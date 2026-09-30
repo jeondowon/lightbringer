@@ -24,6 +24,8 @@ namespace Lightbringer.Pathing
 
         public Vector3 GetPosition(int index) => waypoints[index].position;
 
+        public void Configure(Transform[] points) => waypoints = points ?? new Transform[0];
+
         // Join the closest segment in its forward direction instead of returning to the start.
         public int FindEntryWaypoint(Vector3 position)
         {

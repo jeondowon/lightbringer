@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 namespace Lightbringer.Units
 {
     [DisallowMultipleComponent]
-    public sealed class UnitSummoner : MonoBehaviour
+    public sealed partial class UnitSummoner : MonoBehaviour
     {
         [SerializeField] private FoodResource food;
         [Tooltip("Inactive unit-scale soldier template with a centered CharacterController and UnitPathFollower.")]
@@ -22,6 +22,7 @@ namespace Lightbringer.Units
             new InputAction("Summon Soldier", InputActionType.Button, "<Keyboard>/f");
 
         private int summonedCount;
+        public string LastFeedback { get; private set; } = "";
 
         private void OnEnable()
         {
@@ -45,6 +46,15 @@ namespace Lightbringer.Units
 
         private void Update()
         {
+            if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked && Time.timeScale > 0f
+                && Keyboard.current != null)
+            {
+                if (Keyboard.current.digit1Key.wasPressedThisFrame) TrySelectPath(0);
+                if (Keyboard.current.digit2Key.wasPressedThisFrame) TrySelectPath(1);
+                if (Keyboard.current.digit3Key.wasPressedThisFrame) TrySelectPath(2);
+                if (Keyboard.current.tabKey.wasPressedThisFrame)
+                    TrySelectUnit(((int)selectedUnit + 1) % unlockedUnitCount);
+            }
             if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked
                 && Time.timeScale > 0f && summonAction.WasPressedThisFrame())
                 TrySummon();
@@ -56,30 +66,50 @@ namespace Lightbringer.Units
                 || selectedPath == null || !selectedPath.IsValid
                 || soldierTemplate.GetComponent<UnitPathFollower>() == null)
                 return false;
-            if (!food.CanAfford(foodCost))
+            float cost = SelectedCost;
+            if (!food.CanAfford(cost))
             {
-                Debug.Log($"Not enough Food: {food.CurrentFood:F1} / {foodCost:F1}.", this);
+                LastFeedback = $"Not enough Food: {food.CurrentFood:F1} / {cost:F1}.";
                 return false;
             }
             if (!TryFindSpawnPosition(out Vector3 position))
             {
-                Debug.Log("No free ground nearby. Move to an open area to summon. Food was not spent.", this);
+                LastFeedback = "No free ground nearby. Move to an open area.";
                 return false;
             }
 
             // Keep the instance inactive until payment succeeds.
             CharacterController soldier = Instantiate(soldierTemplate, position,
                 Quaternion.Euler(0f, transform.eulerAngles.y, 0f), soldiersParent);
-            if (!soldier.GetComponent<UnitPathFollower>().TryAssignPath(selectedPath) || !food.TrySpend(foodCost))
+            if (!soldier.GetComponent<UnitPathFollower>().TryAssignPath(selectedPath) || !food.TrySpend(cost))
             {
                 Destroy(soldier.gameObject);
                 return false;
             }
-            soldier.name = $"Greybox Soldier {++summonedCount}";
+            if (selectedUnit != UnitKind.Swordsman)
+            {
+                soldier.GetComponent<Combatant>()?.Configure(Faction.Allied, UnitCatalog.MaxHealth(selectedUnit));
+                soldier.GetComponent<UnitCombat>()?.Configure(UnitCatalog.AttackDamage(selectedUnit), UnitCatalog.Range(selectedUnit), 1f);
+                soldier.GetComponent<UnitPathFollower>().ConfigureSpeed(UnitCatalog.Speed(selectedUnit));
+                Transform visual = soldier.transform.Find("Visual");
+                if (visual != null) visual.localScale = UnitCatalog.VisualScale(selectedUnit);
+                if (selectedUnit == UnitKind.Shieldbearer) soldier.GetComponent<Combatant>().DamageReduction = 0.35f;
+                if (selectedUnit == UnitKind.Priest)
+                {
+                    soldier.GetComponent<UnitCombat>().enabled = false;
+                    soldier.gameObject.AddComponent<UnitSupport>();
+                }
+                if (selectedUnit == UnitKind.Mage || selectedUnit == UnitKind.Dragon)
+                    soldier.GetComponent<UnitCombat>().ConfigureSplash(selectedUnit == UnitKind.Dragon ? 4f : 2.5f);
+                if (selectedUnit == UnitKind.Dragon) soldier.GetComponent<UnitPathFollower>().ConfigureFlight(3.5f);
+            }
+            soldier.name = $"{UnitCatalog.Names[(int)selectedUnit]} {++summonedCount}";
+            soldier.GetComponent<UnitPathFollower>().ConfigureCrowdAvoidance(true);
             soldier.gameObject.SetActive(true);
+            Summoned?.Invoke(soldier.GetComponent<Combatant>());
             // Make consecutive spawns see this collider even before the next physics step.
             Physics.SyncTransforms();
-            Debug.Log($"Soldier summoned. Food: {food.CurrentFood:F1} / {food.MaximumFood:F1}.", this);
+            LastFeedback = UnitCatalog.Names[(int)selectedUnit] + " deployed.";
             return true;
         }
 

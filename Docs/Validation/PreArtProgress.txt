@@ -1,0 +1,35 @@
+Lightbringer — pre-Art Pass implementation and verification
+
+Source: Docs/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx
+Art reference found at Docs/ArtReference/CharacterSheet_FemaleHero_v1.png.png.
+Existing user scene edits are preserved. No final art/VFX in this phase.
+
+Gate 1: Path selection and additional unit types — PASS, Selection.v1, 104 checks (2026-09-30).
+Gate 2: Hero combat, Mana, equipment and defeat — PASS, Hero.v1 (2026-09-30).
+Gate 3a: Permanent progression and save/load — PASS, Progression.v1 (2026-09-30).
+Gate 3b: Playable campaign and stage integration — PASS, Campaign.v1 (2026-09-30).
+Gate 4: Combat scale, AI performance, battlefield readability and camera — PASS, Scale.v1 (2026-09-30).
+Gate 5: Actual Play-mode campaign and rendered stress validation — PASS, CampaignPlay.v1 (2026-09-30).
+
+Final verification:
+- Unity Editor compilation and 181 component/physics/progression/integration checks PASS.
+- 27 actual Play-mode checks PASS, including runtime lifecycle, all troop deployments,
+  level-up pause/resume, victory/defeat transitions and cleanup back to preparation.
+- Save/load checks use an isolated temporary slot; actual Play-mode checks use memory-only progress.
+- Final 300-unit component/physics run: mean 2.699 ms, p95 6.975 ms, zero managed bytes in the measured loop.
+- Final 300-unit rendered Editor run: mean frame 8.530 ms, p95 11.072 ms, 180 measured frames after warmup.
+- Captures inspected: preparation, battle, victory, three fronts and 300-unit combat.
+- Hardware: AMD Ryzen 7 260 / NVIDIA GeForce RTX 5060 Laptop GPU.
+- Runtime and component reports are stored separately; Editor frame timings are not shipping-build or final-art claims.
+- Corrections found during verification: large-object attack distance, death callback reentrancy,
+  crowd movement CPU cost, test resource initialization order, compile-before-play ordering,
+  Play-mode exit guard and preparation camera/scene cleanup.
+
+Entry point: Lightbringer > Prepare and Play Campaign, or Assets/Scenes/CampaignPrototype.unity.
+See PreArtImplementationNotes.txt for controls, gameplay scope, saves and remaining Art/Presentation/Polish work.
+See ImplementationFiles.txt for the implementation and generated artifact file list.
+
+Balance values, campaign test stages, stat increments and equipment count (3) are prototype
+choices based on the handoff, not final balancing decisions. All unlocked troop types
+remain available without a deck restriction. Assigned Paths remain permanent.
+Automated checks do not establish subjective fun, final visual quality, or target-PC frame rate.

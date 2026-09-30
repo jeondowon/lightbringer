@@ -20,6 +20,8 @@ namespace Lightbringer.Player
         private CharacterController controller;
         private InputAction moveAction;
         private float verticalSpeed;
+        public void Configure(Transform camera, InputActionAsset actions)
+        { cameraTransform = camera; inputActions = actions; }
 
         private void Awake()
         {

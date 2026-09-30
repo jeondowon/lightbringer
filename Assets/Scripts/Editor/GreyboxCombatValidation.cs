@@ -3,6 +3,8 @@ using Lightbringer.Units;
 using System.Linq;
 using Lightbringer.Resources;
 using Lightbringer.Aura;
+using Lightbringer.Core;
+using Lightbringer.UI;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -177,6 +179,15 @@ namespace Lightbringer.EditorTools
             var player = root.transform.Find("Player");
             FoodResource food = player.GetComponent<FoodResource>();
             HeroAura aura = player.GetComponent<HeroAura>();
+            Combatant enemyBase = root.transform.Find("Enemy Base").GetComponent<Combatant>();
+            StageObjective objective = root.GetComponent<StageObjective>();
+            Check(enemyBase.Faction == Faction.Enemy && enemyBase.MaximumHealth == 200f
+                && enemyBase.GetComponent<BoxCollider>() != null
+                && enemyBase.GetComponent<UnitCombat>() == null && enemyBase.GetComponent<UnitPathFollower>() == null,
+                "Setup creates a stationary solid enemy base with 200 HP");
+            Check(objective != null && objective.EnemyBase == enemyBase && root.GetComponent<GreyboxHUD>() != null,
+                "Setup connects the enemy base objective and prototype HUD");
+            SetFloat(enemyBase, "maximumHealth", 250f);
             Check(aura != null && player.GetComponent<AuraRangeVisual>() != null,
                 "Setup connects hero aura and range visualization");
             SetFloat(aura, "radius", 7f);
@@ -189,9 +200,13 @@ namespace Lightbringer.EditorTools
             Check(new SerializedObject(food).FindProperty("foodPerSecond").floatValue == 7f
                 && new SerializedObject(template.GetComponent<UnitCombat>()).FindProperty("attackDamage").floatValue == 12f,
                 "Repeated setup preserves Inspector tuning");
-            Check(player.GetComponent<Combatant>() == null, "Setup does not add hero combat outside this stage's scope");
+            Check(player.GetComponent<Combatant>() != null && player.GetComponent<Lightbringer.Player.HeroAbilities>() != null,
+                "Setup equips the hero for direct combat and survival");
             Check(player.GetComponents<HeroAura>().Length == 1 && aura.Radius == 7f,
                 "Repeated setup preserves aura tuning and does not duplicate the aura");
+            Check(enemyBase.MaximumHealth == 250f && root.GetComponents<StageObjective>().Length == 1
+                && root.GetComponents<GreyboxHUD>().Length == 1 && objective.EnemyBase == enemyBase,
+                "Repeated setup preserves base health tuning and one objective/HUD");
         }
     }
 }

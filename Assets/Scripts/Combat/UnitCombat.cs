@@ -44,7 +44,22 @@ namespace Lightbringer.Combat
         private Combatant self;
         private UnitPathFollower movement;
         private float cooldown;
-        private readonly Collider[] candidates = new Collider[32];
+        private readonly PhysicsQueryBuffer candidates = new PhysicsQueryBuffer();
+        private readonly PhysicsQueryBuffer splashQuery = new PhysicsQueryBuffer();
+        private float searchCooldown;
+        public int TargetSearches { get; private set; }
+        public Combatant Health => self != null ? self : GetComponent<Combatant>();
+        private float splashRadius;
+        private readonly HashSet<Combatant> splashTargets = new HashSet<Combatant>();
+        public void ConfigureSplash(float radius) => splashRadius = Mathf.Max(0, radius);
+
+        public void Configure(float damage, float range, float interval)
+        {
+            attackDamage = Mathf.Max(0f, damage);
+            attackRange = Mathf.Max(0.1f, range);
+            attackInterval = Mathf.Max(0.05f, interval);
+            detectionRadius = Mathf.Max(attackRange + 2f, detectionRadius);
+        }
 
         private void Awake()
         {
@@ -62,7 +77,7 @@ namespace Lightbringer.Combat
 
         private void Update() => Tick(Time.deltaTime);
 
-        private void Tick(float deltaTime)
+        public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f || !isActiveAndEnabled)
                 return;
@@ -71,22 +86,48 @@ namespace Lightbringer.Combat
             if (!self.IsAlive)
                 return;
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
+            searchCooldown -= deltaTime;
             if (!IsValidTarget(Target))
-                Target = FindTarget();
+            {
+                bool lostTarget = Target != null;
+                Target = null;
+                if (lostTarget || searchCooldown <= 0f)
+                {
+                    Target = FindTarget();
+                    // Stagger per-unit scans while retaining immediate reacquisition after a lost target.
+                    searchCooldown = 0.1f + (GetInstanceID() & 7) * 0.005f;
+                }
+            }
             if (Target == null)
             {
                 movement.ClearSteeringOverride();
                 return;
             }
 
-            movement.SetSteeringOverride(Target.transform.position, attackRange * 0.9f);
-            if ((Target.transform.position - transform.position).sqrMagnitude > attackRange * attackRange
+            Vector3 aimPoint = Target.GetAimPoint(transform.position);
+            movement.SetSteeringOverride(aimPoint, attackRange * 0.9f);
+            if ((aimPoint - transform.position).sqrMagnitude > attackRange * attackRange
                 || cooldown > 0f || !HasLineOfSight(Target))
                 return;
 
-            Target.TakeDamage(EffectiveDamage);
+            Combatant primary = Target;
+            Vector3 impact = primary.transform.position;
+            float damage = EffectiveDamage;
+            primary.TakeDamage(damage, self);
+            if (splashRadius > 0 && isActiveAndEnabled)
+            {
+                splashTargets.Clear();
+                int count = splashQuery.Overlap(impact, splashRadius, detectionMask);
+                for (int i = 0; i < count; i++)
+                {
+                    Combatant other = splashQuery.Items[i].GetComponentInParent<Combatant>();
+                    if (other != primary && IsValidTarget(other) && splashTargets.Add(other) && HasLineOfSight(other))
+                        other.TakeDamage(damage, self);
+                }
+            }
             cooldown = attackInterval;
-            if (!Target.IsAlive)
+            // A death listener can end the stage and disable this component during TakeDamage.
+            if (Target == null || !Target.IsAlive)
             {
                 Target = null;
                 movement.ClearSteeringOverride();
@@ -97,27 +138,21 @@ namespace Lightbringer.Combat
         {
             return candidate != null && candidate != self && candidate.IsAlive
                 && candidate.Faction != self.Faction && candidate.gameObject.scene == gameObject.scene
-                && (candidate.transform.position - transform.position).sqrMagnitude <= detectionRadius * detectionRadius;
+                && (candidate.GetAimPoint(transform.position) - transform.position).sqrMagnitude <= detectionRadius * detectionRadius;
         }
 
         private Combatant FindTarget()
         {
-            int count = Physics.OverlapSphereNonAlloc(transform.position, detectionRadius,
-                candidates, detectionMask, QueryTriggerInteraction.Ignore);
-            // Preserve correctness if more than 32 colliders surround this prototype unit.
-            Collider[] hits = count == candidates.Length
-                ? Physics.OverlapSphere(transform.position, detectionRadius, detectionMask, QueryTriggerInteraction.Ignore)
-                : candidates;
-            if (hits != candidates)
-                count = hits.Length;
+            TargetSearches++;
+            int count = candidates.Overlap(transform.position, detectionRadius, detectionMask);
             Combatant nearest = null;
             float nearestDistance = float.PositiveInfinity;
             for (int i = 0; i < count; i++)
             {
-                Combatant candidate = hits[i].GetComponentInParent<Combatant>();
+                Combatant candidate = candidates.Items[i].GetComponentInParent<Combatant>();
                 if (!IsValidTarget(candidate))
                     continue;
-                float distance = (candidate.transform.position - transform.position).sqrMagnitude;
+                float distance = (candidate.GetAimPoint(transform.position) - transform.position).sqrMagnitude;
                 if (distance < nearestDistance && HasLineOfSight(candidate))
                 {
                     nearest = candidate;
@@ -129,7 +164,7 @@ namespace Lightbringer.Combat
 
         private bool HasLineOfSight(Combatant candidate)
         {
-            Vector3 offset = candidate.transform.position - transform.position;
+            Vector3 offset = candidate.GetAimPoint(transform.position) - transform.position;
             if (offset.sqrMagnitude < 0.0001f)
                 return true;
             // Rays originate inside this unit's controller, which does not block its own ray.

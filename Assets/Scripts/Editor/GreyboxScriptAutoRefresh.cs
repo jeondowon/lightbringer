@@ -36,7 +36,7 @@ namespace Lightbringer.EditorTools
 
         private static void Probe()
         {
-            if (!SessionState.GetBool(EnabledKey, true) || EditorApplication.isPlayingOrWillChangePlaymode
+            if (!SessionState.GetBool(EnabledKey, true) || EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode
                 || EditorApplication.isCompiling || EditorApplication.isUpdating
                 || EditorApplication.timeSinceStartup < nextProbe)
                 return;

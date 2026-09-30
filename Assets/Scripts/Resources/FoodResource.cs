@@ -11,6 +11,14 @@ namespace Lightbringer.Resources
 
         public float CurrentFood { get; private set; }
         public float MaximumFood => maximumFood;
+        public float ProductionPerSecond => foodPerSecond;
+
+        public void Configure(float capacity, float production)
+        {
+            maximumFood = Mathf.Max(0f, capacity);
+            foodPerSecond = Mathf.Max(0f, production);
+            CurrentFood = Mathf.Min(CurrentFood, maximumFood);
+        }
 
         private void Awake()
         {

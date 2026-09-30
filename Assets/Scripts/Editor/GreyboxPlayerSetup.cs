@@ -7,6 +7,8 @@ using Lightbringer.Units;
 using Lightbringer.Pathing;
 using Lightbringer.Combat;
 using Lightbringer.Aura;
+using Lightbringer.Core;
+using Lightbringer.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -149,9 +151,12 @@ namespace Lightbringer.EditorTools
                 SetupSummoning(root, player);
                 SetupAura(player.gameObject);
                 SetupEnemies(root);
+                SetupHeroCombat(player.gameObject, camera);
+                SetupObjective(root, player, follow);
+                SetupPathSelection(root, player.GetComponent<UnitSummoner>());
                 EditorSceneManager.MarkSceneDirty(scene);
                 Selection.activeGameObject = player.gameObject;
-                Debug.Log("Greybox ready. Save, then Play: WASD / mouse look / F summons a soldier. Inspect Player > Food Resource for Current Food and Unit Summoner for cost. Escape releases the cursor.", player);
+                Debug.Log("Greybox ready. Save, then Play: WASD / mouse look / F summons a soldier. Destroy the enemy base to win; Food and base HP appear in the HUD. Escape releases the cursor.", player);
                 return true;
             }
             catch (Exception exception)
@@ -174,6 +179,7 @@ namespace Lightbringer.EditorTools
                 || children.Count(item => item.name == "Soldier Template") > 1
                 || children.Count(item => item.name == "Path 1") > 1
                 || children.Count(item => item.name == "Enemies") > 1
+                || children.Count(item => item.name == "Enemy Base") > 1
                 || children.Count(item => item.name == "Soldiers") > 1)
                 return false;
             Transform template = root.transform.Find("Soldier Template");
@@ -301,6 +307,108 @@ namespace Lightbringer.EditorTools
             if (visual == null)
                 visual = Undo.AddComponent<AuraRangeVisual>(player);
             SetReference(visual, "ringShader", shader);
+        }
+
+        private static void SetupObjective(GameObject root, Transform player, ThirdPersonCamera camera)
+        {
+            Transform existing = root.transform.Find("Enemy Base");
+            Combatant health;
+            if (existing == null)
+            {
+                UnitSummoner summoner = player.GetComponent<UnitSummoner>();
+                WaypointPath path = (WaypointPath)new SerializedObject(summoner)
+                    .FindProperty("selectedPath").objectReferenceValue;
+                if (path == null || !path.IsValid)
+                    throw new InvalidOperationException("The enemy base needs a valid selected Path.");
+                GameObject baseObject = CreatePrimitive("Enemy Base", PrimitiveType.Cube, root.transform);
+                baseObject.transform.position = path.GetPosition(path.Count - 1) + Vector3.up * 2f;
+                baseObject.transform.localScale = new Vector3(4f, 4f, 4f);
+                health = Undo.AddComponent<Combatant>(baseObject);
+                SerializedObject settings = new SerializedObject(health);
+                settings.FindProperty("faction").enumValueIndex = (int)Faction.Enemy;
+                settings.FindProperty("maximumHealth").floatValue = 200f;
+                settings.FindProperty("attackSurface").objectReferenceValue = baseObject.GetComponent<BoxCollider>();
+                settings.ApplyModifiedProperties();
+            }
+            else
+            {
+                health = existing.GetComponent<Combatant>();
+                BoxCollider box = existing.GetComponent<BoxCollider>();
+                if (health == null || health.Faction != Faction.Enemy || box == null
+                    || !box.enabled || box.isTrigger || !existing.gameObject.activeSelf
+                    || existing.GetComponent<UnitCombat>() != null || existing.GetComponent<UnitPathFollower>() != null)
+                    throw new InvalidOperationException("Conflicting Enemy Base object. Use an active enemy Combatant and a solid BoxCollider without unit movement/combat.");
+                SetReference(health, "attackSurface", box);
+            }
+            health.RefreshTeamColor();
+            StageObjective objective = root.GetComponent<StageObjective>();
+            if (objective == null)
+                objective = Undo.AddComponent<StageObjective>(root);
+            SetReference(objective, "enemyBase", health);
+            SetReference(objective, "battlefieldRoot", root.transform);
+            SetReference(objective, "battleCamera", camera);
+            SetReference(objective, "hero", player.GetComponent<Combatant>());
+            GreyboxHUD hud = root.GetComponent<GreyboxHUD>();
+            if (hud == null)
+                hud = Undo.AddComponent<GreyboxHUD>(root);
+            SetReference(hud, "objective", objective);
+            SetReference(hud, "food", player.GetComponent<FoodResource>());
+            SetReference(hud, "summoner", player.GetComponent<UnitSummoner>());
+            SetReference(hud, "hero", player.GetComponent<Combatant>());
+            SetReference(hud, "mana", player.GetComponent<ManaResource>());
+            SetReference(hud, "abilities", player.GetComponent<HeroAbilities>());
+        }
+
+        private static void SetupHeroCombat(GameObject player, UnityEngine.Camera camera)
+        {
+            if (player.GetComponent<Combatant>() == null)
+            {
+                Combatant health = Undo.AddComponent<Combatant>(player);
+                Undo.RecordObject(health, "Configure Hero Health");
+                health.Configure(Faction.Allied, 120f);
+            }
+            if (player.GetComponent<ManaResource>() == null) Undo.AddComponent<ManaResource>(player);
+            HeroAbilities abilities = player.GetComponent<HeroAbilities>();
+            if (abilities == null) abilities = Undo.AddComponent<HeroAbilities>(player);
+            SetReference(abilities, "aimCamera", camera);
+        }
+
+        private static void SetupPathSelection(GameObject root, UnitSummoner summoner)
+        {
+            WaypointPath first = root.transform.Find("Path 1")?.GetComponent<WaypointPath>();
+            if (first == null || !first.IsValid) return;
+            Transform second = root.transform.Find("Path 2");
+            if (second == null)
+            {
+                GameObject pathObject = CreateObject("Path 2", root.scene);
+                Undo.SetTransformParent(pathObject.transform, root.transform, "Parent second Path");
+                WaypointPath path = Undo.AddComponent<WaypointPath>(pathObject);
+                Vector3 end = first.GetPosition(first.Count - 1);
+                Vector3[] positions = { root.transform.TransformPoint(new Vector3(12, 0, 6)),
+                    root.transform.TransformPoint(new Vector3(12, 0, 20)), end };
+                Transform[] points = new Transform[positions.Length];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    GameObject point = CreateObject("Waypoint " + (i + 1), root.scene);
+                    Undo.SetTransformParent(point.transform, pathObject.transform, "Parent Waypoint");
+                    point.transform.position = positions[i];
+                    points[i] = point.transform;
+                }
+                Undo.RecordObject(path, "Configure second Path");
+                path.Configure(points);
+                second = pathObject.transform;
+            }
+            if (second.GetComponent<WaypointPath>() == null)
+                throw new InvalidOperationException("Path 2 must contain WaypointPath.");
+            SerializedObject settings = new SerializedObject(summoner);
+            SerializedProperty paths = settings.FindProperty("availablePaths");
+            if (paths.arraySize == 0)
+            {
+                paths.arraySize = 2;
+                paths.GetArrayElementAtIndex(0).objectReferenceValue = first;
+                paths.GetArrayElementAtIndex(1).objectReferenceValue = second.GetComponent<WaypointPath>();
+                settings.ApplyModifiedProperties();
+            }
         }
 
         private static void EnsureCombat(GameObject unit, Faction faction)

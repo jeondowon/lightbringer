@@ -18,6 +18,7 @@ namespace Lightbringer.Aura
         private LineRenderer ring;
         private Material material;
         private const int Segments = 96;
+        public void Configure(Shader shader) => ringShader = shader;
 
         private void OnEnable()
         {

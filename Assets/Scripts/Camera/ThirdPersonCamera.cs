@@ -30,6 +30,10 @@ namespace Lightbringer.CameraSystem
         private CursorLockMode previousLockMode;
         private bool previousCursorVisible;
         private bool ownsCursor;
+        private bool hasPose;
+        private RaycastHit[] obstructionHits = new RaycastHit[16];
+        public void Configure(Transform followTarget, InputActionAsset actions)
+        { target = followTarget; inputActions = actions; }
 
         private void OnEnable()
         {
@@ -45,8 +49,12 @@ namespace Lightbringer.CameraSystem
             lookAction = source.Clone();
             lookAction.bindingMask = InputBinding.MaskByGroup("Keyboard&Mouse");
             lookAction.Enable();
-            yaw = transform.eulerAngles.y;
-            pitch = Mathf.Clamp(initialPitch, minPitch, maxPitch);
+            if (!hasPose)
+            {
+                yaw = transform.eulerAngles.y;
+                pitch = Mathf.Clamp(initialPitch, minPitch, maxPitch);
+                hasPose = true;
+            }
             previousLockMode = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             ownsCursor = true;
@@ -86,6 +94,8 @@ namespace Lightbringer.CameraSystem
 
             // Mouse delta already represents this frame's displacement: no deltaTime here.
             Vector2 delta = lookAction.ReadValue<Vector2>() * sensitivity;
+            if (Mouse.current != null)
+                distance = Mathf.Clamp(distance - Mathf.Clamp(Mouse.current.scroll.ReadValue().y, -1f, 1f), 5f, 20f);
             yaw = Mathf.Repeat(yaw + delta.x, 360f);
             pitch = Mathf.Clamp(pitch - delta.y, minPitch, maxPitch);
             // Movement reads this frame's camera orientation before the late follow pass.
@@ -102,7 +112,23 @@ namespace Lightbringer.CameraSystem
         {
             Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
             Vector3 pivot = target.position + Vector3.up * height;
-            transform.SetPositionAndRotation(pivot - rotation * Vector3.forward * distance, rotation);
+            Vector3 direction = -(rotation * Vector3.forward);
+            int count;
+            while (true)
+            {
+                count = Physics.SphereCastNonAlloc(pivot, 0.25f, direction, obstructionHits, distance, ~0, QueryTriggerInteraction.Ignore);
+                if (count < obstructionHits.Length) break;
+                obstructionHits = new RaycastHit[obstructionHits.Length * 2];
+            }
+            float visibleDistance = distance;
+            for (int i = 0; i < count; i++)
+            {
+                Collider collider = obstructionHits[i].collider;
+                if (collider.transform.IsChildOf(target) || collider.GetComponentInParent<Lightbringer.Units.UnitPathFollower>() != null)
+                    continue;
+                visibleDistance = Mathf.Min(visibleDistance, Mathf.Max(0.3f, obstructionHits[i].distance - 0.1f));
+            }
+            transform.SetPositionAndRotation(pivot + direction * visibleDistance, rotation);
         }
 
         private void OnApplicationFocus(bool focused)

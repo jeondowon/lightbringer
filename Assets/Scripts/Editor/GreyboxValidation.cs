@@ -17,7 +17,7 @@ namespace Lightbringer.EditorTools
     [InitializeOnLoad]
     public static partial class GreyboxValidation
     {
-        private const string Revision = "Lightbringer.GreyboxValidation.Aura.v1";
+        private const string Revision = "Lightbringer.GreyboxValidation.Scale.v1";
         private const string LastCheckedScriptsKey = "Lightbringer.LastCheckedScripts";
         private static readonly List<string> Results = new List<string>();
 
@@ -29,7 +29,7 @@ namespace Lightbringer.EditorTools
         private static void RunOnceWhenIdle()
         {
             if (EditorApplication.isCompiling || EditorApplication.isUpdating
-                || EditorApplication.isPlayingOrWillChangePlaymode
+                || Application.isPlaying || EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode
                 || PrefabStageUtility.GetCurrentPrefabStage() != null)
                 return;
             EditorApplication.update -= RunOnceWhenIdle;
@@ -43,7 +43,7 @@ namespace Lightbringer.EditorTools
 
         public static bool RunChecks()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling
+            if (Application.isPlaying || EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling
                 || PrefabStageUtility.GetCurrentPrefabStage() != null)
             {
                 Debug.LogWarning("Stop Play and leave Prefab mode before validating Greybox systems.");
@@ -66,6 +66,12 @@ namespace Lightbringer.EditorTools
                 ValidatePathMovement();
                 ValidateCombat();
                 ValidateAura();
+                ValidateObjective();
+                ValidateSelection();
+                ValidateHeroSystems();
+                ValidateProgression();
+                ValidateCampaignIntegration();
+                ValidateCombatScale();
                 ValidateSetup();
                 passed = true;
             }
@@ -257,7 +263,7 @@ namespace Lightbringer.EditorTools
 
         private static void Invoke(object target, string method, params object[] arguments)
         {
-            target.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)
+            target.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .Invoke(target, arguments);
         }
 

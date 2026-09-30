@@ -1,4 +1,5 @@
 using Lightbringer.Pathing;
+using Lightbringer.Combat;
 using UnityEngine;
 
 namespace Lightbringer.Units
@@ -20,6 +21,21 @@ namespace Lightbringer.Units
         private bool hasSteeringOverride;
         private Vector3 steeringDestination;
         private float steeringStopDistance;
+        private float flightHeight;
+        private bool crowdAvoidance;
+        private float separationTimer;
+        private Vector3 separation;
+        private readonly PhysicsQueryBuffer neighbours = new PhysicsQueryBuffer(16);
+        private float movementAccumulator;
+
+        public void ConfigureSpeed(float speed) => moveSpeed = Mathf.Max(0f, speed);
+        public void ConfigureFlight(float height) => flightHeight = Mathf.Max(0, height);
+        public void ConfigureCrowdAvoidance(bool enabled)
+        {
+            crowdAvoidance = enabled;
+            // Stagger 30 Hz crowd simulation. Hero movement remains per-frame.
+            movementAccumulator = enabled ? (GetInstanceID() & 15) / 15f / 30f : 0f;
+        }
 
         public void SetSteeringOverride(Vector3 destination, float stopDistance)
         {
@@ -54,12 +70,19 @@ namespace Lightbringer.Units
 
         private void Update() => Tick(Time.deltaTime);
 
-        private void Tick(float deltaTime)
+        public void Tick(float deltaTime)
         {
             if (controller == null)
                 controller = GetComponent<CharacterController>();
             if (deltaTime <= 0f || !isActiveAndEnabled || !controller.enabled)
                 return;
+            if (crowdAvoidance)
+            {
+                movementAccumulator += deltaTime;
+                if (movementAccumulator < 1f / 30f) return;
+                deltaTime = movementAccumulator;
+                movementAccumulator = 0;
+            }
 
             Vector3 horizontal = Vector3.zero;
             if (hasSteeringOverride)
@@ -90,6 +113,40 @@ namespace Lightbringer.Units
                 break;
             }
 
+            if (crowdAvoidance && horizontal.sqrMagnitude > 0f)
+            {
+                separationTimer -= deltaTime;
+                if (separationTimer <= 0f)
+                {
+                    separationTimer = 0.12f;
+                    separation = Vector3.zero;
+                    int count = neighbours.Overlap(transform.position, 1.1f);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Combatant unit = neighbours.Items[i].GetComponentInParent<Combatant>();
+                        if (unit == null || !unit.IsAlive || unit.gameObject == gameObject || unit.gameObject.scene != gameObject.scene) continue;
+                        Vector3 away = transform.position - unit.transform.position;
+                        away.y = 0;
+                        float distance = away.magnitude;
+                        if (distance > 0.01f && distance < 1.1f) separation += away / distance * (1.1f - distance);
+                    }
+                    separation = Vector3.ClampMagnitude(separation, 0.8f);
+                }
+                horizontal = Vector3.ClampMagnitude(horizontal + separation * moveSpeed * deltaTime, moveSpeed * deltaTime);
+            }
+            if (flightHeight > 0f)
+            {
+                float groundY = AssignedPath != null && AssignedPath.IsValid
+                    ? AssignedPath.GetPosition(Mathf.Min(waypointIndex, AssignedPath.Count - 1)).y : 0f;
+                float lift = Mathf.Clamp(groundY + flightHeight - transform.position.y, -moveSpeed * deltaTime, moveSpeed * deltaTime);
+                controller.Move(horizontal + Vector3.up * lift);
+                return;
+            }
+            if (controller.isGrounded && horizontal.sqrMagnitude < 0.000001f)
+            {
+                verticalSpeed = -2f;
+                return;
+            }
             if (controller.isGrounded && verticalSpeed < 0f)
                 verticalSpeed = -2f;
             verticalSpeed += gravity * deltaTime;

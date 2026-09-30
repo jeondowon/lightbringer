@@ -15,7 +15,13 @@ namespace Lightbringer.Aura
 
         public float Radius => radius;
         public float AttackBonus => attackBonus;
-        private readonly Collider[] candidates = new Collider[64];
+        public void Configure(float newRadius, float bonus)
+        {
+            radius = Mathf.Max(0f, newRadius);
+            attackBonus = Mathf.Max(0f, bonus);
+        }
+        private readonly PhysicsQueryBuffer candidates = new PhysicsQueryBuffer(64);
+        private float scanCooldown;
         private HashSet<UnitCombat> affected = new HashSet<UnitCombat>();
         private HashSet<UnitCombat> detected = new HashSet<UnitCombat>();
 
@@ -24,28 +30,28 @@ namespace Lightbringer.Aura
             if (!isActiveAndEnabled || radius <= 0f || unit == null || !unit.isActiveAndEnabled
                 || unit.gameObject.scene != gameObject.scene)
                 return false;
-            Combatant health = unit.GetComponent<Combatant>();
+            Combatant health = unit.Health;
             return health != null && health.IsAlive && health.Faction == Faction.Allied
                 && (unit.transform.position - transform.position).sqrMagnitude <= radius * radius;
         }
 
-        private void Update() => RefreshRecipients();
+        private void Update()
+        {
+            scanCooldown -= Time.deltaTime;
+            if (scanCooldown > 0) return;
+            scanCooldown = 0.1f;
+            RefreshRecipients();
+        }
 
         private void RefreshRecipients()
         {
             if (!isActiveAndEnabled)
                 return;
             detected.Clear();
-            int count = Physics.OverlapSphereNonAlloc(transform.position, radius, candidates, unitMask,
-                QueryTriggerInteraction.Ignore);
-            Collider[] hits = count == candidates.Length
-                ? Physics.OverlapSphere(transform.position, radius, unitMask, QueryTriggerInteraction.Ignore)
-                : candidates;
-            if (hits != candidates)
-                count = hits.Length;
+            int count = candidates.Overlap(transform.position, radius, unitMask);
             for (int i = 0; i < count; i++)
             {
-                UnitCombat unit = hits[i].GetComponentInParent<UnitCombat>();
+                UnitCombat unit = candidates.Items[i].GetComponentInParent<UnitCombat>();
                 if (Affects(unit) && detected.Add(unit))
                     unit.AddAura(this);
             }

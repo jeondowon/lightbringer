@@ -1,0 +1,111 @@
+using Lightbringer.Core;
+using Lightbringer.Player;
+using Lightbringer.Progression;
+using Lightbringer.Resources;
+using Lightbringer.Units;
+using UnityEngine;
+
+namespace Lightbringer.UI
+{
+    [RequireComponent(typeof(CampaignSession))]
+    public sealed class CampaignHUD : MonoBehaviour
+    {
+        private CampaignSession session;
+        private Vector2 scroll;
+        private void Awake() => session = GetComponent<CampaignSession>();
+        private void OnGUI()
+        {
+            if (session == null || session.Progress == null) return;
+            CampaignProgress profile = session.Progress;
+            if (session.Battle == null) Preparation(profile);
+            else Battle(profile);
+            if (session.IsChoosing) Choices(profile);
+            if (!string.IsNullOrEmpty(session.SaveStatus))
+                GUI.Box(new Rect(16, Screen.height - 48, Screen.width - 32, 38), session.SaveStatus);
+        }
+
+        private void Preparation(CampaignProgress profile)
+        {
+            float width = Mathf.Min(700, Screen.width - 32);
+            GUILayout.BeginArea(new Rect((Screen.width - width) / 2, 20, width, Screen.height - 80), GUI.skin.box);
+            scroll = GUILayout.BeginScrollView(scroll);
+            GUILayout.Label("LIGHTBRINGER | CAMPAIGN PREPARATION");
+            GUILayout.Label($"Level {profile.level} | EXP {profile.experience}/{profile.ExperienceToNext} | Gold {profile.gold}");
+            GUILayout.Label(profile.IsComplete ? "Prototype campaign complete. All stages can be replayed." : "Choose a stage and three equipment items.");
+            GUI.enabled = !session.IsChoosing;
+            GUILayout.BeginHorizontal();
+            for (int stage = 1; stage <= CampaignProgress.StageCount; stage++)
+            {
+                GUI.enabled = !session.IsChoosing && stage <= profile.unlockedStage;
+                if (GUILayout.Button((stage == session.SelectedStage ? "> " : "") + stage + (profile.cleared[stage - 1] ? " *" : "")))
+                    session.SelectStage(stage);
+            }
+            GUILayout.EndHorizontal();
+            GUI.enabled = !session.IsChoosing;
+            for (int slot = 0; slot < EquipmentCatalog.Slots; slot++)
+            {
+                GUILayout.Label($"Slot {slot + 1} ({(slot == 0 ? "LMB" : slot == 1 ? "Q" : "E")}): {EquipmentCatalog.Names[profile.loadout[slot]]}");
+                GUILayout.BeginHorizontal();
+                for (int id = 0; id < EquipmentCatalog.Count; id++)
+                {
+                    GUI.enabled = !session.IsChoosing && profile.equipmentLevels[id] > 0;
+                    if (GUILayout.Button(EquipmentCatalog.Names[id] + " +" + profile.equipmentLevels[id])) session.TryEquip(slot, id);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUI.enabled = !session.IsChoosing;
+            GUILayout.Label("Unlocked troops (all available during battle):");
+            for (int i = 0; i < profile.UnlockedUnits; i++) GUILayout.Label(UnitCatalog.Names[i] + " — " + UnitCatalog.Cost((UnitKind)i) + " Food");
+            if (GUILayout.Button("START STAGE " + session.SelectedStage, GUILayout.Height(38))) session.StartBattle();
+            GUI.enabled = true;
+            GUILayout.Label("Permanent growth:");
+            for (int i = 0; i < profile.ranks.Length; i++) if (profile.ranks[i] > 0)
+                GUILayout.Label(CampaignProgress.GrowthNames[i] + " × " + profile.ranks[i]);
+            GUILayout.Label("Prototype balance. First clears award gold and gear; upgraded gear replaces lower levels.");
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+        }
+
+        private void Battle(CampaignProgress profile)
+        {
+            PrototypeBattle battle = session.Battle;
+            GUILayout.BeginArea(new Rect(16, 16, 400, 345), GUI.skin.box);
+            GUILayout.Label($"Stage {session.SelectedStage} | Level {profile.level} | EXP {profile.experience}/{profile.ExperienceToNext}");
+            if (battle.Hero != null)
+            {
+                FoodResource food = battle.Hero.GetComponent<FoodResource>();
+                ManaResource mana = battle.Hero.GetComponent<ManaResource>();
+                GUILayout.Label($"HP {battle.Hero.CurrentHealth:F0}/{battle.Hero.MaximumHealth:F0} | Mana {mana.Current:F0}/{mana.Maximum:F0}");
+                GUILayout.Label($"Food {food.CurrentFood:F1}/{food.MaximumFood:F0} | F: summon ({battle.Summoner.SelectedCost:0.##})");
+                GUILayout.Label($"1/2/3: {battle.Summoner.SelectedPath?.name} | Tab: {UnitCatalog.Names[(int)battle.Summoner.SelectedUnit]}");
+                for (int i = 0; i < 3; i++)
+                    GUILayout.Label($"{(i == 0 ? "LMB" : i == 1 ? "Q" : "E")}: {EquipmentCatalog.Names[battle.Abilities.Equipped(i)]} | {battle.Abilities.CooldownRemaining(i):F1}s");
+                GUILayout.Label(battle.Abilities.Feedback);
+                GUILayout.Label(battle.Summoner.LastFeedback);
+            }
+            if (battle.Objective.EnemyBase != null) GUILayout.Label($"Enemy base: {battle.Objective.EnemyBase.CurrentHealth:F0} HP");
+            GUILayout.Label($"Enemy waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
+            GUILayout.Label("WASD move | Mouse look | Wheel zoom | Esc cursor");
+            GUILayout.EndArea();
+            GUI.Label(new Rect(Screen.width / 2 - 8, Screen.height / 2 - 12, 24, 24), "+");
+            if (!battle.Objective.HasEnded || session.IsChoosing) return;
+            GUILayout.BeginArea(new Rect((Screen.width - 560) / 2, (Screen.height - 160) / 2, 560, 160), GUI.skin.box);
+            GUILayout.Label(battle.Objective.HasWon ? "VICTORY" : "DEFEAT");
+            GUILayout.Label(session.LastResult);
+            if (GUILayout.Button("RETURN TO PREPARATION", GUILayout.Height(36))) session.ReturnToPreparation();
+            GUILayout.EndArea();
+        }
+
+        private void Choices(CampaignProgress profile)
+        {
+            float width = Mathf.Min(600, Screen.width - 32);
+            GUILayout.BeginArea(new Rect((Screen.width - width) / 2, (Screen.height - 230) / 2, width, 230), GUI.skin.box);
+            GUILayout.Label("LEVEL UP — CHOOSE ONE PERMANENT UPGRADE");
+            GUILayout.Label($"{profile.pendingLevels} choice(s) remaining. Battlefield paused.");
+            for (int i = 0; i < profile.choices.Length; i++)
+                if (GUILayout.Button(CampaignProgress.GrowthNames[profile.choices[i]], GUILayout.Height(36)))
+                { session.ChooseGrowth(i); break; }
+            GUILayout.EndArea();
+        }
+    }
+}

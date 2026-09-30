@@ -899,6 +899,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Combat.Combatant
   faction: 0
   maximumHealth: 30
+  attackSurface: {fileID: 0}
 --- !u!1 &969953865
 GameObject:
   m_ObjectHideFlags: 0
@@ -908,6 +909,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 969953866}
+  - component: {fileID: 969953868}
+  - component: {fileID: 969953867}
   m_Layer: 0
   m_Name: Lightbringer Greybox
   m_TagString: Untagged
@@ -934,8 +937,38 @@ Transform:
   - {fileID: 959219039}
   - {fileID: 2005459519}
   - {fileID: 1502133719}
+  - {fileID: 1759611939}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &969953867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 969953865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa0c2df8d4a5c1541b90bf777a445135, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.UI.GreyboxHUD
+  objective: {fileID: 969953868}
+  food: {fileID: 1562215399}
+--- !u!114 &969953868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 969953865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea739c7c24e5d194683ec0932a645081, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Core.StageObjective
+  enemyBase: {fileID: 1759611935}
+  battlefieldRoot: {fileID: 969953866}
+  battleCamera: {fileID: 330585548}
 --- !u!1 &1079958956
 GameObject:
   m_ObjectHideFlags: 0
@@ -1220,6 +1253,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Combat.Combatant
   faction: 1
   maximumHealth: 30
+  attackSurface: {fileID: 0}
 --- !u!114 &1460320290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1309,6 +1343,8 @@ GameObject:
   - component: {fileID: 1562215394}
   - component: {fileID: 1562215399}
   - component: {fileID: 1562215398}
+  - component: {fileID: 1562215401}
+  - component: {fileID: 1562215400}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1487,6 +1523,39 @@ MonoBehaviour:
   startingFood: 0
   maximumFood: 100
   foodPerSecond: 5
+--- !u!114 &1562215400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1562215392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feec8dea7444d724197915273e645fb6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Aura.AuraRangeVisual
+  ringShader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  color: {r: 1, g: 0.8, b: 0.2, a: 1}
+  width: 0.06
+  heightOffset: -0.9
+--- !u!114 &1562215401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1562215392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95cedf0a54e5e2740a8e13aade27a29f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Aura.HeroAura
+  radius: 6
+  attackBonus: 0.25
+  unitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1623442335
 GameObject:
   m_ObjectHideFlags: 0
@@ -1559,6 +1628,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Combat.Combatant
   faction: 1
   maximumHealth: 30
+  attackSurface: {fileID: 0}
 --- !u!114 &1623442339
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1722,6 +1792,134 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1750692066}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1759611934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1759611939}
+  - component: {fileID: 1759611938}
+  - component: {fileID: 1759611936}
+  - component: {fileID: 1759611937}
+  - component: {fileID: 1759611935}
+  m_Layer: 0
+  m_Name: Enemy Base
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1759611935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759611934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 251ef68a00957a04c92472e8c2bfb7a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Combat.Combatant
+  faction: 1
+  maximumHealth: 200
+  attackSurface: {fileID: 1759611936}
+--- !u!65 &1759611936
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759611934}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1759611937
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759611934}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1759611938
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759611934}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1759611939
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759611934}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6, y: 2, z: 28}
+  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 969953866}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2005459518
 GameObject:
   m_ObjectHideFlags: 0
