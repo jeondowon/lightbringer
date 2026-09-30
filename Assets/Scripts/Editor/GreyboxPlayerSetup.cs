@@ -28,7 +28,9 @@ namespace Lightbringer.EditorTools
         {
             return !EditorApplication.isPlayingOrWillChangePlaymode
                 && !EditorApplication.isCompiling
-                && PrefabStageUtility.GetCurrentPrefabStage() == null;
+                && PrefabStageUtility.GetCurrentPrefabStage() == null
+                && !SceneManager.GetActiveScene().GetRootGameObjects().Any(root =>
+                    root.GetComponentInChildren<CampaignSession>(true) != null);
         }
 
         [MenuItem(MenuPath)]

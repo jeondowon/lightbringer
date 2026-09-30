@@ -32,6 +32,7 @@ namespace Lightbringer.CameraSystem
         private bool ownsCursor;
         private bool hasPose;
         private RaycastHit[] obstructionHits = new RaycastHit[16];
+        public Transform Target => target;
         public void Configure(Transform followTarget, InputActionAsset actions)
         { target = followTarget; inputActions = actions; }
 

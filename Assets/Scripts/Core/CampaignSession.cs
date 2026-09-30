@@ -33,6 +33,7 @@ namespace Lightbringer.Core
 
         private void Awake()
         {
+            DisableStandaloneGreybox();
             if (Progress == null)
             {
                 store = new CampaignSaveStore(Path.Combine(Application.persistentDataPath, "Lightbringer", "campaign-v1.json"));
@@ -48,6 +49,29 @@ namespace Lightbringer.Core
             preparationCamera.AddComponent<AudioListener>();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+
+        // The standalone setup can exist in older campaign scenes. Its camera would
+        // recapture menu clicks and its simulation would run behind preparation.
+        private void DisableStandaloneGreybox()
+        {
+            GameObject[] roots = gameObject.scene.GetRootGameObjects();
+            foreach (GameObject root in roots)
+            {
+                if (root.GetComponent<Lightbringer.UI.GreyboxHUD>() == null
+                    || transform.IsChildOf(root.transform)) continue;
+                foreach (GameObject cameraRoot in roots)
+                    foreach (Lightbringer.CameraSystem.ThirdPersonCamera follow in
+                        cameraRoot.GetComponentsInChildren<Lightbringer.CameraSystem.ThirdPersonCamera>(true))
+                    {
+                        if (follow.Target == null || !follow.Target.IsChildOf(root.transform)) continue;
+                        follow.enabled = false;
+                        follow.GetComponent<UnityEngine.Camera>().enabled = false;
+                        AudioListener listener = follow.GetComponent<AudioListener>();
+                        if (listener != null) listener.enabled = false;
+                    }
+                root.SetActive(false);
+            }
         }
 
         public bool SelectStage(int stage)

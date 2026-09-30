@@ -1,4 +1,5 @@
-PASS | CampaignPlay.v1 | 2026-09-30T14:04:25.1248455Z
+PASS | CampaignPlay.v1 | 2026-09-30T14:26:35.6284480Z
+PASS: Campaign preparation disables a conflicting standalone battlefield and releases menu input
 PASS: Actual Play mode can start a campaign with isolated progress
 PASS: Awake/Start initialize hero stats and live Food generation
 PASS: Actual runtime summon initializes and activates one allied soldier
@@ -21,10 +22,10 @@ PASS: Runtime deployment: Mage
 PASS: Runtime deployment: Knight
 PASS: Runtime deployment: Dragon
 PASS: Runtime Dragon rises above ground troops
-MEASURE: 100 rendered stress units (+hero/base): frame mean 6.735 ms, p95 7.886 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 100 rendered stress units (+hero/base): frame mean 6.179 ms, p95 8.288 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 100 rendered stress units stay active through sustained real-time combat
 PASS: 100 rendered stress units exchange damage
-MEASURE: 300 rendered stress units (+hero/base): frame mean 8.530 ms, p95 11.072 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 300 rendered stress units (+hero/base): frame mean 6.964 ms, p95 8.870 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 300 rendered stress units stay active through sustained real-time combat
 PASS: 300 rendered stress units exchange damage
 PASS: Stress battle can clean up and return to campaign preparation
