@@ -64,6 +64,14 @@ namespace Lightbringer.Visuals
         public Material auraMotesMaterial;
         [Tooltip("Lightbringer/Lightning, used by hero strike spells.")]
         public Material lightningMaterial;
+        [Tooltip("Lightbringer/Terrain: painterly ground (vertex palette, alpha = road mask).")]
+        public Material terrainMaterial;
+        [Tooltip("Lightbringer/Grass: wind-swayed grass blades.")]
+        public Material grassMaterial;
+        [Tooltip("Lightbringer/Toon, baked vertex palette with outline (trees, rocks, ruins).")]
+        public Material propsMaterial;
+        [Tooltip("Lightbringer/Sky Gradient skybox.")]
+        public Material skyMaterial;
 
         [Header("Allied palette (character sheet v1)")]
         public Color ivory = new Color(0.93f, 0.91f, 0.86f);
@@ -85,15 +93,32 @@ namespace Lightbringer.Visuals
         public Color corruptGlow = new Color(1f, 0.22f, 0.35f);
         public Color corruptStone = new Color(0.25f, 0.22f, 0.28f);
 
+        [Header("Environment palette")]
+        public Color grassLight = new Color(0.5f, 0.64f, 0.36f);
+        public Color grassDark = new Color(0.32f, 0.46f, 0.27f);
+        public Color dirt = new Color(0.62f, 0.52f, 0.38f);
+        public Color plazaStone = new Color(0.72f, 0.7f, 0.66f);
+        public Color rock = new Color(0.52f, 0.52f, 0.55f);
+        public Color ruinStone = new Color(0.86f, 0.84f, 0.78f);
+        public Color bark = new Color(0.36f, 0.26f, 0.2f);
+        public Color foliage = new Color(0.4f, 0.6f, 0.34f);
+        public Color foliageDark = new Color(0.2f, 0.38f, 0.26f);
+        public Color mountain = new Color(0.5f, 0.56f, 0.66f);
+
         [Header("Battlefield lighting")]
-        public Color sunColor = new Color(1f, 0.95f, 0.86f);
-        [Min(0f)] public float sunIntensity = 1.35f;
-        public Color ambientSky = new Color(0.62f, 0.7f, 0.85f);
-        public Color ambientEquator = new Color(0.5f, 0.52f, 0.55f);
-        public Color ambientGround = new Color(0.3f, 0.28f, 0.26f);
+        [Tooltip("Sun rotation (lower pitch = longer, more dramatic shadows).")]
+        public Vector3 sunEuler = new Vector3(38f, -35f, 0f);
+        [Range(0f, 1f)] public float cloudShadowStrength = 0.35f;
+        [Min(0.001f)] public float cloudScale = 0.018f;
+        public Vector2 cloudDrift = new Vector2(0.9f, 0.4f);
+        public Color sunColor = new Color(1f, 0.9f, 0.74f);
+        [Min(0f)] public float sunIntensity = 1.6f;
+        public Color ambientSky = new Color(0.5f, 0.6f, 0.82f);
+        public Color ambientEquator = new Color(0.42f, 0.45f, 0.5f);
+        public Color ambientGround = new Color(0.22f, 0.21f, 0.18f);
         public Color fogColor = new Color(0.72f, 0.76f, 0.84f);
-        [Min(0f)] public float fogStart = 45f;
-        [Min(0f)] public float fogEnd = 160f;
+        [Min(0f)] public float fogStart = 80f;
+        [Min(0f)] public float fogEnd = 260f;
         [Tooltip("Optional global post-processing (bloom, tonemapping, grading).")]
         public VolumeProfile postProcessing;
 
@@ -102,6 +127,8 @@ namespace Lightbringer.Visuals
 
         [Header("Model overrides (Art Pass replacements)")]
         public VisualOverride[] overrides = new VisualOverride[0];
+
+        [HideInInspector] public int styleVersion;
 
         public bool HasMaterials => alliedMaterial != null && enemyMaterial != null;
 

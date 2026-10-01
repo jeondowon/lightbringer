@@ -16,9 +16,16 @@ namespace Lightbringer.UI
         private int[] alliesPerPath;
         private int[] enemiesPerPath;
 
-        public void Configure(PrototypeBattle value, Shader shader)
+        // Styled battles already show the lanes as dirt roads, so lines stay quiet: a faint trace for every
+        // Path and a softly pulsing gold line for the Path new troops will take.
+        private bool styled;
+        private static readonly Color StyledIdle = new Color(0.86f, 0.82f, 0.7f);
+        private static readonly Color StyledSelected = new Color(1f, 0.82f, 0.38f);
+
+        public void Configure(PrototypeBattle value, Shader shader, bool styledLook = false)
         {
             battle = value;
+            styled = styledLook;
             lines = new LineRenderer[battle.Paths.Length];
             alliesPerPath = new int[lines.Length]; enemiesPerPath = new int[lines.Length];
             for (int i = 0; i < lines.Length; i++)
@@ -31,18 +38,34 @@ namespace Lightbringer.UI
                 materials.Add(material);
                 line.sharedMaterial = material;
                 line.positionCount = battle.Paths[i].Count;
-                for (int j = 0; j < line.positionCount; j++) line.SetPosition(j, battle.Paths[i].GetPosition(j) + Vector3.up * 0.025f);
+                for (int j = 0; j < line.positionCount; j++) line.SetPosition(j, battle.Paths[i].GetPosition(j) + Vector3.up * (styled ? 0.05f : 0.025f));
                 line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 line.receiveShadows = false;
                 lines[i] = line;
+            }
+            ApplyLook();
+        }
+
+        private void ApplyLook()
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 3f);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                bool selected = battle.Summoner != null && battle.Summoner.SelectedPath == battle.Paths[i];
+                if (!styled)
+                {
+                    lines[i].widthMultiplier = selected ? 0.22f : 0.07f;
+                    continue;
+                }
+                lines[i].widthMultiplier = selected ? 0.14f + 0.04f * pulse : 0.04f;
+                materials[i].SetColor("_BaseColor", selected ? Color.Lerp(StyledSelected, Color.white, 0.25f * pulse) : StyledIdle);
             }
         }
 
         private void Update()
         {
             if (battle == null || battle.Camera == null) return;
-            for (int i = 0; i < lines.Length; i++)
-                lines[i].widthMultiplier = battle.Summoner != null && battle.Summoner.SelectedPath == battle.Paths[i] ? 0.22f : 0.07f;
+            ApplyLook();
             if (Time.unscaledTime < nextScan) return;
             nextScan = Time.unscaledTime + 0.25f;
             units = battle.Root.GetComponentsInChildren<Combatant>();

@@ -18,6 +18,10 @@ MonoBehaviour:
   auraRunesMaterial: {fileID: 2100000, guid: 8517546322a0a01429914918a7ffcd45, type: 2}
   auraMotesMaterial: {fileID: 2100000, guid: 407c555f41deeff45917357e1b6f53b6, type: 2}
   lightningMaterial: {fileID: 2100000, guid: db6ebeccd580e4e40994f2231d286c99, type: 2}
+  terrainMaterial: {fileID: 2100000, guid: cdfac254b786c1e44a7ff332bb427db8, type: 2}
+  grassMaterial: {fileID: 2100000, guid: d0ca5325729be9243bd92d36d8f4708c, type: 2}
+  propsMaterial: {fileID: 2100000, guid: 58e2ba22f98e381478958791a4eade1d, type: 2}
+  skyMaterial: {fileID: 2100000, guid: 6a604490472de0248a20f7dba289a624, type: 2}
   ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
   royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
   gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}
@@ -34,15 +38,29 @@ MonoBehaviour:
   bone: {r: 0.8, g: 0.75, b: 0.64, a: 1}
   corruptGlow: {r: 1, g: 0.22, b: 0.35, a: 1}
   corruptStone: {r: 0.25, g: 0.22, b: 0.28, a: 1}
-  sunColor: {r: 1, g: 0.95, b: 0.86, a: 1}
-  sunIntensity: 1.35
-  ambientSky: {r: 0.62, g: 0.7, b: 0.85, a: 1}
-  ambientEquator: {r: 0.5, g: 0.52, b: 0.55, a: 1}
-  ambientGround: {r: 0.3, g: 0.28, b: 0.26, a: 1}
+  grassLight: {r: 0.5, g: 0.64, b: 0.36, a: 1}
+  grassDark: {r: 0.32, g: 0.46, b: 0.27, a: 1}
+  dirt: {r: 0.62, g: 0.52, b: 0.38, a: 1}
+  plazaStone: {r: 0.72, g: 0.7, b: 0.66, a: 1}
+  rock: {r: 0.52, g: 0.52, b: 0.55, a: 1}
+  ruinStone: {r: 0.86, g: 0.84, b: 0.78, a: 1}
+  bark: {r: 0.36, g: 0.26, b: 0.2, a: 1}
+  foliage: {r: 0.4, g: 0.6, b: 0.34, a: 1}
+  foliageDark: {r: 0.2, g: 0.38, b: 0.26, a: 1}
+  mountain: {r: 0.5, g: 0.56, b: 0.66, a: 1}
+  sunEuler: {x: 38, y: -35, z: 0}
+  cloudShadowStrength: 0.35
+  cloudScale: 0.018
+  cloudDrift: {x: 0.9, y: 0.4}
+  sunColor: {r: 1, g: 0.9, b: 0.74, a: 1}
+  sunIntensity: 1.6
+  ambientSky: {r: 0.5, g: 0.6, b: 0.82, a: 1}
+  ambientEquator: {r: 0.42, g: 0.45, b: 0.5, a: 1}
+  ambientGround: {r: 0.22, g: 0.21, b: 0.18, a: 1}
   fogColor: {r: 0.72, g: 0.76, b: 0.84, a: 1}
-  fogStart: 45
-  fogEnd: 160
-  postProcessing: {fileID: 11400000, guid: e1f6474d7e1e4834ba1e057706782beb, type: 2}
+  fogStart: 80
+  fogEnd: 260
+  postProcessing: {fileID: 11400000, guid: f3ca60fda4427e04ebd964c9739b48f5, type: 2}
   auraColor: {r: 0.55, g: 0.75, b: 1.6, a: 1}
   overrides:
   - id: 0
@@ -61,3 +79,4 @@ MonoBehaviour:
       localEuler: {x: 349.6733, y: 204.9089, z: 155.09108}
       localScale: {x: 170.00003, y: 169.99992, z: 169.99998}
       stabilize: 1
+  styleVersion: 2

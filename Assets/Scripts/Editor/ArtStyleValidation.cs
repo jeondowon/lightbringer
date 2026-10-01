@@ -23,7 +23,8 @@ namespace Lightbringer.EditorTools
             Check(toon != null && toon.isSupported && runes != null && runes.isSupported && glow != null && glow.isSupported,
                 "Art Pass toon, aura rune and glow shaders compile for URP");
             Check(FacesOutward(ProceduralMeshes.Box) && FacesOutward(ProceduralMeshes.Sphere) && FacesOutward(ProceduralMeshes.Frustum(0.5f))
-                && FacesOutward(ProceduralMeshes.Frustum(0f, 6)),
+                && FacesOutward(ProceduralMeshes.Frustum(0f, 6))
+                && FacesOutward(ProceduralMeshes.Lumpy(0)) && FacesOutward(ProceduralMeshes.Faceted(0)),
                 "Procedural building blocks have outward-facing triangles for culling and outlines");
 
             ArtStyleLibrary style = ArtStyleSetup.CreateTransientLibrary();
@@ -97,6 +98,28 @@ namespace Lightbringer.EditorTools
                     && fortress.GetComponentsInChildren<Collider>(true).Length == 0,
                     "Enemy stronghold gets a world-scale fortress while keeping its attack surface");
 
+                BattlefieldEnvironment environment = battle.Root.GetComponentInChildren<BattlefieldEnvironment>(true);
+                Check(environment != null && environment.Terrain != null && !battle.Root.transform.Find("Ground").gameObject.activeSelf,
+                    "Styled battle replaces the greybox plane with the environment terrain");
+                bool flat = true;
+                foreach (Lightbringer.Pathing.WaypointPath lane in battle.Paths)
+                    for (int w = 0; w < lane.Count; w++)
+                    {
+                        Vector3 point = lane.GetPosition(w);
+                        if (point.z > 36f) continue; // final waypoint sits inside the enemy stronghold
+                        flat &= environment.Terrain.Raycast(new Ray(point + Vector3.up * 5f, Vector3.down), out RaycastHit hit, 10f)
+                            && Mathf.Abs(hit.point.y - point.y) < 0.01f;
+                    }
+                Check(flat, "Terrain stays flat at ground level along every Path, so movement is unchanged");
+                Mesh props = environment.transform.Find("Props (Near)").GetComponent<MeshFilter>().sharedMesh;
+                Check(props.vertices.Where(v => v.y < 2.5f).All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 2.5f),
+                    "Trees, rocks and ruins keep the lanes clear");
+                bool grassOffRoads = environment.GrassChunks > 20;
+                foreach (MeshFilter chunk in environment.GetComponentsInChildren<MeshFilter>())
+                    if (chunk.name.StartsWith("Grass "))
+                        grassOffRoads &= chunk.sharedMesh.vertices.Where(v => Mathf.Abs(v.y) < 0.01f)
+                            .All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 1.8f);
+                Check(grassOffRoads, "Grass covers the field in culled chunks and leaves the dirt roads bare");
                 FoodResource food = battle.Hero.GetComponent<FoodResource>();
                 CharacterController template = battle.Root.GetComponentsInChildren<CharacterController>(true).First(c => c.name == "Unit Template");
                 Combatant spawned = null;

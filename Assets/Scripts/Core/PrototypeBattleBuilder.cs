@@ -100,7 +100,15 @@ namespace Lightbringer.Core
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
-            battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader);
+            battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader, art != null && art.HasMaterials);
+            if (art != null && art.HasMaterials)
+            {
+                // The environment's flat play area replaces the greybox plane (same height, so nothing moves).
+                Vector3 enemyGate = objective.transform.position + Vector3.back * 5f;
+                BattlefieldEnvironment environment = BattlefieldEnvironment.Build(art, stage, root, battle.Paths,
+                    battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate }, light);
+                if (environment != null) ground.SetActive(false);
+            }
             BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root);
             return battle;
         }

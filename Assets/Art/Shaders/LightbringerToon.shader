@@ -20,6 +20,7 @@ Shader "Lightbringer/Toon"
         _AuraReact ("Aura Reaction (allies)", Range(0, 1)) = 0
         _OutlineColor ("Outline Color", Color) = (0.08, 0.07, 0.1, 1)
         _OutlineWidth ("Outline Width (world m)", Range(0, 0.1)) = 0.02
+        _WindSway ("Wind Sway (props, uses uv1.y weights)", Range(0, 0.5)) = 0
     }
 
     SubShader
@@ -44,11 +45,38 @@ Shader "Lightbringer/Toon"
             half _AuraReact;
             half4 _OutlineColor;
             float _OutlineWidth;
+            float _WindSway;
         CBUFFER_END
 
         // xyz = aura centre (world), w = radius. Set by AuraRuneVisual.
         float4 _LB_AuraSphere;
         half4 _LB_AuraColor;
+
+        // Drifting cloud shadows (x strength, y scale, zw drift); a global set by BattlefieldStyling, 0 = off.
+        float4 _LB_CloudParams;
+        float LBHash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+        float LBNoise(float2 p)
+        {
+            float2 i = floor(p), f = frac(p);
+            float2 u = f * f * (3.0 - 2.0 * f);
+            return lerp(lerp(LBHash(i), LBHash(i + float2(1, 0)), u.x), lerp(LBHash(i + float2(0, 1)), LBHash(i + float2(1, 1)), u.x), u.y);
+        }
+        half CloudShadow(float3 positionWS)
+        {
+            if (_LB_CloudParams.x <= 0.0) return 1.0h;
+            float2 p = (positionWS.xz + _Time.y * _LB_CloudParams.zw) * _LB_CloudParams.y;
+            float n = LBNoise(p) * 0.65 + LBNoise(p * 2.3 + 5.2) * 0.35;
+            return 1.0h - _LB_CloudParams.x * smoothstep(0.48, 0.68, n);
+        }
+
+        // Wind for props: uv1.y holds a per-vertex sway weight (0 for characters, so they never move).
+        float3 ApplySway(float3 positionWS, float weight)
+        {
+            float phase = _Time.y * 1.3 + positionWS.x * 0.15 + positionWS.z * 0.11;
+            float2 sway = float2(sin(phase), sin(phase * 0.83 + 1.7)) * (_WindSway * weight);
+            positionWS.xz += sway;
+            return positionWS;
+        }
         ENDHLSL
 
         Pass
@@ -96,11 +124,11 @@ Shader "Lightbringer/Toon"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-                VertexPositionInputs position = GetVertexPositionInputs(input.positionOS.xyz);
-                output.positionCS = position.positionCS;
-                output.positionWS = position.positionWS;
+                float3 positionWS = ApplySway(TransformObjectToWorld(input.positionOS.xyz), input.surface.y);
+                output.positionCS = TransformWorldToHClip(positionWS);
+                output.positionWS = positionWS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.fogFactor = ComputeFogFactor(position.positionCS.z);
+                output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 // Baked palette: rgb = albedo, a = emission amount, uv1.x = metallic highlight.
                 output.color = _UseVertexColor > 0.5h ? input.color : half4(1, 1, 1, 0);
                 output.specular = _UseVertexColor > 0.5h ? input.surface.x : 0;
@@ -117,7 +145,7 @@ Shader "Lightbringer/Toon"
                 // Soft two-tone ramp; cast shadows fall into the same painted shadow tone.
                 half ndl = dot(normalWS, light.direction);
                 half lit = smoothstep(_RampThreshold - _RampSoftness, _RampThreshold + _RampSoftness, ndl);
-                lit *= lerp(1.0h, light.shadowAttenuation, 0.85h);
+                lit *= lerp(1.0h, light.shadowAttenuation, 0.85h) * CloudShadow(input.positionWS);
                 half3 shade = lerp(_ShadowColor.rgb, half3(1, 1, 1), lit);
                 half3 albedo = _BaseColor.rgb * input.color.rgb;
                 half3 color = albedo * (shade * light.color + SampleSH(normalWS) * 0.35h);
@@ -162,6 +190,7 @@ Shader "Lightbringer/Toon"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 surface : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -177,7 +206,7 @@ Shader "Lightbringer/Toon"
                 Varyings output = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 positionWS = ApplySway(TransformObjectToWorld(input.positionOS.xyz), input.surface.y);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
                 positionWS += normalWS * _OutlineWidth;
                 output.positionCS = TransformWorldToHClip(positionWS);
@@ -218,13 +247,14 @@ Shader "Lightbringer/Toon"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 surface : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             float4 ShadowVert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 positionWS = ApplySway(TransformObjectToWorld(input.positionOS.xyz), input.surface.y);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
             #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDirectionWS = normalize(_LightPosition - positionWS);
@@ -256,13 +286,14 @@ Shader "Lightbringer/Toon"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float2 surface : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             float4 DepthVert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformObjectToHClip(input.positionOS.xyz);
+                return TransformWorldToHClip(ApplySway(TransformObjectToWorld(input.positionOS.xyz), input.surface.y));
             }
 
             half DepthFrag() : SV_Target { return 0; }
@@ -286,6 +317,7 @@ Shader "Lightbringer/Toon"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 surface : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -299,7 +331,7 @@ Shader "Lightbringer/Toon"
             {
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionCS = TransformWorldToHClip(ApplySway(TransformObjectToWorld(input.positionOS.xyz), input.surface.y));
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return output;
             }

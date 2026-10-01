@@ -18,11 +18,14 @@ namespace Lightbringer.Visuals
             }
             if (sun != null)
             {
+                sun.transform.rotation = Quaternion.Euler(style.sunEuler);
                 sun.color = style.sunColor;
                 sun.intensity = style.sunIntensity;
                 sun.shadows = LightShadows.Soft;
                 sun.shadowStrength = 0.75f;
             }
+            // Drifting cloud shadows shared by the terrain, grass and toon shaders (strength 0 = off).
+            Shader.SetGlobalVector("_LB_CloudParams", new Vector4(style.cloudShadowStrength, style.cloudScale, style.cloudDrift.x, style.cloudDrift.y));
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = style.ambientSky;
             RenderSettings.ambientEquatorColor = style.ambientEquator;
@@ -34,7 +37,9 @@ namespace Lightbringer.Visuals
             RenderSettings.fogEndDistance = Mathf.Max(style.fogStart + 1f, style.fogEnd);
             if (camera != null)
             {
-                camera.clearFlags = CameraClearFlags.SolidColor;
+                // The gradient sky (set by the environment) meets the fog colour at the horizon.
+                camera.clearFlags = style.skyMaterial != null && RenderSettings.skybox != null
+                    ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
                 camera.backgroundColor = style.fogColor;
             }
             if (style.postProcessing != null && root != null)

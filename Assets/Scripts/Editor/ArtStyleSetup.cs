@@ -20,6 +20,9 @@ namespace Lightbringer.EditorTools
         public const string RuneShader = "Lightbringer/Aura Runes";
         public const string GlowShader = "Lightbringer/Glow Particle";
         public const string LightningShader = "Lightbringer/Lightning";
+        public const string SkyShader = "Lightbringer/Sky Gradient";
+        public const string TerrainShader = "Lightbringer/Terrain";
+        public const string GrassShader = "Lightbringer/Grass";
 
         [MenuItem("Lightbringer/Art/Build Art Style Assets")]
         private static void BuildMenu()
@@ -59,7 +62,30 @@ namespace Lightbringer.EditorTools
             library.auraMotesMaterial = library.auraMotesMaterial != null ? library.auraMotesMaterial : LoadOrCreate("LB_AuraMotes", glow, m => m.SetColor("_Color", new Color(0.7f, 0.85f, 1.5f)));
             Shader lightning = Shader.Find(LightningShader);
             if (library.lightningMaterial == null && lightning != null) library.lightningMaterial = LoadOrCreate("LB_Lightning", lightning, null);
-            if (library.postProcessing == null) library.postProcessing = LoadOrCreateProfile(Folder + "/LB_BattlePostProcess.asset");
+            Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
+            if (library.terrainMaterial == null && terrain != null) library.terrainMaterial = LoadOrCreate("LB_EnvTerrain", terrain, null);
+            // Earlier builds made the terrain material with the toon shader; move it to the terrain shader.
+            if (library.terrainMaterial != null && terrain != null && library.terrainMaterial.shader != terrain)
+            {
+                library.terrainMaterial.shader = terrain;
+                EditorUtility.SetDirty(library.terrainMaterial);
+            }
+            if (library.grassMaterial == null && grass != null) library.grassMaterial = LoadOrCreate("LB_Grass", grass, null);
+            if (library.propsMaterial == null) library.propsMaterial = LoadOrCreate("LB_EnvProps", toon, ConfigureProps);
+            Shader sky = Shader.Find(SkyShader);
+            if (library.skyMaterial == null && sky != null) library.skyMaterial = LoadOrCreate("LB_Sky", sky, null);
+            // v2 grading: more contrast and saturation, cool shadows / warm highlights, gentler bloom. Replaces only
+            // the original v1 default; a profile assigned by hand is left alone.
+            string v1 = Folder + "/LB_BattlePostProcess.asset";
+            if (library.postProcessing == null || AssetDatabase.GetAssetPath(library.postProcessing) == v1)
+                library.postProcessing = LoadOrCreateGradedProfile(Folder + "/LB_BattlePostProcess_v2.asset");
+            // One-time value updates for libraries created by earlier Art Pass steps (tuned values are kept after).
+            if (library.styleVersion < 2)
+            {
+                library.fogStart = 80f;
+                library.fogEnd = 260f;
+                library.styleVersion = 2;
+            }
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();
             return library;
@@ -88,6 +114,12 @@ namespace Lightbringer.EditorTools
             library.auraMotesMaterial = Create(glow, null);
             Shader lightning = Shader.Find(LightningShader);
             if (lightning != null) library.lightningMaterial = Create(lightning, null);
+            Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
+            if (terrain != null) library.terrainMaterial = Create(terrain, null);
+            if (grass != null) library.grassMaterial = Create(grass, null);
+            library.propsMaterial = Create(toon, ConfigureProps);
+            Shader sky = Shader.Find(SkyShader);
+            if (sky != null) library.skyMaterial = Create(sky, null);
             return library;
         }
 
@@ -100,6 +132,10 @@ namespace Lightbringer.EditorTools
             Object.DestroyImmediate(library.auraRunesMaterial);
             Object.DestroyImmediate(library.auraMotesMaterial);
             if (library.lightningMaterial != null) Object.DestroyImmediate(library.lightningMaterial);
+            if (library.terrainMaterial != null) Object.DestroyImmediate(library.terrainMaterial);
+            if (library.grassMaterial != null) Object.DestroyImmediate(library.grassMaterial);
+            if (library.propsMaterial != null) Object.DestroyImmediate(library.propsMaterial);
+            if (library.skyMaterial != null) Object.DestroyImmediate(library.skyMaterial);
             Object.DestroyImmediate(library);
             SilhouetteFactory.ClearCache();
         }
@@ -123,6 +159,18 @@ namespace Lightbringer.EditorTools
             material.SetColor("_RimColor", new Color(1f, 0.45f, 0.6f));
             material.SetFloat("_OutlineWidth", 0.02f);
             material.SetFloat("_RimStrength", 0.3f);
+        }
+
+        private static void ConfigureProps(Material material)
+        {
+            material.SetFloat("_UseVertexColor", 1f);
+            material.SetFloat("_AuraReact", 0f);
+            material.SetColor("_ShadowColor", new Color(0.58f, 0.64f, 0.82f));
+            material.SetColor("_OutlineColor", new Color(0.1f, 0.12f, 0.14f));
+            material.SetFloat("_OutlineWidth", 0.035f);
+            material.SetFloat("_RimStrength", 0.15f);
+            material.SetFloat("_RampSoftness", 0.15f);
+            material.SetFloat("_WindSway", 0.12f);
         }
 
         private static void ConfigureGround(Material material)
@@ -151,6 +199,37 @@ namespace Lightbringer.EditorTools
             material.name = name;
             AssetDatabase.CreateAsset(material, path);
             return material;
+        }
+
+        private static VolumeProfile LoadOrCreateGradedProfile(string path)
+        {
+            VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile != null) return profile;
+            profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, path);
+            Bloom bloom = profile.Add<Bloom>();
+            bloom.threshold.Override(1.1f);
+            bloom.intensity.Override(0.45f);
+            bloom.scatter.Override(0.6f);
+            Tonemapping tonemapping = profile.Add<Tonemapping>();
+            tonemapping.mode.Override(TonemappingMode.Neutral);
+            ColorAdjustments grading = profile.Add<ColorAdjustments>();
+            grading.postExposure.Override(0.05f);
+            grading.contrast.Override(18f);
+            grading.saturation.Override(14f);
+            SplitToning split = profile.Add<SplitToning>();
+            split.shadows.Override(new Color(0.4f, 0.5f, 0.82f));
+            split.highlights.Override(new Color(1f, 0.86f, 0.66f));
+            split.balance.Override(-10f);
+            Vignette vignette = profile.Add<Vignette>();
+            vignette.intensity.Override(0.22f);
+            foreach (VolumeComponent component in profile.components)
+            {
+                component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(component, profile);
+            }
+            EditorUtility.SetDirty(profile);
+            return profile;
         }
 
         private static VolumeProfile LoadOrCreateProfile(string path)

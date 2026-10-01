@@ -32,6 +32,12 @@ namespace Lightbringer.EditorTools
                 || EditorApplication.isCompiling || EditorApplication.isUpdating)
                 return;
             nextProbe = EditorApplication.timeSinceStartup + 2d;
+            string battlefield = Path.Combine(PreviewFolder, "battlefield.request");
+            if (File.Exists(battlefield))
+            {
+                File.Delete(battlefield);
+                CaptureBattlefield();
+            }
             string request = Path.Combine(PreviewFolder, "capture.request");
             if (!File.Exists(request)) return;
             File.Delete(request);
@@ -169,6 +175,93 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(sheet);
                 Object.DestroyImmediate(tile);
             }
+        }
+
+        // Stage 8 battlefield built exactly as in play (styled), with a few troops and an enemy wave,
+        // rendered from behind the hero and from a high overview. Output: Battlefield_Hero/Overview.png.
+        [MenuItem("Lightbringer/Art/Capture Battlefield Preview")]
+        public static void CaptureBattlefield()
+        {
+            if (Application.isPlaying) { Debug.LogWarning("Stop Play mode before capturing the battlefield preview."); return; }
+            // Async shader compilation would render not-yet-compiled variants as missing in the first frames.
+            bool asyncCompile = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            ArtStyleLibrary library = ArtStyleSetup.EnsureLibrary();
+            Scene original = SceneManager.GetActiveScene();
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            RenderTexture target = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            try
+            {
+                SceneManager.SetActiveScene(scene);
+                GameObject host = new GameObject("Battlefield Preview");
+                host.transform.position = Stage; // away from objects in the scene that is open in the Editor
+                Lightbringer.Core.CampaignSession session = host.AddComponent<Lightbringer.Core.CampaignSession>();
+                Lightbringer.Progression.CampaignProgress profile = new Lightbringer.Progression.CampaignProgress();
+                for (int stage = 1; stage < Lightbringer.Progression.CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
+                session.InitializeForValidation(profile);
+                session.Configure(AssetDatabase.LoadAssetAtPath<UnityEngine.InputSystem.InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
+                    material, Shader.Find("Universal Render Pipeline/Unlit"));
+                session.ConfigureArt(library);
+                session.SelectStage(8);
+                if (!session.StartBattle()) { Debug.LogError("Preview: battle did not start."); return; }
+                Lightbringer.Core.PrototypeBattle battle = session.Battle;
+                Lightbringer.Resources.FoodResource food = battle.Hero.GetComponent<Lightbringer.Resources.FoodResource>();
+                System.Reflection.MethodInfo generate = typeof(Lightbringer.Resources.FoodResource)
+                    .GetMethod("GenerateFood", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                for (int i = 0; i < 9; i++)
+                {
+                    generate.Invoke(food, new object[] { 1000f });
+                    battle.Summoner.TrySelectPath(i % battle.Paths.Length);
+                    Physics.SyncTransforms();
+                    if (battle.Summoner.TrySummonKind(i % 8))
+                    {
+                        Transform spawned = battle.Root.transform.Find("Allied Units").GetChild(battle.Root.transform.Find("Allied Units").childCount - 1);
+                        Vector3 lane = battle.Paths[i % battle.Paths.Length].GetPosition(1);
+                        spawned.position = new Vector3(lane.x + (i / 3) * 1.4f, spawned.position.y, -2f + (i / 3) * 2.5f);
+                    }
+                }
+                Physics.SyncTransforms();
+                battle.Waves.Tick(0.1f);
+                foreach (Transform enemy in battle.Root.transform.Find("Enemy Units"))
+                    enemy.position += Vector3.back * 12f;
+                Camera camera = battle.Camera;
+                camera.targetTexture = target;
+                Vector3 hero = battle.Hero.transform.position;
+                // The first Editor render happens before shadows and ambient are ready; render once and discard it.
+                camera.Render();
+                RenderView(camera, Stage + new Vector3(-55f, 38f, -40f), Stage + new Vector3(0f, 0f, 10f), "Battlefield_Overview.png");
+                RenderView(camera, hero + new Vector3(0f, 3.6f, -7.5f), hero + new Vector3(0f, 1.2f, 6f), "Battlefield_Hero.png");
+                Vector3 field = hero + new Vector3(9f, -1.05f, 4f);
+                RenderView(camera, field + new Vector3(0f, 1.2f, -3f), field + new Vector3(0f, 0.2f, 2f), "Battlefield_GrassCloseup.png");
+                camera.targetTexture = null;
+                Debug.Log("Battlefield preview written to " + PreviewFolder);
+            }
+            finally
+            {
+                if (original.IsValid()) SceneManager.SetActiveScene(original);
+                EditorSceneManager.CloseScene(scene, true);
+                ShaderUtil.allowAsyncCompilation = asyncCompile;
+                target.Release();
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        private static void RenderView(Camera camera, Vector3 position, Vector3 lookAt, string fileName)
+        {
+            camera.transform.position = position;
+            camera.transform.LookAt(lookAt);
+            camera.fieldOfView = 55f;
+            camera.Render();
+            RenderTexture.active = camera.targetTexture;
+            Texture2D image = new Texture2D(camera.targetTexture.width, camera.targetTexture.height, TextureFormat.RGB24, false);
+            image.ReadPixels(new Rect(0, 0, image.width, image.height), 0, 0);
+            image.Apply();
+            RenderTexture.active = null;
+            Directory.CreateDirectory(PreviewFolder);
+            File.WriteAllBytes(Path.Combine(PreviewFolder, fileName), image.EncodeToPNG());
+            Object.DestroyImmediate(image);
         }
     }
 }

@@ -124,6 +124,100 @@ namespace Lightbringer.Visuals
             return mesh;
         }
 
+        private static readonly Dictionary<int, Mesh> Lumps = new Dictionary<int, Mesh>();
+        private static readonly Dictionary<int, Mesh> Stones = new Dictionary<int, Mesh>();
+
+        // Smooth, organic blob (unit diameter, centred) for foliage clumps and bushes. A few cached variants.
+        public static Mesh Lumpy(int variant)
+        {
+            variant = Mathf.Abs(variant) % 6;
+            if (Lumps.TryGetValue(variant, out Mesh cached) && cached != null) return cached;
+            Mesh mesh = Icosphere("LB Lumpy " + variant, 2, 0.22f, 1.6f, variant * 13.7f, false);
+            Lumps[variant] = mesh;
+            return mesh;
+        }
+
+        // Faceted, chipped stone (unit diameter, centred, flat-shaded) for rocks and rubble.
+        public static Mesh Faceted(int variant)
+        {
+            variant = Mathf.Abs(variant) % 6;
+            if (Stones.TryGetValue(variant, out Mesh cached) && cached != null) return cached;
+            Mesh mesh = Icosphere("LB Stone " + variant, 1, 0.3f, 1.1f, variant * 7.3f + 3f, true);
+            Stones[variant] = mesh;
+            return mesh;
+        }
+
+        private static Mesh Icosphere(string name, int subdivisions, float amplitude, float frequency, float seed, bool faceted)
+        {
+            float t = (1f + Mathf.Sqrt(5f)) / 2f;
+            List<Vector3> points = new List<Vector3>
+            {
+                new Vector3(-1, t, 0), new Vector3(1, t, 0), new Vector3(-1, -t, 0), new Vector3(1, -t, 0),
+                new Vector3(0, -1, t), new Vector3(0, 1, t), new Vector3(0, -1, -t), new Vector3(0, 1, -t),
+                new Vector3(t, 0, -1), new Vector3(t, 0, 1), new Vector3(-t, 0, -1), new Vector3(-t, 0, 1)
+            };
+            for (int i = 0; i < points.Count; i++) points[i] = points[i].normalized;
+            List<int> faces = new List<int>
+            {
+                0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11, 1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+                3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9, 4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
+            };
+            for (int s = 0; s < subdivisions; s++)
+            {
+                Dictionary<long, int> midpoints = new Dictionary<long, int>();
+                List<int> next = new List<int>();
+                for (int f = 0; f < faces.Count; f += 3)
+                {
+                    int a = faces[f], b = faces[f + 1], c = faces[f + 2];
+                    int ab = Midpoint(points, midpoints, a, b), bc = Midpoint(points, midpoints, b, c), ca = Midpoint(points, midpoints, c, a);
+                    next.AddRange(new[] { a, ab, ca, b, bc, ab, c, ca, bc, ab, bc, ca });
+                }
+                faces = next;
+            }
+            // Low-frequency radial displacement makes every variant a distinct, irregular shape.
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 p = points[i] * frequency + Vector3.one * seed;
+                float noise = (Mathf.PerlinNoise(p.x, p.y) + Mathf.PerlinNoise(p.y + 5.1f, p.z) + Mathf.PerlinNoise(p.z + 9.7f, p.x)) / 3f;
+                points[i] = points[i] * 0.5f * (1f + (noise - 0.5f) * 2f * amplitude);
+            }
+            List<Vector3> vertices = new List<Vector3>();
+            List<int> triangles = new List<int>();
+            if (faceted)
+            {
+                for (int f = 0; f < faces.Count; f++) { vertices.Add(points[faces[f]]); triangles.Add(f); }
+            }
+            else
+            {
+                vertices.AddRange(points);
+                triangles.AddRange(faces);
+            }
+            // Ensure every triangle faces outward (Unity front faces: Cross(b - a, c - a) along the normal).
+            for (int f = 0; f < triangles.Count; f += 3)
+            {
+                Vector3 a = vertices[triangles[f]], b = vertices[triangles[f + 1]], c = vertices[triangles[f + 2]];
+                if (Vector3.Dot(Vector3.Cross(b - a, c - a), a + b + c) < 0f)
+                {
+                    int swap = triangles[f + 1]; triangles[f + 1] = triangles[f + 2]; triangles[f + 2] = swap;
+                }
+            }
+            Mesh mesh = new Mesh { name = name, hideFlags = HideFlags.DontSave };
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static int Midpoint(List<Vector3> points, Dictionary<long, int> cache, int a, int b)
+        {
+            long key = a < b ? ((long)a << 32) | (uint)b : ((long)b << 32) | (uint)a;
+            if (cache.TryGetValue(key, out int index)) return index;
+            points.Add(((points[a] + points[b]) * 0.5f).normalized);
+            cache[key] = points.Count - 1;
+            return points.Count - 1;
+        }
+
         private static void AddCap(List<Vector3> vertices, List<Vector3> normals, List<int> triangles,
             int segments, float height, float radius, Vector3 normal)
         {
