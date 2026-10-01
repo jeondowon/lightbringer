@@ -71,20 +71,21 @@ namespace Lightbringer.UI
         private void Battle(CampaignProgress profile)
         {
             PrototypeBattle battle = session.Battle;
-            GUILayout.BeginArea(new Rect(16, 16, 400, 345), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(16, 16, 420, 390), GUI.skin.box);
             GUILayout.Label($"Stage {session.SelectedStage} | Level {profile.level} | EXP {profile.experience}/{profile.ExperienceToNext}");
             if (battle.Hero != null)
             {
                 FoodResource food = battle.Hero.GetComponent<FoodResource>();
                 ManaResource mana = battle.Hero.GetComponent<ManaResource>();
                 GUILayout.Label($"HP {battle.Hero.CurrentHealth:F0}/{battle.Hero.MaximumHealth:F0} | Mana {mana.Current:F0}/{mana.Maximum:F0}");
-                GUILayout.Label($"Food {food.CurrentFood:F1}/{food.MaximumFood:F0} | F: summon ({battle.Summoner.SelectedCost:0.##})");
-                GUILayout.Label($"1/2/3: {battle.Summoner.SelectedPath?.name} | Tab: {UnitCatalog.Names[(int)battle.Summoner.SelectedUnit]}");
+                GUILayout.Label($"Food {food.CurrentFood:F1}/{food.MaximumFood:F0} | Tab: {battle.Summoner.SelectedPath?.name} | F: repeat {UnitCatalog.Names[(int)battle.Summoner.SelectedUnit]}");
+                GUILayout.Label(TroopKeys(battle.Summoner, food.CurrentFood));
                 for (int i = 0; i < 3; i++)
                     GUILayout.Label($"{(i == 0 ? "LMB" : i == 1 ? "Q" : "E")}: {EquipmentCatalog.Names[battle.Abilities.Equipped(i)]} | {battle.Abilities.CooldownRemaining(i):F1}s");
                 GUILayout.Label(battle.Abilities.Feedback);
                 GUILayout.Label(battle.Summoner.LastFeedback);
             }
+            if (battle.AlliedBase != null) GUILayout.Label($"Our base: {battle.AlliedBase.CurrentHealth:F0}/{battle.AlliedBase.MaximumHealth:F0} HP");
             if (battle.Objective.EnemyBase != null) GUILayout.Label($"Enemy base: {battle.Objective.EnemyBase.CurrentHealth:F0} HP");
             GUILayout.Label($"Enemy waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
             GUILayout.Label("WASD move | Mouse look | Wheel zoom | Esc cursor");
@@ -103,6 +104,19 @@ namespace Lightbringer.UI
                 session.ReturnToPreparation();
             }
             GUILayout.EndArea();
+        }
+
+        // "1 Swordsman 10 · 2 Archer 15 …" for unlocked troops; unaffordable ones are marked with "-".
+        private static string TroopKeys(UnitSummoner summoner, float food)
+        {
+            System.Text.StringBuilder text = new System.Text.StringBuilder();
+            for (int i = 0; i < summoner.UnlockedUnitCount; i++)
+            {
+                float cost = summoner.CostOf((UnitKind)i);
+                if (i > 0) text.Append(i % 4 == 0 ? "\n" : "   ");
+                text.Append(i + 1).Append(food >= cost ? " " : " -").Append(UnitCatalog.Names[i]).Append(' ').Append(cost.ToString("0.#"));
+            }
+            return text.ToString();
         }
 
         private int funRating;

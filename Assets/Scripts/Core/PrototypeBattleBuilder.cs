@@ -22,6 +22,8 @@ namespace Lightbringer.Core
         public EnemyWaveSpawner Waves;
         public UnityEngine.Camera Camera;
         public WaypointPath[] Paths;
+        public Combatant AlliedBase;
+        public Transform DeployPoint;
     }
 
     public static class PrototypeBattleBuilder
@@ -78,13 +80,14 @@ namespace Lightbringer.Core
                 Vector3[] points = { new Vector3(x, 0, -5), new Vector3(x, 0, 14), new Vector3(x * 0.5f, 0, 29), new Vector3(0, 0, 38) };
                 battle.Paths[i] = Path("Path " + (i + 1), root, points);
                 enemyRoutes[i] = Path("Enemy Route " + (i + 1), root, new[] {
-                    new Vector3(x * 0.5f, 0, 29), new Vector3(x, 0, 14), new Vector3(x, 0, -5), new Vector3(0, 0, -12) });
+                    new Vector3(x * 0.5f, 0, 29), new Vector3(x, 0, 14), new Vector3(x, 0, -5), new Vector3(0, 0, -19.5f) });
             }
             CharacterController template = UnitTemplate(root, material, art);
             Transform soldiers = Child("Allied Units", root).transform;
             Transform enemies = Child("Enemy Units", root).transform;
             battle.Summoner = hero.AddComponent<UnitSummoner>();
             battle.Summoner.Configure(food, template, soldiers, battle.Paths, progress.UnlockedUnits);
+            BuildAlliedBase(battle, stage, root, material, art);
             battle.Abilities.ApplyProgression(progress.ranks);
             GameObject objective = Primitive("Enemy Stronghold", PrimitiveType.Cube, root, material);
             objective.transform.localPosition = new Vector3(0, 2, 38);
@@ -94,12 +97,28 @@ namespace Lightbringer.Core
             baseHealth.SetAttackSurface(objective.GetComponent<BoxCollider>());
             UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f);
             battle.Objective = battle.Root.AddComponent<StageObjective>();
-            battle.Objective.Configure(baseHealth, battle.Hero, root, follow);
+            battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
             battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader);
             BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root);
             return battle;
+        }
+
+        // The allied stronghold sits behind the hero start. Enemy routes end at its gate; losing it is a defeat.
+        // New troops deploy from the gate and walk to their assigned Path.
+        private static void BuildAlliedBase(PrototypeBattle battle, int stage, Transform root, Material material, ArtStyleLibrary art)
+        {
+            GameObject stronghold = Primitive("Allied Stronghold", PrimitiveType.Cube, root, material);
+            stronghold.transform.localPosition = new Vector3(0, 2, -22);
+            stronghold.transform.localScale = new Vector3(6, 4, 4);
+            battle.AlliedBase = stronghold.AddComponent<Combatant>();
+            battle.AlliedBase.Configure(Faction.Allied, 400 + stage * 50);
+            battle.AlliedBase.SetAttackSurface(stronghold.GetComponent<BoxCollider>());
+            UnitAppearance.Attach(stronghold, VisualId.AlliedStronghold, art, -2f);
+            battle.DeployPoint = Child("Deploy Point", root).transform;
+            battle.DeployPoint.localPosition = new Vector3(0, 0, -17.5f);
+            battle.Summoner.ConfigureSpawnAnchor(battle.DeployPoint);
         }
 
         public static CharacterController UnitTemplate(Transform parent, Material material, ArtStyleLibrary art = null)

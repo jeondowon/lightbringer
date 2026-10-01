@@ -83,6 +83,11 @@ namespace Lightbringer.Visuals
                     result.BobHeight = 0f; result.LeanDegrees = 0f;
                     result.Parts = new[] { Crystal(s) };
                     break;
+                case VisualId.AlliedStronghold:
+                    AlliedStronghold(b, s);
+                    result.BobHeight = 0f; result.LeanDegrees = 0f;
+                    result.Parts = new[] { LightCrystal(s) };
+                    break;
             }
             result.Body = b.Bake("LB " + id);
             return result;
@@ -284,6 +289,42 @@ namespace Lightbringer.Visuals
                 Pivot = new Vector3(0.5f * side, 1.2f, 0.4f),
                 Motion = side < 0 ? PartMotion.WingLeft : PartMotion.WingRight
             };
+        }
+
+        private static void AlliedStronghold(Shapes b, ArtStyleLibrary s)
+        {
+            // Ivory keep with royal-blue roofs and gold trim; the glowing gate faces +Z (the battlefield).
+            b.Add(Shape.Cube, s.ivory, new Vector3(0f, 1.6f, 0f), new Vector3(5.2f, 3.2f, 3.2f));
+            b.Add(Shape.Cube, s.gold, new Vector3(0f, 3.25f, 0f), new Vector3(5.3f, 0.12f, 3.3f), spec: 1f);
+            for (int i = 0; i < 6; i++)
+            {
+                float x = -2.3f + i * 0.92f;
+                b.Add(Shape.Cube, s.ivory, new Vector3(x, 3.5f, 1.35f), new Vector3(0.5f, 0.45f, 0.5f));
+                b.Add(Shape.Cube, s.ivory, new Vector3(x, 3.5f, -1.35f), new Vector3(0.5f, 0.45f, 0.5f));
+            }
+            for (int x = -1; x <= 1; x += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    Vector3 tower = new Vector3(2.6f * x, 0f, 1.5f * z);
+                    b.Cone(0.9f, s.ivory, tower, new Vector3(1.4f, 4.4f, 1.4f), segments: 10);
+                    b.Cone(1f, s.gold, tower + Vector3.up * 4.35f, new Vector3(1.45f, 0.12f, 1.45f), segments: 10, spec: 1f);
+                    b.Cone(0f, s.royalBlue, tower + Vector3.up * 4.45f, new Vector3(1.7f, 1.9f, 1.7f), segments: 10);
+                    b.Cone(0f, s.gold, tower + Vector3.up * 6.3f, new Vector3(0.12f, 0.5f, 0.12f), segments: 6, spec: 1f);
+                }
+            // Gate, banners and the winged-star crest toward the front.
+            b.Add(Shape.Cube, s.lightGlow, new Vector3(0f, 0.9f, 1.62f), new Vector3(1.3f, 1.8f, 0.06f), emission: 0.6f);
+            b.Add(Shape.Cube, s.gold, new Vector3(0f, 1.9f, 1.66f), new Vector3(1.6f, 0.22f, 0.14f), spec: 1f);
+            b.Pair(Shape.Cube, s.royalBlue, new Vector3(1.4f, 2.0f, 1.64f), new Vector3(0.7f, 1.8f, 0.04f));
+            b.Pair(Shape.Cube, s.gold, new Vector3(1.4f, 2.3f, 1.67f), new Vector3(0.12f, 0.6f, 0.02f), spec: 1f);
+            b.Add(Shape.Cube, s.gold, new Vector3(0f, 2.75f, 1.66f), new Vector3(0.45f, 0.45f, 0.04f), new Vector3(0f, 0f, 45f), spec: 1f);
+        }
+
+        private static MovingPart LightCrystal(ArtStyleLibrary s)
+        {
+            Shapes b = new Shapes();
+            b.Cone(0f, s.lightGlow, Vector3.zero, new Vector3(0.9f, 1.4f, 0.9f), segments: 4, emission: 0.9f);
+            b.Cone(0f, s.lightGlow, Vector3.zero, new Vector3(0.9f, 0.9f, 0.9f), new Vector3(180f, 0f, 0f), 4, emission: 0.9f);
+            return new MovingPart { Mesh = b.Bake("LB Allied Crystal"), Pivot = new Vector3(0f, 4.9f, 0f), Motion = PartMotion.Spin };
         }
 
         // ---------- Corrupted enemies ----------

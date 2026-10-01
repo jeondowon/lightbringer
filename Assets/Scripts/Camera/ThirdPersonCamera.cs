@@ -17,8 +17,9 @@ namespace Lightbringer.CameraSystem
         [Tooltip("Orbit pivot height above the target's transform position.")]
         [SerializeField] private float height = 1f;
         [SerializeField] private float initialPitch = 30f;
-        [SerializeField] private float minPitch = 10f;
-        [SerializeField] private float maxPitch = 70f;
+        [Tooltip("Negative values look up toward the horizon and sky.")]
+        [SerializeField] private float minPitch = -35f;
+        [SerializeField] private float maxPitch = 75f;
 
         [Header("Mouse")]
         [Tooltip("Degrees per pixel of mouse movement.")]

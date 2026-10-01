@@ -8,7 +8,9 @@ namespace Lightbringer.Visuals
     public enum VisualId
     {
         Hero, Swordsman, Archer, Shieldbearer, Spearman, Priest, Mage, Knight, Dragon,
-        EnemyRaider, EnemyArcher, EnemyStronghold
+        EnemyRaider, EnemyArcher, EnemyStronghold,
+        // Appended so serialized override ids stay stable.
+        AlliedStronghold
     }
 
     // A prop (staff, weapon) parented to a named bone of an override model so it follows animation.
@@ -112,7 +114,7 @@ namespace Lightbringer.Visuals
         }
 
         public static VisualId ForUnit(UnitKind kind) => (VisualId)((int)VisualId.Swordsman + (int)kind);
-        public static bool IsEnemy(VisualId id) => id >= VisualId.EnemyRaider;
+        public static bool IsEnemy(VisualId id) => id == VisualId.EnemyRaider || id == VisualId.EnemyArcher || id == VisualId.EnemyStronghold;
 
         private void OnValidate() => SilhouetteFactory.ClearCache();
     }

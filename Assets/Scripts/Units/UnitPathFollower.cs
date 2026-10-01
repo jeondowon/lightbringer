@@ -11,6 +11,8 @@ namespace Lightbringer.Units
         [SerializeField, Min(0f)] private float moveSpeed = 3f;
         [SerializeField, Min(0f)] private float rotationSpeed = 360f;
         [SerializeField, Min(0.05f)] private float arrivalDistance = 0.3f;
+        [Tooltip("Intermediate waypoints count as reached within this radius, so a crowd sharing one corner never jams.")]
+        [SerializeField, Min(0.05f)] private float cornerRadius = 1.6f;
         [SerializeField] private float gravity = -25f;
 
         public WaypointPath AssignedPath { get; private set; }
@@ -98,9 +100,21 @@ namespace Lightbringer.Units
             while (!hasSteeringOverride && AssignedPath != null && AssignedPath.IsValid && !HasReachedEnd)
             {
                 waypointIndex = Mathf.Min(waypointIndex, AssignedPath.Count - 1);
-                Vector3 offset = AssignedPath.GetPosition(waypointIndex) - transform.position;
+                Vector3 waypoint = AssignedPath.GetPosition(waypointIndex);
+                Vector3 offset = waypoint - transform.position;
                 offset.y = 0f;
-                if (offset.sqrMagnitude <= arrivalDistance * arrivalDistance)
+                // Only the final waypoint needs a precise arrival. Corners are taken when close or already
+                // passed (a crowd pushing past the point), otherwise units jam around the exact spot.
+                bool final = waypointIndex >= AssignedPath.Count - 1;
+                float arrive = final ? arrivalDistance : Mathf.Max(arrivalDistance, cornerRadius);
+                bool passed = false;
+                if (!final)
+                {
+                    Vector3 ahead = AssignedPath.GetPosition(waypointIndex + 1) - waypoint;
+                    ahead.y = 0f;
+                    passed = Vector3.Dot(-offset, ahead) > 0f;
+                }
+                if (offset.sqrMagnitude <= arrive * arrive || passed)
                 {
                     waypointIndex++;
                     HasReachedEnd = waypointIndex >= AssignedPath.Count;
@@ -162,6 +176,7 @@ namespace Lightbringer.Units
             moveSpeed = Mathf.Max(0f, moveSpeed);
             rotationSpeed = Mathf.Max(0f, rotationSpeed);
             arrivalDistance = Mathf.Max(0.05f, arrivalDistance);
+            cornerRadius = Mathf.Max(arrivalDistance, cornerRadius);
             gravity = Mathf.Min(-0.01f, gravity);
         }
     }

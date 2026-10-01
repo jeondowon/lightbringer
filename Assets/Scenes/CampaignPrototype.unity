@@ -1207,8 +1207,8 @@ MonoBehaviour:
   distance: 9
   height: 1
   initialPitch: 30
-  minPitch: 10
-  maxPitch: 70
+  minPitch: -35
+  maxPitch: 75
   sensitivity: 0.15
 --- !u!81 &1181097959
 AudioListener:

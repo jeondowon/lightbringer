@@ -37,7 +37,7 @@ namespace Lightbringer.EditorTools
                 {
                     Silhouette silhouette = SilhouetteFactory.Get(style, id);
                     Bounds bounds = silhouette.Body.bounds;
-                    bool large = id == VisualId.Dragon || id == VisualId.EnemyStronghold || id == VisualId.Knight;
+                    bool large = id == VisualId.Dragon || id == VisualId.EnemyStronghold || id == VisualId.AlliedStronghold || id == VisualId.Knight;
                     Check(silhouette.Body.vertexCount > 0 && silhouette.Body.colors.Length == silhouette.Body.vertexCount
                         && bounds.min.y > -0.1f && bounds.max.y > 1.2f && (large || bounds.max.y < 2.8f)
                         && silhouette.Body.vertexCount < 20000,

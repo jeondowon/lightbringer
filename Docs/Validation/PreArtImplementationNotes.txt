@@ -4,8 +4,8 @@ Lightbringer: Art Pass 전 구현 인수인계
 - Unity 메뉴: Lightbringer > Prepare and Play Campaign
 - 또는 Assets/Scenes/CampaignPrototype.unity를 열고 Play.
 - 이전 Greybox 씬은 유지된다. 새 캠페인 씬은 준비 화면에서 시작한다.
-- 조작: WASD 이동, 마우스 시점, 휠 줌, F 소환, Tab 병종 순환,
-  1/2/3 이후 소환 병력의 Path 선택, LMB/Q/E 장비 슬롯 사용, Esc 커서 해제.
+- 조작: WASD 이동, 마우스 시점(상하 -35~75도), 휠 줌, 1~8 해당 병종 즉시 소환, F 마지막 병종 재소환,
+  Tab 이후 소환 병력의 Path 순환 변경, LMB/Q/E 장비 슬롯 사용, Esc 커서 해제.
 - 패시브 반지를 넣은 슬롯은 직접 시전하지 않는다. 장비는 준비 화면에서만 변경한다.
 
 기획 대응

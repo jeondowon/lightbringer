@@ -32,12 +32,12 @@ namespace Lightbringer.UI
                 GUILayout.Label("Enemy base: destroyed");
             else if (objective.EnemyBase != null)
                 GUILayout.Label($"Enemy base: {objective.EnemyBase.CurrentHealth:F0} / {objective.EnemyBase.MaximumHealth:F0} HP");
-            GUILayout.Label("WASD: Move   Mouse: Look   F: Summon");
+            GUILayout.Label("WASD: Move   Mouse: Look   1-8: Summon   Tab: Path");
             GUILayout.Label("Support your soldiers with the hero aura.");
             if (summoner != null)
             {
-                GUILayout.Label($"Path: {summoner.SelectedPath?.name} (1 / 2 / 3)");
-                GUILayout.Label($"Tab: {UnitCatalog.Names[(int)summoner.SelectedUnit]} | Food {summoner.SelectedCost:F0}");
+                GUILayout.Label($"Path: {summoner.SelectedPath?.name} (Tab)");
+                GUILayout.Label($"F: repeat {UnitCatalog.Names[(int)summoner.SelectedUnit]} | Food {summoner.SelectedCost:F0}");
             }
             if (abilities != null)
             {

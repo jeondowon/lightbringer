@@ -22,10 +22,15 @@ namespace Lightbringer.Core
         public event System.Action<bool> Completed;
         private Combatant subscribedBase;
         private Combatant subscribedHero;
-        public void Configure(Combatant objective, Combatant player, Transform root, ThirdPersonCamera camera)
+        [Tooltip("Optional allied stronghold; its destruction is a defeat (as is the hero's death).")]
+        [SerializeField] private Combatant alliedBase;
+        private Combatant subscribedAlliedBase;
+        public Combatant AlliedBase => alliedBase;
+
+        public void Configure(Combatant objective, Combatant player, Transform root, ThirdPersonCamera camera, Combatant allied = null)
         {
             OnDisable();
-            enemyBase = objective; hero = player; battlefieldRoot = root; battleCamera = camera;
+            enemyBase = objective; hero = player; battlefieldRoot = root; battleCamera = camera; alliedBase = allied;
             if (isActiveAndEnabled) OnEnable();
         }
 
@@ -36,6 +41,8 @@ namespace Lightbringer.Core
                 subscribedBase.Died += OnBaseDestroyed;
             subscribedHero = hero;
             if (subscribedHero != null) subscribedHero.Died += OnHeroDefeated;
+            subscribedAlliedBase = alliedBase;
+            if (subscribedAlliedBase != null) subscribedAlliedBase.Died += OnAlliedBaseLost;
         }
 
         private void OnDisable()
@@ -45,6 +52,8 @@ namespace Lightbringer.Core
             subscribedBase = null;
             if (subscribedHero != null) subscribedHero.Died -= OnHeroDefeated;
             subscribedHero = null;
+            if (subscribedAlliedBase != null) subscribedAlliedBase.Died -= OnAlliedBaseLost;
+            subscribedAlliedBase = null;
         }
 
         private void Start()
@@ -67,6 +76,15 @@ namespace Lightbringer.Core
             StopBattle();
             Completed?.Invoke(true);
             Debug.Log("Victory! The enemy base has been destroyed.", this);
+        }
+
+        private void OnAlliedBaseLost(Combatant defeated)
+        {
+            if (HasEnded || !isActiveAndEnabled || defeated != alliedBase || battlefieldRoot == null) return;
+            HasLost = true;
+            StopBattle();
+            Completed?.Invoke(false);
+            Debug.Log("Defeat. The allied stronghold has fallen.", this);
         }
 
         private void OnHeroDefeated(Combatant defeated)

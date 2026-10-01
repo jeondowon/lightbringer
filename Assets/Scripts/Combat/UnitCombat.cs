@@ -19,6 +19,7 @@ namespace Lightbringer.Combat
         [SerializeField] private LayerMask obstructionMask = ~0;
 
         public Combatant Target { get; private set; }
+        public float AttackRange => attackRange;
         public float BaseDamage => attackDamage;
         public float EffectiveDamage
         {
@@ -105,7 +106,12 @@ namespace Lightbringer.Combat
             }
 
             Vector3 aimPoint = Target.GetAimPoint(transform.position);
-            movement.SetSteeringOverride(aimPoint, attackRange * 0.9f);
+            // Steering stops on the ground plane, so account for height (flying targets) when choosing
+            // the stop distance; otherwise a unit can halt just outside its 3D attack range forever.
+            float reach = attackRange * 0.9f;
+            float height = aimPoint.y - transform.position.y;
+            movement.SetSteeringOverride(aimPoint, Mathf.Sqrt(Mathf.Max(0.01f, reach * reach - height * height)));
+            // Simple rule: an enemy ahead is approached and attacked; with no enemy the unit keeps advancing.
             if ((aimPoint - transform.position).sqrMagnitude > attackRange * attackRange
                 || cooldown > 0f || !HasLineOfSight(Target))
                 return;
@@ -136,9 +142,12 @@ namespace Lightbringer.Combat
 
         private bool IsValidTarget(Combatant candidate)
         {
-            return candidate != null && candidate != self && candidate.IsAlive
-                && candidate.Faction != self.Faction && candidate.gameObject.scene == gameObject.scene
-                && (candidate.GetAimPoint(transform.position) - transform.position).sqrMagnitude <= detectionRadius * detectionRadius;
+            if (candidate == null || candidate == self || !candidate.IsAlive || candidate.Faction == self.Faction
+                || candidate.gameObject.scene != gameObject.scene)
+                return false;
+            Vector3 offset = candidate.GetAimPoint(transform.position) - transform.position;
+            // Units cannot strike targets higher above them than their reach (melee vs the flying Dragon).
+            return Mathf.Abs(offset.y) < attackRange * 0.95f && offset.sqrMagnitude <= detectionRadius * detectionRadius;
         }
 
         private Combatant FindTarget()

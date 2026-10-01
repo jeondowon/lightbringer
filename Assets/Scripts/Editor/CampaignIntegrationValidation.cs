@@ -29,6 +29,9 @@ namespace Lightbringer.EditorTools
                 Invoke(battle.Objective, "OnEnable");
                 Check(battle.Paths.Length == 1 && battle.Summoner.UnlockedUnitCount == 1,
                     "First campaign stage begins with one Path and only the first troop");
+                Check(!battle.Summoner.TrySummonKind(1) && battle.Summoner.LastFeedback.Contains("not unlocked")
+                    && !battle.Summoner.TryCyclePath(),
+                    "Number keys for locked troops and Tab on a single Path do nothing");
                 Check(!session.TryEquip(0, 1), "Equipment cannot change while a stage is active");
                 Physics.SyncTransforms();
                 battle.Waves.Tick(0.1f);
@@ -61,11 +64,23 @@ namespace Lightbringer.EditorTools
                 Check(battle.Objective.HasLost && profile.unlockedStage == 2 && profile.gold == 100,
                     "Defeat does not grant clear rewards or reset permanent progress");
                 Check(session.ReturnToPreparation(), "Defeat returns to preparation for retry");
+                Check(session.SelectStage(2) && session.StartBattle() && session.Battle.AlliedBase != null, "Stage can be retried and has an allied stronghold");
+                battle = session.Battle;
+                Invoke(battle.Objective, "OnEnable");
+                battle.AlliedBase.TakeDamage(100000f);
+                Check(battle.Objective.HasLost && !battle.Objective.HasWon && profile.unlockedStage == 2,
+                    "Losing the allied stronghold is a defeat (hero death remains a defeat too)");
+                Check(session.ReturnToPreparation(), "Stronghold defeat returns to preparation");
 
                 for (int stage = 2; stage < CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
                 session.SelectStage(8);
                 Check(session.StartBattle() && session.Battle.Paths.Length == 3 && session.Battle.Summoner.UnlockedUnitCount == 8,
                     "Late campaign uses three Paths with every unlocked troop available");
+                UnitSummoner tabs = session.Battle.Summoner;
+                Lightbringer.Pathing.WaypointPath firstPath = tabs.SelectedPath;
+                Check(tabs.TryCyclePath() && tabs.SelectedPath == session.Battle.Paths[1] && tabs.TryCyclePath()
+                    && tabs.SelectedPath == session.Battle.Paths[2] && tabs.TryCyclePath() && tabs.SelectedPath == firstPath,
+                    "Tab cycles new deployments through every Path and wraps around");
                 ValidateTroopRoles(session.Battle);
             }
             finally
@@ -87,6 +102,10 @@ namespace Lightbringer.EditorTools
                 Invoke(food, "GenerateFood", 100f);
                 Check(battle.Summoner.TrySelectUnit(i) && battle.Summoner.TrySummon(), "Unlocked " + UnitCatalog.Names[i] + " can be deployed");
                 troops[i] = spawned;
+                if (i == 0)
+                    Check(Vector3.Distance(spawned.transform.position, battle.DeployPoint.position) < 6f
+                        && Vector3.Distance(spawned.transform.position, battle.Hero.transform.position) > 3f,
+                        "Troops deploy from the allied stronghold gate, not around the hero");
                 Invoke(spawned, "Awake");
                 spawned.transform.position = new Vector3(-35 + i * 3, 0.85f, -25);
                 Physics.SyncTransforms();

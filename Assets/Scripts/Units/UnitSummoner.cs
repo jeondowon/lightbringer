@@ -16,6 +16,10 @@ namespace Lightbringer.Units
         [SerializeField] private WaypointPath selectedPath;
         [SerializeField, Min(0f)] private float foodCost = 10f;
         [SerializeField, Min(1f)] private float spawnDistance = 2.5f;
+        [Tooltip("Where new troops appear (the allied base gate). Empty = around the hero (standalone greybox).")]
+        [SerializeField] private Transform spawnAnchor;
+        public Transform SpawnAnchor => spawnAnchor;
+        public void ConfigureSpawnAnchor(Transform anchor) => spawnAnchor = anchor;
         [SerializeField] private LayerMask groundMask = ~0;
         [SerializeField] private LayerMask blockingMask = ~0;
         [SerializeField] private InputAction summonAction =
@@ -49,11 +53,12 @@ namespace Lightbringer.Units
             if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked && Time.timeScale > 0f
                 && Keyboard.current != null)
             {
-                if (Keyboard.current.digit1Key.wasPressedThisFrame) TrySelectPath(0);
-                if (Keyboard.current.digit2Key.wasPressedThisFrame) TrySelectPath(1);
-                if (Keyboard.current.digit3Key.wasPressedThisFrame) TrySelectPath(2);
-                if (Keyboard.current.tabKey.wasPressedThisFrame)
-                    TrySelectUnit(((int)selectedUnit + 1) % unlockedUnitCount);
+                // 1-8 (or numpad 1-8) deploy that troop directly; Tab moves new deployments to the next Path.
+                for (int i = 0; i < UnitCatalog.Count; i++)
+                    if (Keyboard.current[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame
+                        || Keyboard.current[(Key)((int)Key.Numpad1 + i)].wasPressedThisFrame)
+                        TrySummonKind(i);
+                if (Keyboard.current.tabKey.wasPressedThisFrame) TryCyclePath();
             }
             if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked
                 && Time.timeScale > 0f && summonAction.WasPressedThisFrame())
@@ -80,7 +85,7 @@ namespace Lightbringer.Units
 
             // Keep the instance inactive until payment succeeds.
             CharacterController soldier = Instantiate(soldierTemplate, position,
-                Quaternion.Euler(0f, transform.eulerAngles.y, 0f), soldiersParent);
+                Quaternion.Euler(0f, SpawnOrigin.eulerAngles.y, 0f), soldiersParent);
             if (!soldier.GetComponent<UnitPathFollower>().TryAssignPath(selectedPath) || !food.TrySpend(cost))
             {
                 Destroy(soldier.gameObject);
@@ -115,17 +120,22 @@ namespace Lightbringer.Units
             return true;
         }
 
+        private Transform SpawnOrigin => spawnAnchor != null ? spawnAnchor : transform;
+
         private bool TryFindSpawnPosition(out Vector3 position)
         {
             Physics.SyncTransforms();
             float radius = soldierTemplate.radius;
             float halfHeight = Mathf.Max(soldierTemplate.height * 0.5f, radius);
             float segment = halfHeight - radius;
-            // Search around the hero, starting in front; the instance receives its Path before activation.
-            for (int i = 0; i < 12; i++)
+            // Search around the spawn point (base gate, or the hero), starting in front and widening in rings
+            // so a crowded gate still finds room; the instance receives its Path before activation.
+            Transform spawn = SpawnOrigin;
+            for (int i = 0; i < 36; i++)
             {
-                Vector3 offset = Quaternion.Euler(0f, i * 30f, 0f) * transform.forward * spawnDistance;
-                Vector3 origin = transform.position + offset + Vector3.up * 3f;
+                float ring = 1f + (i / 12) * 0.6f;
+                Vector3 offset = Quaternion.Euler(0f, (i % 12) * 30f + (i / 12) * 15f, 0f) * spawn.forward * (spawnDistance * ring);
+                Vector3 origin = spawn.position + offset + Vector3.up * 3f;
                 if (!Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 8f,
                     groundMask, QueryTriggerInteraction.Ignore) || Vector3.Dot(hit.normal, Vector3.up) < 0.95f)
                     continue;
