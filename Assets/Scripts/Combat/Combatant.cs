@@ -20,6 +20,8 @@ namespace Lightbringer.Combat
         public event Action<Combatant> Died;
         public Combatant LastAttacker { get; private set; }
         public float DamageReduction { get; set; }
+        // Greybox faction tint. Styled visuals carry their own palette and turn this off.
+        public bool UseTeamTint { get; set; } = true;
         public void SetAttackSurface(BoxCollider surface) => attackSurface = surface;
 
         public bool Heal(float amount)
@@ -71,6 +73,7 @@ namespace Lightbringer.Combat
 
         public void RefreshTeamColor()
         {
+            if (!UseTeamTint) return;
             Color color = faction == Faction.Allied
                 ? new Color(0.15f, 0.45f, 1f) : new Color(0.9f, 0.15f, 0.1f);
             MaterialPropertyBlock properties = new MaterialPropertyBlock();

@@ -12,6 +12,10 @@ namespace Lightbringer.Resources
         public float CurrentFood { get; private set; }
         public float MaximumFood => maximumFood;
         public float ProductionPerSecond => foodPerSecond;
+        // Playtest counters: production lost at the cap signals idle Food.
+        public float TotalProduced { get; private set; }
+        public float TotalWasted { get; private set; }
+        public float TotalSpent { get; private set; }
 
         public void Configure(float capacity, float production)
         {
@@ -32,7 +36,11 @@ namespace Lightbringer.Resources
 
         private void GenerateFood(float elapsedSeconds)
         {
-            CurrentFood = Mathf.Clamp(CurrentFood + foodPerSecond * elapsedSeconds, 0f, maximumFood);
+            float produced = foodPerSecond * elapsedSeconds;
+            float next = Mathf.Clamp(CurrentFood + produced, 0f, maximumFood);
+            TotalProduced += produced;
+            TotalWasted += Mathf.Max(0f, produced - (next - CurrentFood));
+            CurrentFood = next;
         }
 
         public bool CanAfford(float amount)
@@ -46,6 +54,7 @@ namespace Lightbringer.Resources
             if (!CanAfford(amount))
                 return false;
             CurrentFood -= amount;
+            TotalSpent += amount;
             return true;
         }
 

@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a5e7c9c1ec416b49a94f62c1f204bbb, type: 3}
+  m_Name: ArtStyleLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Visuals.ArtStyleLibrary
+  alliedMaterial: {fileID: 2100000, guid: e2ee310deb138874fb09dcca5d135b65, type: 2}
+  enemyMaterial: {fileID: 2100000, guid: 915506e92da1288449b7cad17807f55f, type: 2}
+  groundMaterial: {fileID: 2100000, guid: 4b82f8eaa5754fa4b92bc78e8b72d1fd, type: 2}
+  auraRunesMaterial: {fileID: 2100000, guid: 8517546322a0a01429914918a7ffcd45, type: 2}
+  auraMotesMaterial: {fileID: 2100000, guid: 407c555f41deeff45917357e1b6f53b6, type: 2}
+  lightningMaterial: {fileID: 2100000, guid: db6ebeccd580e4e40994f2231d286c99, type: 2}
+  ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
+  royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
+  gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}
+  steel: {r: 0.66, g: 0.7, b: 0.77, a: 1}
+  leather: {r: 0.24, g: 0.17, b: 0.14, a: 1}
+  skin: {r: 0.96, g: 0.81, b: 0.7, a: 1}
+  hair: {r: 0.17, g: 0.12, b: 0.1, a: 1}
+  lightGlow: {r: 0.62, g: 0.8, b: 1, a: 1}
+  holyGlow: {r: 1, g: 0.86, b: 0.52, a: 1}
+  dragonScale: {r: 0.92, g: 0.94, b: 0.98, a: 1}
+  dragonMembrane: {r: 0.66, g: 0.76, b: 0.96, a: 1}
+  corruptBody: {r: 0.16, g: 0.12, b: 0.2, a: 1}
+  corruptArmor: {r: 0.3, g: 0.2, b: 0.34, a: 1}
+  bone: {r: 0.8, g: 0.75, b: 0.64, a: 1}
+  corruptGlow: {r: 1, g: 0.22, b: 0.35, a: 1}
+  corruptStone: {r: 0.25, g: 0.22, b: 0.28, a: 1}
+  sunColor: {r: 1, g: 0.95, b: 0.86, a: 1}
+  sunIntensity: 1.35
+  ambientSky: {r: 0.62, g: 0.7, b: 0.85, a: 1}
+  ambientEquator: {r: 0.5, g: 0.52, b: 0.55, a: 1}
+  ambientGround: {r: 0.3, g: 0.28, b: 0.26, a: 1}
+  fogColor: {r: 0.72, g: 0.76, b: 0.84, a: 1}
+  fogStart: 45
+  fogEnd: 160
+  postProcessing: {fileID: 11400000, guid: e1f6474d7e1e4834ba1e057706782beb, type: 2}
+  auraColor: {r: 0.55, g: 0.75, b: 1.6, a: 1}
+  overrides:
+  - id: 0
+    prefab: {fileID: 8771091787928289351, guid: abef4443815bc654a9087006d39964b7, type: 3}
+    localOffset: {x: 0.00000007012309, y: 0.00000028049237, z: -0}
+    localEuler: {x: 0, y: -0, z: 0}
+    scale: 1.1764703
+    idleClip: {fileID: 7400000, guid: 60ec7cae944ea45409d918b8d3d87fd2, type: 2}
+    moveClip: {fileID: 7400000, guid: 1eac7892efd866a41a629d3a64f7c4e4, type: 2}
+    actionClip: {fileID: 7400000, guid: cdaa78b826e6b7f4abbfe4979d08ff40, type: 2}
+    moveClipSpeed: 4
+    attachments:
+    - prefab: {fileID: -3819515703403138191, guid: b3a934e9c7d375f43afa523302d0aeea, type: 3}
+      boneName: RightHand
+      localPosition: {x: 7.3546443, y: -12.333654, z: -6.4313717}
+      localEuler: {x: 349.6733, y: 204.9089, z: 155.09108}
+      localScale: {x: 170.00003, y: 169.99992, z: 169.99998}
+      stabilize: 1

@@ -22,6 +22,10 @@ namespace Lightbringer.Player
         private bool capturedBaseStats;
         private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraRadius, baseAuraBonus;
         public string Feedback { get; private set; } = "";
+        // Raised after a successful cast with the equipment slot; visuals play the cast animation.
+        public event System.Action<int> Casted;
+        // Raised for offensive spells with the impact point and area radius; visuals draw the strike.
+        public event System.Action<int, Vector3, float> SpellLanded;
         public int Equipped(int slot) => slot >= 0 && slot < equipment.Length ? equipment[slot] : -1;
         public float CooldownRemaining(int slot) => cooldowns[slot];
         public void ConfigureCamera(UnityEngine.Camera camera) => aimCamera = camera;
@@ -111,7 +115,10 @@ namespace Lightbringer.Player
             cooldowns[slot] = EquipmentCatalog.Cooldown(id);
             float power = (1f + 0.2f * (levels[id] - 1)) * damageMultiplier;
             if (id == (int)EquipmentKind.LightStaff)
+            {
+                SpellLanded?.Invoke(id, target.GetAimPoint(transform.position), 0.6f);
                 target.TakeDamage(18f * power, self);
+            }
             else if (id == (int)EquipmentKind.HealingStaff)
             {
                 foreach (Combatant unit in Collect(transform.position, 6f))
@@ -120,10 +127,12 @@ namespace Lightbringer.Player
             else
             {
                 Vector3 centre = target.transform.position;
+                SpellLanded?.Invoke(id, centre, 3f);
                 foreach (Combatant unit in Collect(centre, 3f))
                     if (CanAttack(unit)) unit.TakeDamage(30f * power, self);
             }
             Feedback = EquipmentCatalog.Names[id];
+            Casted?.Invoke(slot);
             return true;
         }
 

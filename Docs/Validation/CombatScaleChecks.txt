@@ -1,7 +1,7 @@
-Unity Editor component/physics benchmark | 2026-09-30T14:27:35.5628978Z
+Unity Editor component/physics benchmark | 2026-10-01T08:40:39.4389553Z
 120 simulated 1/60-second steps after warmup. No rendering, assets, animation, or shipping-build frame-rate claim.
 Hardware: AMD Ryzen 7 260 w/ Radeon 780M Graphics | NVIDIA GeForce RTX 5060 Laptop GPU
-100 units: mean 0.540 ms/step, p95 0.712 ms/step; managed bytes 0; target scans 162 vs 12000 unthrottled opportunities.
-Mean combat 0.116 ms, movement 0.423 ms. Auto sync transforms: False.
-300 units: mean 1.354 ms/step, p95 3.313 ms/step; managed bytes 0; target scans 3358 vs 36000 unthrottled opportunities.
-Mean combat 0.773 ms, movement 0.581 ms. Auto sync transforms: False.
+100 units: mean 0.589 ms/step, p95 0.845 ms/step; managed bytes 0; target scans 158 vs 12000 unthrottled opportunities.
+Mean combat 0.125 ms, movement 0.463 ms. Auto sync transforms: False.
+300 units: mean 1.394 ms/step, p95 3.377 ms/step; managed bytes 0; target scans 3362 vs 36000 unthrottled opportunities.
+Mean combat 0.802 ms, movement 0.592 ms. Auto sync transforms: False.

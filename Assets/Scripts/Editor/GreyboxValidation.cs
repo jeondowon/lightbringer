@@ -71,6 +71,8 @@ namespace Lightbringer.EditorTools
                 ValidateHeroSystems();
                 ValidateProgression();
                 ValidateCampaignIntegration();
+                ValidatePlaytestRecorder();
+                ValidateArtStyle();
                 ValidateCombatScale();
                 ValidateSetup();
                 passed = true;

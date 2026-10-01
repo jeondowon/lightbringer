@@ -103,6 +103,8 @@ namespace Lightbringer.Units
                     soldier.GetComponent<UnitCombat>().ConfigureSplash(selectedUnit == UnitKind.Dragon ? 4f : 2.5f);
                 if (selectedUnit == UnitKind.Dragon) soldier.GetComponent<UnitPathFollower>().ConfigureFlight(3.5f);
             }
+            if (soldier.TryGetComponent(out Lightbringer.Visuals.UnitAppearance appearance))
+                appearance.Apply(Lightbringer.Visuals.ArtStyleLibrary.ForUnit(selectedUnit));
             soldier.name = $"{UnitCatalog.Names[(int)selectedUnit]} {++summonedCount}";
             soldier.GetComponent<UnitPathFollower>().ConfigureCrowdAvoidance(true);
             soldier.gameObject.SetActive(true);

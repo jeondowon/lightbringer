@@ -6,6 +6,7 @@ using Lightbringer.Player;
 using Lightbringer.Progression;
 using Lightbringer.Resources;
 using Lightbringer.Units;
+using Lightbringer.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -26,7 +27,7 @@ namespace Lightbringer.Core
     public static class PrototypeBattleBuilder
     {
         public static PrototypeBattle Build(int stage, CampaignProgress progress, InputActionAsset input,
-            Material material, Shader ringShader, Transform parent)
+            Material material, Shader ringShader, Transform parent, ArtStyleLibrary art = null)
         {
             PrototypeBattle battle = new PrototypeBattle();
             battle.Root = new GameObject("Campaign Battlefield " + stage);
@@ -49,8 +50,14 @@ namespace Lightbringer.Core
             FoodResource food = hero.AddComponent<FoodResource>();
             hero.AddComponent<ManaResource>();
             hero.AddComponent<HeroAura>();
-            hero.AddComponent<AuraRangeVisual>().Configure(ringShader);
+            if (art != null && art.HasMaterials)
+            {
+                UnitAppearance.Attach(hero, VisualId.Hero, art, -controller.height * 0.5f);
+                hero.AddComponent<AuraRuneVisual>().Configure(art, -controller.height * 0.5f - 0.03f);
+            }
+            else hero.AddComponent<AuraRangeVisual>().Configure(ringShader);
             battle.Abilities = hero.AddComponent<HeroAbilities>();
+            if (art != null && art.HasMaterials) hero.AddComponent<HeroSpellVfx>().Configure(art);
             battle.Abilities.ConfigureLoadout(progress.loadout, progress.equipmentLevels);
             battle.Abilities.ApplyProgression(progress.ranks);
             GameObject cameraObject = Child("Battle Camera", root);
@@ -73,7 +80,7 @@ namespace Lightbringer.Core
                 enemyRoutes[i] = Path("Enemy Route " + (i + 1), root, new[] {
                     new Vector3(x * 0.5f, 0, 29), new Vector3(x, 0, 14), new Vector3(x, 0, -5), new Vector3(0, 0, -12) });
             }
-            CharacterController template = UnitTemplate(root, material);
+            CharacterController template = UnitTemplate(root, material, art);
             Transform soldiers = Child("Allied Units", root).transform;
             Transform enemies = Child("Enemy Units", root).transform;
             battle.Summoner = hero.AddComponent<UnitSummoner>();
@@ -85,15 +92,17 @@ namespace Lightbringer.Core
             Combatant baseHealth = objective.AddComponent<Combatant>();
             baseHealth.Configure(Faction.Enemy, 150 + stage * 50);
             baseHealth.SetAttackSurface(objective.GetComponent<BoxCollider>());
+            UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f);
             battle.Objective = battle.Root.AddComponent<StageObjective>();
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
             battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader);
+            BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root);
             return battle;
         }
 
-        public static CharacterController UnitTemplate(Transform parent, Material material)
+        public static CharacterController UnitTemplate(Transform parent, Material material, ArtStyleLibrary art = null)
         {
             GameObject item = Child("Unit Template", parent);
             item.SetActive(false);
@@ -105,6 +114,8 @@ namespace Lightbringer.Core
             item.AddComponent<UnitPathFollower>();
             item.AddComponent<Combatant>();
             item.AddComponent<UnitCombat>();
+            if (art != null && art.HasMaterials)
+                item.AddComponent<UnitAppearance>().Configure(art, -controller.height * 0.5f);
             return controller;
         }
 

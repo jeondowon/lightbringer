@@ -17,11 +17,13 @@ namespace Lightbringer.UI
         {
             if (session == null || session.Progress == null) return;
             CampaignProgress profile = session.Progress;
-            if (session.Battle == null) Preparation(profile);
+            if (session.Battle == null) { funRating = 0; playtestNote = ""; Preparation(profile); }
             else Battle(profile);
             if (session.IsChoosing) Choices(profile);
-            if (!string.IsNullOrEmpty(session.SaveStatus))
-                GUI.Box(new Rect(16, Screen.height - 48, Screen.width - 32, 38), session.SaveStatus);
+            string status = string.IsNullOrEmpty(session.PlaytestStatus) ? session.SaveStatus
+                : session.PlaytestStatus + " " + session.SaveStatus;
+            if (!string.IsNullOrEmpty(status))
+                GUI.Box(new Rect(16, Screen.height - 48, Screen.width - 32, 38), status);
         }
 
         private void Preparation(CampaignProgress profile)
@@ -89,11 +91,36 @@ namespace Lightbringer.UI
             GUILayout.EndArea();
             GUI.Label(new Rect(Screen.width / 2 - 8, Screen.height / 2 - 12, 24, 24), "+");
             if (!battle.Objective.HasEnded || session.IsChoosing) return;
-            GUILayout.BeginArea(new Rect((Screen.width - 560) / 2, (Screen.height - 160) / 2, 560, 160), GUI.skin.box);
+            PlaytestRecord record = session.PlaytestRecord;
+            float height = record == null ? 160 : 400;
+            GUILayout.BeginArea(new Rect((Screen.width - 560) / 2, (Screen.height - height) / 2, 560, height), GUI.skin.box);
             GUILayout.Label(battle.Objective.HasWon ? "VICTORY" : "DEFEAT");
             GUILayout.Label(session.LastResult);
-            if (GUILayout.Button("RETURN TO PREPARATION", GUILayout.Height(36))) session.ReturnToPreparation();
+            if (record != null) PlaytestSummary(record);
+            if (GUILayout.Button("RETURN TO PREPARATION", GUILayout.Height(36)))
+            {
+                session.SetPlaytestFeedback(funRating, playtestNote);
+                session.ReturnToPreparation();
+            }
             GUILayout.EndArea();
+        }
+
+        private int funRating;
+        private string playtestNote = "";
+
+        private void PlaytestSummary(PlaytestRecord record)
+        {
+            GUILayout.Label($"PLAYTEST | {record.durationSeconds / 60f:0.0} min | Summoned {record.alliesSummoned}, lost {record.alliesLost} | Enemies defeated {record.enemiesDefeated}");
+            float wastedPercent = record.foodProduced > 0f ? 100f * record.foodWasted / record.foodProduced : 0f;
+            GUILayout.Label($"Food spent {record.foodSpent:0} | wasted at cap {wastedPercent:0}% | Lowest hero HP {record.lowestHeroHealthPercent:0}%");
+            GUILayout.Label($"Allies in aura (avg) {record.averageAlliesInAura:0.0} | Enemy base left {record.enemyBaseHealthPercent:0}%");
+            GUILayout.Label("How fun was this stage? (0 = skip)");
+            GUILayout.BeginHorizontal();
+            for (int rating = 0; rating <= 5; rating++)
+                if (GUILayout.Toggle(funRating == rating, rating == 0 ? "-" : rating.ToString(), GUI.skin.button)) funRating = rating;
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Note (what felt fun, slow, confusing or unfair?):");
+            playtestNote = GUILayout.TextArea(playtestNote, 400, GUILayout.Height(60));
         }
 
         private void Choices(CampaignProgress profile)

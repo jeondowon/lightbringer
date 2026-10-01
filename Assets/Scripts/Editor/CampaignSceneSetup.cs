@@ -49,6 +49,7 @@ namespace Lightbringer.EditorTools
         private static void PrepareAndPlay()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || !GreyboxValidation.RunChecks() || !EnsureScene()) return;
+            ArtStyleSetup.EnsureFirstRunStyle();
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             EditorSceneManager.OpenScene(ScenePath);
             EditorApplication.ExecuteMenuItem("Window/General/Game");

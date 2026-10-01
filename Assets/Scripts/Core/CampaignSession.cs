@@ -12,11 +12,14 @@ namespace Lightbringer.Core
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private Material prototypeMaterial;
         [SerializeField] private Shader auraShader;
+        [Tooltip("Art Pass look. Leave empty to keep greybox capsules.")]
+        [SerializeField] private Lightbringer.Visuals.ArtStyleLibrary artStyle;
         private CampaignSaveStore store;
         private readonly BattleSimulation simulation = new BattleSimulation();
         private bool dirty;
         private float saveTimer;
         private GameObject preparationCamera;
+        private PlaytestRecorder playtest = new PlaytestRecorder(null);
         public CampaignProgress Progress { get; private set; }
         public PrototypeBattle Battle { get; private set; }
         public int SelectedStage { get; private set; } = 1;
@@ -24,12 +27,17 @@ namespace Lightbringer.Core
         public string SaveStatus => store == null ? "Validation session" : store.Error;
         public bool IsChoosing => Progress != null && Progress.pendingLevels > 0;
         public bool IsBattlePaused => simulation.IsPaused;
+        public PlaytestRecord PlaytestRecord => playtest.Current;
+        public string PlaytestStatus { get; private set; } = "";
 
         public void Configure(InputActionAsset actions, Material material, Shader ring)
         { inputActions = actions; prototypeMaterial = material; auraShader = ring; }
 
+        public Lightbringer.Visuals.ArtStyleLibrary ArtStyle => artStyle;
+        public void ConfigureArt(Lightbringer.Visuals.ArtStyleLibrary style) => artStyle = style;
+
         public void InitializeForValidation(CampaignProgress profile)
-        { Progress = profile; store = null; SelectedStage = profile.unlockedStage; }
+        { Progress = profile; store = null; SelectedStage = profile.unlockedStage; playtest = new PlaytestRecorder(null); }
 
         private void Awake()
         {
@@ -39,6 +47,7 @@ namespace Lightbringer.Core
                 store = new CampaignSaveStore(Path.Combine(Application.persistentDataPath, "Lightbringer", "campaign-v1.json"));
                 Progress = store.Load();
                 SelectedStage = Progress.unlockedStage;
+                playtest = new PlaytestRecorder(PlaytestRecorder.DefaultLogPath);
             }
             preparationCamera = new GameObject("Preparation Camera");
             preparationCamera.transform.SetParent(transform, false);
@@ -91,13 +100,14 @@ namespace Lightbringer.Core
         {
             if (Progress == null || Battle != null || IsChoosing || inputActions == null || prototypeMaterial == null || auraShader == null)
                 return false;
-            Battle = PrototypeBattleBuilder.Build(SelectedStage, Progress, inputActions, prototypeMaterial, auraShader, transform);
+            Battle = PrototypeBattleBuilder.Build(SelectedStage, Progress, inputActions, prototypeMaterial, auraShader, transform, artStyle);
             Battle.Objective.Completed += OnCompleted;
             Battle.Waves.Spawned += RegisterEnemy;
             RegisterEnemy(Battle.Objective.EnemyBase);
             if (preparationCamera != null) preparationCamera.SetActive(false);
             Battle.Root.SetActive(true);
             LastResult = "";
+            playtest.Begin(Battle, SelectedStage, Progress);
             return true;
         }
 
@@ -114,6 +124,7 @@ namespace Lightbringer.Core
 
         private void OnCompleted(bool victory)
         {
+            playtest.Finish(victory ? "victory" : "defeat");
             bool rewarded = victory && Progress.CompleteStage(SelectedStage);
             LastResult = victory
                 ? rewarded ? "Victory! Earned first-clear gold, equipment and campaign unlocks." : "Victory! First-clear rewards were already claimed."
@@ -121,6 +132,8 @@ namespace Lightbringer.Core
             dirty = true;
             Flush();
         }
+
+        public void SetPlaytestFeedback(int rating, string note) => playtest.SetFeedback(rating, note);
 
         public bool ChooseGrowth(int index)
         {
@@ -135,6 +148,7 @@ namespace Lightbringer.Core
         public bool ReturnToPreparation()
         {
             if (Battle == null || !Battle.Objective.HasEnded || IsChoosing) return false;
+            PlaytestStatus = playtest.Commit();
             simulation.Resume(true);
             Battle.Root.SetActive(false);
             if (Application.isPlaying) Destroy(Battle.Root); else DestroyImmediate(Battle.Root);
@@ -149,6 +163,7 @@ namespace Lightbringer.Core
         private void Update()
         {
             UpdatePause();
+            playtest.Tick(Time.deltaTime, Battle == null || IsChoosing || simulation.IsPaused);
             saveTimer += Time.unscaledDeltaTime;
             if (saveTimer >= 2f) { saveTimer = 0; Flush(); }
         }
@@ -165,7 +180,7 @@ namespace Lightbringer.Core
             if (dirty && store != null && store.Save(Progress)) dirty = false;
         }
         private void OnApplicationPause(bool paused) { if (paused) Flush(); }
-        private void OnApplicationQuit() => Flush();
-        private void OnDestroy() => Flush();
+        private void OnApplicationQuit() { playtest.Commit(); Flush(); }
+        private void OnDestroy() { playtest.Commit(); Flush(); }
     }
 }

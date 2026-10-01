@@ -42,6 +42,8 @@ namespace Lightbringer.Core
                     unit.GetComponent<UnitCombat>().Configure(3 + stage, stage >= 3 && i == 1 ? 6f : 1.25f, 1.2f);
                     unit.GetComponent<UnitPathFollower>().TryAssignPath(routes[lane]);
                     unit.GetComponent<UnitPathFollower>().ConfigureCrowdAvoidance(true);
+                    if (unit.TryGetComponent(out Lightbringer.Visuals.UnitAppearance appearance))
+                        appearance.Apply(stage >= 3 && i == 1 ? Lightbringer.Visuals.VisualId.EnemyArcher : Lightbringer.Visuals.VisualId.EnemyRaider);
                     Spawned?.Invoke(health);
                     unit.gameObject.SetActive(true);
                     Physics.SyncTransforms();
