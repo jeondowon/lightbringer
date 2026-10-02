@@ -55,6 +55,8 @@ namespace Lightbringer.UI
         {
             Root = Hud.Box(parent, "lb-bar", modifier);
             fill = Hud.Box(Root, "lb-bar-fill");
+            // Sheen over the fill; only the battle HUD styles it.
+            Hud.Box(Root, "lb-bar-gloss");
             text = Hud.Text(Root, "", "lb-bar-text");
         }
 
@@ -64,6 +66,45 @@ namespace Lightbringer.UI
         {
             Hud.Fraction(fill, maximum > 0f ? current / maximum : 0f);
             Hud.Set(text, label);
+        }
+    }
+
+    // Clockwise cooldown sweep: the shaded wedge is the part still recharging, starting at twelve o'clock.
+    internal sealed class HudDial
+    {
+        public readonly VisualElement Root;
+        private readonly Color shade;
+        private float value;
+
+        public HudDial(VisualElement parent, string className, Color shade)
+        {
+            Root = Hud.Box(parent, className);
+            this.shade = shade;
+            Root.generateVisualContent += Draw;
+        }
+
+        public void Set(float fraction)
+        {
+            fraction = Mathf.Clamp01(float.IsNaN(fraction) ? 0f : fraction);
+            if (Mathf.Abs(fraction - value) < 0.002f) return;
+            value = fraction;
+            Root.MarkDirtyRepaint();
+        }
+
+        private void Draw(MeshGenerationContext context)
+        {
+            if (value <= 0f) return;
+            Rect area = Root.contentRect;
+            Vector2 centre = area.center;
+            float radius = Mathf.Min(area.width, area.height) * 0.5f;
+            Painter2D painter = context.painter2D;
+            painter.BeginPath();
+            painter.MoveTo(centre);
+            painter.LineTo(centre + Vector2.down * radius);
+            painter.Arc(centre, radius, new Angle(-90f, AngleUnit.Degree), new Angle(-90f + 360f * value, AngleUnit.Degree));
+            painter.ClosePath();
+            painter.fillColor = shade;
+            painter.Fill();
         }
     }
 }

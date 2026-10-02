@@ -46,8 +46,10 @@ namespace Lightbringer.EditorTools
                     && view.IsCardSelected((int)battle.Summoner.SelectedUnit),
                     "Troop cards light up exactly when Food covers their cost");
                 Check(view.EnemyBaseShielded && !view.BossVisible, "Boss stage shows the shielded enemy stronghold before the Warlord arrives");
-                Check(battle.Summoner.TryCyclePath() && RefreshAndRead(view, session).Contains("PATH 2"),
-                    "The command bar names the Path that new troops will take");
+                view.Refresh(session);
+                Check(view.MinimapSelectedPath == 0, "The battlefield map highlights the first Path at the start");
+                Check(battle.Summoner.TryCyclePath() && RefreshAndRead(view, session).Contains("PATH 2") && view.MinimapSelectedPath == 1,
+                    "The battlefield map names and highlights the Path that new troops will take");
 
                 Physics.SyncTransforms();
                 battle.Waves.Tick(0.1f);

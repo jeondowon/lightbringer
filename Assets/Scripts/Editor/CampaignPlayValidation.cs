@@ -186,7 +186,7 @@ namespace Lightbringer.EditorTools
                 case 5:
                     if (elapsed < 0.2f) return;
                     while (session.IsChoosing) session.ChooseGrowth(0);
-                    Assert(battle.Objective.HasWon && session.Progress.unlockedStage == 2 && session.Progress.gold == 100,
+                    Assert(battle.Objective.HasWon && session.Progress.unlockedStage == 2 && session.Progress.equipmentLevels[2] == 1,
                         "Runtime base destruction grants victory and persistent-profile rewards");
                     Screenshot("CampaignVictory.png");
                     Advance(); break;
@@ -200,7 +200,7 @@ namespace Lightbringer.EditorTools
                     Advance(); break;
                 case 8:
                     if (elapsed < 0.3f) return;
-                    Assert(battle.Objective.HasLost && session.Progress.ranks[chosenRank] >= 1 && session.Progress.gold == 100,
+                    Assert(battle.Objective.HasLost && session.Progress.ranks[chosenRank] >= 1 && session.Progress.equipmentLevels[2] == 1,
                         "Runtime hero death keeps permanent growth and grants no victory reward");
                     Assert(session.ReturnToPreparation(), "Defeat can return to preparation without reloading Unity");
                     for (int stage = 2; stage < 8; stage++) session.Progress.CompleteStage(stage);

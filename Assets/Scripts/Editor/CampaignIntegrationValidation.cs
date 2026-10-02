@@ -50,7 +50,7 @@ namespace Lightbringer.EditorTools
                 Check(session.ChooseGrowth(0) && profile.ranks[chosen] == 1 && !session.IsBattlePaused && battle.Summoner.enabled,
                     "Picking growth applies a permanent rank and resumes the same battle");
                 battle.Objective.EnemyBase.TakeDamage(10000, battle.Hero);
-                Check(battle.Objective.HasWon && profile.unlockedStage == 2 && profile.gold == 100,
+                Check(battle.Objective.HasWon && profile.unlockedStage == 2 && profile.equipmentLevels[2] == 1,
                     "Real objective death drives campaign completion and first-clear rewards");
                 while (session.IsChoosing) session.ChooseGrowth(0);
                 Check(session.ReturnToPreparation() && session.Battle == null && profile.ranks[chosen] >= 1,
@@ -59,7 +59,7 @@ namespace Lightbringer.EditorTools
                 battle = session.Battle;
                 Invoke(battle.Objective, "OnEnable");
                 battle.Hero.TakeDamage(10000);
-                Check(battle.Objective.HasLost && profile.unlockedStage == 2 && profile.gold == 100,
+                Check(battle.Objective.HasLost && profile.unlockedStage == 2 && profile.equipmentLevels[2] == 1,
                     "Defeat does not grant clear rewards or reset permanent progress");
                 Check(session.ReturnToPreparation(), "Defeat returns to preparation for retry");
                 Check(session.SelectStage(2) && session.StartBattle() && session.Battle.AlliedBase != null, "Stage can be retried and has an allied stronghold");

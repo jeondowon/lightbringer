@@ -19,7 +19,7 @@ namespace Lightbringer.UI
         private readonly VisualElement hero, runeOuter, runeInner, runeBriefing, startGlow, routeFill;
         private readonly VisualElement enemies, rewards, growth;
         private readonly VisualElement[] mapPaths = new VisualElement[3];
-        private readonly Label level, gold, stageTitle, stageTag, briefingNote, status, mapCaption, mapStronghold;
+        private readonly Label level, stageTitle, stageTag, briefingNote, status, mapCaption, mapStronghold;
         private readonly HudBar experience;
         private readonly Tile[] stages = new Tile[CampaignProgress.StageCount];
         private readonly Tile[] slots = new Tile[EquipmentCatalog.Slots];
@@ -65,10 +65,6 @@ namespace Lightbringer.UI
             VisualElement titles = Hud.Box(header, "lb-prep-titles");
             Hud.Text(titles, "LIGHTBRINGER", "lb-display", "lb-prep-title");
             Hud.Text(titles, "CAMPAIGN PREPARATION", "lb-prep-subtitle");
-            VisualElement purse = Hud.Box(Root, "lb-prep-purse");
-            Hud.Box(purse, "lb-prep-coin");
-            gold = Hud.Text(purse, "", "lb-display", "lb-prep-gold");
-            Hud.Text(purse, "GOLD", "lb-prep-purse-label");
 
             VisualElement plate = Hud.Box(Root, "lb-prep-frame", "lb-prep-plate");
             VisualElement medal = Hud.Box(plate, "lb-prep-medal");
@@ -121,7 +117,7 @@ namespace Lightbringer.UI
             VisualElement launch = Hud.Box(campaign, "lb-launch");
             startGlow = Hud.Box(launch, "lb-launch-glow");
             start = Clickable(launch, () => Start(), "lb-display", "lb-launch-button");
-            Hud.Text(campaign, "Prototype balance. First clears award gold and gear; upgraded gear replaces lower levels.", "lb-prep-footnote");
+            Hud.Text(campaign, "Prototype balance. First clears award a staff or ring; upgraded gear replaces lower levels.", "lb-prep-footnote");
 
             VisualElement loadout = Panel(army, "LOADOUT", "Choose a slot, then an item");
             VisualElement socketRow = Hud.Box(loadout, "lb-sockets");
@@ -210,7 +206,6 @@ namespace Lightbringer.UI
             if (!visible) return;
 
             Hud.Set(level, profile.level.ToString());
-            Hud.Set(gold, profile.gold.ToString("N0"));
             experience.Set(profile.experience, profile.ExperienceToNext, $"EXP {profile.experience} / {profile.ExperienceToNext}");
 
             Hud.Fraction(routeFill, (profile.unlockedStage - 1) / (float)(stages.Length - 1));
@@ -301,9 +296,6 @@ namespace Lightbringer.UI
                 Hud.Text(rewards, "Claimed. Replays award battle EXP only.", "lb-prep-hint");
             else
             {
-                VisualElement goldReward = Hud.Box(rewards, "lb-reward");
-                Hud.Box(goldReward, "lb-reward-icon", "lb-prep-coin");
-                Hud.Text(goldReward, "+" + CampaignProgress.ClearGold(stage), "lb-display", "lb-reward-value");
                 int item = CampaignProgress.ClearRewardItem(stage), rank = CampaignProgress.ClearRewardLevel(stage);
                 VisualElement gear = Hud.Box(rewards, "lb-reward");
                 Hud.Box(gear, "lb-reward-icon", "lb-icon", "lb-icon--" + item);

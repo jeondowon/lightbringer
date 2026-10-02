@@ -67,6 +67,8 @@ namespace Lightbringer.UI
         public int AlliesOn(int front) => alliesPerPath[front];
         public int EnemiesOn(int front) => enemiesPerPath[front];
         public IReadOnlyList<Combatant> DamagedUnits => visible;
+        // Every Combatant found by the last scan, including dead or destroyed ones; callers filter.
+        public IReadOnlyList<Combatant> Units => units;
 
         private void Update()
         {

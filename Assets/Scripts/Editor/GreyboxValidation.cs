@@ -51,6 +51,8 @@ namespace Lightbringer.EditorTools
             }
 
             Results.Clear();
+            // Validation battles are built at the origin; a leftover hidden preview battlefield there would block spawns.
+            PreparationPreview.Purge();
             SessionState.SetString(LastCheckedScriptsKey, GreyboxScriptAutoRefresh.GetStamp());
             Scene original = SceneManager.GetActiveScene();
             UnityEngine.Object[] originalSelection = Selection.objects;

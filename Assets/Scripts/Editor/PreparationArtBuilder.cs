@@ -9,7 +9,7 @@ namespace Lightbringer.EditorTools
     // Builds the preparation screen art in Assets/UI/Art: character illustrations keyed out of the white-background
     // concept sources, plus procedural frames, rune circle, glows and item icons. Re-run after source art changes.
     [InitializeOnLoad]
-    public static class PreparationArtBuilder
+    public static partial class PreparationArtBuilder
     {
         public const string Folder = "Assets/UI/Art";
         private const string Characters = "Assets/Art/Characters/";
@@ -17,7 +17,31 @@ namespace Lightbringer.EditorTools
         private static readonly Color Gold = new Color(0.86f, 0.69f, 0.36f), BrightGold = new Color(1f, 0.88f, 0.6f);
         private static readonly List<(string path, bool compressed)> Written = new List<(string, bool)>();
 
-        static PreparationArtBuilder() => EditorRequests.Register(Request, Build);
+        static PreparationArtBuilder()
+        {
+            EditorRequests.Register(Request, Build);
+            EditorRequests.Register("Docs/Validation/BuildUpdatedUnitPortraits.request", BuildUpdatedUnitPortraits);
+        }
+
+        [MenuItem("Lightbringer/UI/Build Updated Unit Portraits")]
+        public static void BuildUpdatedUnitPortraits()
+        {
+            Directory.CreateDirectory(Full(Folder));
+            Written.Clear();
+            SaveUpdatedUnitPortraits();
+            ImportWritten();
+            Debug.Log("Updated unit portraits built: Archer, Mage, Priest, Spearman.");
+        }
+
+        private static void SaveUpdatedUnitPortraits()
+        {
+            foreach (string unit in new[] { "Archer", "Mage", "Priest", "Spearman" })
+            {
+                string variant = unit == "Spearman" ? "ClosedHelmet" : "ShadowFace";
+                Illustration("Docs/ArtReference/Characters/" + unit + "_Concept_" + variant + "_v2.png",
+                    "Unit_" + unit, 640, false, false, true);
+            }
+        }
 
         private static void SaveGrowthFallback(string name, Func<Canvas> create)
         {
@@ -32,13 +56,12 @@ namespace Lightbringer.EditorTools
             Written.Clear();
 
             Illustration("FemaleHero/Source/FemaleHero_View_v2_front.png", "Hero_Commander", 1400, false, false);
-            string[] units = { "Swordsman", "Archer", "Shieldbearer", null, "Priest", "Mage", "Knight", null };
+            string[] units = { "Swordsman", "Shieldbearer", "Knight" };
             foreach (string unit in units)
                 if (unit != null) Illustration(unit + "/Source/" + unit + "_1_Front.png", "Unit_" + unit, 640, false, false);
             // The wings enclose pockets of background the border flood fill cannot reach.
             Illustration("Dragon/Source/Dragon_1_ThreeQuarter.png", "Unit_Dragon", 640, false, true);
-            // No Spearman concept exists yet: a silhouette stands in until the art pass.
-            Illustration("Swordsman/Source/Swordsman_1_Front.png", "Unit_Spearman", 640, true, false);
+            SaveUpdatedUnitPortraits();
 
             Save("Prep_Background", Background(960, 540), false);
             Save("Prep_Rune", Rune(1024), false);
@@ -47,7 +70,6 @@ namespace Lightbringer.EditorTools
             Save("Prep_Frame", Frame(128), false);
             Save("Prep_Fade", Fade(4, 128), false);
             Save("Prep_Star", Star(128), false);
-            Save("Prep_Coin", Coin(64), false);
             Save("Item_LightStaff", Staff(new Color(1f, 0.9f, 0.6f), false), false);
             Save("Item_HealingStaff", Staff(new Color(0.5f, 0.95f, 0.6f), false), false);
             Save("Item_RuneStaff", Staff(new Color(0.62f, 0.62f, 1f), true), false);
@@ -65,7 +87,14 @@ namespace Lightbringer.EditorTools
             SaveGrowthFallback("Growth_AuraBuff", BlessedBladeIcon);
             SaveGrowthFallback("Growth_HeroPower", MightIcon);
             SaveGrowthFallback("Growth_HeroVitality", HeartIcon);
+            SaveBattleHudArt();
 
+            ImportWritten();
+            Debug.Log("Preparation art built: " + Written.Count + " textures in " + Folder);
+        }
+
+        private static void ImportWritten()
+        {
             AssetDatabase.Refresh();
             foreach ((string path, bool compressed) in Written)
             {
@@ -81,16 +110,15 @@ namespace Lightbringer.EditorTools
             }
             // The style sheet resolves url() references at import; reimport it so newly created textures bind.
             AssetDatabase.ImportAsset(Lightbringer.UI.CampaignHUD.StyleSheetPath, ImportAssetOptions.ForceUpdate);
-            Debug.Log("Preparation art built: " + Written.Count + " textures in " + Folder);
         }
 
         private static string Full(string projectPath) => Path.GetFullPath(Path.Combine(Application.dataPath, "..", projectPath));
 
         // ---------- Illustrations ----------
 
-        private static void Illustration(string source, string name, int maxHeight, bool silhouette, bool pockets)
+        private static void Illustration(string source, string name, int maxHeight, bool silhouette, bool pockets, bool projectRelative = false)
         {
-            string path = Full(Characters + source);
+            string path = Full(projectRelative ? source : Characters + source);
             if (!File.Exists(path)) { Debug.LogWarning("Missing illustration source " + path); return; }
             Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             texture.LoadImage(File.ReadAllBytes(path));
@@ -398,18 +426,6 @@ namespace Lightbringer.EditorTools
             canvas.Shape(0, 0, size, size, (x, y) => StarSdf(x, y, c, c, size * 0.47f, size * 0.07f, 4, 0f), (x, y) => Color.white, 7f, 0.5f);
             canvas.Shape(0, 0, size, size, (x, y) => StarSdf(x, y, c, c, size * 0.27f, size * 0.05f, 4, Mathf.PI / 4f),
                 (x, y) => new Color(1f, 1f, 1f, 0.75f), 0f, 0f);
-            return canvas;
-        }
-
-        private static Canvas Coin(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f, r = size * 0.42f;
-            canvas.Shape(0, 0, size, size, (x, y) => Len(x - c, y - c) - r,
-                (x, y) => Color.Lerp(new Color(1f, 0.9f, 0.55f), new Color(0.72f, 0.5f, 0.18f), (y - c + r) / (2f * r)));
-            canvas.Ring(c, c, r, 1.3f, new Color(0.45f, 0.3f, 0.1f), 0f, 0f);
-            canvas.Ring(c, c, r * 0.78f, 1f, new Color(0.6f, 0.42f, 0.14f), 0f, 0f);
-            canvas.Shape(0, 0, size, size, (x, y) => StarSdf(x, y, c, c, r * 0.5f, r * 0.12f, 4, 0f), (x, y) => new Color(1f, 0.97f, 0.8f));
             return canvas;
         }
 

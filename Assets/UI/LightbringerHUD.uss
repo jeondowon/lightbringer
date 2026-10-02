@@ -1,15 +1,8 @@
 /* Lightbringer desktop HUD. Palette follows the character sheet: navy panels, gold trim, ivory text.
-   Replace this file during the Art Pass; the view code only depends on the class names. */
+   The view code only depends on the class names. Battle HUD art: Assets/UI/Art/Hud_*.png
+   (Lightbringer/UI/Build Battle HUD Art). */
 
-.lb-hud {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    color: rgb(238, 232, 219);
-    font-size: 16px;
-}
+/* ---------- Shared ---------- */
 
 .lb-panel {
     background-color: rgba(12, 18, 34, 0.78);
@@ -25,84 +18,6 @@
     -unity-font-style: bold;
     letter-spacing: 1px;
 }
-
-/* ---------- Top bar ---------- */
-
-.lb-top {
-    position: absolute;
-    top: 14px;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: center;
-}
-
-.lb-top-row {
-    flex-direction: row;
-    align-items: center;
-}
-
-.lb-stage {
-    font-size: 18px;
-    -unity-font-style: bold;
-    color: rgb(240, 205, 128);
-    margin-right: 14px;
-}
-
-.lb-waves {
-    margin-left: 14px;
-}
-
-.lb-front {
-    flex-direction: row;
-    align-items: center;
-    margin: 0 4px;
-    padding: 3px 10px;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: rgba(238, 232, 219, 0.25);
-    background-color: rgba(30, 44, 80, 0.6);
-}
-
-.lb-front--selected {
-    border-color: rgb(240, 205, 128);
-    border-width: 2px;
-}
-
-.lb-front--contested {
-    background-color: rgba(120, 92, 40, 0.65);
-}
-
-.lb-front--danger {
-    background-color: rgba(150, 36, 48, 0.8);
-    border-color: rgb(255, 120, 120);
-}
-
-.lb-front-name {
-    -unity-font-style: bold;
-    margin-right: 8px;
-}
-
-.lb-front-allies {
-    color: rgb(158, 204, 255);
-    margin-right: 6px;
-}
-
-.lb-front-enemies {
-    color: rgb(255, 140, 140);
-}
-
-.lb-bases {
-    flex-direction: row;
-    margin-top: 6px;
-}
-
-.lb-base {
-    width: 260px;
-    margin: 0 8px;
-}
-
-/* ---------- Bars ---------- */
 
 .lb-bar {
     height: 18px;
@@ -122,6 +37,10 @@
     width: 50%;
 }
 
+.lb-bar-gloss {
+    display: none;
+}
+
 .lb-bar-text {
     position: absolute;
     left: 0;
@@ -135,27 +54,401 @@
     text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
 }
 
-.lb-bar--hp .lb-bar-fill { background-color: rgb(190, 62, 70); }
-.lb-bar--mana .lb-bar-fill { background-color: rgb(70, 120, 220); }
-.lb-bar--food .lb-bar-fill { background-color: rgb(212, 168, 74); }
-.lb-bar--ally .lb-bar-fill { background-color: rgb(96, 150, 230); }
-.lb-bar--enemy .lb-bar-fill { background-color: rgb(196, 58, 74); }
-.lb-bar--boss .lb-bar-fill { background-color: rgb(160, 40, 90); }
+/* ---------- Battle HUD frame ---------- */
 
-.lb-bar--shielded {
-    border-color: rgb(255, 120, 200);
-    border-width: 2px;
+.lb-hud {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    color: rgb(244, 238, 226);
+    font-size: 16px;
 }
+
+.lb-hud Label {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Darkens the ground behind the command bar so cards and orbs stay readable on bright grass. */
+.lb-hud-vignette {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 300px;
+    background-image: url("Art/Prep_Fade.png");
+    background-size: 100% 100%;
+    opacity: 0.5;
+}
+
+.lb-hud-panel {
+    background-image: url("Art/Hud_Panel.png");
+    -unity-slice-left: 22;
+    -unity-slice-right: 22;
+    -unity-slice-top: 22;
+    -unity-slice-bottom: 22;
+    padding: 8px 16px;
+}
+
+.lb-hud-frame {
+    background-image: url("Art/Hud_FramePanel.png");
+    -unity-slice-left: 30;
+    -unity-slice-right: 30;
+    -unity-slice-top: 30;
+    -unity-slice-bottom: 30;
+    padding: 14px 18px 14px 18px;
+}
+
+.lb-hud-heading {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.lb-hud-title {
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: rgb(244, 212, 140);
+}
+
+.lb-hud-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+}
+
+.lb-hud-icon--ally { background-image: url("Art/Hud_IconAlly.png"); }
+.lb-hud-icon--enemy { background-image: url("Art/Hud_IconEnemy.png"); }
+.lb-hud-icon--wave { background-image: url("Art/Hud_IconWave.png"); }
+.lb-hud-icon--castle { background-image: url("Art/Hud_IconCastle.png"); }
+.lb-hud-icon--food { background-image: url("Art/Growth_FoodProduction.png"); }
+
+.lb-keycap {
+    flex-shrink: 0;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px 2px 7px;
+    align-items: center;
+    justify-content: center;
+    background-image: url("Art/Hud_Keycap.png");
+    -unity-slice-left: 10;
+    -unity-slice-right: 10;
+    -unity-slice-top: 10;
+    -unity-slice-bottom: 10;
+}
+
+.lb-keycap-text {
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(244, 244, 248);
+}
+
+/* ---------- Gauges ---------- */
+
+.lb-hud .lb-bar {
+    height: 18px;
+    margin: 2px 0;
+    border-width: 3px;
+    border-radius: 0;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/Hud_BarFrame.png");
+    -unity-slice-left: 12;
+    -unity-slice-right: 12;
+    -unity-slice-top: 12;
+    -unity-slice-bottom: 12;
+    overflow: hidden;
+}
+
+.lb-hud .lb-bar-fill {
+    border-radius: 2px;
+    background-image: url("Art/Hud_BarFill.png");
+    background-size: 100% 100%;
+    transition-property: width;
+    transition-duration: 0.15s;
+}
+
+.lb-hud .lb-bar-gloss {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: url("Art/Hud_BarGloss.png");
+    background-size: 100% 100%;
+}
+
+.lb-hud .lb-bar-text {
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+.lb-bar--hp .lb-bar-fill { -unity-background-image-tint-color: rgb(228, 58, 60); }
+.lb-bar--mana .lb-bar-fill { -unity-background-image-tint-color: rgb(66, 134, 255); }
+.lb-bar--food .lb-bar-fill { -unity-background-image-tint-color: rgb(244, 182, 58); }
+.lb-bar--ally .lb-bar-fill { -unity-background-image-tint-color: rgb(84, 150, 244); }
+.lb-bar--enemy .lb-bar-fill { -unity-background-image-tint-color: rgb(214, 52, 64); }
+.lb-bar--boss .lb-bar-fill { -unity-background-image-tint-color: rgb(206, 36, 72); }
+.lb-hud .lb-bar--shielded .lb-bar-fill { -unity-background-image-tint-color: rgb(160, 104, 255); }
+.lb-hud .lb-bar--shielded .lb-bar-text { color: rgb(236, 220, 255); }
+
+/* ---------- Top bar ---------- */
+
+.lb-top {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lb-top-row {
+    flex-direction: row;
+    align-items: center;
+    height: 52px;
+    padding: 0 20px;
+}
+
+.lb-stage {
+    margin: 0;
+    padding: 0;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: rgb(255, 224, 150);
+}
+
+.lb-divider {
+    width: 1px;
+    height: 26px;
+    margin: 0 14px;
+    background-color: rgba(219, 174, 90, 0.4);
+}
+
+.lb-fronts {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-front {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 4px;
+    padding: 3px 12px 3px 3px;
+    border-radius: 17px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.04);
+    transition-property: background-color, border-color;
+    transition-duration: 0.25s;
+}
+
+.lb-front-number {
+    width: 26px;
+    height: 26px;
+    margin: 0 8px 0 0;
+    padding: 0;
+    border-radius: 13px;
+    border-width: 1px;
+    border-color: rgba(238, 232, 219, 0.45);
+    background-color: rgb(16, 22, 40);
+    -unity-text-align: middle-center;
+    font-size: 14px;
+    color: rgb(238, 232, 219);
+}
+
+.lb-front-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+.lb-front-allies, .lb-front-enemies {
+    min-width: 14px;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.lb-front-allies {
+    margin-right: 10px;
+    color: rgb(168, 210, 255);
+}
+
+.lb-front-enemies {
+    color: rgb(255, 146, 146);
+}
+
+.lb-front--contested {
+    background-color: rgba(214, 150, 50, 0.2);
+}
+
+.lb-front--danger {
+    background-color: rgba(196, 36, 50, 0.5);
+    border-color: rgb(255, 112, 112);
+}
+
+.lb-front--selected {
+    border-color: rgb(244, 204, 120);
+}
+
+.lb-front--selected .lb-front-number {
+    border-width: 2px;
+    border-color: rgb(255, 214, 120);
+    background-color: rgb(92, 64, 18);
+    color: rgb(255, 240, 196);
+}
+
+.lb-waves {
+    margin: 0 0 0 8px;
+    padding: 0;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.lb-bases {
+    flex-direction: row;
+    margin-top: 4px;
+}
+
+.lb-base {
+    width: 280px;
+    margin: 0 6px;
+    padding: 7px 14px 9px 14px;
+}
+
+.lb-base-head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.lb-base-head .lb-hud-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+}
+
+.lb-base-title {
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+}
+
+.lb-base--ally .lb-base-title { color: rgb(176, 210, 255); }
+.lb-base--enemy .lb-base-title { color: rgb(255, 156, 150); }
+.lb-base--ally .lb-hud-icon--castle { -unity-background-image-tint-color: rgb(196, 220, 255); }
+.lb-base--enemy .lb-hud-icon--castle { -unity-background-image-tint-color: rgb(255, 186, 176); }
+
+/* ---------- Boss ---------- */
 
 .lb-boss {
     position: absolute;
-    top: 118px;
-    left: 30%;
-    right: 30%;
+    top: 150px;
+    left: 32%;
+    right: 32%;
+    align-items: stretch;
 }
 
-.lb-boss .lb-bar {
+.lb-boss-title {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.lb-boss-title .lb-hud-icon {
+    width: 22px;
     height: 22px;
+}
+
+.lb-boss-name {
+    margin: 0 12px;
+    padding: 0;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: rgb(255, 176, 156);
+}
+
+.lb-hud .lb-boss .lb-bar {
+    height: 26px;
+}
+
+/* ---------- Battlefield map (top left) ---------- */
+
+.lb-minimap {
+    position: absolute;
+    left: 18px;
+    top: 14px;
+    width: 264px;
+}
+
+.lb-minimap-map {
+    height: 270px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.45);
+    background-color: rgba(16, 30, 28, 0.8);
+    overflow: hidden;
+}
+
+.lb-minimap-label {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    margin-top: -9px;
+    padding: 0;
+    border-radius: 9px;
+    border-width: 1px;
+    border-color: rgba(238, 232, 219, 0.5);
+    background-color: rgb(16, 24, 44);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    font-size: 11px;
+    color: rgba(238, 232, 219, 0.75);
+}
+
+.lb-minimap-label--selected {
+    border-width: 2px;
+    border-color: rgb(255, 209, 97);
+    background-color: rgb(70, 52, 16);
+    color: rgb(255, 235, 180);
+}
+
+.lb-minimap-route {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.lb-route-caption {
+    margin: 0 8px 0 0;
+    padding: 0;
+    font-size: 11px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.6);
+}
+
+.lb-path-hint {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: rgb(255, 214, 120);
 }
 
 /* ---------- Hero vitals (bottom left) ---------- */
@@ -164,150 +457,404 @@
     position: absolute;
     left: 18px;
     bottom: 18px;
-    width: 300px;
+    width: 392px;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 18px 12px 12px;
+}
+
+.lb-portrait {
+    width: 112px;
+    height: 112px;
+    flex-shrink: 0;
+    margin-right: 14px;
+}
+
+.lb-portrait-face {
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    overflow: hidden;
+    background-color: rgb(30, 46, 92);
+}
+
+.lb-portrait-art {
+    position: absolute;
+    left: -121px;
+    top: -22px;
+    width: 333px;
+    height: 699px;
+    background-image: url("Art/Hero_Commander.png");
+    background-size: 100% 100%;
+}
+
+.lb-portrait-ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 112px;
+    height: 112px;
+    background-image: url("Art/Hud_PortraitRing.png");
+    background-size: 100% 100%;
+}
+
+.lb-level {
+    position: absolute;
+    left: -4px;
+    bottom: -2px;
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    border-width: 2px;
+    border-color: rgb(244, 204, 120);
+    background-color: rgb(18, 28, 60);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-level-value {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    -unity-text-align: middle-center;
+    color: rgb(255, 238, 196);
+}
+
+.lb-gauges {
+    flex-grow: 1;
+}
+
+.lb-hero-name {
+    margin: 0 0 5px 2px;
+    padding: 0;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgb(244, 212, 140);
 }
 
 .lb-vital-row {
     flex-direction: row;
     align-items: center;
+    margin: 1px 0;
 }
 
 .lb-vital-label {
-    width: 44px;
-    font-size: 13px;
+    width: 30px;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
     -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.8);
+}
+
+.lb-vital-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 6px;
 }
 
 .lb-vital-row .lb-bar {
     flex-grow: 1;
 }
 
+.lb-hud .lb-bar--hp {
+    height: 24px;
+}
+
+.lb-hud .lb-bar--hp .lb-bar-text {
+    font-size: 13px;
+}
+
 /* ---------- Command bar (bottom centre) ---------- */
 
 .lb-command {
     position: absolute;
-    bottom: 14px;
+    bottom: 18px;
     left: 0;
     right: 0;
     align-items: center;
-}
-
-.lb-path-hint {
-    margin-bottom: 6px;
-    padding: 2px 12px;
-    font-size: 14px;
-    color: rgb(240, 205, 128);
-}
-
-.lb-abilities, .lb-troops {
-    flex-direction: row;
-    justify-content: center;
 }
 
 .lb-abilities {
-    margin-bottom: 6px;
-}
-
-.lb-slot, .lb-card {
-    overflow: hidden;
-    border-radius: 6px;
-    border-width: 1px;
-    border-color: rgba(219, 174, 90, 0.6);
-    background-color: rgba(12, 18, 34, 0.82);
-    margin: 0 3px;
-    align-items: center;
+    flex-direction: row;
     justify-content: center;
+    align-items: flex-end;
 }
 
 .lb-slot {
-    width: 140px;
-    height: 54px;
+    width: 160px;
+    align-items: center;
+    margin: 0 2px;
 }
 
-.lb-card {
-    width: 116px;
-    height: 58px;
+.lb-socket-orb {
+    width: 96px;
+    height: 96px;
 }
 
-.lb-fill {
+.lb-orb-glow {
+    position: absolute;
+    left: -18px;
+    right: -18px;
+    top: -18px;
+    bottom: -18px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: 100% 100%;
+    -unity-background-image-tint-color: rgba(255, 214, 140, 0.32);
+}
+
+.lb-orb, .lb-orb-dial {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 72px;
+    height: 72px;
+}
+
+.lb-orb {
+    border-radius: 36px;
+    background-color: rgb(10, 14, 28);
+    background-size: 100% 100%;
+}
+
+.lb-orb--0 { background-image: url("Art/Hud_Orb_0.png"); }
+.lb-orb--1 { background-image: url("Art/Hud_Orb_1.png"); }
+.lb-orb--2 { background-image: url("Art/Hud_Orb_2.png"); }
+.lb-orb--3 { background-image: url("Art/Hud_Orb_3.png"); }
+.lb-orb--4 { background-image: url("Art/Hud_Orb_4.png"); }
+.lb-orb--5 { background-image: url("Art/Hud_Orb_5.png"); }
+
+.lb-orb-ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 96px;
+    height: 96px;
+    background-image: url("Art/Hud_OrbRing.png");
+    background-size: 100% 100%;
+}
+
+.lb-orb-timer {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
-    height: 0;
-}
-
-.lb-slot .lb-fill {
     top: 0;
-    bottom: auto;
-    background-color: rgba(0, 0, 0, 0.6);
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-center;
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
 }
 
-.lb-card .lb-fill {
-    background-color: rgba(212, 168, 74, 0.25);
+.lb-orb-key {
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    translate: -50% 0;
 }
 
-/* Key and name share one row so long names never run into the key or wrap. */
-.lb-head {
+.lb-slot-caption {
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    padding: 0 6px;
-}
-
-.lb-key {
-    flex-shrink: 0;
-    margin: 0 5px 0 0;
-    padding: 0;
-    font-size: 12px;
-    -unity-font-style: bold;
-    color: rgb(240, 205, 128);
+    margin-top: 13px;
+    padding: 2px 9px;
+    border-radius: 9px;
+    background-color: rgba(5, 8, 18, 0.72);
 }
 
 .lb-name {
-    flex-shrink: 1;
     margin: 0;
     padding: 0;
-    font-size: 13px;
+    font-size: 12px;
     -unity-font-style: bold;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .lb-cost {
-    margin: 2px 0 0 0;
+    margin: 0 0 0 6px;
     padding: 0;
-    font-size: 12px;
-    color: rgba(238, 232, 219, 0.75);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(132, 178, 255);
 }
 
-.lb-slot--cooling .lb-name, .lb-slot--nomana .lb-name {
-    color: rgba(238, 232, 219, 0.5);
+.lb-slot--passive .lb-orb-glow { opacity: 0.3; }
+.lb-slot--passive .lb-cost { color: rgba(238, 232, 219, 0.5); }
+.lb-slot--cooling .lb-orb-glow { opacity: 0; }
+.lb-slot--cooling .lb-name { color: rgba(238, 232, 219, 0.55); }
+.lb-slot--nomana .lb-orb { -unity-background-image-tint-color: rgb(150, 156, 196); }
+.lb-slot--nomana .lb-orb-glow { opacity: 0; }
+.lb-slot--nomana .lb-cost { color: rgb(255, 118, 118); }
+
+/* ---------- Troop roster (right edge) ----------
+   One row per troop: framed portrait, name and Food cost. The portrait shade drains from the top as Food builds up. */
+
+.lb-troops {
+    position: absolute;
+    right: 18px;
+    top: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: flex-end;
 }
 
-.lb-slot--nomana .lb-cost {
-    color: rgb(130, 160, 255);
+.lb-card {
+    width: 232px;
+    height: 88px;
+    margin: 3px 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px 0 7px;
+    background-image: url("Art/Hud_Panel.png");
+    -unity-slice-left: 22;
+    -unity-slice-right: 22;
+    -unity-slice-top: 22;
+    -unity-slice-bottom: 22;
+    transition-property: translate;
+    transition-duration: 0.15s;
 }
 
-.lb-slot--passive {
-    border-color: rgba(238, 232, 219, 0.2);
-    opacity: 0.7;
+.lb-card-halo {
+    position: absolute;
+    left: -12px;
+    right: -12px;
+    top: -12px;
+    bottom: -12px;
+    background-image: url("Art/Prep_Halo.png");
+    -unity-slice-left: 40;
+    -unity-slice-right: 40;
+    -unity-slice-top: 40;
+    -unity-slice-bottom: 40;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: rgb(255, 204, 110);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
 }
 
-.lb-card--ready {
-    border-color: rgb(240, 205, 128);
-    background-color: rgba(42, 52, 92, 0.9);
+.lb-card-portrait {
+    width: 74px;
+    height: 74px;
+    flex-shrink: 0;
+    margin-right: 12px;
 }
 
-.lb-card--ready .lb-cost {
-    color: rgb(240, 205, 128);
+.lb-card-body {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 3px;
+    bottom: 3px;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: rgb(22, 34, 66);
 }
+
+.lb-card-art {
+    position: absolute;
+    left: -32%;
+    right: -32%;
+    top: 2px;
+    height: 200px;
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: top;
+}
+
+.lb-card--0 .lb-card-art { background-image: url("Art/Unit_Swordsman.png"); }
+.lb-card--1 .lb-card-art { background-image: url("Art/Unit_Archer.png"); }
+.lb-card--2 .lb-card-art { background-image: url("Art/Unit_Shieldbearer.png"); }
+.lb-card--3 .lb-card-art { background-image: url("Art/Unit_Spearman.png"); }
+.lb-card--4 .lb-card-art { background-image: url("Art/Unit_Priest.png"); }
+.lb-card--5 .lb-card-art { background-image: url("Art/Unit_Mage.png"); }
+.lb-card--6 .lb-card-art { background-image: url("Art/Unit_Knight.png"); }
+.lb-card--7 .lb-card-art { background-image: url("Art/Unit_Dragon.png"); left: -60%; right: -20%; height: 110px; background-position-x: right; }
+
+.lb-card-shade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 0;
+    background-color: rgba(4, 6, 16, 0.74);
+    border-bottom-width: 1px;
+    border-color: rgba(255, 214, 130, 0.7);
+}
+
+.lb-card-frame {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: url("Art/Hud_CardFrame.png");
+    -unity-slice-left: 24;
+    -unity-slice-right: 24;
+    -unity-slice-top: 24;
+    -unity-slice-bottom: 24;
+    -unity-slice-scale: 0.75px;
+    -unity-background-image-tint-color: rgb(150, 146, 150);
+}
+
+.lb-card-key {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    min-width: 22px;
+    height: 22px;
+}
+
+.lb-card-info {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.lb-card-name {
+    margin: 0 0 3px 0;
+    padding: 0;
+    font-size: 16px;
+    -unity-font-style: bold;
+    white-space: nowrap;
+    color: rgba(238, 232, 219, 0.65);
+}
+
+.lb-card-price {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-card-food {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.lb-card-cost {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.55);
+}
+
+.lb-card--ready .lb-card-halo { opacity: 0.35; }
+.lb-card--ready .lb-card-frame { -unity-background-image-tint-color: rgb(255, 255, 255); }
+.lb-card--ready .lb-card-name { color: rgb(255, 250, 240); }
+.lb-card--ready .lb-card-cost { color: rgb(255, 214, 120); }
+.lb-card--ready .lb-card-shade { border-bottom-width: 0; }
 
 .lb-card--selected {
-    border-width: 2px;
-    border-color: rgb(158, 204, 255);
+    translate: -14px 0;
+}
+
+.lb-card--selected .lb-card-halo {
+    opacity: 0.9;
+    -unity-background-image-tint-color: rgb(140, 196, 255);
 }
 
 /* ---------- Misc ---------- */
@@ -316,33 +863,71 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 6px;
-    height: 6px;
-    margin-left: -3px;
-    margin-top: -3px;
-    border-radius: 3px;
-    background-color: rgba(255, 250, 240, 0.85);
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    margin-top: -8px;
+    border-radius: 8px;
+    border-width: 1.5px;
+    border-color: rgba(255, 250, 240, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-crosshair-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 250, 240, 0.95);
 }
 
 .lb-toast {
     position: absolute;
-    bottom: 200px;
-    left: 0;
-    right: 0;
+    bottom: 190px;
+    left: 50%;
+    width: 640px;
+    height: 46px;
+    margin: 0 0 0 -320px;
+    padding: 0;
+    background-image: url("Art/Hud_Banner.png");
+    -unity-slice-left: 70;
+    -unity-slice-right: 70;
+    -unity-slice-top: 4;
+    -unity-slice-bottom: 4;
     -unity-text-align: middle-center;
     font-size: 17px;
     -unity-font-style: bold;
     color: rgb(255, 245, 225);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-.lb-hint {
+.lb-hints {
     position: absolute;
     right: 18px;
     bottom: 18px;
+    align-items: flex-end;
+    padding: 4px 14px 10px 4px;
+}
+
+.lb-hint-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.lb-hint-row .lb-keycap {
+    height: 22px;
+    min-width: 22px;
+}
+
+.lb-hint-text {
+    margin: 0 0 0 6px;
+    padding: 0;
     font-size: 12px;
-    color: rgba(238, 232, 219, 0.6);
-    -unity-text-align: lower-right;
+    color: rgba(238, 232, 219, 0.8);
+}
+
+.lb-hint-row .lb-keycap {
+    margin-left: 12px;
 }
 
 .lb-healthbars {
@@ -356,17 +941,21 @@
 .lb-unit-bar {
     position: absolute;
     width: 40px;
-    height: 5px;
+    height: 6px;
     margin-left: -20px;
-    background-color: rgba(0, 0, 0, 0.7);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 .lb-unit-bar-fill {
     height: 100%;
+    background-image: url("Art/Hud_BarFill.png");
+    background-size: 100% 100%;
 }
 
-.lb-unit-bar--ally .lb-unit-bar-fill { background-color: rgb(110, 200, 255); }
-.lb-unit-bar--enemy .lb-unit-bar-fill { background-color: rgb(230, 70, 80); }
+.lb-unit-bar--ally .lb-unit-bar-fill { -unity-background-image-tint-color: rgb(110, 196, 255); }
+.lb-unit-bar--enemy .lb-unit-bar-fill { -unity-background-image-tint-color: rgb(236, 70, 80); }
 
 /* ---------- Overlays: level-up and result ---------- */
 
@@ -541,7 +1130,7 @@
     -unity-background-image-tint-color: rgb(255, 236, 190);
 }
 
-/* Header and purse */
+/* Header */
 
 .lb-prep-header {
     position: absolute;
@@ -576,42 +1165,6 @@
     letter-spacing: 5px;
     -unity-font-style: bold;
     color: rgba(238, 232, 219, 0.7);
-}
-
-.lb-prep-purse {
-    position: absolute;
-    right: 48px;
-    top: 36px;
-    flex-direction: row;
-    align-items: center;
-    padding: 6px 18px 6px 8px;
-    border-radius: 22px;
-    border-width: 1px;
-    border-color: rgba(219, 174, 90, 0.6);
-    background-color: rgba(8, 12, 24, 0.82);
-}
-
-.lb-prep-coin {
-    width: 30px;
-    height: 30px;
-    background-image: url("Art/Prep_Coin.png");
-    background-size: contain;
-}
-
-.lb-prep-gold {
-    margin: 0 0 0 8px;
-    padding: 0;
-    font-size: 24px;
-    color: rgb(244, 212, 140);
-}
-
-.lb-prep-purse-label {
-    margin: 0 0 0 8px;
-    padding: 0;
-    font-size: 12px;
-    letter-spacing: 2px;
-    -unity-font-style: bold;
-    color: rgba(238, 232, 219, 0.6);
 }
 
 /* Framed panels */

@@ -16,7 +16,6 @@ namespace Lightbringer.Progression
         public int version = 1;
         public int unlockedStage = 1;
         public bool[] cleared = new bool[StageCount];
-        public int gold;
         public int level = 1;
         public int experience;
         public int pendingLevels;
@@ -31,7 +30,7 @@ namespace Lightbringer.Progression
         public bool IsValid()
         {
             if (version != 1 || unlockedStage < 1 || unlockedStage > StageCount || level < 1 || level > 100
-                || gold < 0 || experience < 0 || experience >= ExperienceToNext || pendingLevels < 0 || pendingLevels > 99
+                || experience < 0 || experience >= ExperienceToNext || pendingLevels < 0 || pendingLevels > 99
                 || cleared == null || cleared.Length != StageCount || ranks == null || ranks.Length != GrowthCount
                 || equipmentLevels == null || equipmentLevels.Length != EquipmentCatalog.Count
                 || loadout == null || loadout.Length != EquipmentCatalog.Slots || choices == null
@@ -107,14 +106,12 @@ namespace Lightbringer.Progression
             if (stage < 1 || stage > unlockedStage || stage > StageCount || cleared[stage - 1]) return false;
             cleared[stage - 1] = true;
             unlockedStage = Mathf.Max(unlockedStage, Mathf.Min(StageCount, stage + 1));
-            gold += ClearGold(stage);
             int reward = ClearRewardItem(stage);
             equipmentLevels[reward] = Mathf.Max(equipmentLevels[reward], ClearRewardLevel(stage));
             return true;
         }
 
-        // First-clear rewards, also shown in the preparation briefing.
-        public static int ClearGold(int stage) => stage * 100;
+        // The only first-clear reward is equipment: a staff (skill) or a ring. Also shown in the preparation briefing.
         public static int ClearRewardItem(int stage) => (stage + 1) % EquipmentCatalog.Count;
         public static int ClearRewardLevel(int stage) => 1 + stage / 3;
     }

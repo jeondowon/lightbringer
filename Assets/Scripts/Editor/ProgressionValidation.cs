@@ -22,9 +22,9 @@ namespace Lightbringer.EditorTools
             Check(!progress.ChooseGrowth(3) && progress.ChooseGrowth(1) && progress.ranks[picked] == 1
                 && progress.pendingLevels == 1, "Choosing a valid growth applies exactly one permanent rank");
             Check(progress.CompleteStage(1) && progress.unlockedStage == 2 && progress.UnlockedUnits == 2
-                && progress.gold == 100 && progress.equipmentLevels[2] == 1,
-                "First clear grants gold, equipment, a new stage and an additional troop");
-            Check(!progress.CompleteStage(1) && progress.gold == 100,
+                && progress.equipmentLevels[2] == 1,
+                "First clear grants equipment, a new stage and an additional troop");
+            Check(!progress.CompleteStage(1) && progress.unlockedStage == 2 && progress.equipmentLevels[2] == 1,
                 "Repeated first-clear requests cannot duplicate campaign rewards");
             Check(!progress.TryEquip(0, 5) && !progress.TryEquip(1, 0) && progress.TryEquip(1, 2),
                 "Campaign loadout rejects unowned and duplicate gear and accepts unlocked gear");
@@ -36,7 +36,7 @@ namespace Lightbringer.EditorTools
                 CampaignSaveStore store = new CampaignSaveStore(path);
                 Check(store.Save(progress), "Campaign saves to an isolated test slot");
                 CampaignProgress loaded = new CampaignSaveStore(path).Load();
-                Check(loaded.IsValid() && loaded.ranks[picked] == 1 && loaded.gold == 100
+                Check(loaded.IsValid() && loaded.ranks[picked] == 1 && loaded.equipmentLevels[2] == 1
                     && loaded.choices.SequenceEqual(progress.choices) && loaded.pendingLevels == 1
                     && loaded.loadout.SequenceEqual(progress.loadout),
                     "Save/load preserves growth, rewards, loadout and pending random choices without rerolling");
@@ -45,7 +45,7 @@ namespace Lightbringer.EditorTools
                 File.WriteAllText(path, "{ damaged");
                 CampaignSaveStore recovery = new CampaignSaveStore(path);
                 CampaignProgress recovered = recovery.Load();
-                Check(recovered.gold == 100 && recovery.CanSave && recovered.pendingLevels == 1,
+                Check(recovered.equipmentLevels[2] == 1 && recovery.CanSave && recovered.pendingLevels == 1,
                     "Corrupted main save recovers the valid backup");
                 Check(recovery.Save(recovered) && Directory.GetFiles(folder, "*.corrupt-*").Length == 1,
                     "Backup recovery preserves the damaged original before replacing it");

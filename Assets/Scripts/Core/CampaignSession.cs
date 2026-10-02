@@ -103,7 +103,7 @@ namespace Lightbringer.Core
             playtest.Finish(victory ? "victory" : "defeat");
             bool rewarded = victory && Progress.CompleteStage(SelectedStage);
             LastResult = victory
-                ? rewarded ? "Victory! Earned first-clear gold, equipment and campaign unlocks." : "Victory! First-clear rewards were already claimed."
+                ? rewarded ? "Victory! Earned first-clear equipment and campaign unlocks." : "Victory! First-clear rewards were already claimed."
                 : "Defeat. Your permanent growth and equipment are retained.";
             dirty = true;
             Flush();

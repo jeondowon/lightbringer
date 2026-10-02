@@ -34,7 +34,7 @@ namespace Lightbringer.Progression
                 if (!File.Exists(file)) return false;
                 string json = File.ReadAllText(file, Encoding.UTF8);
                 // JsonUtility supplies field defaults for missing fields; reject incomplete records first.
-                string[] required = { "version", "unlockedStage", "cleared", "gold", "level", "experience",
+                string[] required = { "version", "unlockedStage", "cleared", "level", "experience",
                     "pendingLevels", "choices", "ranks", "equipmentLevels", "loadout" };
                 foreach (string field in required) if (!json.Contains("\"" + field + "\"")) return false;
                 progress = JsonUtility.FromJson<CampaignProgress>(json);
