@@ -23,7 +23,7 @@ namespace Lightbringer.UI
         }
 
         // Assigning identical text or style each frame is cheap but still dirties layout; skip unchanged values.
-        public static void Set(Label label, string text)
+        public static void Set(TextElement label, string text)
         {
             if (label.text != text) label.text = text;
         }

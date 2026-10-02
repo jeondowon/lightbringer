@@ -28,6 +28,8 @@ namespace Lightbringer.Core
 
     public static class PrototypeBattleBuilder
     {
+        public static int PathCount(int stage) => stage <= 2 ? 1 : stage <= 5 ? 2 : 3;
+
         public static PrototypeBattle Build(int stage, CampaignProgress progress, InputActionAsset input,
             Material material, Shader ringShader, Transform parent, ArtStyleLibrary art = null)
         {
@@ -70,7 +72,7 @@ namespace Lightbringer.Core
             hero.AddComponent<PlayerMovement>().Configure(cameraObject.transform, input);
             battle.Abilities.ConfigureCamera(battle.Camera);
 
-            int lanes = stage <= 2 ? 1 : stage <= 5 ? 2 : 3;
+            int lanes = PathCount(stage);
             battle.Paths = new WaypointPath[lanes];
             WaypointPath[] enemyRoutes = new WaypointPath[lanes];
             for (int i = 0; i < lanes; i++)

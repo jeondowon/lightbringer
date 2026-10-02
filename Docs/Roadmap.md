@@ -41,7 +41,7 @@
 
 ## Step 2. 데스크톱 HUD 교체
 
-현재 HUD는 `OnGUI` 디버그 UI (`UI/CampaignHUD.cs`, `UI/BattlefieldReadability.cs`).
+이전 `OnGUI` 디버그 UI는 모두 UI Toolkit으로 교체 (`UI/CampaignHUD.cs`가 호스트).
 
 - [x] UI 방식 결정 → **UI Toolkit** (`Assets/UI/`: PanelSettings, 테마, `LightbringerHUD.uss`), 배치 → 액션 RPG형
 - [x] Food / Mana / HP 게이지 (좌하단)
@@ -52,7 +52,7 @@
 - [x] 레벨업 3택1 카드 UI
 - [x] 승리 / 패배 화면 (플레이테스트 요약 · 재미 평가 · 메모)
 - [x] 유닛 머리 위 체력바 (UI Toolkit으로 이전)
-- [ ] 스테이지 준비 화면 (스테이지 선택 · 장비 3개 선택) — 아직 OnGUI
+- [x] 스테이지 준비 화면 (스테이지 선택 · 슬롯 선택 후 장비 장착 · 병종/성장 요약) — UI Toolkit `PreparationView`
 - [ ] 실제 플레이 화면 확인 후 레이아웃/크기 조정
 
 ## Step 3. 전투 손맛과 사운드

@@ -107,10 +107,15 @@ namespace Lightbringer.Progression
             if (stage < 1 || stage > unlockedStage || stage > StageCount || cleared[stage - 1]) return false;
             cleared[stage - 1] = true;
             unlockedStage = Mathf.Max(unlockedStage, Mathf.Min(StageCount, stage + 1));
-            gold += stage * 100;
-            int reward = (stage + 1) % EquipmentCatalog.Count;
-            equipmentLevels[reward] = Mathf.Max(equipmentLevels[reward], 1 + stage / 3);
+            gold += ClearGold(stage);
+            int reward = ClearRewardItem(stage);
+            equipmentLevels[reward] = Mathf.Max(equipmentLevels[reward], ClearRewardLevel(stage));
             return true;
         }
+
+        // First-clear rewards, also shown in the preparation briefing.
+        public static int ClearGold(int stage) => stage * 100;
+        public static int ClearRewardItem(int stage) => (stage + 1) % EquipmentCatalog.Count;
+        public static int ClearRewardLevel(int stage) => 1 + stage / 3;
     }
 }

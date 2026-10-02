@@ -69,5 +69,14 @@ namespace Lightbringer.Units
         }
 
         public static bool HasBoss(int stage) => stage == BossStage;
+
+        public static bool AppearsIn(EnemyKind kind, int stage)
+        {
+            if (kind == EnemyKind.Boss) return HasBoss(stage);
+            if (stage < 1) return false;
+            foreach (EnemyKind[] squad in Squads[UnityEngine.Mathf.Clamp(stage, 1, Squads.Length) - 1])
+                if (System.Array.IndexOf(squad, kind) >= 0) return true;
+            return false;
+        }
     }
 }

@@ -27,7 +27,8 @@ namespace Lightbringer.Core
         private readonly Dictionary<Combatant, EnemyKind> kinds = new Dictionary<Combatant, EnemyKind>();
 
         public int WavesSpawned => waves;
-        public int TotalWaves => 3 + stage / 2;
+        public int TotalWaves => WaveCount(stage);
+        public static int WaveCount(int stage) => 3 + stage / 2;
         public bool HasBoss => EnemyCatalog.HasBoss(stage);
         public Combatant Boss { get; private set; }
         public bool BossDefeated { get; private set; }

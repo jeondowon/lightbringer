@@ -477,6 +477,1012 @@
     background-color: rgb(72, 108, 210);
 }
 
+/* ---------- Campaign preparation ----------
+   Full screen: the preparation camera renders nothing behind it. Textures in Art/ come from
+   Lightbringer/UI/Build Preparation Art; Cinzel (OFL) is the display face. */
+
+.lb-display {
+    -unity-font-definition: url("Fonts/Cinzel.ttf");
+    -unity-font-style: bold;
+}
+
+.lb-prep {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background-color: rgb(5, 8, 16);
+    color: rgb(238, 232, 219);
+}
+
+.lb-prep-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("Art/Prep_Background.png");
+    background-size: cover;
+}
+
+.lb-prep-rune {
+    position: absolute;
+    left: -130px;
+    top: 180px;
+    width: 960px;
+    height: 960px;
+    background-image: url("Art/Prep_Rune.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgba(240, 200, 120, 0.24);
+}
+
+.lb-prep-rune--inner {
+    left: 60px;
+    top: 370px;
+    width: 580px;
+    height: 580px;
+    -unity-background-image-tint-color: rgba(150, 190, 255, 0.26);
+}
+
+.lb-prep-hero-glow {
+    position: absolute;
+    left: -60px;
+    top: 160px;
+    width: 820px;
+    height: 820px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgba(255, 214, 140, 0.22);
+}
+
+.lb-prep-hero {
+    position: absolute;
+    left: 90px;
+    top: 150px;
+    width: 520px;
+    height: 1090px;
+    background-image: url("Art/Hero_Commander.png");
+    background-size: contain;
+    background-position-y: top;
+}
+
+.lb-prep-motes {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lb-prep-mote {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgb(255, 236, 190);
+}
+
+/* Header and purse */
+
+.lb-prep-header {
+    position: absolute;
+    left: 48px;
+    top: 28px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-prep-emblem {
+    width: 64px;
+    height: 64px;
+    margin-right: 14px;
+    background-image: url("Art/Prep_Star.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgb(240, 205, 128);
+}
+
+.lb-prep-title {
+    margin: 0;
+    padding: 0;
+    font-size: 46px;
+    letter-spacing: 6px;
+    color: rgb(244, 212, 140);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.lb-prep-subtitle {
+    margin: 0;
+    padding: 0 0 0 3px;
+    font-size: 14px;
+    letter-spacing: 5px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.7);
+}
+
+.lb-prep-purse {
+    position: absolute;
+    right: 48px;
+    top: 36px;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 18px 6px 8px;
+    border-radius: 22px;
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.6);
+    background-color: rgba(8, 12, 24, 0.82);
+}
+
+.lb-prep-coin {
+    width: 30px;
+    height: 30px;
+    background-image: url("Art/Prep_Coin.png");
+    background-size: contain;
+}
+
+.lb-prep-gold {
+    margin: 0 0 0 8px;
+    padding: 0;
+    font-size: 24px;
+    color: rgb(244, 212, 140);
+}
+
+.lb-prep-purse-label {
+    margin: 0 0 0 8px;
+    padding: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.6);
+}
+
+/* Framed panels */
+
+.lb-prep-frame {
+    background-image: url("Art/Prep_Frame.png");
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 26;
+    -unity-slice-bottom: 26;
+}
+
+.lb-prep-plate {
+    position: absolute;
+    left: 40px;
+    bottom: 34px;
+    width: 560px;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 22px 18px 18px;
+}
+
+.lb-prep-medal {
+    width: 76px;
+    height: 76px;
+    margin-right: 16px;
+    border-radius: 38px;
+    border-width: 2px;
+    border-color: rgb(240, 205, 128);
+    background-color: rgb(24, 36, 72);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-prep-medal-label {
+    margin: 0 0 -4px 0;
+    padding: 0;
+    font-size: 11px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgb(240, 205, 128);
+}
+
+.lb-prep-medal-value {
+    margin: 0;
+    padding: 0;
+    font-size: 30px;
+    color: rgb(255, 240, 200);
+    -unity-text-align: middle-center;
+}
+
+.lb-prep-identity {
+    flex-grow: 1;
+}
+
+.lb-prep-hero-name {
+    margin: 0;
+    padding: 0;
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: rgb(244, 212, 140);
+}
+
+.lb-prep-hero-role {
+    margin: 0 0 6px 0;
+    padding: 0;
+    font-size: 13px;
+    color: rgba(238, 232, 219, 0.65);
+}
+
+.lb-bar--exp .lb-bar-fill { background-color: rgb(150, 120, 210); }
+
+.lb-prep-content {
+    position: absolute;
+    left: 640px;
+    right: 40px;
+    top: 120px;
+    bottom: 30px;
+    flex-direction: row;
+}
+
+.lb-prep-column {
+    flex-basis: 0;
+    flex-direction: column;
+}
+
+.lb-prep-column--campaign {
+    flex-grow: 0.92;
+    margin-right: 18px;
+}
+
+.lb-prep-column--army {
+    flex-grow: 1.08;
+}
+
+.lb-prep-panel {
+    margin-bottom: 14px;
+    padding: 16px 20px 18px 20px;
+}
+
+.lb-prep-panel-head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.lb-prep-bullet {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    background-image: url("Art/Prep_Star.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgb(240, 205, 128);
+}
+
+.lb-prep-panel-title {
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: rgb(244, 212, 140);
+}
+
+.lb-prep-hint {
+    margin: 0 0 0 12px;
+    padding: 0;
+    font-size: 12px;
+    color: rgba(238, 232, 219, 0.5);
+}
+
+.lb-chips .lb-prep-hint, .lb-rewards .lb-prep-hint {
+    margin-left: 0;
+}
+
+.lb-reward .lb-prep-hint {
+    margin-left: 8px;
+}
+
+.lb-prep-caption {
+    margin: 12px 0 6px 0;
+    padding: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgba(240, 205, 128, 0.8);
+}
+
+/* Campaign route */
+
+.lb-route {
+    flex-direction: row;
+    justify-content: space-between;
+    height: 96px;
+    padding: 0 4px;
+}
+
+.lb-route-track {
+    position: absolute;
+    left: 35px;
+    right: 35px;
+    top: 27px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(238, 232, 219, 0.12);
+}
+
+.lb-route-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: 2px;
+    background-color: rgb(232, 192, 110);
+}
+
+.lb-prep .lb-stage {
+    width: 62px;
+    height: 96px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible;
+    opacity: 1;
+}
+
+.lb-prep .lb-stage:hover, .lb-prep .lb-stage:active, .lb-prep .lb-stage:focus, .lb-prep .lb-stage:disabled {
+    background-color: rgba(0, 0, 0, 0);
+    opacity: 1;
+}
+
+.lb-stage-glow {
+    position: absolute;
+    left: -24px;
+    top: -26px;
+    width: 110px;
+    height: 110px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgba(255, 210, 120, 0.9);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.lb-stage-circle {
+    width: 58px;
+    height: 58px;
+    border-radius: 29px;
+    border-width: 2px;
+    border-color: rgba(219, 174, 90, 0.55);
+    background-color: rgb(16, 24, 46);
+    align-items: center;
+    justify-content: center;
+    transition-property: scale, border-color, background-color;
+    transition-duration: 0.15s;
+}
+
+.lb-stage-number {
+    margin: 0;
+    padding: 0;
+    font-size: 22px;
+    color: rgb(238, 232, 219);
+    -unity-text-align: middle-center;
+}
+
+.lb-stage-state {
+    margin: 6px 0 0 0;
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 1px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.55);
+}
+
+.lb-stage--new .lb-stage-circle { background-color: rgb(26, 40, 80); }
+.lb-stage--new .lb-stage-state { color: rgb(158, 204, 255); }
+.lb-stage--cleared .lb-stage-circle { background-color: rgb(28, 46, 58); border-color: rgba(150, 210, 150, 0.7); }
+.lb-stage--cleared .lb-stage-state { color: rgb(150, 210, 150); }
+.lb-stage--boss .lb-stage-circle { background-color: rgb(56, 18, 30); border-color: rgb(220, 90, 100); }
+.lb-stage--boss .lb-stage-state { color: rgb(255, 140, 140); }
+
+.lb-prep .lb-stage:hover .lb-stage-circle {
+    border-color: rgb(255, 225, 150);
+    scale: 1.08 1.08;
+}
+
+.lb-prep .lb-stage--selected .lb-stage-circle {
+    border-width: 3px;
+    border-color: rgb(255, 226, 160);
+    background-color: rgb(52, 76, 140);
+    scale: 1.12 1.12;
+}
+
+.lb-stage--selected .lb-stage-glow { opacity: 1; }
+.lb-stage--selected .lb-stage-number { color: rgb(255, 255, 255); }
+
+.lb-prep .lb-stage:disabled .lb-stage-circle {
+    background-color: rgb(10, 14, 26);
+    border-color: rgba(238, 232, 219, 0.12);
+}
+
+.lb-prep .lb-stage:disabled .lb-stage-number { color: rgba(238, 232, 219, 0.25); }
+.lb-prep .lb-stage:disabled .lb-stage-state { color: rgba(238, 232, 219, 0.3); }
+
+/* Briefing */
+
+.lb-prep-panel--briefing {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.lb-briefing-rune {
+    position: absolute;
+    right: -90px;
+    top: -40px;
+    width: 340px;
+    height: 340px;
+    background-image: url("Art/Prep_Rune.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgba(158, 190, 255, 0.12);
+}
+
+.lb-briefing-title-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.lb-briefing-title {
+    margin: 0;
+    padding: 0;
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: rgb(255, 240, 205);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.lb-briefing-tag {
+    margin: 0 0 0 14px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(158, 204, 255, 0.6);
+    background-color: rgba(30, 50, 100, 0.6);
+    font-size: 12px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgb(158, 204, 255);
+}
+
+.lb-briefing-tag--boss {
+    border-color: rgb(220, 90, 100);
+    background-color: rgba(90, 20, 34, 0.75);
+    color: rgb(255, 150, 150);
+}
+
+.lb-briefing-tag--cleared {
+    border-color: rgba(150, 210, 150, 0.7);
+    background-color: rgba(30, 60, 40, 0.6);
+    color: rgb(150, 210, 150);
+}
+
+.lb-briefing-note {
+    margin: 16px 0 0 0;
+    padding: 0;
+    font-size: 13px;
+    -unity-font-style: italic;
+    white-space: normal;
+    color: rgba(238, 232, 219, 0.7);
+}
+
+.lb-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.lb-chip {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 6px 6px 0;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(238, 232, 219, 0.18);
+    background-color: rgba(24, 36, 70, 0.85);
+}
+
+.lb-chip-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 7px;
+    border-radius: 4px;
+    background-color: rgb(230, 130, 90);
+}
+
+.lb-chip--heavy .lb-chip-dot { background-color: rgb(220, 60, 80); }
+
+.lb-chip-name {
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: rgb(238, 232, 219);
+}
+
+/* Battlefield schematic: our gate below, the enemy stronghold above, one lane per Path. */
+
+.lb-map {
+    flex-grow: 1;
+    min-height: 150px;
+    max-height: 260px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.3);
+    background-color: rgba(6, 10, 20, 0.6);
+    overflow: hidden;
+}
+
+.lb-map-base {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    height: 26px;
+    margin: 0;
+    padding: 0;
+    border-radius: 4px;
+    border-width: 1px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.lb-map-base--enemy {
+    top: 10px;
+    border-color: rgb(200, 80, 90);
+    background-color: rgba(110, 26, 38, 0.75);
+    color: rgb(255, 170, 170);
+}
+
+.lb-map-base--boss {
+    border-color: rgb(255, 110, 130);
+    background-color: rgba(150, 20, 50, 0.9);
+}
+
+.lb-map-base--ally {
+    bottom: 10px;
+    border-color: rgb(120, 170, 255);
+    background-color: rgba(30, 52, 110, 0.8);
+    color: rgb(190, 215, 255);
+}
+
+.lb-map-path {
+    position: absolute;
+    top: 36px;
+    bottom: 36px;
+    width: 0;
+}
+
+.lb-map-path-line {
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: rgba(232, 192, 110, 0.75);
+}
+
+.lb-map-path-label {
+    position: absolute;
+    left: -34px;
+    top: 42%;
+    width: 68px;
+    margin: 0;
+    padding: 2px 0;
+    border-radius: 3px;
+    background-color: rgb(12, 18, 36);
+    font-size: 10px;
+    letter-spacing: 1px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(240, 205, 128);
+}
+
+.lb-chip-badge {
+    margin: 0 0 0 7px;
+    padding: 0 5px;
+    border-radius: 3px;
+    background-color: rgb(212, 168, 74);
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: rgb(20, 20, 30);
+}
+
+.lb-chip-detail {
+    margin: 0 0 0 6px;
+    padding: 0;
+    font-size: 12px;
+    color: rgb(240, 205, 128);
+}
+
+.lb-rewards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.lb-reward {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 12px 6px 0;
+    padding: 5px 12px 5px 6px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.35);
+    background-color: rgba(8, 12, 24, 0.55);
+}
+
+.lb-reward .lb-reward-icon {
+    width: 34px;
+    height: 34px;
+    margin-right: 8px;
+}
+
+.lb-reward-value {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: rgb(255, 245, 225);
+}
+
+/* Start */
+
+.lb-launch {
+    height: 84px;
+    justify-content: center;
+}
+
+.lb-launch-glow {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: -6px;
+    bottom: -6px;
+    background-image: url("Art/Prep_Halo.png");
+    -unity-slice-left: 40;
+    -unity-slice-right: 40;
+    -unity-slice-top: 40;
+    -unity-slice-bottom: 40;
+    -unity-slice-scale: 0.333px;
+    -unity-background-image-tint-color: rgb(255, 210, 120);
+}
+
+.lb-prep .lb-launch-button {
+    height: 72px;
+    margin: 0 24px;
+    padding: 0;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: rgb(240, 205, 128);
+    background-color: rgb(40, 66, 146);
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: rgb(255, 246, 225);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.lb-prep .lb-launch-button:hover {
+    background-color: rgb(56, 88, 186);
+    border-color: rgb(255, 232, 170);
+    scale: 1.02 1.02;
+}
+
+.lb-prep .lb-launch-button:active {
+    background-color: rgb(32, 54, 120);
+    scale: 0.99 0.99;
+}
+
+.lb-prep .lb-launch-button:disabled {
+    background-color: rgb(30, 36, 56);
+    border-color: rgba(238, 232, 219, 0.2);
+    color: rgba(238, 232, 219, 0.4);
+    opacity: 1;
+}
+
+.lb-prep-footnote {
+    align-self: center;
+    margin: 8px 0 0 0;
+    padding: 0;
+    font-size: 11px;
+    color: rgba(238, 232, 219, 0.45);
+}
+
+/* Loadout */
+
+.lb-sockets {
+    flex-direction: row;
+    margin-bottom: 12px;
+}
+
+.lb-halo {
+    position: absolute;
+    left: -12px;
+    right: -12px;
+    top: -12px;
+    bottom: -12px;
+    background-image: url("Art/Prep_Halo.png");
+    -unity-slice-left: 40;
+    -unity-slice-right: 40;
+    -unity-slice-top: 40;
+    -unity-slice-bottom: 40;
+    -unity-slice-scale: 0.333px;
+    -unity-background-image-tint-color: rgb(255, 210, 120);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.lb-prep .lb-socket {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 92px;
+    margin: 0 4px;
+    padding: 8px 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    border-width: 1px;
+    border-radius: 8px;
+    border-color: rgba(219, 174, 90, 0.45);
+    background-color: rgba(20, 30, 58, 0.92);
+    overflow: visible;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.lb-prep .lb-socket:hover {
+    border-color: rgb(255, 225, 150);
+    background-color: rgb(32, 48, 92);
+}
+
+.lb-prep .lb-socket--active, .lb-prep .lb-socket--active:hover {
+    border-width: 2px;
+    border-color: rgb(255, 226, 160);
+    background-color: rgb(44, 64, 120);
+}
+
+.lb-socket--active .lb-halo { opacity: 0.9; }
+
+.lb-socket-ring {
+    width: 58px;
+    height: 58px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    border-radius: 29px;
+    border-width: 2px;
+    border-color: rgba(219, 174, 90, 0.7);
+    background-color: rgb(10, 16, 32);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-socket-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.lb-socket-key {
+    align-self: flex-start;
+    margin: 0 0 3px 0;
+    padding: 0 6px;
+    border-radius: 3px;
+    background-color: rgba(240, 205, 128, 0.9);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(20, 20, 30);
+}
+
+.lb-socket-name {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: rgb(238, 232, 219);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -unity-text-align: middle-left;
+}
+
+.lb-socket-note {
+    margin: 2px 0 0 0;
+    padding: 0;
+    font-size: 11px;
+    color: rgba(238, 232, 219, 0.65);
+    -unity-text-align: middle-left;
+}
+
+.lb-icon {
+    width: 48px;
+    height: 48px;
+    background-size: contain;
+}
+
+.lb-icon--0 { background-image: url("Art/Item_LightStaff.png"); }
+.lb-icon--1 { background-image: url("Art/Item_HealingStaff.png"); }
+.lb-icon--2 { background-image: url("Art/Item_RuneStaff.png"); }
+.lb-icon--3 { background-image: url("Art/Item_FoodRing.png"); }
+.lb-icon--4 { background-image: url("Art/Item_ManaRing.png"); }
+.lb-icon--5 { background-image: url("Art/Item_VitalityRing.png"); }
+
+.lb-armory {
+    flex-direction: row;
+}
+
+.lb-prep .lb-item {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 104px;
+    margin: 0 4px;
+    padding: 6px 4px;
+    align-items: center;
+    justify-content: flex-start;
+    border-width: 1px;
+    border-radius: 8px;
+    border-color: rgba(219, 174, 90, 0.35);
+    background-color: rgba(18, 27, 52, 0.92);
+    overflow: visible;
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.lb-prep .lb-item:hover {
+    border-color: rgb(255, 225, 150);
+    background-color: rgb(30, 46, 88);
+    scale: 1.04 1.04;
+}
+
+.lb-prep .lb-item--equipped, .lb-prep .lb-item--equipped:hover {
+    border-width: 2px;
+    border-color: rgb(255, 226, 160);
+    background-color: rgb(44, 64, 120);
+}
+
+.lb-item--equipped .lb-halo { opacity: 0.75; }
+
+.lb-prep .lb-item:disabled {
+    opacity: 0.5;
+    background-color: rgba(14, 20, 36, 0.92);
+    border-color: rgba(238, 232, 219, 0.12);
+}
+
+.lb-item .lb-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 4px;
+}
+
+.lb-item--locked .lb-icon { -unity-background-image-tint-color: rgb(50, 60, 84); }
+
+.lb-item-name {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(238, 232, 219);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -unity-text-align: middle-center;
+}
+
+.lb-item-note {
+    margin: 2px 0 0 0;
+    padding: 0;
+    font-size: 10px;
+    white-space: nowrap;
+    color: rgba(238, 232, 219, 0.6);
+}
+
+.lb-item--used .lb-item-note { color: rgb(158, 204, 255); }
+
+/* Troops */
+
+.lb-troops-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.lb-troop {
+    width: 24%;
+    height: 172px;
+    margin-bottom: 8px;
+    justify-content: flex-end;
+    padding-bottom: 6px;
+    overflow: hidden;
+    border-width: 1px;
+    border-radius: 8px;
+    border-color: rgba(219, 174, 90, 0.45);
+    background-color: rgb(14, 22, 44);
+}
+
+.lb-troop-glow {
+    position: absolute;
+    left: -20%;
+    right: -20%;
+    top: -10%;
+    height: 100%;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: 100% 100%;
+    -unity-background-image-tint-color: rgba(120, 160, 255, 0.35);
+}
+
+.lb-troop-art {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 4px;
+    bottom: 0;
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: top;
+}
+
+.lb-troop-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    background-image: url("Art/Prep_Fade.png");
+    background-size: 100% 100%;
+}
+
+.lb-troop-name {
+    margin: 0;
+    padding: 0 10px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: rgb(255, 250, 240);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.lb-troop-cost {
+    margin: 0;
+    padding: 0 10px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(240, 205, 128);
+}
+
+.lb-troop--0 .lb-troop-art { background-image: url("Art/Unit_Swordsman.png"); }
+.lb-troop--1 .lb-troop-art { background-image: url("Art/Unit_Archer.png"); }
+.lb-troop--2 .lb-troop-art { background-image: url("Art/Unit_Shieldbearer.png"); }
+.lb-troop--3 .lb-troop-art { background-image: url("Art/Unit_Spearman.png"); }
+.lb-troop--4 .lb-troop-art { background-image: url("Art/Unit_Priest.png"); }
+.lb-troop--5 .lb-troop-art { background-image: url("Art/Unit_Mage.png"); }
+.lb-troop--6 .lb-troop-art { background-image: url("Art/Unit_Knight.png"); }
+.lb-troop--7 .lb-troop-art { background-image: url("Art/Unit_Dragon.png"); background-position-x: right; }
+
+.lb-troop--locked { border-color: rgba(238, 232, 219, 0.12); }
+.lb-troop--locked .lb-troop-art { -unity-background-image-tint-color: rgb(16, 22, 40); }
+.lb-troop--locked .lb-troop-glow { opacity: 0; }
+.lb-troop--locked .lb-troop-name { color: rgba(238, 232, 219, 0.45); }
+.lb-troop--locked .lb-troop-cost { color: rgba(238, 232, 219, 0.35); }
+
+.lb-prep-status {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 8px;
+    font-size: 11px;
+    color: rgba(238, 232, 219, 0.55);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
 .lb-hidden {
     display: none;
 }

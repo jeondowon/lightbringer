@@ -24,6 +24,7 @@ namespace Lightbringer.EditorTools
             Check(BattleHudView.Evaluate(1, 5) == FrontStatus.Danger && BattleHudView.Evaluate(4, 3) == FrontStatus.Contested
                 && BattleHudView.Evaluate(2, 0) == FrontStatus.Clear && BattleHudView.Evaluate(0, 2) == FrontStatus.Contested,
                 "A front is flagged in danger only when enemies clearly outnumber our troops");
+            ValidatePreparationView();
 
             Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             GameObject host = null;
@@ -92,6 +93,51 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(material);
                 Physics.SyncTransforms();
             }
+        }
+
+        private static void ValidatePreparationView()
+        {
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            GameObject host = new GameObject("Preparation view validation host");
+            try
+            {
+                CampaignSession session = host.AddComponent<CampaignSession>();
+                CampaignProgress profile = new CampaignProgress();
+                profile.CompleteStage(1);
+                profile.CompleteStage(2);
+                session.InitializeForValidation(profile);
+                EditorAssets.ConfigureSession(session, material);
+                PreparationView view = new PreparationView(new VisualElement());
+                view.Refresh(session);
+                Check(view.Visible && view.StartText == "START STAGE 3" && view.IsStageSelected(3)
+                    && view.IsStageEnabled(3) && !view.IsStageEnabled(4) && view.TroopCount == 3,
+                    "Preparation opens on the newest stage, locks later stages and lists unlocked troops");
+                Check(session.SelectStage(2) && RefreshAndSelected(view, session, 2), "Selecting a stage highlights it and retargets START");
+
+                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("in Q")
+                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "LOCKED" && view.IsItemEnabled(2),
+                    "Items worn in another slot or not yet owned cannot be equipped");
+                Check(view.Equip(2) && profile.loadout[0] == 2 && view.SlotText(0) == EquipmentCatalog.Names[2],
+                    "Clicking an item equips it into the active slot");
+                view.SelectSlot(2);
+                Check(view.ActiveSlot == 2 && view.Equip(0) && profile.loadout[2] == 0, "Choosing another slot redirects the next equip");
+
+                Check(view.Start() && session.Battle != null && session.SelectedStage == 2, "START launches the selected stage");
+                view.Refresh(session);
+                Check(!view.Visible, "Preparation hides once the battle begins");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(material);
+                Physics.SyncTransforms();
+            }
+        }
+
+        private static bool RefreshAndSelected(PreparationView view, CampaignSession session, int stage)
+        {
+            view.Refresh(session);
+            return view.IsStageSelected(stage) && view.StartText == "START STAGE " + stage;
         }
 
         private static string RefreshAndRead(BattleHudView view, CampaignSession session)
