@@ -124,8 +124,8 @@ namespace Lightbringer.EditorTools
             Check(target.CurrentHealth == 82 && nearby.CurrentHealth == 82, "Mage splash damages multiple opponents once each");
             float height = troops[7].transform.position.y;
             Invoke(troops[7].GetComponent<UnitPathFollower>(), "Tick", 0.5f);
-            Check(troops[7].transform.position.y > height + 1f && troops[7].MaximumHealth == 300,
-                "Final Dragon troop takes flight and has distinct large-unit stats");
+            Check(troops[7].transform.position.y < height + 0.5f && troops[7].MaximumHealth == 300,
+                "Final Dragon troop stays on the ground and has distinct large-unit stats");
         }
     }
 }

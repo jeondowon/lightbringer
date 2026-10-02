@@ -99,3 +99,33 @@ MonoBehaviour:
     actionClip: {fileID: 7400000, guid: a0c8884697fb03547ab34e9ff9310521, type: 2}
     moveClipSpeed: 3
     attachments: []
+  - id: 3
+    prefab: {fileID: 919132149155446097, guid: 801483b828d0cf746a3b6dfe39fb3667, type: 3}
+    localOffset: {x: -0, y: -0, z: 0.000000059604645}
+    localEuler: {x: -90, y: 0, z: 0}
+    scale: 1.7
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []
+  - id: 8
+    prefab: {fileID: 8222129778706187931, guid: 8efa3c1e5a0a69246a6a75d8df6ab563, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 7657b67f0d1b7154aa0c2fc90c86d7ed, type: 2}
+    moveClip: {fileID: 7400000, guid: 5847f6a3454604740b193ae907f15a7b, type: 2}
+    actionClip: {fileID: 7400000, guid: cc0a1e8bf151a354e9b0da855c3dfa19, type: 2}
+    moveClipSpeed: 3
+    attachments: []
+  - id: 7
+    prefab: {fileID: 80713950213917158, guid: fe05b14d42fc1c64d96cb7663e4add4f, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []

@@ -107,9 +107,9 @@ namespace Lightbringer.Units
                     soldier.GetComponent<UnitCombat>().enabled = false;
                     soldier.gameObject.AddComponent<UnitSupport>();
                 }
+                // The Dragon walks on the ground and breathes fire (splash); flight was dropped for the rigged model.
                 if (selectedUnit == UnitKind.Mage || selectedUnit == UnitKind.Dragon)
                     soldier.GetComponent<UnitCombat>().ConfigureSplash(selectedUnit == UnitKind.Dragon ? 4f : 2.5f);
-                if (selectedUnit == UnitKind.Dragon) soldier.GetComponent<UnitPathFollower>().ConfigureFlight(3.5f);
             }
             if (soldier.TryGetComponent(out Lightbringer.Visuals.UnitAppearance appearance))
                 appearance.Apply(Lightbringer.Visuals.ArtStyleLibrary.ForUnit(selectedUnit));

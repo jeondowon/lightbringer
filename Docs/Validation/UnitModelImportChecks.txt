@@ -1,0 +1,9 @@
+PASS | 2026-10-02T18:53:50.0494520Z
+Shieldbearer: 1.05 x 1.70 x 0.60 m (W x H x L, bind pose), feet -0.800, renderers 1, vertices 298920, static with bob/lean fallback.
+Knight: 1.58 x 2.49 x 2.75 m (W x H x L, bind pose), feet -0.800, renderers 2, vertices 593454, static with bob/lean fallback.
+Dragon: 5.47 x 2.46 x 3.69 m (W x H x L, bind pose), feet -0.800, renderers 1, vertices 135126, rigged clips.
+Shieldbearer: yaw 0, scale 1.7, offset (0.00, 0.00, 0.00)
+Dragon: yaw 90, scale 5.4661, offset (0.00, 0.00, -0.82); head end top 0.447 vs tail end 0.132; heading from 4 feet; rigged (see DragonRigChecks.txt)
+Knight horse: yaw -90, scale 2.7509, offset (0.00, 0.00, -0.06); head end top 0.763 vs tail end 0.526; heading from 4 feet
+Knight rider: yaw 0, scale 1.65, offset (0.00, 0.00, 0.00); seated hip (0.00, 0.78, 0.19), leg spread 0.196 m, seat (0.00, 1.51, -0.06), barrel half-width 0.31 m, rider offset (0.00, 0.84, -0.25)
+Editor instantiation validated; gameplay visual review remains manual.

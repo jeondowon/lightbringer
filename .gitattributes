@@ -16,3 +16,4 @@ Assets/Art/**/*.png filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Characters/*/Rigged/*_Skinned.asset filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Characters/*/FaceRepair/*.asset filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Characters/*/ShadowHood/*.asset filter=lfs diff=lfs merge=lfs -text
+Assets/Art/Characters/*/Mounted/*.asset filter=lfs diff=lfs merge=lfs -text

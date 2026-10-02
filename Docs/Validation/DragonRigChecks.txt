@@ -1,0 +1,8 @@
+PASS | 2026-10-02T18:53:31.1447599Z
+Unity-native prototype skeleton: 23 bones; 135126 weighted vertices.
+Dragon_Idle: largest sampled vertex motion 2.603 m; mouth lowest 1.70 m (rest 1.72).
+Dragon_Walk: largest sampled vertex motion 2.694 m; mouth lowest 1.68 m (rest 1.72).
+Dragon_Breath: largest sampled vertex motion 0.863 m; mouth lowest 1.29 m (rest 1.72).
+Walk: front foot stride 0.30 m between half cycles.
+Wings rest folded back (70 deg) and open during the breath; fire from Head/Mouth.
+Ground unit (no flight). Original FBX preserved. Visual review of joints remains manual.

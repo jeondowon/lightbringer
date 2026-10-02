@@ -21,6 +21,8 @@
 5. **라이선스 확인:** 무료 플랜 결과물의 상업적 사용 조건(CC BY 등)을 확인
 
 ## 3. 리깅 + 동작 — Mixamo (mixamo.com, Adobe 무료 계정)
+> 인간형 전용. 드래곤·말처럼 사족 보행이거나 Mixamo를 쓰지 않을 때는 [프로젝트 자체 리깅](RiggingPipeline.md) 방식을 쓴다.
+
 1. Upload Character → 2단계에서 FBX 업로드 → 턱·손목·팔꿈치·무릎·사타구니 마커 배치 → Next
 2. 리깅된 캐릭터를 **T-Pose 상태로 Download** (Format FBX, Skin: With Skin)
 3. Animations에서 검색해 각각 Download (Format FBX, **Skin: Without Skin**, In Place 체크 가능하면 체크)
