@@ -1,0 +1,482 @@
+/* Lightbringer desktop HUD. Palette follows the character sheet: navy panels, gold trim, ivory text.
+   Replace this file during the Art Pass; the view code only depends on the class names. */
+
+.lb-hud {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    color: rgb(238, 232, 219);
+    font-size: 16px;
+}
+
+.lb-panel {
+    background-color: rgba(12, 18, 34, 0.78);
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.7);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.lb-caption {
+    font-size: 13px;
+    color: rgba(238, 232, 219, 0.7);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+/* ---------- Top bar ---------- */
+
+.lb-top {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lb-top-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-stage {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgb(240, 205, 128);
+    margin-right: 14px;
+}
+
+.lb-waves {
+    margin-left: 14px;
+}
+
+.lb-front {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 4px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(238, 232, 219, 0.25);
+    background-color: rgba(30, 44, 80, 0.6);
+}
+
+.lb-front--selected {
+    border-color: rgb(240, 205, 128);
+    border-width: 2px;
+}
+
+.lb-front--contested {
+    background-color: rgba(120, 92, 40, 0.65);
+}
+
+.lb-front--danger {
+    background-color: rgba(150, 36, 48, 0.8);
+    border-color: rgb(255, 120, 120);
+}
+
+.lb-front-name {
+    -unity-font-style: bold;
+    margin-right: 8px;
+}
+
+.lb-front-allies {
+    color: rgb(158, 204, 255);
+    margin-right: 6px;
+}
+
+.lb-front-enemies {
+    color: rgb(255, 140, 140);
+}
+
+.lb-bases {
+    flex-direction: row;
+    margin-top: 6px;
+}
+
+.lb-base {
+    width: 260px;
+    margin: 0 8px;
+}
+
+/* ---------- Bars ---------- */
+
+.lb-bar {
+    height: 18px;
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.55);
+    border-width: 1px;
+    border-color: rgba(238, 232, 219, 0.25);
+    overflow: hidden;
+    margin: 2px 0;
+}
+
+.lb-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+}
+
+.lb-bar-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-center;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(255, 250, 240);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.lb-bar--hp .lb-bar-fill { background-color: rgb(190, 62, 70); }
+.lb-bar--mana .lb-bar-fill { background-color: rgb(70, 120, 220); }
+.lb-bar--food .lb-bar-fill { background-color: rgb(212, 168, 74); }
+.lb-bar--ally .lb-bar-fill { background-color: rgb(96, 150, 230); }
+.lb-bar--enemy .lb-bar-fill { background-color: rgb(196, 58, 74); }
+.lb-bar--boss .lb-bar-fill { background-color: rgb(160, 40, 90); }
+
+.lb-bar--shielded {
+    border-color: rgb(255, 120, 200);
+    border-width: 2px;
+}
+
+.lb-boss {
+    position: absolute;
+    top: 118px;
+    left: 30%;
+    right: 30%;
+}
+
+.lb-boss .lb-bar {
+    height: 22px;
+}
+
+/* ---------- Hero vitals (bottom left) ---------- */
+
+.lb-vitals {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    width: 300px;
+}
+
+.lb-vital-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-vital-label {
+    width: 44px;
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.lb-vital-row .lb-bar {
+    flex-grow: 1;
+}
+
+/* ---------- Command bar (bottom centre) ---------- */
+
+.lb-command {
+    position: absolute;
+    bottom: 14px;
+    left: 0;
+    right: 0;
+    align-items: center;
+}
+
+.lb-path-hint {
+    margin-bottom: 6px;
+    padding: 2px 12px;
+    font-size: 14px;
+    color: rgb(240, 205, 128);
+}
+
+.lb-abilities, .lb-troops {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.lb-abilities {
+    margin-bottom: 6px;
+}
+
+.lb-slot, .lb-card {
+    overflow: hidden;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(219, 174, 90, 0.6);
+    background-color: rgba(12, 18, 34, 0.82);
+    margin: 0 3px;
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-slot {
+    width: 140px;
+    height: 54px;
+}
+
+.lb-card {
+    width: 116px;
+    height: 58px;
+}
+
+.lb-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+}
+
+.lb-slot .lb-fill {
+    top: 0;
+    bottom: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.lb-card .lb-fill {
+    background-color: rgba(212, 168, 74, 0.25);
+}
+
+/* Key and name share one row so long names never run into the key or wrap. */
+.lb-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    padding: 0 6px;
+}
+
+.lb-key {
+    flex-shrink: 0;
+    margin: 0 5px 0 0;
+    padding: 0;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(240, 205, 128);
+}
+
+.lb-name {
+    flex-shrink: 1;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lb-cost {
+    margin: 2px 0 0 0;
+    padding: 0;
+    font-size: 12px;
+    color: rgba(238, 232, 219, 0.75);
+}
+
+.lb-slot--cooling .lb-name, .lb-slot--nomana .lb-name {
+    color: rgba(238, 232, 219, 0.5);
+}
+
+.lb-slot--nomana .lb-cost {
+    color: rgb(130, 160, 255);
+}
+
+.lb-slot--passive {
+    border-color: rgba(238, 232, 219, 0.2);
+    opacity: 0.7;
+}
+
+.lb-card--ready {
+    border-color: rgb(240, 205, 128);
+    background-color: rgba(42, 52, 92, 0.9);
+}
+
+.lb-card--ready .lb-cost {
+    color: rgb(240, 205, 128);
+}
+
+.lb-card--selected {
+    border-width: 2px;
+    border-color: rgb(158, 204, 255);
+}
+
+/* ---------- Misc ---------- */
+
+.lb-crosshair {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    margin-top: -3px;
+    border-radius: 3px;
+    background-color: rgba(255, 250, 240, 0.85);
+}
+
+.lb-toast {
+    position: absolute;
+    bottom: 200px;
+    left: 0;
+    right: 0;
+    -unity-text-align: middle-center;
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: rgb(255, 245, 225);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.lb-hint {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    font-size: 12px;
+    color: rgba(238, 232, 219, 0.6);
+    -unity-text-align: lower-right;
+}
+
+.lb-healthbars {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lb-unit-bar {
+    position: absolute;
+    width: 40px;
+    height: 5px;
+    margin-left: -20px;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.lb-unit-bar-fill {
+    height: 100%;
+}
+
+.lb-unit-bar--ally .lb-unit-bar-fill { background-color: rgb(110, 200, 255); }
+.lb-unit-bar--enemy .lb-unit-bar-fill { background-color: rgb(230, 70, 80); }
+
+/* ---------- Overlays: level-up and result ---------- */
+
+.lb-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(4, 8, 18, 0.62);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-dialog {
+    width: 640px;
+    padding: 18px 24px;
+    align-items: center;
+}
+
+.lb-title {
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(240, 205, 128);
+    margin-bottom: 4px;
+}
+
+.lb-title--defeat {
+    color: rgb(230, 110, 110);
+}
+
+.lb-subtitle {
+    margin-bottom: 12px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.lb-choices {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.lb-choice {
+    width: 180px;
+    height: 120px;
+    margin: 0 6px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(219, 174, 90, 0.8);
+    background-color: rgba(30, 44, 84, 0.95);
+    color: rgb(238, 232, 219);
+    font-size: 17px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.lb-choice:hover {
+    background-color: rgba(52, 76, 140, 1);
+    border-color: rgb(255, 225, 150);
+}
+
+.lb-stats {
+    align-self: stretch;
+    margin: 6px 0 10px 0;
+}
+
+.lb-stat {
+    font-size: 14px;
+    white-space: normal;
+}
+
+.lb-ratings {
+    flex-direction: row;
+    margin: 4px 0 8px 0;
+}
+
+.lb-rating {
+    width: 44px;
+    height: 32px;
+    margin: 0 3px;
+    background-color: rgba(30, 44, 84, 0.95);
+    border-color: rgba(219, 174, 90, 0.5);
+    color: rgb(238, 232, 219);
+}
+
+.lb-rating--on {
+    background-color: rgb(212, 168, 74);
+    color: rgb(20, 20, 30);
+}
+
+.lb-note {
+    align-self: stretch;
+    min-height: 60px;
+    margin-bottom: 10px;
+}
+
+.lb-primary {
+    height: 40px;
+    width: 300px;
+    font-size: 16px;
+    -unity-font-style: bold;
+    background-color: rgb(52, 84, 173);
+    border-color: rgb(240, 205, 128);
+    color: rgb(255, 250, 240);
+}
+
+.lb-primary:hover {
+    background-color: rgb(72, 108, 210);
+}
+
+.lb-hidden {
+    display: none;
+}

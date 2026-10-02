@@ -62,19 +62,32 @@ namespace Lightbringer.UI
             }
         }
 
+        // Per-front troop counts and damaged units (nearest first) for the HUD; refreshed four times a second.
+        public int FrontCount => alliesPerPath != null ? alliesPerPath.Length : 0;
+        public int AlliesOn(int front) => alliesPerPath[front];
+        public int EnemiesOn(int front) => enemiesPerPath[front];
+        public IReadOnlyList<Combatant> DamagedUnits => visible;
+
         private void Update()
         {
             if (battle == null || battle.Camera == null) return;
             ApplyLook();
             if (Time.unscaledTime < nextScan) return;
             nextScan = Time.unscaledTime + 0.25f;
+            Scan();
+        }
+
+        public void Scan()
+        {
+            if (battle == null || battle.Camera == null) return;
             units = battle.Root.GetComponentsInChildren<Combatant>();
             System.Array.Clear(alliesPerPath, 0, alliesPerPath.Length);
             System.Array.Clear(enemiesPerPath, 0, enemiesPerPath.Length);
             visible.Clear();
             foreach (Combatant unit in units)
             {
-                if (!unit.IsAlive || unit == battle.Hero || unit == battle.Objective.EnemyBase) continue;
+                // Hero and both strongholds have their own HUD bars.
+                if (!unit.IsAlive || unit == battle.Hero || unit == battle.Objective.EnemyBase || unit == battle.AlliedBase) continue;
                 var follower = unit.GetComponent<Units.UnitPathFollower>();
                 if (follower != null && follower.AssignedPath != null)
                 {
@@ -96,29 +109,6 @@ namespace Lightbringer.UI
             }
             Vector3 cameraPosition = battle.Camera.transform.position;
             visible.Sort((a, b) => (a.transform.position - cameraPosition).sqrMagnitude.CompareTo((b.transform.position - cameraPosition).sqrMagnitude));
-        }
-
-        private void OnGUI()
-        {
-            if (battle == null || battle.Camera == null || alliesPerPath == null) return;
-            GUILayout.BeginArea(new Rect(Screen.width - 230, 16, 215, 100), GUI.skin.box);
-            GUILayout.Label("FRONTS | Allies / Enemies");
-            for (int i = 0; i < alliesPerPath.Length; i++) GUILayout.Label($"Path {i + 1}: {alliesPerPath[i]} / {enemiesPerPath[i]}");
-            GUILayout.EndArea();
-            Color previous = GUI.color;
-            for (int i = 0; i < Mathf.Min(48, visible.Count); i++)
-            {
-                Combatant unit = visible[i];
-                if (unit == null || !unit.IsAlive) continue;
-                Vector3 point = battle.Camera.WorldToScreenPoint(unit.transform.position + Vector3.up * 1.25f);
-                if (point.z <= 0 || point.x < 0 || point.x > Screen.width || point.y < 0 || point.y > Screen.height) continue;
-                Rect box = new Rect(point.x - 20, Screen.height - point.y, 40, 5);
-                GUI.color = Color.black; GUI.DrawTexture(box, Texture2D.whiteTexture);
-                box.width *= unit.CurrentHealth / unit.MaximumHealth;
-                GUI.color = unit.Faction == Faction.Allied ? Color.cyan : Color.red;
-                GUI.DrawTexture(box, Texture2D.whiteTexture);
-            }
-            GUI.color = previous;
         }
 
         private void OnDestroy()

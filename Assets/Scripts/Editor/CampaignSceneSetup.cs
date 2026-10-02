@@ -35,7 +35,8 @@ namespace Lightbringer.EditorTools
                 SceneManager.SetActiveScene(temporary);
                 GameObject root = new GameObject("Lightbringer Campaign");
                 root.AddComponent<CampaignSession>().Configure(actions, material, aura);
-                root.AddComponent<CampaignHUD>();
+                root.AddComponent<CampaignHUD>().Configure(HudSetup.EnsureAssets(),
+                    AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.StyleSheet>(CampaignHUD.StyleSheetPath));
                 return EditorSceneManager.SaveScene(temporary, ScenePath);
             }
             finally
@@ -52,6 +53,7 @@ namespace Lightbringer.EditorTools
             ArtStyleSetup.EnsureFirstRunStyle();
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             EditorSceneManager.OpenScene(ScenePath);
+            HudSetup.AssignToOpenScenes();
             EditorApplication.ExecuteMenuItem("Window/General/Game");
             EditorApplication.isPlaying = true;
         }
