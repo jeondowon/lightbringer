@@ -109,8 +109,18 @@ MonoBehaviour:
     actionClip: {fileID: 0}
     moveClipSpeed: 4
     attachments: []
+  - id: 4
+    prefab: {fileID: 1432428380869670723, guid: 9cab45a63c2dfe34892b570b3232f094, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 08573233e9faf424bae30976e5f21ec3, type: 2}
+    moveClip: {fileID: 7400000, guid: a2d66797ce682934293edaf343cff8e1, type: 2}
+    actionClip: {fileID: 7400000, guid: d74bc515ca7428a4ba10f1a559f4fc24, type: 2}
+    moveClipSpeed: 3
+    attachments: []
   - id: 8
-    prefab: {fileID: 8222129778706187931, guid: 8efa3c1e5a0a69246a6a75d8df6ab563, type: 3}
+    prefab: {fileID: 2348786305617487430, guid: 8efa3c1e5a0a69246a6a75d8df6ab563, type: 3}
     localOffset: {x: 0, y: 0, z: 0}
     localEuler: {x: 0, y: 0, z: 0}
     scale: 1

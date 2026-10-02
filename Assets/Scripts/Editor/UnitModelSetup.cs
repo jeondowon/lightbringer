@@ -13,10 +13,11 @@ using static Lightbringer.EditorTools.RigBuildUtility;
 
 namespace Lightbringer.EditorTools
 {
-    // Tripo exports of the Shieldbearer, mounted Knight and Dragon. The downloaded FBX files stay untouched.
-    // The Shieldbearer uses its FBX directly through the override transform; the Knight is a prefab of the
+    // Tripo exports of the Shieldbearer, Spearman, mounted Knight and Dragon. The downloaded FBX files stay
+    // untouched. The Shieldbearer uses its FBX directly through the override transform; the Knight is a prefab of the
     // horse FBX plus the rider mesh baked into a seated pose on the saddle (both static, animated by
-    // UnitAppearance's bob/lean fallback); the Dragon is placed the same way and then rigged by DragonRigSetup.
+    // UnitAppearance's bob/lean fallback); the Spearman and Dragon are placed the same way and then rigged by
+    // SpearmanRigSetup and DragonRigSetup.
     [InitializeOnLoad]
     public static class UnitModelSetup
     {
@@ -27,6 +28,7 @@ namespace Lightbringer.EditorTools
         private const string SeatedMeshPath = MountedFolder + "/Knight_Seated.asset";
         private const string MountedPrefabPath = MountedFolder + "/Knight_Mounted.prefab";
         private const float ShieldbearerHeight = 1.7f;
+        private const float SpearmanHeight = 1.7f;
         private const float HorseHeight = 2.1f;
         private const float RiderHeight = 1.65f;
         private const float DragonLength = 4f;
@@ -45,7 +47,7 @@ namespace Lightbringer.EditorTools
 
         static UnitModelSetup() => EditorRequests.Register(Request, AssignAll);
 
-        [MenuItem("Lightbringer/Art/Assign Shieldbearer, Knight and Dragon Models")]
+        [MenuItem("Lightbringer/Art/Assign Shieldbearer, Spearman, Knight and Dragon Models")]
         public static void AssignAll()
         {
             var library = AssetDatabase.LoadAssetAtPath<ArtStyleLibrary>(ArtStyleSetup.LibraryPath);
@@ -56,6 +58,12 @@ namespace Lightbringer.EditorTools
             Placement shieldPlace = PlaceHumanoid(UprightPoints(shield), ShieldbearerHeight);
             SetOverride(library, VisualId.Shieldbearer, shield, shieldPlace);
             report.AppendLine($"Shieldbearer: {Describe(shieldPlace)}");
+
+            GameObject spear = PrepareSource("Spearman");
+            Placement spearPlace = PlaceHumanoid(UprightPoints(spear), SpearmanHeight);
+            Matrix4x4 spearToUnit = Matrix4x4.TRS(spearPlace.Offset, Quaternion.Euler(spearPlace.Euler), Vector3.one * spearPlace.Scale);
+            SetOverride(library, SpearmanRigSetup.Build(spear, spearToUnit, library));
+            report.AppendLine($"Spearman: {Describe(spearPlace)}; rigged with a hand-held spear (see SpearmanRigChecks.txt)");
 
             GameObject dragon = PrepareSource("Dragon");
             Placement dragonPlace = PlaceQuadruped(UprightPoints(dragon), DragonLength, true, out string dragonNote);
@@ -74,7 +82,7 @@ namespace Lightbringer.EditorTools
             Validate(library, report);
         }
 
-        [MenuItem("Lightbringer/Art/Assign Shieldbearer, Knight and Dragon Models", true)]
+        [MenuItem("Lightbringer/Art/Assign Shieldbearer, Spearman, Knight and Dragon Models", true)]
         private static bool CanAssign() => !EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling;
 
         private static string Describe(Placement p) => $"yaw {p.Yaw:0}, scale {p.Scale:0.####}, offset {p.Offset}";
@@ -494,7 +502,7 @@ namespace Lightbringer.EditorTools
             Scene preview = EditorSceneManager.NewPreviewScene();
             try
             {
-                foreach (VisualId id in new[] { VisualId.Shieldbearer, VisualId.Knight, VisualId.Dragon })
+                foreach (VisualId id in new[] { VisualId.Shieldbearer, VisualId.Spearman, VisualId.Knight, VisualId.Dragon })
                 {
                     var owner = new GameObject(id + " validation");
                     SceneManager.MoveGameObjectToScene(owner, preview);

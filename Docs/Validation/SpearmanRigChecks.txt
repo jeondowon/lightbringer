@@ -1,0 +1,12 @@
+PASS | 2026-10-02T19:27:55.8310755Z
+Unity-native prototype skeleton: 21 bones; 187766 weighted vertices.
+Spearman_Idle: sampled weighted vertex motion 0.218 m
+Spearman_Idle: grip error 0.0000 m; spear butt 0.23 m above ground.
+Spearman_Run: sampled weighted vertex motion 0.311 m
+Spearman_Run: grip error 0.0000 m; spear butt 0.31 m above ground.
+Spearman_Thrust: sampled weighted vertex motion 0.659 m
+Spearman_Thrust: grip error 0.0000 m; spear butt 1.18 m above ground.
+Thrust: spear tip 1.94 m in front of the pivot at 1.26 m height at contact.
+Spear: primitive parts on RightHand (grip at the palm). Original FBX preserved.
+No external animation assets. Hand-tuned landmark weights and generated prototype clips.
+Visual review of joints and the tabard remains manual; no mesh decimation performed.

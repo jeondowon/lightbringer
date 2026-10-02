@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Lightbringer.EditorTools
 {
-    // Helpers shared by the generated prototype rigs (Swordsman, Archer).
+    // Helpers shared by the generated prototype rigs (Swordsman, Archer, Spearman, Dragon).
     internal static class RigBuildUtility
     {
         // Creates the asset, or overwrites an existing one in place so references to it stay valid.
