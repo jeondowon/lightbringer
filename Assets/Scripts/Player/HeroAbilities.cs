@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using Lightbringer.Aura;
 using Lightbringer.Combat;
+using Lightbringer.Progression;
 using Lightbringer.Resources;
+using Lightbringer.Units;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,10 +18,11 @@ namespace Lightbringer.Player
         [SerializeField] private int[] levels = { 1, 1, 0, 1, 0, 0 };
         private readonly float[] cooldowns = new float[EquipmentCatalog.Slots];
         private readonly HashSet<Combatant> hits = new HashSet<Combatant>();
+        private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
         private Combatant self;
         private ManaResource mana;
         private float damageMultiplier = 1f;
-        private int[] growthRanks = new int[8];
+        private int[] growthRanks = new int[CampaignProgress.GrowthCount];
         private bool capturedBaseStats;
         private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraRadius, baseAuraBonus;
         public string Feedback { get; private set; } = "";
@@ -29,7 +33,6 @@ namespace Lightbringer.Player
         public int Equipped(int slot) => slot >= 0 && slot < equipment.Length ? equipment[slot] : -1;
         public float CooldownRemaining(int slot) => cooldowns[slot];
         public void ConfigureCamera(UnityEngine.Camera camera) => aimCamera = camera;
-        public void SetDamageMultiplier(float multiplier) => damageMultiplier = Mathf.Max(1f, multiplier);
 
         private void Awake()
         {
@@ -43,7 +46,8 @@ namespace Lightbringer.Player
         {
             if (self == null || mana == null) Awake();
             FoodResource food = GetComponent<FoodResource>();
-            Lightbringer.Aura.HeroAura aura = GetComponent<Lightbringer.Aura.HeroAura>();
+            HeroAura aura = GetComponent<HeroAura>();
+            UnitSummoner summoner = GetComponent<UnitSummoner>();
             if (!capturedBaseStats)
             {
                 capturedBaseStats = true;
@@ -54,17 +58,21 @@ namespace Lightbringer.Player
                 baseAuraRadius = aura != null ? aura.Radius : 6;
                 baseAuraBonus = aura != null ? aura.AttackBonus : 0.25f;
             }
-            growthRanks = ranks != null && ranks.Length == 8 ? (int[])ranks.Clone() : new int[8];
+            growthRanks = ranks != null && ranks.Length == CampaignProgress.GrowthCount
+                ? (int[])ranks.Clone() : new int[CampaignProgress.GrowthCount];
             int foodRing = RingLevel(EquipmentKind.FoodRing);
             int manaRing = RingLevel(EquipmentKind.ManaRing);
             int lifeRing = RingLevel(EquipmentKind.VitalityRing);
-            food?.Configure(baseFoodCapacity + growthRanks[3] * 10, baseFoodProduction + growthRanks[1] + foodRing);
-            mana.Configure(baseManaCapacity + growthRanks[3] * 10 + manaRing * 15, baseManaRecovery + growthRanks[2] * 2 + manaRing * 2);
-            self.SetMaximumHealth(baseHealth + growthRanks[7] * 20 + lifeRing * 30);
-            aura?.Configure(baseAuraRadius + growthRanks[0] * 0.6f, baseAuraBonus + growthRanks[5] * 0.05f);
-            GetComponent<Lightbringer.Units.UnitSummoner>()?.SetCostMultiplier(1f - growthRanks[4] * 0.025f);
-            damageMultiplier = 1 + growthRanks[6] * 0.1f;
+            int capacity = Rank(GrowthKind.Capacity) * 10;
+            if (food != null) food.Configure(baseFoodCapacity + capacity, baseFoodProduction + Rank(GrowthKind.FoodProduction) + foodRing);
+            mana.Configure(baseManaCapacity + capacity + manaRing * 15, baseManaRecovery + Rank(GrowthKind.ManaRecovery) * 2 + manaRing * 2);
+            self.SetMaximumHealth(baseHealth + Rank(GrowthKind.HeroVitality) * 20 + lifeRing * 30);
+            if (aura != null) aura.Configure(baseAuraRadius + Rank(GrowthKind.AuraSize) * 0.6f, baseAuraBonus + Rank(GrowthKind.AuraBuff) * 0.05f);
+            if (summoner != null) summoner.SetCostMultiplier(1f - Rank(GrowthKind.Leadership) * 0.025f);
+            damageMultiplier = 1 + Rank(GrowthKind.HeroPower) * 0.1f;
         }
+
+        private int Rank(GrowthKind kind) => growthRanks[(int)kind];
 
         private int RingLevel(EquipmentKind kind)
         {
@@ -139,9 +147,10 @@ namespace Lightbringer.Player
         private IEnumerable<Combatant> Collect(Vector3 position, float radius)
         {
             hits.Clear();
-            foreach (Collider collider in Physics.OverlapSphere(position, radius, ~0, QueryTriggerInteraction.Ignore))
+            int count = query.Overlap(position, radius);
+            for (int i = 0; i < count; i++)
             {
-                Combatant unit = collider.GetComponentInParent<Combatant>();
+                Combatant unit = query.Items[i].GetComponentInParent<Combatant>();
                 if (unit != null && unit.gameObject.scene == gameObject.scene) hits.Add(unit);
             }
             return hits;

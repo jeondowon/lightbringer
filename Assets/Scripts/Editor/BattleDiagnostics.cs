@@ -10,7 +10,6 @@ using Lightbringer.Units;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace Lightbringer.EditorTools
@@ -25,29 +24,14 @@ namespace Lightbringer.EditorTools
         private const float Step = 1f / 30f;
         private const float Duration = 90f;
         private const float StuckWindow = 8f;
-        private static double nextProbe;
 
-        static BattleDiagnostics() => EditorApplication.update += ProbeRequest;
+        static BattleDiagnostics()
+        {
+            EditorRequests.Register(Path.Combine(Folder, "validate.request"), () => GreyboxValidation.RunChecks());
+            EditorRequests.Register(Path.Combine(Folder, "battle.request"), Run);
+        }
 
         private static string Folder => Path.Combine(Path.GetDirectoryName(Application.dataPath), "Docs", "Diagnostics");
-
-        private static void ProbeRequest()
-        {
-            if (EditorApplication.timeSinceStartup < nextProbe || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode
-                || EditorApplication.isCompiling || EditorApplication.isUpdating)
-                return;
-            nextProbe = EditorApplication.timeSinceStartup + 2d;
-            string validate = Path.Combine(Folder, "validate.request");
-            if (File.Exists(validate))
-            {
-                File.Delete(validate);
-                GreyboxValidation.RunChecks();
-            }
-            string request = Path.Combine(Folder, "battle.request");
-            if (!File.Exists(request)) return;
-            File.Delete(request);
-            Run();
-        }
 
         [MenuItem("Lightbringer/Diagnostics/Simulate Stage 8 Battle")]
         public static void Run()
@@ -65,8 +49,7 @@ namespace Lightbringer.EditorTools
                 CampaignProgress profile = new CampaignProgress();
                 for (int stage = 1; stage < CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
                 session.InitializeForValidation(profile);
-                session.Configure(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                    material, Shader.Find("Universal Render Pipeline/Unlit"));
+                EditorAssets.ConfigureSession(session, material);
                 session.SelectStage(8);
                 if (!session.StartBattle()) { Debug.LogError("Diagnostics: battle did not start."); return; }
                 PrototypeBattle battle = session.Battle;

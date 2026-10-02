@@ -16,9 +16,8 @@ namespace Lightbringer.Units
         [SerializeField] private WaypointPath selectedPath;
         [SerializeField, Min(0f)] private float foodCost = 10f;
         [SerializeField, Min(1f)] private float spawnDistance = 2.5f;
-        [Tooltip("Where new troops appear (the allied base gate). Empty = around the hero (standalone greybox).")]
+        [Tooltip("Where new troops appear (the allied base gate). Empty = around the summoner.")]
         [SerializeField] private Transform spawnAnchor;
-        public Transform SpawnAnchor => spawnAnchor;
         public void ConfigureSpawnAnchor(Transform anchor) => spawnAnchor = anchor;
         [SerializeField] private LayerMask groundMask = ~0;
         [SerializeField] private LayerMask blockingMask = ~0;
@@ -38,7 +37,7 @@ namespace Lightbringer.Units
                 || soldierTemplate.transform.lossyScale != Vector3.one
                 || soldiersParent.lossyScale != Vector3.one)
             {
-                Debug.LogError("UnitSummoner needs Food, a valid Path, a unit-scale Soldiers parent, and an inactive centered CharacterController template with UnitPathFollower. Run Greybox setup.", this);
+                Debug.LogError("UnitSummoner needs Food, a valid Path, a unit-scale Soldiers parent, and an inactive centered CharacterController template with UnitPathFollower.", this);
                 enabled = false;
                 return;
             }

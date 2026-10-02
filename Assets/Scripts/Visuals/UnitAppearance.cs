@@ -18,7 +18,6 @@ namespace Lightbringer.Visuals
         [SerializeField] private float feetOffset = -0.8f;
 
         public ArtStyleLibrary Style => style;
-        public Transform VisualRoot { get; private set; }
 
         public void Configure(ArtStyleLibrary library, float feet)
         {
@@ -26,11 +25,7 @@ namespace Lightbringer.Visuals
             feetOffset = feet;
         }
 
-        public bool Apply(VisualId id)
-        {
-            VisualRoot = Attach(gameObject, id, style, feetOffset);
-            return VisualRoot != null;
-        }
+        public bool Apply(VisualId id) => Attach(gameObject, id, style, feetOffset) != null;
 
         public static Transform Attach(GameObject owner, VisualId id, ArtStyleLibrary style, float feetOffset)
         {

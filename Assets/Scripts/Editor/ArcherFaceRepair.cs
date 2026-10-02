@@ -15,19 +15,11 @@ namespace Lightbringer.EditorTools
         private const string Source = Folder + "/Source/Tripo/Archer_Source.fbx";
         private const string ColorPath = Folder + "/Source/Tripo/Archer_Source.fbm/fantasy_armor_3d_model_basecolor.JPEG";
         private const string Output = Folder + "/FaceRepair";
-        private const string Request = "Docs/Diagnostics/ArcherImport/Inspect.request";
-        private const string RepairRequest = "Docs/Diagnostics/ArcherImport/Repair.request";
 
-        static ArcherFaceRepair() => EditorApplication.update += Poll;
-        private static void Poll()
+        static ArcherFaceRepair()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
-            try
-            {
-                if (File.Exists(Request)) { File.Delete(Request); Inspect(); }
-                if (File.Exists(RepairRequest)) { File.Delete(RepairRequest); Repair(); }
-            }
-            catch (Exception error) { Debug.LogException(error); }
+            EditorRequests.Register("Docs/Diagnostics/ArcherImport/Inspect.request", Inspect);
+            EditorRequests.Register("Docs/Diagnostics/ArcherImport/Repair.request", Repair);
         }
 
         [MenuItem("Lightbringer/Art/Repair Archer Face From Reference")]
@@ -112,14 +104,6 @@ namespace Lightbringer.EditorTools
                 material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(corrected));
                 material.SetColor("_BaseColor",Color.white);material.SetFloat("_Smoothness",.25f);
                 RestoreSurfaceMaps(material,mask,atlas.width,atlas.height);
-                var model=new GameObject("Archer_FaceFixed");
-                try
-                {
-                    model.AddComponent<MeshFilter>().sharedMesh=mesh;
-                    model.AddComponent<MeshRenderer>().sharedMaterial=material;
-                    PrefabUtility.SaveAsPrefabAsset(model,Output+"/Archer_FaceFixed.prefab");
-                }
-                finally { UnityEngine.Object.DestroyImmediate(model); }
                 EditorUtility.SetDirty(material);AssetDatabase.SaveAssets();
                 File.WriteAllText("Docs/Diagnostics/ArcherImport/Repair.txt", $"Projected existing face reference onto {changed} atlas pixels. Original ZIP/FBX/textures unchanged. Geometry unchanged.\n");
             }
@@ -186,9 +170,7 @@ namespace Lightbringer.EditorTools
                 var mesh = new Mesh { name = "Archer_Upright", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
                 mesh.CombineMeshes(probe.GetComponentsInChildren<MeshFilter>().Select(f => new CombineInstance
                 { mesh = f.sharedMesh, transform = f.transform.localToWorldMatrix }).ToArray(), true, true);
-                Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(Output + "/Archer_Upright.asset");
-                if (existing == null) AssetDatabase.CreateAsset(mesh, Output + "/Archer_Upright.asset");
-                else { EditorUtility.CopySerialized(mesh, existing); UnityEngine.Object.DestroyImmediate(mesh); mesh = existing; }
+                mesh = RigBuildUtility.SaveAsset(mesh, Output + "/Archer_Upright.asset");
                 Render(mesh, color, "Docs/Diagnostics/ArcherImport/Face_Before.png", 0);
                 Render(mesh, color, "Docs/Diagnostics/ArcherImport/Face_Before_Side.png", 55);
                 AssetDatabase.SaveAssets();

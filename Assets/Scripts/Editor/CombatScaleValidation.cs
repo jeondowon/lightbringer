@@ -83,7 +83,7 @@ namespace Lightbringer.EditorTools
                 double average = milliseconds.Average();
                 double p95 = milliseconds[(int)(milliseconds.Length * 0.95f)];
                 report.Add($"{count} units: mean {average:F3} ms/step, p95 {p95:F3} ms/step; managed bytes {bytes}; target scans {scans} vs {count * 120} unthrottled opportunities.");
-                report.Add($"Mean combat {combatTime / 120:F3} ms, movement {movementTime / 120:F3} ms. Auto sync transforms: {Physics.autoSyncTransforms}.");
+                report.Add($"Mean combat {combatTime / 120:F3} ms, movement {movementTime / 120:F3} ms.");
                 Check(scans < count * 25, count + "-unit target scans are throttled substantially below per-frame polling");
                 Check(combat.All(unit => unit.Health.IsAlive) && combat.Any(unit => unit.Health.CurrentHealth < 100000),
                     count + "-unit simulation exchanges damage without invalid/dead-target state");

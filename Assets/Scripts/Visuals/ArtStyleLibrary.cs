@@ -128,8 +128,6 @@ namespace Lightbringer.Visuals
         [Header("Model overrides (Art Pass replacements)")]
         public VisualOverride[] overrides = new VisualOverride[0];
 
-        [HideInInspector] public int styleVersion;
-
         public bool HasMaterials => alliedMaterial != null && enemyMaterial != null;
 
         public VisualOverride FindOverride(VisualId id)

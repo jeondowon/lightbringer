@@ -25,7 +25,7 @@ namespace Lightbringer.Aura
             aura = GetComponent<HeroAura>();
             if (ringShader == null)
             {
-                Debug.LogError("AuraRangeVisual needs its URP shader reference. Run Greybox setup.", this);
+                Debug.LogError("AuraRangeVisual needs its URP shader reference.", this);
                 enabled = false;
                 return;
             }

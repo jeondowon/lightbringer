@@ -12,7 +12,6 @@ namespace Lightbringer.Units
         public WaypointPath SelectedPath => selectedPath;
         public UnitKind SelectedUnit => selectedUnit;
         public int UnlockedUnitCount => unlockedUnitCount;
-        public int PathCount => availablePaths.Length;
         public float SelectedCost => CostOf(selectedUnit);
         public float CostOf(UnitKind kind) => (kind == UnitKind.Swordsman ? foodCost : UnitCatalog.Cost(kind)) * costMultiplier;
         public void SetCostMultiplier(float multiplier) => costMultiplier = Mathf.Clamp(multiplier, 0.5f, 1f);

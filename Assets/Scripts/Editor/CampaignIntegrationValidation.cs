@@ -6,7 +6,6 @@ using Lightbringer.Resources;
 using Lightbringer.Units;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Lightbringer.EditorTools
 {
@@ -19,8 +18,7 @@ namespace Lightbringer.EditorTools
             CampaignSession session = host.AddComponent<CampaignSession>();
             CampaignProgress profile = new CampaignProgress();
             session.InitializeForValidation(profile);
-            session.Configure(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                material, Shader.Find("Universal Render Pipeline/Unlit"));
+            EditorAssets.ConfigureSession(session, material);
             try
             {
                 Check(!session.SelectStage(2) && session.StartBattle() && !session.StartBattle(),

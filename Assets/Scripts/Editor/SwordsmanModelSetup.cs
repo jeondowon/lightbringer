@@ -16,19 +16,9 @@ namespace Lightbringer.EditorTools
         private const string ModelPath = Folder + "/Swordsman.fbx";
         private const string MaterialPath = Folder + "/Swordsman.mat";
         private const string PackedPath = Folder + "/Swordsman_MetallicSmoothness.png";
-        private const string RequestPath = "Docs/Validation/SwordsmanAlignment.request";
         private const float Height = 1.65f;
 
-        static SwordsmanModelSetup() => EditorApplication.update += RunRequested;
-
-        private static void RunRequested()
-        {
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating
-                || EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(RequestPath)) return;
-            File.Delete(RequestPath);
-            try { Assign(); }
-            catch (Exception error) { Debug.LogException(error); }
-        }
+        static SwordsmanModelSetup() => EditorRequests.Register("Docs/Validation/SwordsmanAlignment.request", Assign);
 
         [MenuItem("Lightbringer/Art/Assign Swordsman Model")]
         public static void Assign()

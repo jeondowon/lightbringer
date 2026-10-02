@@ -61,7 +61,6 @@ namespace Lightbringer.Core
             battle.Abilities = hero.AddComponent<HeroAbilities>();
             if (art != null && art.HasMaterials) hero.AddComponent<HeroSpellVfx>().Configure(art);
             battle.Abilities.ConfigureLoadout(progress.loadout, progress.equipmentLevels);
-            battle.Abilities.ApplyProgression(progress.ranks);
             GameObject cameraObject = Child("Battle Camera", root);
             battle.Camera = cameraObject.AddComponent<UnityEngine.Camera>();
             cameraObject.tag = "MainCamera";
@@ -88,6 +87,7 @@ namespace Lightbringer.Core
             battle.Summoner = hero.AddComponent<UnitSummoner>();
             battle.Summoner.Configure(food, template, soldiers, battle.Paths, progress.UnlockedUnits);
             BuildAlliedBase(battle, stage, root, material, art);
+            // After the summoner exists, so Leadership also lowers summon costs.
             battle.Abilities.ApplyProgression(progress.ranks);
             GameObject objective = Primitive("Enemy Stronghold", PrimitiveType.Cube, root, material);
             objective.transform.localPosition = new Vector3(0, 2, 38);

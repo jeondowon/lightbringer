@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Lightbringer.EditorTools.RigBuildUtility;
 
 namespace Lightbringer.EditorTools
 {
@@ -40,16 +41,7 @@ namespace Lightbringer.EditorTools
         // Maps the bow hand's pointing axis onto the arrow axis, so the fist stays in line with the forearm.
         private static Quaternion bowGrip;
 
-        static ArcherRigSetup() => EditorApplication.update += Poll;
-
-        private static void Poll()
-        {
-            if (!File.Exists(Request) || EditorApplication.isPlayingOrWillChangePlaymode
-                || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
-            File.Delete(Request);
-            try { Build(); }
-            catch (Exception error) { Debug.LogException(error); }
-        }
+        static ArcherRigSetup() => EditorRequests.Register(Request, Build);
 
         [MenuItem("Lightbringer/Art/Build Archer Rig and Bow")]
         public static void Build()
@@ -170,21 +162,6 @@ namespace Lightbringer.EditorTools
                 Transform shin = Bone(side + "Shin", thigh, knee, ankle);
                 Bone(side + "Foot", shin, ankle, toe);
             }
-        }
-
-        private static Vector3 Landmark(Vector3[] vertices, int sign, float minY, float maxY, float minX, out int[] indices)
-        {
-            var matches = new List<int>();
-            Vector3 sum = Vector3.zero;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                Vector3 p = vertices[i];
-                if (p.x * sign < minX || p.y < minY || p.y > maxY) continue;
-                sum += p; matches.Add(i);
-            }
-            if (matches.Count == 0) throw new InvalidOperationException("Cannot locate Archer arm landmark.");
-            indices = matches.ToArray();
-            return sum / matches.Count;
         }
 
         private static bool IsArm(Vector3 p)
@@ -371,21 +348,8 @@ namespace Lightbringer.EditorTools
             return mesh;
         }
 
-        private static Transform Part(Transform parent, string name, PrimitiveType shape, Vector3 position, Vector3 scale, Material material)
-        {
-            GameObject part = GameObject.CreatePrimitive(shape);
-            part.name = name; part.transform.SetParent(parent, false); part.transform.localPosition = position; part.transform.localScale = scale;
-            UnityEngine.Object.DestroyImmediate(part.GetComponent<Collider>());
-            part.GetComponent<Renderer>().sharedMaterial = material;
-            return part.transform;
-        }
-
         private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
-        {
-            var material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
-            material.SetColor("_BaseColor", color); material.SetFloat("_Metallic", metallic); material.SetFloat("_Smoothness", smoothness);
-            return SaveAsset(material, RigFolder + "/" + name + ".mat");
-        }
+            => RigBuildUtility.MakeMaterial(RigFolder, name, color, metallic, smoothness);
 
         // Grip positions for the shot: the longest draw the short stylised bow arm can hold, and a drawn-in
         // grip used while nocking so the string hand can reach the string.
@@ -584,13 +548,6 @@ namespace Lightbringer.EditorTools
             string key = path + "|" + property;
             if (!curves.TryGetValue(key, out AnimationCurve curve)) curves[key] = curve = new AnimationCurve();
             curve.AddKey(time, value);
-        }
-
-        private static T SaveAsset<T>(T value, string path) where T : UnityEngine.Object
-        {
-            T existing = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (existing == null) { AssetDatabase.CreateAsset(value, path); return value; }
-            EditorUtility.CopySerialized(value, existing); UnityEngine.Object.DestroyImmediate(value); EditorUtility.SetDirty(existing); return existing;
         }
 
         private static Vector3 Centroid(SkinnedMeshRenderer skin, Vector3[] posed, int[] indices)

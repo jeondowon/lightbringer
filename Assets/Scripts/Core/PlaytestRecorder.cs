@@ -58,7 +58,6 @@ namespace Lightbringer.Core
         private float auraSum;
         private bool finished;
         public PlaytestRecord Current { get; private set; }
-        public bool HasPendingRecord => Current != null;
 
         // A null path keeps the recorder in memory only (validation sessions).
         public PlaytestRecorder(string path) => logPath = path;
@@ -147,21 +146,12 @@ namespace Lightbringer.Core
         {
             int best = -1;
             float bestDistance = float.PositiveInfinity;
-            position.y = 0f;
             for (int lane = 0; lane < battle.Paths.Length; lane++)
             {
                 WaypointPath path = battle.Paths[lane];
                 if (path == null || !path.IsValid) continue;
-                for (int i = 0; i < path.Count - 1; i++)
-                {
-                    Vector3 start = path.GetPosition(i), end = path.GetPosition(i + 1);
-                    start.y = end.y = 0f;
-                    Vector3 segment = end - start;
-                    float t = segment.sqrMagnitude > 0.0001f
-                        ? Mathf.Clamp01(Vector3.Dot(position - start, segment) / segment.sqrMagnitude) : 0f;
-                    float distance = (position - (start + segment * t)).sqrMagnitude;
-                    if (distance < bestDistance) { bestDistance = distance; best = lane; }
-                }
+                float distance = path.SqrDistanceTo(position);
+                if (distance < bestDistance) { bestDistance = distance; best = lane; }
             }
             return best;
         }

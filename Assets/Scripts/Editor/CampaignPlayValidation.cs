@@ -10,7 +10,6 @@ using Lightbringer.Units;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace Lightbringer.EditorTools
@@ -128,30 +127,11 @@ namespace Lightbringer.EditorTools
             GameObject host = new GameObject("Isolated Campaign Probe"); host.SetActive(false);
             session = host.AddComponent<CampaignSession>();
             material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            session.Configure(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                material, Shader.Find("Universal Render Pipeline/Unlit"));
+            EditorAssets.ConfigureSession(session, material);
             session.InitializeForValidation(new CampaignProgress());
             host.AddComponent<Lightbringer.UI.CampaignHUD>();
-            GameObject legacy = new GameObject("Standalone greybox conflict probe");
-            legacy.AddComponent<Lightbringer.UI.GreyboxHUD>();
-            GameObject legacyHero = new GameObject("Legacy hero");
-            legacyHero.transform.SetParent(legacy.transform);
-            GameObject legacyCamera = new GameObject("Legacy camera");
-            legacyCamera.SetActive(false);
-            legacyCamera.AddComponent<UnityEngine.Camera>();
-            legacyCamera.AddComponent<AudioListener>();
-            var legacyFollow = legacyCamera.AddComponent<Lightbringer.CameraSystem.ThirdPersonCamera>();
-            legacyFollow.Configure(legacyHero.transform,
-                AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"));
-            legacyCamera.SetActive(true);
             host.SetActive(true);
-            Assert(!legacy.activeSelf && !legacyFollow.enabled
-                && !legacyCamera.GetComponent<UnityEngine.Camera>().enabled
-                && !legacyCamera.GetComponent<AudioListener>().enabled
-                && Cursor.lockState == CursorLockMode.None && Cursor.visible,
-                "Campaign preparation disables a conflicting standalone battlefield and releases menu input");
-            UnityEngine.Object.Destroy(legacy);
-            UnityEngine.Object.Destroy(legacyCamera);
+            Assert(Cursor.lockState == CursorLockMode.None && Cursor.visible, "Campaign preparation releases menu input");
             Assert(session.StartBattle(), "Actual Play mode can start a campaign with isolated progress");
             phase = 1; phaseTime = Time.realtimeSinceStartup;
         }

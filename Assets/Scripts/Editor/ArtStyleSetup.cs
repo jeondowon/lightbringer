@@ -64,28 +64,14 @@ namespace Lightbringer.EditorTools
             if (library.lightningMaterial == null && lightning != null) library.lightningMaterial = LoadOrCreate("LB_Lightning", lightning, null);
             Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
             if (library.terrainMaterial == null && terrain != null) library.terrainMaterial = LoadOrCreate("LB_EnvTerrain", terrain, null);
-            // Earlier builds made the terrain material with the toon shader; move it to the terrain shader.
-            if (library.terrainMaterial != null && terrain != null && library.terrainMaterial.shader != terrain)
-            {
-                library.terrainMaterial.shader = terrain;
-                EditorUtility.SetDirty(library.terrainMaterial);
-            }
             if (library.grassMaterial == null && grass != null) library.grassMaterial = LoadOrCreate("LB_Grass", grass, null);
             if (library.propsMaterial == null) library.propsMaterial = LoadOrCreate("LB_EnvProps", toon, ConfigureProps);
             Shader sky = Shader.Find(SkyShader);
             if (library.skyMaterial == null && sky != null) library.skyMaterial = LoadOrCreate("LB_Sky", sky, null);
-            // v2 grading: more contrast and saturation, cool shadows / warm highlights, gentler bloom. Replaces only
-            // the original v1 default; a profile assigned by hand is left alone.
-            string v1 = Folder + "/LB_BattlePostProcess.asset";
-            if (library.postProcessing == null || AssetDatabase.GetAssetPath(library.postProcessing) == v1)
+            // v2 grading: more contrast and saturation, cool shadows / warm highlights, gentler bloom.
+            // A profile assigned by hand is left alone.
+            if (library.postProcessing == null)
                 library.postProcessing = LoadOrCreateGradedProfile(Folder + "/LB_BattlePostProcess_v2.asset");
-            // One-time value updates for libraries created by earlier Art Pass steps (tuned values are kept after).
-            if (library.styleVersion < 2)
-            {
-                library.fogStart = 80f;
-                library.fogEnd = 260f;
-                library.styleVersion = 2;
-            }
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();
             return library;

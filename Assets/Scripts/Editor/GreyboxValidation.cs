@@ -74,7 +74,6 @@ namespace Lightbringer.EditorTools
                 ValidatePlaytestRecorder();
                 ValidateArtStyle();
                 ValidateCombatScale();
-                ValidateSetup();
                 passed = true;
             }
             catch (Exception exception)

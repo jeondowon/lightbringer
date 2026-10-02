@@ -19,30 +19,14 @@ namespace Lightbringer.EditorTools
         private const int TileWidth = 320, TileHeight = 400;
         // Far from the origin so objects in the open scene (e.g. the greybox player) stay out of frame.
         private static readonly Vector3 Stage = new Vector3(5000f, 0f, 0f);
-        private static double nextProbe;
 
-        static ArtAnimationPreview() => EditorApplication.update += ProbeRequest;
+        static ArtAnimationPreview()
+        {
+            EditorRequests.Register(Path.Combine(PreviewFolder, "battlefield.request"), CaptureBattlefield);
+            EditorRequests.Register(Path.Combine(PreviewFolder, "capture.request"), Capture);
+        }
 
         private static string PreviewFolder => Path.Combine(Path.GetDirectoryName(Application.dataPath), "Docs", "ArtPass", "Preview");
-
-        private static void ProbeRequest()
-        {
-            if (EditorApplication.timeSinceStartup < nextProbe || Application.isPlaying || EditorApplication.isPlaying
-                || EditorApplication.isPlayingOrWillChangePlaymode
-                || EditorApplication.isCompiling || EditorApplication.isUpdating)
-                return;
-            nextProbe = EditorApplication.timeSinceStartup + 2d;
-            string battlefield = Path.Combine(PreviewFolder, "battlefield.request");
-            if (File.Exists(battlefield))
-            {
-                File.Delete(battlefield);
-                CaptureBattlefield();
-            }
-            string request = Path.Combine(PreviewFolder, "capture.request");
-            if (!File.Exists(request)) return;
-            File.Delete(request);
-            Capture();
-        }
 
         [MenuItem("Lightbringer/Art/Capture Hero Animation Preview")]
         public static void Capture()
@@ -200,8 +184,7 @@ namespace Lightbringer.EditorTools
                 Lightbringer.Progression.CampaignProgress profile = new Lightbringer.Progression.CampaignProgress();
                 for (int stage = 1; stage < Lightbringer.Progression.CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
                 session.InitializeForValidation(profile);
-                session.Configure(AssetDatabase.LoadAssetAtPath<UnityEngine.InputSystem.InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                    material, Shader.Find("Universal Render Pipeline/Unlit"));
+                EditorAssets.ConfigureSession(session, material);
                 session.ConfigureArt(library);
                 session.SelectStage(8);
                 if (!session.StartBattle()) { Debug.LogError("Preview: battle did not start."); return; }

@@ -1,8 +1,0 @@
-PASS | 2026-10-01T11:45:18.7893162Z
-Swordsman assigned through UnitAppearance.Attach.
-Model: Assets/Art/Characters/Swordsman/Swordsman.fbx
-Material: URP Lit; base color, normal, metallic and inverted roughness.
-Height: 1.650 m; feet: -0.800; rotation: (-90.00, 0.00, 0.00); bounds: (0.88, 1.65, 0.69).
-Renderers: 1; static mesh vertices: 273074.
-No skeletal animation clips supplied; existing bob/lean fallback is used.
-Editor instantiation validated; gameplay visual review remains manual.

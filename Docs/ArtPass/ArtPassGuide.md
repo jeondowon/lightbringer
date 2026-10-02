@@ -1,13 +1,13 @@
 # Lightbringer Art Pass 가이드 (1단계: 교체 구조 · 셰이더 · 오라)
 
-기준 자료: `Docs/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx` 9장, `Docs/ArtReference/CharacterSheet_FemaleHero_v1.png.png`.
+기준 자료: `Docs/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx` 9장, `Docs/ArtReference/Characters/CharacterSheet_FemaleHero_v1.png`.
 게임 로직·밸런스·충돌 판정은 바꾸지 않았다. 외형만 교체된다.
 
 ## 1. 시작하기
 
 1. Unity 창을 활성화해 스크립트/셰이더를 컴파일한다.
 2. `Lightbringer > Art > Build Art Style Assets` 실행 (최초 1회).
-   - `Assets/Art/ArtStyleLibrary.asset`, `Assets/Art/Materials/LB_*.mat`, `Assets/Art/LB_BattlePostProcess.asset` 생성
+   - `Assets/Art/ArtStyleLibrary.asset`, `Assets/Art/Materials/LB_*.mat`, `Assets/Art/LB_BattlePostProcess_v2.asset` 생성
    - `CampaignPrototype.unity`의 `CampaignSession > Art Style`에 자동 연결
    - `Prepare and Play Campaign`도 라이브러리가 없으면 최초 1회 자동 생성·연결한다.
 3. `Lightbringer > Prepare and Play Campaign`으로 확인.
@@ -48,7 +48,7 @@
 - 색감: 라이브러리 팔레트 색. 플레이 중 변경은 **새로 소환되는 유닛부터** 반영된다.
 - 외곽선 굵기·그림자 색·림: `LB_Allied`, `LB_Enemy` 머티리얼.
 - 오라 밝기: 라이브러리 `Aura Color`(HDR), `LB_AuraRunes`의 `Fill Strength`/`Pulse`.
-- 블룸·톤매핑·채도: `LB_BattlePostProcess`.
+- 블룸·톤매핑·채도: `LB_BattlePostProcess_v2`.
 - 안개·환경광: 라이브러리 `Battlefield lighting`.
 
 ## 5. 다음 단계 후보

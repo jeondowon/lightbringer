@@ -1,7 +1,7 @@
 Lightbringer — pre-Art Pass implementation and verification
 
 Source: Docs/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx
-Art reference found at Docs/ArtReference/CharacterSheet_FemaleHero_v1.png.png.
+Art reference found at Docs/ArtReference/Characters/CharacterSheet_FemaleHero_v1.png.
 Existing user scene edits are preserved. No final art/VFX in this phase.
 
 Gate 1: Path selection and additional unit types — PASS, Selection.v1, 104 checks (2026-09-30).
@@ -27,7 +27,6 @@ Final verification:
 
 Entry point: Lightbringer > Prepare and Play Campaign, or Assets/Scenes/CampaignPrototype.unity.
 See PreArtImplementationNotes.txt for controls, gameplay scope, saves and remaining Art/Presentation/Polish work.
-See ImplementationFiles.txt for the implementation and generated artifact file list.
 
 Balance values, campaign test stages, stat increments and equipment count (3) are prototype
 choices based on the handoff, not final balancing decisions. All unlocked troop types

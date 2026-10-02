@@ -8,7 +8,6 @@ using Lightbringer.Units;
 using Lightbringer.Visuals;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 namespace Lightbringer.EditorTools
@@ -52,8 +51,7 @@ namespace Lightbringer.EditorTools
                 CampaignProgress profile = new CampaignProgress();
                 for (int stage = 1; stage < CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
                 session.InitializeForValidation(profile);
-                session.Configure(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                    material, Shader.Find("Universal Render Pipeline/Unlit"));
+                EditorAssets.ConfigureSession(session, material);
                 session.ConfigureArt(style);
                 session.SelectStage(8);
                 Check(session.StartBattle(), "Styled campaign battle starts with the Art Style Library");

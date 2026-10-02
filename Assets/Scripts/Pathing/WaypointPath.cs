@@ -31,16 +31,9 @@ namespace Lightbringer.Pathing
         {
             int bestIndex = 0;
             float bestDistance = float.PositiveInfinity;
-            position.y = 0f;
             for (int i = 0; i < Count - 1; i++)
             {
-                Vector3 start = GetPosition(i);
-                Vector3 end = GetPosition(i + 1);
-                start.y = end.y = 0f;
-                Vector3 segment = end - start;
-                float progress = segment.sqrMagnitude > 0.0001f
-                    ? Mathf.Clamp01(Vector3.Dot(position - start, segment) / segment.sqrMagnitude) : 0f;
-                float distance = (position - (start + segment * progress)).sqrMagnitude;
+                float distance = ProjectOnSegment(i, position, out float progress);
                 if (distance < bestDistance)
                 {
                     bestDistance = distance;
@@ -48,6 +41,27 @@ namespace Lightbringer.Pathing
                 }
             }
             return bestIndex;
+        }
+
+        // Horizontal squared distance to the nearest segment (infinite for a single-waypoint Path).
+        public float SqrDistanceTo(Vector3 position)
+        {
+            float best = float.PositiveInfinity;
+            for (int i = 0; i < Count - 1; i++)
+                best = Mathf.Min(best, ProjectOnSegment(i, position, out _));
+            return best;
+        }
+
+        // Ground-plane projection onto segment i: progress along it (0..1) and squared distance from it.
+        private float ProjectOnSegment(int i, Vector3 position, out float progress)
+        {
+            Vector3 start = GetPosition(i);
+            Vector3 end = GetPosition(i + 1);
+            position.y = start.y = end.y = 0f;
+            Vector3 segment = end - start;
+            progress = segment.sqrMagnitude > 0.0001f
+                ? Mathf.Clamp01(Vector3.Dot(position - start, segment) / segment.sqrMagnitude) : 0f;
+            return (position - (start + segment * progress)).sqrMagnitude;
         }
 
         private void OnDrawGizmos()

@@ -15,8 +15,7 @@ namespace Lightbringer.Combat
             {
                 Count = Physics.OverlapSphereNonAlloc(centre, radius, Items, mask, QueryTriggerInteraction.Ignore);
                 if (Count < Items.Length) return Count;
-                Collider[] expanded = new Collider[Items.Length * 2];
-                Items = expanded;
+                Items = new Collider[Items.Length * 2];
             }
         }
     }

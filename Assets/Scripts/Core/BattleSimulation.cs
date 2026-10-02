@@ -20,14 +20,19 @@ namespace Lightbringer.Core
             suspended.Clear();
             foreach (MonoBehaviour component in root.GetComponentsInChildren<MonoBehaviour>())
             {
-                if (component.enabled && (component is UnitCombat || component is UnitPathFollower
-                    || component is UnitSummoner || component is PlayerMovement || component is HeroAbilities
-                    || component is ThirdPersonCamera || component is FoodResource || component is ManaResource
-                    || component is EnemyWaveSpawner || component is UnitSupport))
+                if (component.enabled && IsSimulated(component))
                 { suspended.Add(component); component.enabled = false; }
             }
             if (Application.isPlaying) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         }
+
+        // Components that advance the battle: resources, movement, combat, spawning, hero input and camera.
+        public static bool IsSimulated(MonoBehaviour component) =>
+            component is UnitCombat || component is UnitPathFollower || component is UnitSummoner
+            || component is PlayerMovement || component is HeroAbilities || component is ThirdPersonCamera
+            || component is FoodResource || component is ManaResource || component is EnemyWaveSpawner
+            || component is UnitSupport;
+
         public void Resume(bool battleEnded)
         {
             if (!battleEnded)

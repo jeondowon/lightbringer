@@ -1,8 +1,5 @@
 using Lightbringer.CameraSystem;
 using Lightbringer.Combat;
-using Lightbringer.Player;
-using Lightbringer.Resources;
-using Lightbringer.Units;
 using UnityEngine;
 
 namespace Lightbringer.Core
@@ -60,7 +57,7 @@ namespace Lightbringer.Core
         {
             if (enemyBase == null || enemyBase.Faction != Faction.Enemy || battlefieldRoot == null)
             {
-                Debug.LogError("StageObjective needs an enemy base and a battlefield root. Run Greybox setup.", this);
+                Debug.LogError("StageObjective needs an enemy base and a battlefield root.", this);
                 enabled = false;
             }
         }
@@ -101,10 +98,7 @@ namespace Lightbringer.Core
             // Stop only this battlefield; never change the global time scale.
             foreach (MonoBehaviour behaviour in battlefieldRoot.GetComponentsInChildren<MonoBehaviour>(true))
             {
-                if (behaviour is UnitCombat || behaviour is UnitPathFollower
-                    || behaviour is UnitSummoner || behaviour is FoodResource || behaviour is PlayerMovement
-                    || behaviour is HeroAbilities || behaviour is ManaResource || behaviour is EnemyWaveSpawner
-                    || behaviour is Lightbringer.Units.UnitSupport)
+                if (BattleSimulation.IsSimulated(behaviour))
                     behaviour.enabled = false;
             }
             if (battleCamera != null)

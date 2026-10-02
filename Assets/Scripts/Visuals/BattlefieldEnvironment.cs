@@ -142,11 +142,7 @@ namespace Lightbringer.Visuals
             float road = RoadMask(flat);
             color = Color.Lerp(color, Color.Lerp(style.dirt, style.dirt * 0.85f, variation), road * 0.9f);
             // Stone plazas at the strongholds.
-            foreach (Vector2 clear in keepClear)
-            {
-                float plaza = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 8.5f, Vector2.Distance(flat, clear)));
-                color = Color.Lerp(color, style.plazaStone * (0.92f + 0.08f * variation), plaza);
-            }
+            color = Color.Lerp(color, style.plazaStone * (0.92f + 0.08f * variation), PlazaMask(flat));
             // Hills darken with height; steep faces turn to rock.
             color = Color.Lerp(color, style.grassDark * 0.8f, Mathf.Clamp01(point.y / 20f) * 0.5f);
             color = Color.Lerp(color, style.rock, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.85f, 0.6f, normal.y)));

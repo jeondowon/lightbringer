@@ -11,25 +11,16 @@ namespace Lightbringer.EditorTools
     {
         private const string Root = "Assets/Art/Characters/Archer";
         private const string Output = Root + "/ShadowHood";
-        private const string Request = "Docs/Diagnostics/ArcherImport/ShadowHood.request";
 
-        static ArcherShadowHoodSetup() => EditorApplication.update += Poll;
-
-        private static void Poll()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating || !File.Exists(Request)) return;
-            File.Delete(Request);
-            try { Build(); }
-            catch (Exception error) { Debug.LogException(error); }
-        }
+        static ArcherShadowHoodSetup() => EditorRequests.Register("Docs/Diagnostics/ArcherImport/ShadowHood.request", Build);
 
         [MenuItem("Lightbringer/Art/Build Archer Shadow Hood")]
         public static void Build()
         {
             var source = AssetDatabase.LoadAssetAtPath<Mesh>(Root + "/FaceRepair/Archer_Upright.asset");
-            var body = AssetDatabase.LoadAssetAtPath<Material>(Root + "/FaceRepair/Archer_FaceFixed.mat");
+            bool hasBody = AssetDatabase.LoadAssetAtPath<Material>(Root + "/FaceRepair/Archer_FaceFixed.mat") != null;
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (source == null || body == null || shader == null)
+            if (source == null || !hasBody || shader == null)
                 throw new InvalidOperationException("Archer upright mesh, body material and URP Unlit shader are required.");
             if (!AssetDatabase.IsValidFolder(Output)) AssetDatabase.CreateFolder(Root, "ShadowHood");
 
@@ -52,10 +43,7 @@ namespace Lightbringer.EditorTools
             mesh.subMeshCount = 2;
             mesh.SetTriangles(exterior, 0);
             mesh.SetTriangles(interior, 1);
-            string meshPath = Output + "/Archer_ShadowHood.asset";
-            var savedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
-            if (savedMesh == null) { AssetDatabase.CreateAsset(mesh, meshPath); savedMesh = mesh; }
-            else { EditorUtility.CopySerialized(mesh, savedMesh); UnityEngine.Object.DestroyImmediate(mesh); EditorUtility.SetDirty(savedMesh); }
+            Mesh savedMesh = RigBuildUtility.SaveAsset(mesh, Output + "/Archer_ShadowHood.asset");
 
             string materialPath = Output + "/HoodInterior.mat";
             var shadow = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
@@ -65,15 +53,6 @@ namespace Lightbringer.EditorTools
             shadow.SetTexture("_BaseMap", null);
             shadow.SetFloat("_Cull", 0); // Hide face folds from oblique views as well.
             EditorUtility.SetDirty(shadow);
-
-            var model = new GameObject("Archer_ShadowHood");
-            try
-            {
-                model.AddComponent<MeshFilter>().sharedMesh = savedMesh;
-                model.AddComponent<MeshRenderer>().sharedMaterials = new[] { body, shadow };
-                PrefabUtility.SaveAsPrefabAsset(model, Output + "/Archer_ShadowHood.prefab");
-            }
-            finally { UnityEngine.Object.DestroyImmediate(model); }
             AssetDatabase.SaveAssets();
             string diagnostics = "Docs/Diagnostics/ArcherImport";
             Directory.CreateDirectory(diagnostics);
@@ -86,7 +65,7 @@ namespace Lightbringer.EditorTools
             }
             finally { UnityEngine.Object.DestroyImmediate(atlas); }
             File.WriteAllText(diagnostics + "/ShadowHood.txt", $"Shadow triangles: {interior.Count / 3}; total: {triangles.Length / 3}. Unlit interior, no facial texture or specular response.\n");
-            Debug.Log("Created Archer_ShadowHood prefab.");
+            Debug.Log("Created Archer_ShadowHood mesh and hood material.");
         }
     }
 }

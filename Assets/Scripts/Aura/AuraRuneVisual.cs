@@ -26,7 +26,6 @@ namespace Lightbringer.Aura
         private float appliedRadius = -1f;
 
         public GameObject Disc => disc;
-        public ParticleSystem Motes => motes;
 
         public void Configure(ArtStyleLibrary library, float groundHeight)
         {

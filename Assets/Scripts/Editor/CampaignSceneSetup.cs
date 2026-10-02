@@ -15,7 +15,7 @@ namespace Lightbringer.EditorTools
         public static bool EnsureScene()
         {
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null) return true;
-            InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions");
+            InputActionAsset actions = EditorAssets.InputActions;
             Shader shader = Shader.Find("Universal Render Pipeline/Lit");
             Shader aura = Shader.Find("Universal Render Pipeline/Unlit");
             if (actions == null || shader == null || aura == null) return false;

@@ -7,7 +7,6 @@ using Lightbringer.Progression;
 using Lightbringer.Resources;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Lightbringer.EditorTools
 {
@@ -20,8 +19,7 @@ namespace Lightbringer.EditorTools
             CampaignSession session = host.AddComponent<CampaignSession>();
             CampaignProgress profile = new CampaignProgress();
             session.InitializeForValidation(profile);
-            session.Configure(AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions"),
-                material, Shader.Find("Universal Render Pipeline/Unlit"));
+            EditorAssets.ConfigureSession(session, material);
             string log = Path.Combine(Path.GetTempPath(), "lightbringer-playtest-" + System.Guid.NewGuid().ToString("N") + ".jsonl");
             try
             {

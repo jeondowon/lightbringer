@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Lightbringer.EditorTools.RigBuildUtility;
 
 namespace Lightbringer.EditorTools
 {
@@ -24,16 +25,7 @@ namespace Lightbringer.EditorTools
         private static readonly Dictionary<string, int[]> palmVertices = new Dictionary<string, int[]>();
         private static readonly Quaternion SwordMountRotation = Quaternion.Euler(75f, 0f, 0f);
 
-        static SwordsmanRigSetup() => EditorApplication.update += Poll;
-
-        private static void Poll()
-        {
-            if (!File.Exists(Request) || EditorApplication.isPlayingOrWillChangePlaymode
-                || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
-            File.Delete(Request);
-            try { Build(); }
-            catch (Exception error) { Debug.LogException(error); }
-        }
+        static SwordsmanRigSetup() => EditorRequests.Register(Request, Build);
 
         [MenuItem("Lightbringer/Art/Build Swordsman Rig and Weapons")]
         public static void Build()
@@ -149,21 +141,6 @@ namespace Lightbringer.EditorTools
             Bone("Cape", chest, new Vector3(0, 1.20f, -.10f), new Vector3(0, .50f, -.15f));
         }
 
-        private static Vector3 Landmark(Vector3[] vertices, int sign, float minY, float maxY, float minX, out int[] indices)
-        {
-            var matches = new List<int>();
-            Vector3 sum = Vector3.zero;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                Vector3 p = vertices[i];
-                if (p.x * sign < minX || p.y < minY || p.y > maxY) continue;
-                sum += p; matches.Add(i);
-            }
-            if (matches.Count == 0) throw new InvalidOperationException("Cannot locate Swordsman arm landmark.");
-            indices = matches.ToArray();
-            return sum / matches.Count;
-        }
-
         private static void AssignWeights(Mesh mesh)
         {
             Vector3[] vertices = mesh.vertices;
@@ -261,21 +238,8 @@ namespace Lightbringer.EditorTools
             Part(shield, "Boss", PrimitiveType.Sphere, new Vector3(0,0,.045f), new Vector3(.12f,.12f,.065f), gold);
         }
 
-        private static Transform Part(Transform parent, string name, PrimitiveType shape, Vector3 position, Vector3 scale, Material material)
-        {
-            GameObject part = GameObject.CreatePrimitive(shape);
-            part.name = name; part.transform.SetParent(parent, false); part.transform.localPosition = position; part.transform.localScale = scale;
-            UnityEngine.Object.DestroyImmediate(part.GetComponent<Collider>());
-            part.GetComponent<Renderer>().sharedMaterial = material;
-            return part.transform;
-        }
-
         private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
-        {
-            var material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
-            material.SetColor("_BaseColor", color); material.SetFloat("_Metallic", metallic); material.SetFloat("_Smoothness", smoothness);
-            return SaveAsset(material, RigFolder + "/" + name + ".mat");
-        }
+            => RigBuildUtility.MakeMaterial(RigFolder, name, color, metallic, smoothness);
 
         private static AnimationClip MakeClip(Transform root, string role, float duration)
         {
@@ -356,13 +320,6 @@ namespace Lightbringer.EditorTools
                 roll = -15f * raise + 15f * cut;
             }
             return Quaternion.Inverse(parent) * Quaternion.Euler(pitch, 0, roll) * Quaternion.Inverse(SwordMountRotation);
-        }
-
-        private static T SaveAsset<T>(T value, string path) where T : UnityEngine.Object
-        {
-            T existing = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (existing == null) { AssetDatabase.CreateAsset(value, path); return value; }
-            EditorUtility.CopySerialized(value, existing); UnityEngine.Object.DestroyImmediate(value); EditorUtility.SetDirty(existing); return existing;
         }
 
         private static void ValidateRig(GameObject root, SkinnedMeshRenderer skin, params AnimationClip[] clips)

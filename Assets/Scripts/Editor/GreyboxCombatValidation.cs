@@ -1,13 +1,7 @@
 using Lightbringer.Combat;
 using Lightbringer.Units;
-using System.Linq;
-using Lightbringer.Resources;
-using Lightbringer.Aura;
-using Lightbringer.Core;
-using Lightbringer.UI;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Lightbringer.EditorTools
 {
@@ -165,52 +159,6 @@ namespace Lightbringer.EditorTools
             SerializedObject serialized = new SerializedObject(target);
             serialized.FindProperty(property).floatValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void ValidateSetup()
-        {
-            Check(GreyboxPlayerSetup.TrySetup(), "One-step setup succeeds in an empty prototype scene");
-            var scene = SceneManager.GetActiveScene();
-            GameObject root = scene.GetRootGameObjects().Single(item => item.name == "Lightbringer Greybox");
-            Transform template = root.transform.Find("Soldier Template");
-            Check(!template.gameObject.activeSelf && template.GetComponent<Combatant>().Faction == Faction.Allied
-                && template.GetComponent<UnitCombat>() != null && template.GetComponent<UnitPathFollower>() != null,
-                "Setup equips the inactive soldier template with allied combat and movement");
-            Transform enemies = root.transform.Find("Enemies");
-            Check(enemies.childCount == 2 && enemies.GetComponentsInChildren<Combatant>()
-                .All(unit => unit.Faction == Faction.Enemy && unit.GetComponent<UnitCombat>() != null),
-                "Setup creates two opponents of the same enemy type");
-            var player = root.transform.Find("Player");
-            FoodResource food = player.GetComponent<FoodResource>();
-            HeroAura aura = player.GetComponent<HeroAura>();
-            Combatant enemyBase = root.transform.Find("Enemy Base").GetComponent<Combatant>();
-            StageObjective objective = root.GetComponent<StageObjective>();
-            Check(enemyBase.Faction == Faction.Enemy && enemyBase.MaximumHealth == 200f
-                && enemyBase.GetComponent<BoxCollider>() != null
-                && enemyBase.GetComponent<UnitCombat>() == null && enemyBase.GetComponent<UnitPathFollower>() == null,
-                "Setup creates a stationary solid enemy base with 200 HP");
-            Check(objective != null && objective.EnemyBase == enemyBase && root.GetComponent<GreyboxHUD>() != null,
-                "Setup connects the enemy base objective and prototype HUD");
-            SetFloat(enemyBase, "maximumHealth", 250f);
-            Check(aura != null && player.GetComponent<AuraRangeVisual>() != null,
-                "Setup connects hero aura and range visualization");
-            SetFloat(aura, "radius", 7f);
-            SetFloat(food, "foodPerSecond", 7f);
-            SetFloat(template.GetComponent<UnitCombat>(), "attackDamage", 12f);
-            int before = scene.GetRootGameObjects().Sum(item => item.GetComponentsInChildren<Transform>(true).Length);
-            Check(GreyboxPlayerSetup.TrySetup(), "Repeated setup succeeds");
-            int after = scene.GetRootGameObjects().Sum(item => item.GetComponentsInChildren<Transform>(true).Length);
-            Check(before == after && enemies.childCount == 2, "Repeated setup does not duplicate enemies or prototype objects");
-            Check(new SerializedObject(food).FindProperty("foodPerSecond").floatValue == 7f
-                && new SerializedObject(template.GetComponent<UnitCombat>()).FindProperty("attackDamage").floatValue == 12f,
-                "Repeated setup preserves Inspector tuning");
-            Check(player.GetComponent<Combatant>() != null && player.GetComponent<Lightbringer.Player.HeroAbilities>() != null,
-                "Setup equips the hero for direct combat and survival");
-            Check(player.GetComponents<HeroAura>().Length == 1 && aura.Radius == 7f,
-                "Repeated setup preserves aura tuning and does not duplicate the aura");
-            Check(enemyBase.MaximumHealth == 250f && root.GetComponents<StageObjective>().Length == 1
-                && root.GetComponents<GreyboxHUD>().Length == 1 && objective.EnemyBase == enemyBase,
-                "Repeated setup preserves base health tuning and one objective/HUD");
         }
     }
 }
