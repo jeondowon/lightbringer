@@ -79,4 +79,24 @@ MonoBehaviour:
       localEuler: {x: 349.6733, y: 204.9089, z: 155.09108}
       localScale: {x: 170.00003, y: 169.99992, z: 169.99998}
       stabilize: 1
+  - id: 1
+    prefab: {fileID: 419721511994296569, guid: 1038946768625aa44bc5c8eef4db4890, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 88fb20b2589e77741ac85a38512b7d7e, type: 2}
+    moveClip: {fileID: 7400000, guid: 53fdc8eb34d5f0040acdeef57ec60138, type: 2}
+    actionClip: {fileID: 7400000, guid: 546d8da4335c8df408e70818945fd1cc, type: 2}
+    moveClipSpeed: 3
+    attachments: []
+  - id: 2
+    prefab: {fileID: 6634112117539263143, guid: e4245a55d0e668b439a3e188294709f1, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 3737ec42b6ade6445850f41078851ed9, type: 2}
+    moveClip: {fileID: 7400000, guid: ba7e4891d4b13114a87ca218561c506b, type: 2}
+    actionClip: {fileID: 7400000, guid: a0c8884697fb03547ab34e9ff9310521, type: 2}
+    moveClipSpeed: 3
+    attachments: []
   styleVersion: 2

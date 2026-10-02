@@ -1,4 +1,5 @@
 using Lightbringer.Player;
+using Lightbringer.Combat;
 using UnityEngine;
 
 namespace Lightbringer.Visuals
@@ -12,6 +13,7 @@ namespace Lightbringer.Visuals
         private Animation player;
         private Transform owner;
         private HeroAbilities abilities;
+        private UnitCombat combat;
         private float moveClipSpeed = 4f;
         private Vector3 lastPosition;
         private float smoothedSpeed;
@@ -58,12 +60,16 @@ namespace Lightbringer.Visuals
             if (owner != null) lastPosition = owner.position;
             abilities = GetComponentInParent<HeroAbilities>();
             if (abilities != null) abilities.Casted += OnCasted;
+            combat = GetComponentInParent<UnitCombat>();
+            if (combat != null) combat.Attacked += OnAttacked;
         }
 
         private void OnDisable()
         {
             if (abilities != null) abilities.Casted -= OnCasted;
             abilities = null;
+            if (combat != null) combat.Attacked -= OnAttacked;
+            combat = null;
         }
 
         private void OnCasted(int slot)
@@ -71,6 +77,14 @@ namespace Lightbringer.Visuals
             if (!hasAction) return;
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.08f);
+        }
+
+        private void OnAttacked()
+        {
+            if (!hasAction || player == null) return;
+            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, combat.AttackInterval * 0.9f);
+            player.Stop(ActionState);
+            player.CrossFade(ActionState, 0.05f);
         }
 
         private void LateUpdate()

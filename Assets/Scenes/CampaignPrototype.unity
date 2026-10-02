@@ -531,6 +531,7 @@ MonoBehaviour:
   selectedPath: {fileID: 2039846648}
   foodCost: 10
   spawnDistance: 2.5
+  spawnAnchor: {fileID: 0}
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -993,6 +994,7 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 360
   arrivalDistance: 0.3
+  cornerRadius: 1.6
   gravity: -25
 --- !u!143 &942242968
 CharacterController:
@@ -1917,6 +1919,7 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 360
   arrivalDistance: 0.3
+  cornerRadius: 1.6
   gravity: -25
 --- !u!143 &1753235857
 CharacterController:
@@ -2158,6 +2161,7 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 360
   arrivalDistance: 0.3
+  cornerRadius: 1.6
   gravity: -25
 --- !u!143 &1884374923
 CharacterController:
@@ -2342,6 +2346,7 @@ MonoBehaviour:
   battlefieldRoot: {fileID: 2123758866}
   battleCamera: {fileID: 1181097958}
   hero: {fileID: 288436601}
+  alliedBase: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

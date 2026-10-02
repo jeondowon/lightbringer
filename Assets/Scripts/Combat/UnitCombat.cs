@@ -21,6 +21,8 @@ namespace Lightbringer.Combat
         public Combatant Target { get; private set; }
         public float AttackRange => attackRange;
         public float BaseDamage => attackDamage;
+        public float AttackInterval => attackInterval;
+        public event System.Action Attacked;
         public float EffectiveDamage
         {
             get
@@ -132,6 +134,7 @@ namespace Lightbringer.Combat
                 }
             }
             cooldown = attackInterval;
+            Attacked?.Invoke();
             // A death listener can end the stage and disable this component during TakeDamage.
             if (Target == null || !Target.IsAlive)
             {

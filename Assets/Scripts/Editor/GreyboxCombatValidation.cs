@@ -33,6 +33,8 @@ namespace Lightbringer.EditorTools
             Combatant ally = CreateCombatUnit(origin, Faction.Allied);
             Combatant friend = CreateCombatUnit(origin + Vector3.right * 1.1f, Faction.Allied);
             UnitCombat combat = ally.GetComponent<UnitCombat>();
+            int attacks = 0;
+            combat.Attacked += () => attacks++;
             UnitPathFollower movement = ally.GetComponent<UnitPathFollower>();
             var path = CreatePath(origin - Vector3.up * 0.85f, new[] { Vector3.forward * 10f });
             movement.TryAssignPath(path);
@@ -55,10 +57,12 @@ namespace Lightbringer.EditorTools
             Physics.SyncTransforms();
             Invoke(combat, "Tick", 0f);
             Check(enemy.CurrentHealth == 30f, "Paused combat does not deal damage");
+            Check(attacks == 0, "Paused and out-of-range combat does not trigger attack animation");
             Invoke(combat, "Tick", 0.1f);
             Check(enemy.CurrentHealth == 20f, "In-range attack deals the configured damage");
             Invoke(combat, "Tick", 0.1f);
             Check(enemy.CurrentHealth == 20f, "Attack cooldown prevents damage every frame");
+            Check(attacks == 1, "One hit triggers one attack animation; cooldown does not retrigger it");
             Invoke(combat, "Tick", 0.71f);
             Check(enemy.CurrentHealth == 10f, "Attack resumes after the interval expires");
             Invoke(combat, "Tick", 0.81f);

@@ -1,0 +1,23 @@
+PASS | 2026-10-01T14:56:25.0654397Z
+Unity-native prototype skeleton on Assets/Art/Characters/Archer/ShadowHood/Archer_ShadowHood.asset (source mesh unchanged).
+ok   skeleton: 19 bones, 19 bind poses
+ok   normalized weights on 205927 vertices
+ok   Archer_Idle: sampled weighted vertex motion 0.145 m
+ok   Archer_Idle: lowest bow tip 0.608 m above ground
+ok   Archer_Run: sampled weighted vertex motion 0.263 m
+ok   Archer_Run: lowest bow tip 0.597 m above ground
+ok   Archer_Shoot: sampled weighted vertex motion 0.765 m
+ok   Archer_Shoot: lowest bow tip 0.836 m above ground
+ok   Shoot: nocked arrow hidden right after release
+ok   Shoot: string hand reaches the braced string to nock (gap 0.000 m)
+ok   Shoot 0.6: string hand on the nock (gap 0.000 m)
+ok   Shoot 0.9: string hand on the nock (gap 0.000 m)
+ok   Shoot full draw: bow in the left palm (gap 0.000 m)
+ok   Shoot full draw: bow arm reaches the shooting line (gap 0.000 m)
+ok   Shoot full draw: arrow points at the target (dot 0.997)
+ok   Shoot full draw: draw length 0.390 m (brace 0.11 m)
+ok   Shoot full draw: string hand clear of the face (0.198 m from head centre)
+ok   Shoot full draw: arrow nocked and visible
+Bow: LeftHand; nocked arrow and string animated in the clips; quiver on Chest.
+Shoot clip releases at phase 0 to match UnitCombat.Attacked (damage is instant; no projectile).
+No Mixamo upload or external animation assets. Visual review and cloth polish remain manual.
