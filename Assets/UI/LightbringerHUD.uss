@@ -404,30 +404,6 @@
     white-space: normal;
 }
 
-.lb-choices {
-    flex-direction: row;
-    justify-content: center;
-}
-
-.lb-choice {
-    width: 180px;
-    height: 120px;
-    margin: 0 6px;
-    border-radius: 8px;
-    border-width: 2px;
-    border-color: rgba(219, 174, 90, 0.8);
-    background-color: rgba(30, 44, 84, 0.95);
-    color: rgb(238, 232, 219);
-    font-size: 17px;
-    -unity-font-style: bold;
-    white-space: normal;
-}
-
-.lb-choice:hover {
-    background-color: rgba(52, 76, 140, 1);
-    border-color: rgb(255, 225, 150);
-}
-
 .lb-stats {
     align-self: stretch;
     margin: 6px 0 10px 0;
@@ -1481,6 +1457,446 @@
     color: rgba(238, 232, 219, 0.55);
     -unity-text-align: middle-center;
     white-space: normal;
+}
+
+/* ---------- Level-up blessings ----------
+   Full-screen overlay above the paused battle: three large cards dealt in by LevelUpView.
+   Card frame and growth icons come from Lightbringer/UI/Build Preparation Art. */
+
+.lb-levelup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    color: rgb(238, 232, 219);
+}
+
+.lb-levelup-veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(3, 6, 14, 0.93);
+}
+
+.lb-levelup-rune {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1100px;
+    height: 1100px;
+    margin-left: -550px;
+    margin-top: -530px;
+    background-image: url("Art/Prep_Rune.png");
+    background-size: contain;
+    -unity-background-image-tint-color: rgba(240, 200, 120, 0.09);
+}
+
+.lb-levelup-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1500px;
+    height: 900px;
+    margin-left: -750px;
+    margin-top: -440px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: 100% 100%;
+    -unity-background-image-tint-color: rgba(120, 150, 255, 0.16);
+}
+
+.lb-levelup-header {
+    align-items: center;
+    margin-bottom: 34px;
+}
+
+.lb-levelup-title-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-levelup-title {
+    margin: 0 26px;
+    padding: 0;
+    font-size: 72px;
+    letter-spacing: 10px;
+    color: rgb(250, 222, 150);
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+}
+
+.lb-levelup-ornament {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-levelup-ornament--right {
+    flex-direction: row-reverse;
+}
+
+.lb-levelup-ornament .lb-prep-bullet {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+}
+
+.lb-levelup-ornament-line {
+    width: 190px;
+    height: 2px;
+    margin: 0 10px;
+    background-color: rgba(240, 205, 128, 0.55);
+}
+
+.lb-levelup-subtitle {
+    margin: 4px 0 0 0;
+    padding: 0;
+    font-size: 17px;
+    letter-spacing: 4px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.78);
+}
+
+.lb-levelup-remaining {
+    margin: 10px 0 0 0;
+    padding: 4px 14px;
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: rgba(240, 205, 128, 0.6);
+    background-color: rgba(40, 66, 146, 0.55);
+    font-size: 13px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgb(250, 222, 150);
+}
+
+.lb-lvcards {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.lb-lvslot {
+    margin: 0 20px;
+}
+
+.lb-lvcard {
+    width: 420px;
+    height: 600px;
+    margin: 0;
+    padding: 58px 34px 26px 34px;
+    align-items: center;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/LevelUp_Card.png");
+    -unity-slice-left: 48;
+    -unity-slice-right: 48;
+    -unity-slice-top: 48;
+    -unity-slice-bottom: 48;
+    color: rgb(238, 232, 219);
+    transition-property: scale, translate, opacity;
+    transition-duration: 0.16s;
+    transition-timing-function: ease-out;
+}
+
+.lb-lvcard:hover {
+    scale: 1.035 1.035;
+    translate: 0 -10px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.lb-lvcard:active {
+    scale: 1.0 1.0;
+    translate: 0 -4px;
+}
+
+.lb-lvcard .lb-halo {
+    left: -18px;
+    right: -18px;
+    top: -18px;
+    bottom: -18px;
+}
+
+.lb-lvcard:hover .lb-halo {
+    opacity: 0.55;
+}
+
+/* Selected card stays raised with a full halo until CONFIRM; the other two step back. */
+.lb-lvcard--selected, .lb-lvcard--selected:hover {
+    scale: 1.05 1.05;
+    translate: 0 -16px;
+}
+
+.lb-lvcard--selected .lb-halo, .lb-lvcard--selected:hover .lb-halo {
+    opacity: 1;
+    -unity-background-image-tint-color: rgb(255, 230, 160);
+}
+
+.lb-lvcard--selected .lb-lvcard-shine {
+    opacity: 0.5;
+}
+
+.lb-lvcard--selected .lb-lvcard-medal {
+    background-color: rgb(196, 150, 64);
+    border-color: rgb(255, 244, 205);
+}
+
+.lb-lvcard--dimmed {
+    opacity: 0.5;
+}
+
+.lb-lvcard--dimmed:hover {
+    opacity: 0.85;
+}
+
+.lb-lvcard-shine {
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    top: 30px;
+    height: 300px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: 100% 100%;
+    opacity: 0.22;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.lb-lvcard:hover .lb-lvcard-shine {
+    opacity: 0.4;
+}
+
+.lb-lvcard-medal {
+    position: absolute;
+    left: 50%;
+    top: -30px;
+    width: 64px;
+    height: 64px;
+    margin-left: -32px;
+    border-radius: 32px;
+    border-width: 2px;
+    border-color: rgb(240, 205, 128);
+    background-color: rgb(24, 36, 72);
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-lvcard:hover .lb-lvcard-medal {
+    background-color: rgb(40, 66, 146);
+    border-color: rgb(255, 236, 180);
+}
+
+.lb-lvcard-number {
+    margin: 0;
+    padding: 0;
+    font-size: 30px;
+    color: rgb(255, 240, 200);
+    -unity-text-align: middle-center;
+}
+
+.lb-lvcard-category {
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    letter-spacing: 5px;
+    -unity-font-style: bold;
+}
+
+.lb-lvcard-well {
+    width: 196px;
+    height: 196px;
+    margin: 10px 0 8px 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.lb-lvcard-well-glow {
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    top: -20px;
+    bottom: -20px;
+    background-image: url("Art/Prep_Glow.png");
+    background-size: contain;
+    opacity: 0.5;
+}
+
+.lb-lvcard-well-rune {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: url("Art/Prep_Rune.png");
+    background-size: contain;
+    opacity: 0.45;
+}
+
+.lb-growth-icon {
+    width: 150px;
+    height: 150px;
+    background-size: contain;
+}
+
+.lb-growth-icon--AuraSize { background-image: url("Art/Growth_AuraSize.png"); }
+.lb-growth-icon--FoodProduction { background-image: url("Art/Growth_FoodProduction.png"); }
+.lb-growth-icon--ManaRecovery { background-image: url("Art/Growth_ManaRecovery.png"); }
+.lb-growth-icon--Capacity { background-image: url("Art/Growth_Capacity.png"); }
+.lb-growth-icon--Leadership { background-image: url("Art/Growth_Leadership.png"); }
+.lb-growth-icon--AuraBuff { background-image: url("Art/Growth_AuraBuff.png"); }
+.lb-growth-icon--HeroPower { background-image: url("Art/Growth_HeroPower.png"); }
+.lb-growth-icon--HeroVitality { background-image: url("Art/Growth_HeroVitality.png"); }
+
+.lb-lvcard-title {
+    margin: 4px 0 0 0;
+    padding: 0;
+    font-size: 30px;
+    letter-spacing: 1px;
+    color: rgb(250, 222, 150);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.lb-lvcard-divider {
+    flex-direction: row;
+    align-items: center;
+    margin: 10px 0 12px 0;
+}
+
+.lb-lvcard-divider .lb-prep-bullet {
+    width: 14px;
+    height: 14px;
+    margin: 0 8px;
+}
+
+.lb-lvcard-divider-line {
+    width: 90px;
+    height: 1px;
+    background-color: rgba(240, 205, 128, 0.45);
+}
+
+.lb-lvcard-description {
+    min-height: 52px;
+    margin: 0;
+    padding: 0;
+    font-size: 17px;
+    color: rgba(238, 232, 219, 0.82);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.lb-lvcard-effect {
+    margin: 12px 0 0 0;
+    padding: 0;
+    font-size: 23px;
+    -unity-text-align: middle-center;
+}
+
+.lb-lvcard-footer {
+    position: absolute;
+    left: 34px;
+    right: 34px;
+    bottom: 26px;
+    height: 40px;
+    padding: 0 14px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-top-width: 1px;
+    border-color: rgba(240, 205, 128, 0.3);
+}
+
+.lb-lvcard-rank {
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: rgba(238, 232, 219, 0.6);
+}
+
+.lb-lvcard-total {
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: rgb(250, 222, 150);
+}
+
+/* Category tints: shine, icon well, label and effect line. */
+.lb-lvcard--aura .lb-lvcard-shine, .lb-lvcard--aura .lb-lvcard-well-glow { -unity-background-image-tint-color: rgb(255, 205, 120); }
+.lb-lvcard--aura .lb-lvcard-well-rune { -unity-background-image-tint-color: rgb(255, 215, 140); }
+.lb-lvcard--aura .lb-lvcard-category, .lb-lvcard--aura .lb-lvcard-effect { color: rgb(255, 210, 120); }
+.lb-lvcard--supply .lb-lvcard-shine, .lb-lvcard--supply .lb-lvcard-well-glow { -unity-background-image-tint-color: rgb(150, 225, 120); }
+.lb-lvcard--supply .lb-lvcard-well-rune { -unity-background-image-tint-color: rgb(175, 235, 150); }
+.lb-lvcard--supply .lb-lvcard-category, .lb-lvcard--supply .lb-lvcard-effect { color: rgb(160, 230, 130); }
+.lb-lvcard--magic .lb-lvcard-shine, .lb-lvcard--magic .lb-lvcard-well-glow { -unity-background-image-tint-color: rgb(110, 160, 255); }
+.lb-lvcard--magic .lb-lvcard-well-rune { -unity-background-image-tint-color: rgb(150, 190, 255); }
+.lb-lvcard--magic .lb-lvcard-category, .lb-lvcard--magic .lb-lvcard-effect { color: rgb(140, 185, 255); }
+.lb-lvcard--command .lb-lvcard-shine, .lb-lvcard--command .lb-lvcard-well-glow { -unity-background-image-tint-color: rgb(170, 130, 255); }
+.lb-lvcard--command .lb-lvcard-well-rune { -unity-background-image-tint-color: rgb(195, 165, 255); }
+.lb-lvcard--command .lb-lvcard-category, .lb-lvcard--command .lb-lvcard-effect { color: rgb(195, 165, 255); }
+.lb-lvcard--hero .lb-lvcard-shine, .lb-lvcard--hero .lb-lvcard-well-glow { -unity-background-image-tint-color: rgb(255, 120, 110); }
+.lb-lvcard--hero .lb-lvcard-well-rune { -unity-background-image-tint-color: rgb(255, 160, 140); }
+.lb-lvcard--hero .lb-lvcard-category, .lb-lvcard--hero .lb-lvcard-effect { color: rgb(255, 150, 135); }
+
+.lb-levelup-prompt {
+    align-items: center;
+    margin-top: 32px;
+}
+
+.lb-levelup-prompt-title {
+    margin: 0;
+    padding: 0;
+    font-size: 26px;
+    letter-spacing: 8px;
+    color: rgb(244, 212, 140);
+}
+
+.lb-levelup-prompt-hint {
+    margin: 6px 0 0 0;
+    padding: 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: rgba(238, 232, 219, 0.55);
+}
+
+.lb-levelup-confirm {
+    width: 340px;
+    height: 62px;
+    margin: 16px 0 0 0;
+    padding: 0;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: rgb(240, 205, 128);
+    background-color: rgb(40, 66, 146);
+    font-size: 24px;
+    letter-spacing: 6px;
+    color: rgb(255, 246, 225);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    transition-property: scale, background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.lb-levelup-confirm:hover {
+    background-color: rgb(56, 88, 186);
+    border-color: rgb(255, 232, 170);
+    scale: 1.03 1.03;
+}
+
+.lb-levelup-confirm:active {
+    background-color: rgb(32, 54, 120);
+    scale: 0.99 0.99;
+}
+
+.lb-levelup-confirm:disabled {
+    background-color: rgb(30, 36, 56);
+    border-color: rgba(238, 232, 219, 0.2);
+    color: rgba(238, 232, 219, 0.4);
+    opacity: 1;
+    scale: 1 1;
 }
 
 .lb-hidden {

@@ -69,9 +69,12 @@ namespace Lightbringer.EditorTools
                 session.Progress.GainExperience(1000);
                 levelUp.Refresh(session);
                 int pending = session.Progress.pendingLevels;
-                Check(levelUp.Visible && levelUp.ChoiceText(0).Contains(CampaignProgress.GrowthNames[session.Progress.choices[0]]),
+                Check(levelUp.Visible && levelUp.ChoiceText(0).Contains(GrowthCatalog.Titles[session.Progress.choices[0]]),
                     "Level-up cards appear with the offered permanent upgrades");
-                Check(levelUp.Choose(1) && session.Progress.pendingLevels == pending - 1, "Picking a card applies one permanent upgrade");
+                Check(!levelUp.Confirm() && session.Progress.pendingLevels == pending, "CONFIRM does nothing until a card is selected");
+                levelUp.Select(1);
+                Check(levelUp.Selected == 1 && session.Progress.pendingLevels == pending, "Selecting a card does not apply it yet");
+                Check(levelUp.Confirm() && session.Progress.pendingLevels == pending - 1, "Confirming the selected card applies one permanent upgrade");
                 while (session.IsChoosing) levelUp.Choose(0);
                 levelUp.Refresh(session);
                 result.Refresh(session);
