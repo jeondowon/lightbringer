@@ -100,6 +100,12 @@ namespace Lightbringer.Core
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
+            // Boss stage: the stronghold is shielded until its warlord falls.
+            if (battle.Waves.HasBoss)
+            {
+                baseHealth.Invulnerable = true;
+                battle.Waves.BossFell += () => baseHealth.Invulnerable = false;
+            }
             battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader, art != null && art.HasMaterials);
             if (art != null && art.HasMaterials)
             {

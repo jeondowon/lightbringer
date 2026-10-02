@@ -33,6 +33,17 @@ namespace Lightbringer.EditorTools
 
         private static string Folder => Path.Combine(Path.GetDirectoryName(Application.dataPath), "Docs", "Diagnostics");
 
+        private static string Describe(Collider collider)
+        {
+            UnitCombat combat = collider.GetComponent<UnitCombat>();
+            UnitPathFollower path = collider.GetComponent<UnitPathFollower>();
+            if (combat == null || path == null) return collider.name;
+            string target = combat.Target == null ? "no target"
+                : $"target {combat.Target.name} at {Vector3.Distance(combat.Target.transform.position, collider.transform.position):0.0} m";
+            Vector3 at = collider.transform.position, shape = collider.bounds.center;
+            return $"{collider.name} ({target}, waypoint-end {path.HasReachedEnd}, transform ({at.x:0.0},{at.z:0.0}), collider ({shape.x:0.0},{shape.z:0.0}), radius {((CharacterController)collider).radius:0.00})";
+        }
+
         [MenuItem("Lightbringer/Diagnostics/Simulate Stage 8 Battle")]
         public static void Run()
         {
@@ -41,6 +52,7 @@ namespace Lightbringer.EditorTools
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             StringBuilder report = new StringBuilder();
+            SimulationMode simulationMode = Physics.simulationMode;
             try
             {
                 SceneManager.SetActiveScene(scene);
@@ -61,10 +73,12 @@ namespace Lightbringer.EditorTools
                 battle.Objective.EnemyBase.Heal(10000000f);
                 battle.AlliedBase.SetMaximumHealth(10000000f);
                 battle.AlliedBase.Heal(10000000f);
+                Physics.simulationMode = SimulationMode.Script;
                 Simulate(battle, report);
             }
             finally
             {
+                Physics.simulationMode = simulationMode;
                 if (original.IsValid()) SceneManager.SetActiveScene(original);
                 EditorSceneManager.CloseScene(scene, true);
                 Object.DestroyImmediate(material);
@@ -96,6 +110,9 @@ namespace Lightbringer.EditorTools
                     else nextSummon -= 4.9f;
                 }
                 Physics.SyncTransforms();
+                // Edit mode never steps physics, so moved CharacterControllers would linger at stale
+                // positions in the scene-query tree; step it like Play mode's FixedUpdate does.
+                Physics.Simulate(Step);
                 battle.Waves.Tick(Step);
                 foreach (UnitCombat unit in battle.Root.GetComponentsInChildren<UnitCombat>()) unit.Tick(Step);
                 foreach (UnitSupport unit in battle.Root.GetComponentsInChildren<UnitSupport>()) unit.Tick(Step);
@@ -113,7 +130,21 @@ namespace Lightbringer.EditorTools
 
             report.AppendLine("Lightbringer battle diagnostics (stage 8, 3 Paths, editor simulation, hero invulnerable)");
             report.AppendLine($"Summoned {summons} allies over {Duration}s. Battle ended: {battle.Objective.HasEnded} (won {battle.Objective.HasWon}).");
-            report.AppendLine($"Enemy base HP: {(battle.Objective.EnemyBase != null ? battle.Objective.EnemyBase.CurrentHealth : 0f):0}. Waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}.");
+            report.AppendLine($"Enemy base HP: {(battle.Objective.EnemyBase != null ? battle.Objective.EnemyBase.CurrentHealth : 0f):0}. Waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}, queued {battle.Waves.PendingCount}.");
+            Combatant boss = battle.Waves.Boss;
+            report.AppendLine(boss == null ? "Boss: not spawned." : battle.Waves.BossDefeated ? "Boss: defeated, base shield down."
+                : $"Boss: alive {boss.CurrentHealth:0}/{boss.MaximumHealth:0} HP @({boss.transform.position.x:0.0},{boss.transform.position.z:0.0}).");
+            // What occupies each enemy route's first spawn slot (queued enemies wait for it to clear).
+            foreach (Lightbringer.Pathing.WaypointPath route in battle.Root.GetComponentsInChildren<Lightbringer.Pathing.WaypointPath>())
+            {
+                if (!route.name.StartsWith("Enemy Route")) continue;
+                Vector3 start = route.GetPosition(0);
+                Collider[] blockers = Physics.OverlapCapsule(start + Vector3.up * 0.45f, start + Vector3.up * 1.25f, 0.35f, ~0, QueryTriggerInteraction.Ignore);
+                report.AppendLine($"{route.name} spawn slot blocked by: {(blockers.Length == 0 ? "nothing" : string.Join(", ", blockers.Select(Describe)))}");
+                int crowd = battle.Root.GetComponentsInChildren<Combatant>().Count(c => c.GetComponent<UnitPathFollower>() != null
+                    && Vector3.Distance(c.transform.position, start) < 4f);
+                report.AppendLine($"    units within 4 m of that route start: {crowd}");
+            }
             var reasons = new Dictionary<string, List<string>>();
             int alive = 0;
             foreach (var pair in history)

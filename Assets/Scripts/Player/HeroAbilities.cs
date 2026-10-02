@@ -158,7 +158,8 @@ namespace Lightbringer.Player
 
         private bool CanAttack(Combatant target)
         {
-            if (target == null || !target.IsAlive || target.Faction == self.Faction || target.gameObject.scene != gameObject.scene)
+            if (target == null || !target.IsAlive || target.Invulnerable || target.Faction == self.Faction
+                || target.gameObject.scene != gameObject.scene)
                 return false;
             Vector3 offset = target.GetAimPoint(transform.position) - transform.position;
             return offset.sqrMagnitude <= 225f && (!Physics.Raycast(transform.position, offset.normalized,

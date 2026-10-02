@@ -246,6 +246,8 @@ namespace Lightbringer.EditorTools
                     break;
                 case 15:
                     if (elapsed < 0.5f) return;
+                    // The stress run disables waves, so the boss never spawns; drop the stage-8 base shield directly.
+                    battle.Objective.EnemyBase.Invulnerable = false;
                     battle.Objective.EnemyBase.TakeDamage(10000, battle.Hero);
                     while (session.IsChoosing) session.ChooseGrowth(0);
                     Assert(session.ReturnToPreparation(), "Stress battle can clean up and return to campaign preparation");

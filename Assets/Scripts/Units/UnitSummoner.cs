@@ -98,6 +98,10 @@ namespace Lightbringer.Units
                 Transform visual = soldier.transform.Find("Visual");
                 if (visual != null) visual.localScale = UnitCatalog.VisualScale(selectedUnit);
                 if (selectedUnit == UnitKind.Shieldbearer) soldier.GetComponent<Combatant>().DamageReduction = 0.35f;
+                soldier.GetComponent<UnitCombat>()?.ConfigureHeavyBonus(UnitCatalog.HeavyBonus(selectedUnit));
+                if (selectedUnit == UnitKind.Knight)
+                    soldier.GetComponent<UnitCombat>().ConfigureCharge(UnitCatalog.ChargeDistance, UnitCatalog.ChargeMultiplier,
+                        UnitCatalog.ChargeRadius, UnitCatalog.ChargeKnockback);
                 if (selectedUnit == UnitKind.Priest)
                 {
                     soldier.GetComponent<UnitCombat>().enabled = false;

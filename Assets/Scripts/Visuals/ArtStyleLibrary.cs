@@ -10,7 +10,8 @@ namespace Lightbringer.Visuals
         Hero, Swordsman, Archer, Shieldbearer, Spearman, Priest, Mage, Knight, Dragon,
         EnemyRaider, EnemyArcher, EnemyStronghold,
         // Appended so serialized override ids stay stable.
-        AlliedStronghold
+        AlliedStronghold,
+        EnemySwarm, EnemyBrute, EnemyShaman, EnemyBoss
     }
 
     // A prop (staff, weapon) parented to a named bone of an override model so it follows animation.
@@ -139,7 +140,21 @@ namespace Lightbringer.Visuals
         }
 
         public static VisualId ForUnit(UnitKind kind) => (VisualId)((int)VisualId.Swordsman + (int)kind);
-        public static bool IsEnemy(VisualId id) => id == VisualId.EnemyRaider || id == VisualId.EnemyArcher || id == VisualId.EnemyStronghold;
+        public static VisualId ForEnemy(EnemyKind kind)
+        {
+            switch (kind)
+            {
+                case EnemyKind.Archer: return VisualId.EnemyArcher;
+                case EnemyKind.Swarm: return VisualId.EnemySwarm;
+                case EnemyKind.Brute: return VisualId.EnemyBrute;
+                case EnemyKind.Shaman: return VisualId.EnemyShaman;
+                case EnemyKind.Boss: return VisualId.EnemyBoss;
+                default: return VisualId.EnemyRaider;
+            }
+        }
+
+        public static bool IsEnemy(VisualId id) => id == VisualId.EnemyRaider || id == VisualId.EnemyArcher || id == VisualId.EnemyStronghold
+            || id == VisualId.EnemySwarm || id == VisualId.EnemyBrute || id == VisualId.EnemyShaman || id == VisualId.EnemyBoss;
 
         private void OnValidate() => SilhouetteFactory.ClearCache();
     }

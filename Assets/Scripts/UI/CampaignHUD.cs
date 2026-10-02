@@ -71,7 +71,7 @@ namespace Lightbringer.UI
         private void Battle(CampaignProgress profile)
         {
             PrototypeBattle battle = session.Battle;
-            GUILayout.BeginArea(new Rect(16, 16, 420, 390), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(16, 16, 420, 430), GUI.skin.box);
             GUILayout.Label($"Stage {session.SelectedStage} | Level {profile.level} | EXP {profile.experience}/{profile.ExperienceToNext}");
             if (battle.Hero != null)
             {
@@ -86,8 +86,13 @@ namespace Lightbringer.UI
                 GUILayout.Label(battle.Summoner.LastFeedback);
             }
             if (battle.AlliedBase != null) GUILayout.Label($"Our base: {battle.AlliedBase.CurrentHealth:F0}/{battle.AlliedBase.MaximumHealth:F0} HP");
-            if (battle.Objective.EnemyBase != null) GUILayout.Label($"Enemy base: {battle.Objective.EnemyBase.CurrentHealth:F0} HP");
-            GUILayout.Label($"Enemy waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
+            if (battle.Objective.EnemyBase != null)
+                GUILayout.Label($"Enemy base: {battle.Objective.EnemyBase.CurrentHealth:F0} HP"
+                    + (battle.Objective.EnemyBase.Invulnerable ? " | SHIELDED - defeat the Warlord" : ""));
+            if (battle.Waves.Boss != null && battle.Waves.Boss.IsAlive)
+                GUILayout.Label($"Warlord: {battle.Waves.Boss.CurrentHealth:F0}/{battle.Waves.Boss.MaximumHealth:F0} HP");
+            GUILayout.Label($"Enemy waves {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}"
+                + (battle.Waves.HasBoss && battle.Waves.Boss == null ? " | Warlord arrives with the final wave" : ""));
             GUILayout.Label("WASD move | Mouse look | Wheel zoom | Esc cursor");
             GUILayout.EndArea();
             GUI.Label(new Rect(Screen.width / 2 - 8, Screen.height / 2 - 12, 24, 24), "+");

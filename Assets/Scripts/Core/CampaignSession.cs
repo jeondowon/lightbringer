@@ -93,7 +93,7 @@ namespace Lightbringer.Core
         {
             if (Battle == null || enemy.LastAttacker == null || enemy.LastAttacker.Faction != Faction.Allied) return;
             int before = Progress.pendingLevels;
-            Progress.GainExperience(enemy == Battle.Objective.EnemyBase ? 60 : 10 + SelectedStage * 2);
+            Progress.GainExperience(enemy == Battle.Objective.EnemyBase ? 60 : Battle.Waves.ExperienceFor(enemy));
             dirty = true;
             if (before != Progress.pendingLevels) Flush();
         }

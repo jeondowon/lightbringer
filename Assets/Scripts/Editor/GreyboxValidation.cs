@@ -17,7 +17,7 @@ namespace Lightbringer.EditorTools
     [InitializeOnLoad]
     public static partial class GreyboxValidation
     {
-        private const string Revision = "Lightbringer.GreyboxValidation.Scale.v1";
+        private const string Revision = "Lightbringer.GreyboxValidation.EnemyRoster.v1";
         private const string LastCheckedScriptsKey = "Lightbringer.LastCheckedScripts";
         private static readonly List<string> Results = new List<string>();
 
@@ -71,6 +71,8 @@ namespace Lightbringer.EditorTools
                 ValidateHeroSystems();
                 ValidateProgression();
                 ValidateCampaignIntegration();
+                ValidateEnemyRoster();
+                ValidateKnightCharge();
                 ValidatePlaytestRecorder();
                 ValidateArtStyle();
                 ValidateCombatScale();

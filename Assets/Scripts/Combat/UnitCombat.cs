@@ -55,6 +55,42 @@ namespace Lightbringer.Combat
         private float splashRadius;
         private readonly HashSet<Combatant> splashTargets = new HashSet<Combatant>();
         public void ConfigureSplash(float radius) => splashRadius = Mathf.Max(0, radius);
+        // Damage multiplier against Heavy targets (Spearman: 2x). 1 = no bonus.
+        public float HeavyMultiplier { get; private set; } = 1f;
+        public void ConfigureHeavyBonus(float multiplier) => HeavyMultiplier = Mathf.Max(1f, multiplier);
+        private float DamageAgainst(Combatant target, float damage) => target.IsHeavy ? damage * HeavyMultiplier : damage;
+
+        // Charge (Knight): ground covered since the last attack arms a stronger first strike.
+        private float chargeDistance;
+        private float chargeMultiplier = 1f;
+        private float chargeRadius;
+        private float chargeKnockback;
+        private float travelled;
+        private Vector3 lastPosition;
+        private bool hasLastPosition;
+        public bool CanCharge => chargeMultiplier > 1f;
+        public bool IsChargeReady => CanCharge && travelled >= chargeDistance;
+        public event System.Action ChargeLanded;
+
+        public void ConfigureCharge(float distance, float multiplier, float radius, float knockback)
+        {
+            chargeDistance = Mathf.Max(0f, distance);
+            chargeMultiplier = Mathf.Max(1f, multiplier);
+            chargeRadius = Mathf.Max(0f, radius);
+            chargeKnockback = Mathf.Max(0f, knockback);
+        }
+
+        // Heavy enemies and objectives (no CharacterController) stand their ground.
+        private void Knockback(Combatant target, Vector3 from)
+        {
+            if (chargeKnockback <= 0f || target == null || !target.IsAlive || target.IsHeavy
+                || !target.TryGetComponent(out CharacterController body) || !body.enabled)
+                return;
+            Vector3 push = target.transform.position - from;
+            push.y = 0f;
+            if (push.sqrMagnitude < 0.0001f) push = transform.forward;
+            body.Move(push.normalized * chargeKnockback);
+        }
 
         public void Configure(float damage, float range, float interval)
         {
@@ -88,6 +124,18 @@ namespace Lightbringer.Combat
                 Awake();
             if (!self.IsAlive)
                 return;
+            if (CanCharge)
+            {
+                Vector3 position = transform.position;
+                if (hasLastPosition)
+                {
+                    Vector3 moved = position - lastPosition;
+                    moved.y = 0f;
+                    travelled = Mathf.Min(chargeDistance, travelled + moved.magnitude);
+                }
+                lastPosition = position;
+                hasLastPosition = true;
+            }
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
             searchCooldown -= deltaTime;
             if (!IsValidTarget(Target))
@@ -121,20 +169,28 @@ namespace Lightbringer.Combat
             Combatant primary = Target;
             Vector3 impact = primary.transform.position;
             float damage = EffectiveDamage;
-            primary.TakeDamage(damage, self);
-            if (splashRadius > 0 && isActiveAndEnabled)
+            bool charging = IsChargeReady;
+            travelled = 0f;
+            primary.TakeDamage(DamageAgainst(primary, charging ? damage * chargeMultiplier : damage), self);
+            if (charging) Knockback(primary, transform.position);
+            float radius = charging ? Mathf.Max(splashRadius, chargeRadius) : splashRadius;
+            if (radius > 0 && isActiveAndEnabled)
             {
                 splashTargets.Clear();
-                int count = splashQuery.Overlap(impact, splashRadius, detectionMask);
+                int count = splashQuery.Overlap(impact, radius, detectionMask);
                 for (int i = 0; i < count; i++)
                 {
                     Combatant other = splashQuery.Items[i].GetComponentInParent<Combatant>();
                     if (other != primary && IsValidTarget(other) && splashTargets.Add(other) && HasLineOfSight(other))
-                        other.TakeDamage(damage, self);
+                    {
+                        other.TakeDamage(DamageAgainst(other, damage), self);
+                        if (charging) Knockback(other, impact);
+                    }
                 }
             }
             cooldown = attackInterval;
             Attacked?.Invoke();
+            if (charging) ChargeLanded?.Invoke();
             // A death listener can end the stage and disable this component during TakeDamage.
             if (Target == null || !Target.IsAlive)
             {
@@ -145,8 +201,8 @@ namespace Lightbringer.Combat
 
         private bool IsValidTarget(Combatant candidate)
         {
-            if (candidate == null || candidate == self || !candidate.IsAlive || candidate.Faction == self.Faction
-                || candidate.gameObject.scene != gameObject.scene)
+            if (candidate == null || candidate == self || !candidate.IsAlive || candidate.Invulnerable
+                || candidate.Faction == self.Faction || candidate.gameObject.scene != gameObject.scene)
                 return false;
             Vector3 offset = candidate.GetAimPoint(transform.position) - transform.position;
             // Units cannot strike targets higher above them than their reach (melee vs the flying Dragon).

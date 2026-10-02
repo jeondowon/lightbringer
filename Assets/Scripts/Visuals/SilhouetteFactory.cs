@@ -78,6 +78,10 @@ namespace Lightbringer.Visuals
                     break;
                 case VisualId.EnemyRaider: Raider(b, s); result.BobHeight = 0.06f; result.BobRate = 10f; result.LeanDegrees = 8f; break;
                 case VisualId.EnemyArcher: EnemyArcher(b, s); break;
+                case VisualId.EnemySwarm: Swarmling(b, s); result.HoverHeight = 0.12f; result.BobHeight = 0.07f; result.BobRate = 13f; result.LeanDegrees = 10f; break;
+                case VisualId.EnemyBrute: Brute(b, s); result.BobHeight = 0.07f; result.BobRate = 6f; result.LeanDegrees = 3f; break;
+                case VisualId.EnemyShaman: Shaman(b, s); result.BobHeight = 0.03f; break;
+                case VisualId.EnemyBoss: Warlord(b, s); result.BobHeight = 0.04f; result.BobRate = 5f; result.LeanDegrees = 2f; break;
                 case VisualId.EnemyStronghold:
                     Stronghold(b, s);
                     result.BobHeight = 0f; result.LeanDegrees = 0f;
@@ -356,6 +360,73 @@ namespace Lightbringer.Visuals
             b.Add(Shape.Cube, s.bone, grip + new Vector3(0f, 0.28f, -0.07f), new Vector3(0.03f, 0.38f, 0.03f), new Vector3(-28f, 0f, 0f));
             b.Add(Shape.Cube, s.bone, grip + new Vector3(0f, -0.28f, -0.07f), new Vector3(0.03f, 0.38f, 0.03f), new Vector3(28f, 0f, 0f));
             b.Add(Shape.Cube, s.corruptGlow, grip + new Vector3(0.1f, 0f, 0.05f), new Vector3(0.02f, 0.02f, 0.45f), emission: 0.7f);
+        }
+
+        private static void Swarmling(Shapes b, ArtStyleLibrary s)
+        {
+            // Small corrupted wisp: smoky tapered tail, bone mask, big eyes and a flickering crest. Reads as many and weak.
+            b.Cone(4f, s.corruptBody, new Vector3(0f, 0.2f, 0f), new Vector3(0.1f, 0.45f, 0.1f), segments: 7);
+            b.Add(Shape.Ball, s.corruptBody, new Vector3(0f, 0.78f, 0f), new Vector3(0.42f, 0.4f, 0.38f));
+            b.Add(Shape.Ball, s.bone, new Vector3(0f, 0.96f, 0.1f), new Vector3(0.26f, 0.24f, 0.22f));
+            b.Pair(Shape.Ball, s.corruptGlow, new Vector3(0.06f, 0.98f, 0.2f), Vector3.one * 0.065f, emission: 1f);
+            b.Cone(0f, s.corruptGlow, new Vector3(0f, 1.0f, -0.04f), new Vector3(0.2f, 0.3f, 0.2f), new Vector3(-20f, 0f, 0f), 6, emission: 0.9f);
+            b.PairCone(0f, s.bone, new Vector3(0.2f, 0.74f, 0.1f), new Vector3(0.06f, 0.24f, 0.06f), new Vector3(60f, 0f, -20f), 6);
+        }
+
+        private static void Brute(Shapes b, ArtStyleLibrary s)
+        {
+            // Hulking ogre: wide armoured torso, small tusked head, shoulder spikes and a rune-cut stone club.
+            b.Pair(Shape.Ball, s.corruptBody, new Vector3(0.2f, 0.42f, 0f), new Vector3(0.26f, 0.84f, 0.26f));
+            b.Add(Shape.Ball, s.corruptArmor, new Vector3(0f, 1.25f, 0.05f), new Vector3(0.95f, 0.85f, 0.7f));
+            b.Add(Shape.Ball, s.corruptBody, new Vector3(0f, 1.05f, 0.18f), new Vector3(0.7f, 0.55f, 0.5f));
+            b.Add(Shape.Ball, s.bone, new Vector3(0f, 1.72f, 0.3f), new Vector3(0.32f, 0.3f, 0.32f));
+            b.Pair(Shape.Ball, s.corruptGlow, new Vector3(0.07f, 1.76f, 0.45f), Vector3.one * 0.06f, emission: 1f);
+            b.PairCone(0f, s.bone, new Vector3(0.08f, 1.64f, 0.42f), new Vector3(0.05f, 0.18f, 0.05f), new Vector3(-60f, 0f, 0f), 6);
+            b.PairCone(0f, s.bone, new Vector3(0.42f, 1.58f, 0f), new Vector3(0.14f, 0.42f, 0.14f), new Vector3(0f, 0f, -30f), 6);
+            b.Pair(Shape.Ball, s.corruptBody, new Vector3(0.55f, 1.1f, 0.1f), new Vector3(0.24f, 0.8f, 0.24f), new Vector3(0f, 0f, 10f));
+            b.Cone(1.8f, s.leather, new Vector3(0.62f, 0.35f, 0.3f), new Vector3(0.1f, 0.8f, 0.1f), new Vector3(20f, 0f, 0f), 8);
+            b.Add(Shape.Ball, s.corruptStone, new Vector3(0.62f, 0.32f, 0.22f), new Vector3(0.34f, 0.5f, 0.34f), new Vector3(20f, 0f, 0f));
+            b.Add(Shape.Cube, s.corruptGlow, new Vector3(0.62f, 0.34f, 0.4f), new Vector3(0.05f, 0.3f, 0.02f), new Vector3(20f, 0f, 0f), emission: 0.8f);
+        }
+
+        private static void Shaman(Shapes b, ArtStyleLibrary s)
+        {
+            // Robed skull-masked healer with antlers and a tall staff topped by a glowing orb: the target to pick off.
+            b.Cone(0.4f, s.corruptArmor, Vector3.zero, new Vector3(0.55f, 1.05f, 0.48f), segments: 7);
+            b.Add(Shape.Ball, s.corruptBody, new Vector3(0f, 1.1f, 0.03f), new Vector3(0.32f, 0.42f, 0.26f));
+            b.Add(Shape.Ball, s.bone, new Vector3(0f, 1.42f, 0.08f), Vector3.one * 0.22f);
+            b.Pair(Shape.Ball, s.corruptGlow, new Vector3(0.05f, 1.44f, 0.18f), Vector3.one * 0.045f, emission: 1f);
+            b.PairCone(0f, s.bone, new Vector3(0.08f, 1.5f, 0.02f), new Vector3(0.06f, 0.42f, 0.06f), new Vector3(-10f, 0f, -35f), 6);
+            b.PairCone(0f, s.bone, new Vector3(0.2f, 1.66f, 0.02f), new Vector3(0.04f, 0.2f, 0.04f), new Vector3(-10f, 0f, 20f), 6);
+            Vector3 staff = new Vector3(-0.32f, 0.05f, 0.18f);
+            b.Cone(1f, s.bone, staff, new Vector3(0.05f, 1.75f, 0.05f), segments: 8);
+            b.Add(Shape.Ball, s.corruptGlow, staff + Vector3.up * 1.88f, Vector3.one * 0.2f, emission: 1f);
+            for (int i = 0; i < 3; i++)
+                b.Cone(0f, s.bone, staff + Vector3.up * 1.72f, new Vector3(0.04f, 0.32f, 0.04f), new Vector3(-25f, i * 120f, 0f), 5);
+        }
+
+        private static void Warlord(Shapes b, ArtStyleLibrary s)
+        {
+            // Final boss (H ~ 3.4): armoured corrupted giant with a glowing core, horned crown, cape and greatsword.
+            b.Pair(Shape.Ball, s.corruptArmor, new Vector3(0.3f, 0.62f, 0f), new Vector3(0.36f, 1.2f, 0.36f));
+            b.PairCone(0.8f, s.corruptStone, new Vector3(0.3f, 0f, 0f), new Vector3(0.42f, 0.5f, 0.42f), segments: 8);
+            b.Cone(1.3f, s.corruptArmor, new Vector3(0f, 0.95f, 0f), new Vector3(0.95f, 0.5f, 0.75f), segments: 8);
+            b.Add(Shape.Cube, s.corruptArmor, new Vector3(0f, 1.6f, -0.42f), new Vector3(1.1f, 2.2f, 0.05f), new Vector3(-8f, 0f, 0f));
+            b.Add(Shape.Ball, s.corruptArmor, new Vector3(0f, 1.85f, 0.05f), new Vector3(1.25f, 1.1f, 0.85f));
+            b.Add(Shape.Ball, s.corruptGlow, new Vector3(0f, 1.9f, 0.42f), new Vector3(0.3f, 0.3f, 0.15f), emission: 1f);
+            b.Pair(Shape.Ball, s.corruptStone, new Vector3(0.7f, 2.35f, 0f), new Vector3(0.55f, 0.4f, 0.55f));
+            b.PairCone(0f, s.bone, new Vector3(0.75f, 2.5f, 0f), new Vector3(0.16f, 0.6f, 0.16f), new Vector3(0f, 0f, -25f), 6);
+            b.Add(Shape.Ball, s.corruptBody, new Vector3(0f, 2.62f, 0.12f), new Vector3(0.4f, 0.42f, 0.4f));
+            b.Pair(Shape.Ball, s.corruptGlow, new Vector3(0.09f, 2.65f, 0.3f), Vector3.one * 0.07f, emission: 1f);
+            b.PairCone(0f, s.bone, new Vector3(0.15f, 2.75f, 0.05f), new Vector3(0.12f, 0.7f, 0.12f), new Vector3(-15f, 0f, -25f), 6);
+            b.Pair(Shape.Ball, s.corruptArmor, new Vector3(0.75f, 1.75f, 0.15f), new Vector3(0.32f, 0.95f, 0.32f), new Vector3(0f, 0f, 12f));
+            // Greatsword held forward in the right hand with a glowing edge.
+            Vector3 euler = new Vector3(60f, 0f, 0f);
+            Vector3 direction = Quaternion.Euler(euler) * Vector3.up;
+            Vector3 hilt = new Vector3(0.82f, 1.3f, 0.25f);
+            b.Add(Shape.Cube, s.corruptStone, hilt + direction * 1.0f, new Vector3(0.14f, 2.0f, 0.04f), euler);
+            b.Add(Shape.Cube, s.corruptGlow, hilt + direction * 1.0f + new Vector3(0.075f, 0f, 0f), new Vector3(0.02f, 1.9f, 0.03f), euler, emission: 0.8f);
+            b.Add(Shape.Cube, s.bone, hilt, new Vector3(0.45f, 0.06f, 0.08f), euler);
         }
 
         private static void Stronghold(Shapes b, ArtStyleLibrary s)
