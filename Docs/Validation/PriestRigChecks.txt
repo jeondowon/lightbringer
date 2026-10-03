@@ -1,0 +1,9 @@
+PASS | 2026-10-03T06:02:18.7223803Z
+Unity-native prototype skeleton: 23 bones; 308930 weighted vertices.
+Priest_Idle: weighted vertex motion 0.266 m; grip error 0.0000 m; staff butt 0.10 m, head at 1.97 m.
+Priest_Walk: weighted vertex motion 0.321 m; grip error 0.0000 m; staff butt 0.11 m, head at 1.94 m.
+Priest_Bless: weighted vertex motion 0.856 m; grip error 0.0000 m; staff butt 0.75 m, head at 2.63 m.
+Priest_Bless: staff head 0.27 m in front of the pivot at 2.63 m height at the release.
+Staff on RightHand (grip at the palm). Original FBX preserved.
+No external animation assets. Hand-tuned landmark weights and generated prototype clips.
+Visual review of the sleeves and the robe remains manual; no mesh decimation performed.

@@ -1,11 +1,13 @@
 using Lightbringer.Player;
 using Lightbringer.Combat;
+using Lightbringer.Units;
 using UnityEngine;
 
 namespace Lightbringer.Visuals
 {
     // Drives an imported model's legacy Animation from gameplay: idle/move by the owner's speed and a
-    // one-shot action clip when the hero casts. Visual only; the gameplay transform is never moved.
+    // one-shot action clip when the hero casts, a unit attacks or a healer pulses. Visual only; the gameplay
+    // transform is never moved.
     [DisallowMultipleComponent]
     public sealed class ModelAnimationDriver : MonoBehaviour
     {
@@ -14,6 +16,7 @@ namespace Lightbringer.Visuals
         private Transform owner;
         private HeroAbilities abilities;
         private UnitCombat combat;
+        private UnitSupport support;
         private float moveClipSpeed = 4f;
         private Vector3 lastPosition;
         private float smoothedSpeed;
@@ -62,6 +65,8 @@ namespace Lightbringer.Visuals
             if (abilities != null) abilities.Casted += OnCasted;
             combat = GetComponentInParent<UnitCombat>();
             if (combat != null) combat.Attacked += OnAttacked;
+            support = GetComponentInParent<UnitSupport>();
+            if (support != null) support.Pulsed += OnSupported;
         }
 
         private void OnDisable()
@@ -70,6 +75,8 @@ namespace Lightbringer.Visuals
             abilities = null;
             if (combat != null) combat.Attacked -= OnAttacked;
             combat = null;
+            if (support != null) support.Pulsed -= OnSupported;
+            support = null;
         }
 
         private void OnCasted(int slot)
@@ -83,6 +90,15 @@ namespace Lightbringer.Visuals
         {
             if (!hasAction || player == null) return;
             player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, combat.AttackInterval * 0.9f);
+            player.Stop(ActionState);
+            player.CrossFade(ActionState, 0.05f);
+        }
+
+        // Healers play their action clip on each pulse that mended someone.
+        private void OnSupported()
+        {
+            if (!hasAction || player == null) return;
+            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, support.Interval * 0.9f);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
         }

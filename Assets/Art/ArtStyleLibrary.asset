@@ -100,14 +100,14 @@ MonoBehaviour:
     moveClipSpeed: 3
     attachments: []
   - id: 3
-    prefab: {fileID: 919132149155446097, guid: 801483b828d0cf746a3b6dfe39fb3667, type: 3}
-    localOffset: {x: -0, y: -0, z: 0.000000059604645}
-    localEuler: {x: -90, y: 0, z: 0}
-    scale: 1.7
-    idleClip: {fileID: 0}
-    moveClip: {fileID: 0}
-    actionClip: {fileID: 0}
-    moveClipSpeed: 4
+    prefab: {fileID: 8453815972868209000, guid: c6e7a2b391bc3ba4b98ca6757540484f, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 1df66e963e307a84386ab26a3b298f19, type: 2}
+    moveClip: {fileID: 7400000, guid: 7a8cb9d4971d74b41a0bed790e1914b0, type: 2}
+    actionClip: {fileID: 7400000, guid: 6f29189cd1e713948ae48ff49cc8545d, type: 2}
+    moveClipSpeed: 2.2
     attachments: []
   - id: 4
     prefab: {fileID: 1432428380869670723, guid: 9cab45a63c2dfe34892b570b3232f094, type: 3}
@@ -117,6 +117,26 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 08573233e9faf424bae30976e5f21ec3, type: 2}
     moveClip: {fileID: 7400000, guid: a2d66797ce682934293edaf343cff8e1, type: 2}
     actionClip: {fileID: 7400000, guid: d74bc515ca7428a4ba10f1a559f4fc24, type: 2}
+    moveClipSpeed: 3
+    attachments: []
+  - id: 6
+    prefab: {fileID: 6346685358646754384, guid: 5719cced6886a5840bdc2da9cf12749e, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: 28987168ff9f4ed4aa6a3933daab5b16, type: 2}
+    moveClip: {fileID: 7400000, guid: eadad725674c93542ba35e67b0da7f91, type: 2}
+    actionClip: {fileID: 7400000, guid: abe2922b1f884fe4783451258d23511f, type: 2}
+    moveClipSpeed: 3
+    attachments: []
+  - id: 5
+    prefab: {fileID: 3395697669266456268, guid: 3fef1fd1302fbfd4da426b9dc27eb9cf, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: a67b6ec365678ec468498fba6c462d1d, type: 2}
+    moveClip: {fileID: 7400000, guid: 37aa4ddc43bbb67499d4a30417862f4e, type: 2}
+    actionClip: {fileID: 7400000, guid: 9be3b68a7279a714ba32e46633cb3ad0, type: 2}
     moveClipSpeed: 3
     attachments: []
   - id: 8
@@ -130,12 +150,12 @@ MonoBehaviour:
     moveClipSpeed: 3
     attachments: []
   - id: 7
-    prefab: {fileID: 80713950213917158, guid: fe05b14d42fc1c64d96cb7663e4add4f, type: 3}
+    prefab: {fileID: 4913180318165128489, guid: c31badd213550b9409c2ef65dc7c61f5, type: 3}
     localOffset: {x: 0, y: 0, z: 0}
     localEuler: {x: 0, y: 0, z: 0}
     scale: 1
-    idleClip: {fileID: 0}
-    moveClip: {fileID: 0}
-    actionClip: {fileID: 0}
+    idleClip: {fileID: 7400000, guid: bae2e565e54081e4f9401b1a4e000091, type: 2}
+    moveClip: {fileID: 7400000, guid: ba14b32d56a535e4d89b4fbbe9df39f1, type: 2}
+    actionClip: {fileID: 7400000, guid: f6b05bcc35c864f40a1d5c8970c8d847, type: 2}
     moveClipSpeed: 4
     attachments: []

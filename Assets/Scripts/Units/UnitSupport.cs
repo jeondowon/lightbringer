@@ -16,6 +16,9 @@ namespace Lightbringer.Units
         private readonly HashSet<Combatant> healed = new HashSet<Combatant>();
         private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
         public float HealAmount => amount;
+        public float Interval => interval;
+        // Raised after a pulse that restored health to at least one wounded unit (drives the cast animation).
+        public event System.Action Pulsed;
 
         public void Configure(float healAmount, float pulseInterval, float pulseRadius)
         {
@@ -34,13 +37,18 @@ namespace Lightbringer.Units
             if (cooldown > 0) return;
             cooldown = interval;
             healed.Clear();
+            bool restored = false;
             int count = query.Overlap(transform.position, radius);
             for (int i = 0; i < count; i++)
             {
                 Combatant unit = query.Items[i].GetComponentInParent<Combatant>();
                 if (unit != null && unit.gameObject.scene == gameObject.scene && unit.Faction == self.Faction && healed.Add(unit))
-                    unit.Heal(amount);
+                {
+                    bool wounded = unit.CurrentHealth < unit.MaximumHealth;
+                    restored |= unit.Heal(amount) && wounded;
+                }
             }
+            if (restored) Pulsed?.Invoke();
         }
     }
 }

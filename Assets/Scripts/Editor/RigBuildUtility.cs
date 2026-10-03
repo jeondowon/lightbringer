@@ -26,6 +26,17 @@ namespace Lightbringer.EditorTools
             return SaveAsset(material, folder + "/" + name + ".mat");
         }
 
+        // Emissive URP Lit material for glowing prop parts (staff crystals, holy orbs).
+        public static Material MakeGlowMaterial(string folder, string name, Color color, float intensity)
+        {
+            var material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
+            material.SetColor("_BaseColor", color); material.SetFloat("_Metallic", 0f); material.SetFloat("_Smoothness", .8f);
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color * intensity);
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            return SaveAsset(material, folder + "/" + name + ".mat");
+        }
+
         // Collider-free primitive prop part.
         public static Transform Part(Transform parent, string name, PrimitiveType shape, Vector3 position, Vector3 scale, Material material)
         {

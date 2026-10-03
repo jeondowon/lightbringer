@@ -1,4 +1,4 @@
-PASS | 2026-10-02T19:28:01.6052340Z
+PASS | 2026-10-03T06:02:27.5551430Z
 Unity-native prototype skeleton: 23 bones; 135126 weighted vertices.
 Dragon_Idle: largest sampled vertex motion 2.603 m; mouth lowest 1.70 m (rest 1.72).
 Dragon_Walk: largest sampled vertex motion 2.694 m; mouth lowest 1.68 m (rest 1.72).

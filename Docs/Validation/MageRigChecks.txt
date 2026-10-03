@@ -1,0 +1,9 @@
+PASS | 2026-10-03T06:01:40.3620924Z
+Unity-native prototype skeleton: 23 bones; 283941 weighted vertices.
+Mage_Idle: weighted vertex motion 0.222 m; grip error 0.0000 m; staff butt 0.12 m, head at 1.97 m.
+Mage_Walk: weighted vertex motion 0.330 m; grip error 0.0000 m; staff butt 0.12 m, head at 1.94 m.
+Mage_Cast: weighted vertex motion 0.601 m; grip error 0.0000 m; staff butt 0.95 m, head at 1.65 m.
+Mage_Cast: staff head 1.47 m in front of the pivot at 1.65 m height at the release.
+Staff on RightHand (grip at the palm). Original FBX preserved.
+No external animation assets. Hand-tuned landmark weights and generated prototype clips.
+Visual review of the sleeves and the robe remains manual; no mesh decimation performed.

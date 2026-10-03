@@ -1,0 +1,10 @@
+PASS | 2026-10-03T06:03:04.6687097Z
+Horse skeleton: 19 bones, 295603 weighted vertices; rider skeleton: 13 bones (parented to the horse spine), 297851 weighted vertices.
+Knight_Idle: horse motion 0.068 m, rider motion 0.298 m; grip error 0.0000 m; lance butt at (0.51, 0.89, -0.01).
+Knight_Gallop: horse motion 0.633 m, rider motion 0.275 m; grip error 0.0000 m; lance butt at (0.51, 1.13, -0.49).
+Knight_Charge: horse motion 0.492 m, rider motion 0.305 m; grip error 0.0000 m; lance butt at (0.40, 1.76, -0.93).
+Charge: lance tip 2.20 m in front of the pivot at 1.87 m height at contact.
+Gallop: front fetlock travels 0.27 m between half cycles.
+Lance on the rider's RightHand, kite shield on the LeftHand. Source FBX files and Knight_Mounted.prefab preserved.
+No external animation assets. Hand-tuned landmark weights and generated prototype clips.
+Visual review of the gallop, the rider's arms and the tack remains manual.

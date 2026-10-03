@@ -1,0 +1,9 @@
+PASS | 2026-10-03T06:00:54.6305732Z
+Unity-native prototype skeleton: 23 bones; 298920 weighted vertices.
+Shieldbearer_Idle: weighted vertex motion 0.423 m; grip error 0.0000 m; shield centre 0.54 m ahead, -0.23 m across, 0.30-1.70 m high.
+Shieldbearer_Walk: weighted vertex motion 0.451 m; grip error 0.0000 m; shield centre 0.54 m ahead, -0.23 m across, 0.28-1.68 m high.
+Shieldbearer_Bash: weighted vertex motion 0.778 m; grip error 0.0000 m; shield centre 0.56 m ahead, -0.27 m across, 0.28-1.68 m high.
+Bash: mace head 0.99 m in front of the pivot at 1.24 m height at contact.
+Tower shield 0.80 x 1.40 m on LeftHand; flanged mace on RightHand. Original FBX preserved.
+No external animation assets. Hand-tuned landmark weights and generated prototype clips.
+Visual review of joints and the coat remains manual; no mesh decimation performed.
