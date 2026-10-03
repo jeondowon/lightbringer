@@ -31,7 +31,7 @@ namespace Lightbringer.Core
             component is UnitCombat || component is UnitPathFollower || component is UnitSummoner
             || component is PlayerMovement || component is HeroAbilities || component is ThirdPersonCamera
             || component is FoodResource || component is ManaResource || component is EnemyWaveSpawner
-            || component is UnitSupport;
+            || component is UnitSupport || component is Projectile;
 
         public void Resume(bool battleEnded)
         {

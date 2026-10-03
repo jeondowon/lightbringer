@@ -36,6 +36,40 @@ namespace Lightbringer.CameraSystem
         public void Configure(Transform followTarget, InputActionAsset actions)
         { target = followTarget; inputActions = actions; }
 
+        // Impact shake: heavy blows near the hero nudge the view. Trauma decays quickly and is squared,
+        // so small hits barely register while charges and slams read as weight. Never moves the orbit pivot.
+        private static readonly System.Collections.Generic.List<ThirdPersonCamera> active =
+            new System.Collections.Generic.List<ThirdPersonCamera>();
+        private const float ShakeRange = 28f;
+        private float trauma;
+        private float shakeSeed;
+        public float Trauma => trauma;
+
+        // `strength` 0-1; falls off with distance from the followed hero so far-away fronts stay calm.
+        public static void Shake(Vector3 source, float strength)
+        {
+            foreach (ThirdPersonCamera camera in active)
+            {
+                if (camera.target == null) continue;
+                float falloff = 1f - Mathf.Clamp01(Vector3.Distance(source, camera.target.position) / ShakeRange);
+                // Strongest wins: a breath or slam striking many units at once does not stack into a quake.
+                camera.trauma = Mathf.Max(camera.trauma, Mathf.Clamp01(strength * falloff * falloff));
+            }
+        }
+
+        private void ApplyShake()
+        {
+            float delta = Time.deltaTime;
+            if (trauma <= 0f || delta <= 0f) return;
+            trauma = Mathf.Max(0f, trauma - delta * 2.2f);
+            float amount = trauma * trauma;
+            shakeSeed += delta * 28f;
+            float yawJitter = (Mathf.PerlinNoise(shakeSeed, 0.1f) - 0.5f) * 2f;
+            float pitchJitter = (Mathf.PerlinNoise(0.7f, shakeSeed) - 0.5f) * 2f;
+            transform.rotation *= Quaternion.Euler(pitchJitter * amount * 2.5f, yawJitter * amount * 2.5f, yawJitter * amount * 1.5f);
+            transform.position += transform.up * (pitchJitter * amount * 0.18f);
+        }
+
         private void OnEnable()
         {
             InputAction source = inputActions != null
@@ -61,10 +95,13 @@ namespace Lightbringer.CameraSystem
             ownsCursor = true;
             SetCursorLocked(true);
             UpdatePose();
+            if (!active.Contains(this)) active.Add(this);
         }
 
         private void OnDisable()
         {
+            active.Remove(this);
+            trauma = 0f;
             lookAction?.Dispose();
             lookAction = null;
             if (ownsCursor)
@@ -105,8 +142,9 @@ namespace Lightbringer.CameraSystem
 
         private void LateUpdate()
         {
-            if (target != null)
-                UpdatePose();
+            if (target == null) return;
+            UpdatePose();
+            ApplyShake();
         }
 
         private void UpdatePose()

@@ -51,6 +51,8 @@ namespace Lightbringer.EditorTools
             Combatant enemy = CreateCombatUnit(origin + Vector3.up + Vector3.forward * 5, Faction.Enemy);
             Physics.SyncTransforms();
             Invoke(archer.GetComponent<UnitCombat>(), "Tick", 0.1f);
+            Check(enemy.CurrentHealth == 30f && Projectile.InFlightCount > 0, "Archer looses an arrow instead of hitting instantly");
+            Projectile.TickAll(1f);
             Check(enemy.CurrentHealth == 23f, "Archer attacks at range while melee stats stay unchanged");
         }
     }

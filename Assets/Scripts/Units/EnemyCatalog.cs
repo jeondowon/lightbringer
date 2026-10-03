@@ -1,3 +1,5 @@
+using Lightbringer.Combat;
+
 namespace Lightbringer.Units
 {
     public enum EnemyKind { Raider, Archer, Swarm, Brute, Shaman, Boss }
@@ -31,6 +33,14 @@ namespace Lightbringer.Units
         public static float AttackInterval(EnemyKind kind) => Intervals[(int)kind];
         public static float Speed(EnemyKind kind) => Speeds[(int)kind];
         public static float Radius(EnemyKind kind) => Radii[(int)kind];
+        // Wind-up before the blow lands, as a share of the attack motion. Brute and Warlord telegraph their slams.
+        private static readonly float[] StrikePhases = { 0.35f, 0f, 0.25f, 0.5f, 0.3f, 0.55f };
+        public static float StrikePhase(EnemyKind kind) => StrikePhases[(int)kind];
+        public static ProjectileKind Projectile(EnemyKind kind) =>
+            kind == EnemyKind.Archer ? ProjectileKind.Arrow
+            : kind == EnemyKind.Shaman ? ProjectileKind.Bolt : ProjectileKind.None;
+        public static float ProjectileSpeed(EnemyKind kind) => kind == EnemyKind.Archer ? 20f : 12f;
+        public static float ProjectileArc(EnemyKind kind) => kind == EnemyKind.Archer ? 0.07f : 0f;
         // Heavy enemies take bonus damage from anti-heavy troops (Spearman).
         public static bool IsHeavy(EnemyKind kind) => kind == EnemyKind.Brute || kind == EnemyKind.Boss;
         public static float SplashRadius(EnemyKind kind) => kind == EnemyKind.Boss ? 2f : 0f;

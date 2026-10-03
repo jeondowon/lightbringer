@@ -33,12 +33,18 @@ namespace Lightbringer.Visuals
         private void OnEnable()
         {
             combat = GetComponentInParent<UnitCombat>();
-            if (combat != null) combat.Attacked += OnAttacked;
+            if (combat == null) return;
+            combat.Attacked += OnAttacked;
+            combat.StrikeLanded += OnStrikeLanded;
         }
 
         private void OnDisable()
         {
-            if (combat != null) combat.Attacked -= OnAttacked;
+            if (combat != null)
+            {
+                combat.Attacked -= OnAttacked;
+                combat.StrikeLanded -= OnStrikeLanded;
+            }
             combat = null;
             startAt = splashAt = float.MaxValue;
             if (flame != null) flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -50,7 +56,16 @@ namespace Lightbringer.Visuals
             target = combat.Target.GetAimPoint(mouth.position);
             startAt = Time.time + Delay;
             stopAt = startAt + Duration;
-            splashAt = startAt + Lifetime * 0.7f;
+            // Without strike timing the burst follows the stream; otherwise it waits for the hit itself.
+            splashAt = combat.StrikeDelay > 0f ? float.MaxValue : startAt + Lifetime * 0.7f;
+        }
+
+        // The flames burst where the breath actually lands, together with its damage.
+        private void OnStrikeLanded(Combatant struck, Vector3 point)
+        {
+            if (mouth == null || fireMaterial == null) return;
+            target = point;
+            splashAt = Time.time;
         }
 
         private void Update()

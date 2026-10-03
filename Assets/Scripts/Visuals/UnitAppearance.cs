@@ -44,6 +44,7 @@ namespace Lightbringer.Visuals
             root.localScale = new Vector3(1f / Mathf.Max(scale.x, 0.0001f), 1f / Mathf.Max(scale.y, 0.0001f), 1f / Mathf.Max(scale.z, 0.0001f));
             root.localPosition = new Vector3(0f, feetOffset / Mathf.Max(scale.y, 0.0001f), 0f);
 
+            AddCombatFeedback(owner, root, style);
             VisualOverride replacement = style.FindOverride(id);
             if (replacement != null)
             {
@@ -77,6 +78,22 @@ namespace Lightbringer.Visuals
             }
             visual.AddComponent<VisualMotion>().Configure(silhouette, parts);
             return root;
+        }
+
+        // Hit flashes and squash for anything that can be damaged; shot and impact effects for fighters.
+        // Objectives (no CharacterController) flash without squashing their buildings.
+        private static void AddCombatFeedback(GameObject owner, Transform root, ArtStyleLibrary style)
+        {
+            if (owner.TryGetComponent(out Combatant _))
+            {
+                if (!owner.TryGetComponent(out HitReaction reaction)) reaction = owner.AddComponent<HitReaction>();
+                reaction.Configure(style, root, owner.TryGetComponent(out CharacterController _));
+            }
+            if (owner.TryGetComponent(out UnitCombat _))
+            {
+                if (!owner.TryGetComponent(out AttackVfx attack)) attack = owner.AddComponent<AttackVfx>();
+                attack.Configure(style);
+            }
         }
 
         private static void AttachProps(Transform model, VisualOverride source)

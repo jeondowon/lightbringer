@@ -111,6 +111,8 @@ namespace Lightbringer.Units
                 if (selectedUnit == UnitKind.Mage || selectedUnit == UnitKind.Dragon)
                     soldier.GetComponent<UnitCombat>().ConfigureSplash(selectedUnit == UnitKind.Dragon ? 4f : 2.5f);
             }
+            soldier.GetComponent<UnitCombat>()?.ConfigureStrike(UnitCatalog.StrikePhase(selectedUnit), UnitCatalog.Projectile(selectedUnit),
+                UnitCatalog.ProjectileSpeed(selectedUnit), UnitCatalog.ProjectileArc(selectedUnit));
             if (soldier.TryGetComponent(out Lightbringer.Visuals.UnitAppearance appearance))
                 appearance.Apply(Lightbringer.Visuals.ArtStyleLibrary.ForUnit(selectedUnit));
             soldier.name = $"{UnitCatalog.Names[(int)selectedUnit]} {++summonedCount}";

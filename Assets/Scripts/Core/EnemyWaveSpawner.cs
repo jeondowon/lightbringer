@@ -121,6 +121,8 @@ namespace Lightbringer.Core
             UnitCombat combat = unit.GetComponent<UnitCombat>();
             combat.Configure(EnemyCatalog.AttackDamage(kind, stage), EnemyCatalog.Range(kind), EnemyCatalog.AttackInterval(kind));
             combat.ConfigureSplash(EnemyCatalog.SplashRadius(kind));
+            combat.ConfigureStrike(EnemyCatalog.StrikePhase(kind), EnemyCatalog.Projectile(kind),
+                EnemyCatalog.ProjectileSpeed(kind), EnemyCatalog.ProjectileArc(kind));
             UnitPathFollower follower = unit.GetComponent<UnitPathFollower>();
             follower.ConfigureSpeed(EnemyCatalog.Speed(kind));
             follower.TryAssignPath(routes[lane]);

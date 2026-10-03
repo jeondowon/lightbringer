@@ -122,6 +122,9 @@ namespace Lightbringer.EditorTools
             target.Configure(Faction.Enemy, 100); nearby.Configure(Faction.Enemy, 100);
             Physics.SyncTransforms();
             Invoke(troops[5].GetComponent<UnitCombat>(), "Tick", 0.1f);
+            Invoke(troops[5].GetComponent<UnitCombat>(), "Tick", UnitCatalog.StrikePhase(UnitKind.Mage));
+            Check(target.CurrentHealth == 100 && Projectile.InFlightCount > 0, "Mage looses a bolt at the thrust; nothing is hit before it lands");
+            Projectile.TickAll(1f);
             Check(target.CurrentHealth == 82 && nearby.CurrentHealth == 82, "Mage splash damages multiple opponents once each");
             float height = troops[7].transform.position.y;
             Invoke(troops[7].GetComponent<UnitPathFollower>(), "Tick", 0.5f);

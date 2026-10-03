@@ -1,3 +1,4 @@
+using Lightbringer.Combat;
 using UnityEngine;
 
 namespace Lightbringer.Units
@@ -17,6 +18,15 @@ namespace Lightbringer.Units
         public static float MaxHealth(UnitKind kind) => Health[(int)kind];
         public static float AttackDamage(UnitKind kind) => Damage[(int)kind];
         public static float Range(UnitKind kind) => Ranges[(int)kind];
+        // Where in the attack clip the blow lands or the shot is loosed (0-1 of the clip). Matches the rigged
+        // clips: the Archer looses at the start, melee contact ~0.4-0.45, the Mage thrust and Dragon breath ~0.5.
+        private static readonly float[] StrikePhases = { 0.4f, 0f, 0.45f, 0.45f, 0f, 0.5f, 0.45f, 0.5f };
+        public static float StrikePhase(UnitKind kind) => StrikePhases[(int)kind];
+        public static ProjectileKind Projectile(UnitKind kind) => kind == UnitKind.Archer ? ProjectileKind.Arrow
+            : kind == UnitKind.Mage ? ProjectileKind.Bolt : ProjectileKind.None;
+        // Flight speed (m/s) and arc height as a share of the distance. Arrows lob slightly; magic flies straight.
+        public static float ProjectileSpeed(UnitKind kind) => kind == UnitKind.Archer ? 24f : 15f;
+        public static float ProjectileArc(UnitKind kind) => kind == UnitKind.Archer ? 0.07f : 0f;
         // Spearman is the anti-Heavy troop (Brute, Boss).
         public static float HeavyBonus(UnitKind kind) => kind == UnitKind.Spearman ? 2f : 1f;
         // Knight charge: after riding this far without attacking, the next hit deals bonus damage,

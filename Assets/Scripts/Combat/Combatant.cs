@@ -18,6 +18,8 @@ namespace Lightbringer.Combat
         public float CurrentHealth { get; private set; }
         public bool IsAlive => isActiveAndEnabled && CurrentHealth > 0f;
         public event Action<Combatant> Died;
+        // Raised for every hit that lands (amount after armour, attacker may be null), before a lethal hit raises Died.
+        public event Action<Combatant, float, Combatant> Damaged;
         public Combatant LastAttacker { get; private set; }
         public float DamageReduction { get; set; }
         // Heavy targets (Brute, Boss) take bonus damage from anti-heavy troops.
@@ -63,7 +65,9 @@ namespace Lightbringer.Combat
             if (!IsAlive || Invulnerable || amount <= 0f || float.IsNaN(amount) || float.IsInfinity(amount))
                 return false;
             LastAttacker = attacker;
-            CurrentHealth = Mathf.Max(0f, CurrentHealth - amount * (1f - Mathf.Clamp(DamageReduction, 0f, 0.8f)));
+            float dealt = Mathf.Min(CurrentHealth, amount * (1f - Mathf.Clamp(DamageReduction, 0f, 0.8f)));
+            CurrentHealth = Mathf.Max(0f, CurrentHealth - dealt);
+            Damaged?.Invoke(this, dealt, attacker);
             if (CurrentHealth == 0f)
             {
                 // Remove the collider/target immediately; Destroy completes at the end of the frame.

@@ -22,7 +22,38 @@ namespace Lightbringer.Combat
         public float AttackRange => attackRange;
         public float BaseDamage => attackDamage;
         public float AttackInterval => attackInterval;
+        // Attack clips play over this share of the interval; the strike phase is measured against it.
+        public const float ActionShare = 0.9f;
+        public float ActionDuration => attackInterval * ActionShare;
+        // Raised when an attack starts (drives the attack animation). The hit itself follows after StrikeDelay.
         public event System.Action Attacked;
+        // Raised when a melee blow connects, with the struck target and the impact point.
+        public event System.Action<Combatant, Vector3> StrikeLanded;
+        // Raised when a ranged attack is loosed; visuals dress the projectile.
+        public event System.Action<Projectile> ProjectileLaunched;
+
+        // Strike timing: the blow lands (or the shot is loosed) this far into the attack animation, so damage and
+        // hit feedback meet the weapon instead of the start of the swing. 0 = immediate (greybox default).
+        private float strikePhase;
+        public float StrikeDelay => strikePhase * ActionDuration;
+        public ProjectileKind ProjectileType { get; private set; }
+        private float projectileSpeed = 20f;
+        private float projectileArc;
+        private bool strikePending;
+        private float strikeTimer;
+        private Combatant strikeTarget;
+        private float strikeDamage;
+        private bool strikeCharging;
+        public bool IsStrikePending => strikePending;
+
+        public void ConfigureStrike(float phase, ProjectileKind projectile = ProjectileKind.None, float speed = 20f, float arcRatio = 0f)
+        {
+            strikePhase = Mathf.Clamp(phase, 0f, 0.95f);
+            ProjectileType = projectile;
+            projectileSpeed = Mathf.Max(1f, speed);
+            projectileArc = Mathf.Max(0f, arcRatio);
+        }
+
         public float EffectiveDamage
         {
             get
@@ -53,6 +84,7 @@ namespace Lightbringer.Combat
         public int TargetSearches { get; private set; }
         public Combatant Health => self != null ? self : GetComponent<Combatant>();
         private float splashRadius;
+        public float SplashRadius => splashRadius;
         private readonly HashSet<Combatant> splashTargets = new HashSet<Combatant>();
         public void ConfigureSplash(float radius) => splashRadius = Mathf.Max(0, radius);
         // Damage multiplier against Heavy targets (Spearman: 2x). 1 = no bonus.
@@ -108,6 +140,8 @@ namespace Lightbringer.Combat
 
         private void OnDisable()
         {
+            // A pause keeps a swing in progress; it resolves when combat resumes. Death cancels it.
+            if (self == null || !self.IsAlive) CancelStrike();
             Target = null;
             auras.Clear();
             if (movement != null)
@@ -137,6 +171,13 @@ namespace Lightbringer.Combat
                 hasLastPosition = true;
             }
             cooldown = Mathf.Max(0f, cooldown - deltaTime);
+            if (strikePending)
+            {
+                strikeTimer -= deltaTime;
+                if (strikeTimer <= 0f) ResolveStrike();
+                // Resolving can kill the last enemy and end the stage, disabling this component.
+                if (!isActiveAndEnabled) return;
+            }
             searchCooldown -= deltaTime;
             if (!IsValidTarget(Target))
             {
@@ -166,11 +207,57 @@ namespace Lightbringer.Combat
                 || cooldown > 0f || !HasLineOfSight(Target))
                 return;
 
-            Combatant primary = Target;
-            Vector3 impact = primary.transform.position;
-            float damage = EffectiveDamage;
-            bool charging = IsChargeReady;
+            // One swing at a time: a slow attack whose blow has not landed yet does not start another.
+            if (strikePending)
+                return;
+            strikeTarget = Target;
+            strikeDamage = EffectiveDamage;
+            strikeCharging = IsChargeReady;
             travelled = 0f;
+            cooldown = attackInterval;
+            strikePending = true;
+            strikeTimer = StrikeDelay;
+            Attacked?.Invoke();
+            if (strikeTimer <= 0f && isActiveAndEnabled) ResolveStrike();
+        }
+
+        private void CancelStrike()
+        {
+            strikePending = false;
+            strikeTarget = null;
+        }
+
+        // The blow connects (melee) or the shot is loosed (ranged). A melee target that died or slipped out of
+        // reach during the swing is missed; a ranged shot needs a living target to aim at.
+        private void ResolveStrike()
+        {
+            Combatant primary = strikeTarget;
+            float damage = strikeDamage;
+            bool charging = strikeCharging;
+            CancelStrike();
+            if (primary == null || !primary.IsAlive || primary.Invulnerable)
+            {
+                ClearLostTarget();
+                return;
+            }
+            if (ProjectileType != ProjectileKind.None)
+            {
+                Vector3 muzzle = transform.position + Vector3.up * 0.45f + transform.forward * 0.35f;
+                Projectile shot = Lightbringer.Combat.Projectile.Launch(ProjectileType, self, muzzle, primary, projectileSpeed, projectileArc,
+                    damage, HeavyMultiplier, splashRadius, detectionMask);
+                ProjectileLaunched?.Invoke(shot);
+                return;
+            }
+            Vector3 reachOffset = primary.GetAimPoint(transform.position) - transform.position;
+            float reach = attackRange * 1.3f + 0.3f;
+            if (reachOffset.sqrMagnitude > reach * reach)
+            {
+                ClearLostTarget();
+                return;
+            }
+
+            Vector3 impact = primary.transform.position;
+            Vector3 contact = primary.GetAimPoint(transform.position);
             primary.TakeDamage(DamageAgainst(primary, charging ? damage * chargeMultiplier : damage), self);
             if (charging) Knockback(primary, transform.position);
             float radius = charging ? Mathf.Max(splashRadius, chargeRadius) : splashRadius;
@@ -188,15 +275,17 @@ namespace Lightbringer.Combat
                     }
                 }
             }
-            cooldown = attackInterval;
-            Attacked?.Invoke();
+            StrikeLanded?.Invoke(primary, contact);
             if (charging) ChargeLanded?.Invoke();
-            // A death listener can end the stage and disable this component during TakeDamage.
-            if (Target == null || !Target.IsAlive)
-            {
-                Target = null;
-                movement.ClearSteeringOverride();
-            }
+            ClearLostTarget();
+        }
+
+        // A death listener can end the stage and disable this component during TakeDamage.
+        private void ClearLostTarget()
+        {
+            if (Target != null && Target.IsAlive) return;
+            Target = null;
+            if (movement != null) movement.ClearSteeringOverride();
         }
 
         private bool IsValidTarget(Combatant candidate)

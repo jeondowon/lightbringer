@@ -89,7 +89,7 @@ namespace Lightbringer.Visuals
         private void OnAttacked()
         {
             if (!hasAction || player == null) return;
-            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, combat.AttackInterval * 0.9f);
+            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, combat.ActionDuration);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
         }
