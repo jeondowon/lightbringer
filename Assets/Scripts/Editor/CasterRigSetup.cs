@@ -95,6 +95,8 @@ namespace Lightbringer.EditorTools
                 staff.SetParent(body.Rig.Find("RightHand"), false);
                 staff.position = body.PalmCentre("Right", mesh.vertices);
                 staff.rotation = Quaternion.identity;
+                // The faceless Tripo hood gets a dark volume on the Head bone so the face reads as shadow.
+                string hood = HoodShadow.Attach(skin, c.RigFolder, c.Name);
 
                 AnimationClip idle = MakeClip(c, root.transform, "Idle", 2.4f, WrapMode.Loop);
                 AnimationClip walk = MakeClip(c, root.transform, "Walk", 1f, WrapMode.Loop);
@@ -104,7 +106,7 @@ namespace Lightbringer.EditorTools
                 if (prefab == null) throw new InvalidOperationException($"Could not save the {c.Name} rig prefab.");
                 File.WriteAllText($"Docs/Validation/{c.Name}RigChecks.txt", $"PASS | {DateTime.UtcNow:O}\n"
                     + $"Unity-native prototype skeleton: {body.Rig.Bones.Count} bones; {mesh.vertexCount} weighted vertices.\n"
-                    + checks + "Staff on RightHand (grip at the palm). Original FBX preserved.\n"
+                    + checks + hood + "\n" + "Staff on RightHand (grip at the palm). Original FBX preserved.\n"
                     + "No external animation assets. Hand-tuned landmark weights and generated prototype clips.\n"
                     + "Visual review of the sleeves and the robe remains manual; no mesh decimation performed.\n");
                 return new VisualOverride
