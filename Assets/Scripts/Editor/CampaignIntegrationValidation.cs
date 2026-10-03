@@ -115,6 +115,7 @@ namespace Lightbringer.EditorTools
             Physics.SyncTransforms();
             troops[4].GetComponent<UnitSupport>().Tick(0.1f);
             Check(troops[0].CurrentHealth == 25, "Priest heals a nearby allied soldier");
+            ValidatePriestRearGuard(troops);
             Vector3 origin = troops[5].transform.position;
             Combatant target = CreateCombatUnit(origin + Vector3.forward * 5, Faction.Enemy);
             Combatant nearby = CreateCombatUnit(origin + new Vector3(1, 0, 5), Faction.Enemy);
@@ -126,6 +127,33 @@ namespace Lightbringer.EditorTools
             Invoke(troops[7].GetComponent<UnitPathFollower>(), "Tick", 0.5f);
             Check(troops[7].transform.position.y < height + 0.5f && troops[7].MaximumHealth == 300,
                 "Final Dragon troop stays on the ground and has distinct large-unit stats");
+        }
+
+        // The Priest has no UnitCombat to halt it, so it must hold behind the fighters on its Path and short of enemies.
+        private static void ValidatePriestRearGuard(Combatant[] troops)
+        {
+            Combatant priest = troops[4], fighter = troops[0];
+            UnitSupport support = priest.GetComponent<UnitSupport>();
+            Lightbringer.Pathing.WaypointPath path = priest.GetComponent<UnitPathFollower>().AssignedPath;
+            Vector3 start = path.GetPosition(0), next = path.GetPosition(1), lift = Vector3.up * 0.85f;
+            Vector3[] saved = { priest.transform.position, fighter.transform.position };
+            priest.transform.position = Vector3.Lerp(start, next, 0.4f) + lift;
+            fighter.transform.position = Vector3.Lerp(start, next, 0.4f) + Vector3.right * 1.5f + lift;
+            Physics.SyncTransforms();
+            support.Tick(0.3f);
+            Check(support.IsHolding, "Priest waits when no fighter on its Path is ahead of it");
+            fighter.transform.position = Vector3.Lerp(start, next, 0.9f) + lift;
+            Physics.SyncTransforms();
+            support.Tick(0.3f);
+            Check(!support.IsHolding, "Priest advances behind a fighter that leads on its Path");
+            Combatant enemy = CreateCombatUnit(priest.transform.position + Vector3.right * 3f, Faction.Enemy);
+            Physics.SyncTransforms();
+            support.Tick(0.3f);
+            Check(support.IsHolding, "Priest halts short of an enemy instead of walking into it");
+            UnityEngine.Object.DestroyImmediate(enemy.gameObject);
+            priest.transform.position = saved[0];
+            fighter.transform.position = saved[1];
+            Physics.SyncTransforms();
         }
     }
 }

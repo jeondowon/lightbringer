@@ -25,6 +25,10 @@ namespace Lightbringer.Units
         public const float ChargeMultiplier = 2.5f;
         public const float ChargeRadius = 1.8f;
         public const float ChargeKnockback = 1.5f;
+        // Priest rear guard: stays this far behind the leading fighter on its Path and halts this close to enemies
+        // (inside its 6 m heal pulse, so troops in melee are still mended).
+        public const float PriestFollowGap = 2.5f;
+        public const float PriestKeepAway = 4.5f;
         public static float Speed(UnitKind kind) => kind == UnitKind.Shieldbearer ? 2.2f : kind == UnitKind.Knight ? 4f : 3f;
         public static Vector3 VisualScale(UnitKind kind) => kind == UnitKind.Dragon
             ? new Vector3(2.4f, 1.4f, 3f) : kind == UnitKind.Shieldbearer

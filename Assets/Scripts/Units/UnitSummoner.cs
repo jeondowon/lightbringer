@@ -105,7 +105,7 @@ namespace Lightbringer.Units
                 if (selectedUnit == UnitKind.Priest)
                 {
                     soldier.GetComponent<UnitCombat>().enabled = false;
-                    soldier.gameObject.AddComponent<UnitSupport>();
+                    soldier.gameObject.AddComponent<UnitSupport>().ConfigureRearGuard(UnitCatalog.PriestFollowGap, UnitCatalog.PriestKeepAway);
                 }
                 // The Dragon walks on the ground and breathes fire (splash); flight was dropped for the rigged model.
                 if (selectedUnit == UnitKind.Mage || selectedUnit == UnitKind.Dragon)

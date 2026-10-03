@@ -52,6 +52,25 @@ namespace Lightbringer.Pathing
             return best;
         }
 
+        // Ground-plane distance along the Path to the point nearest this position (how far a unit has advanced).
+        public float DistanceAlong(Vector3 position)
+        {
+            float best = float.PositiveInfinity, along = 0f, travelled = 0f;
+            for (int i = 0; i < Count - 1; i++)
+            {
+                float distance = ProjectOnSegment(i, position, out float progress);
+                Vector3 segment = GetPosition(i + 1) - GetPosition(i);
+                segment.y = 0f;
+                if (distance < best)
+                {
+                    best = distance;
+                    along = travelled + progress * segment.magnitude;
+                }
+                travelled += segment.magnitude;
+            }
+            return along;
+        }
+
         // Ground-plane projection onto segment i: progress along it (0..1) and squared distance from it.
         private float ProjectOnSegment(int i, Vector3 position, out float progress)
         {
