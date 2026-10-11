@@ -223,8 +223,11 @@ namespace Lightbringer.EditorTools
                     Advance(); break;
                 case 10:
                     if (elapsed < 1.5f) return;
-                    Assert(soldier != null && soldier.name.StartsWith("Dragon") && soldier.transform.position.y > 2,
-                        "Runtime Dragon rises above ground troops");
+                    // The rigged Dragon became a ground unit (Docs/Roadmap.md, 2026-10-03).
+                    Assert(soldier != null && soldier.name.StartsWith("Dragon")
+                        && soldier.GetComponent<CharacterController>().isGrounded
+                        && soldier.GetComponent<UnitPathFollower>().AssignedPath != null,
+                        "Runtime Dragon stays grounded on its assigned Path");
                     Screenshot("CampaignThreeFronts.png");
                     phase = 16; phaseTime = Time.realtimeSinceStartup; break;
                 case 11:

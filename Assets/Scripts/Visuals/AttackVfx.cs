@@ -53,7 +53,7 @@ namespace Lightbringer.Visuals
             TrailRenderer trail = AddTrail(shot.transform, shot.Kind);
             if (shot.Kind == ProjectileKind.Bolt)
             {
-                visual.AddComponent<BoltFlicker>();
+                visual.AddComponent<BoltFlicker>().Configure(style, Tint, HaloMaterial(style, Tint, allied));
                 CombatEffects.Muzzle(style, shot.transform.position, Tint);
             }
             Color tint = Tint;
@@ -96,7 +96,8 @@ namespace Lightbringer.Visuals
             if (!Application.isPlaying || style == null) return;
             Vector3 front = transform.position + transform.forward * 1f;
             CombatEffects.Ring(front, CombatEffects.HolyGold, 1.8f);
-            CombatEffects.Hit(style, front + Vector3.up * 0.4f, transform.forward, CombatEffects.SteelSpark, 2.5f);
+            CombatEffects.Hit(style, front + Vector3.up * 0.4f, transform.forward, CombatEffects.SteelSpark, 2.5f, true);
+            CombatEffects.DustRing(HeroSpellVfx.GroundBelow(front + Vector3.up * 0.5f), 0.8f, 8);
             ThirdPersonCamera.Shake(front, 0.5f);
         }
 
@@ -109,16 +110,16 @@ namespace Lightbringer.Visuals
             TrailRenderer trail = item.AddComponent<TrailRenderer>();
             trail.sharedMaterial = material;
             bool bolt = kind == ProjectileKind.Bolt;
-            trail.time = bolt ? 0.22f : 0.12f;
-            trail.minVertexDistance = 0.12f;
-            trail.widthMultiplier = bolt ? 0.32f : 0.07f;
+            trail.time = bolt ? 0.3f : 0.16f;
+            trail.minVertexDistance = 0.1f;
+            trail.widthMultiplier = bolt ? 0.38f : 0.08f;
             trail.widthCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
             trail.textureMode = LineTextureMode.Stretch;
             trail.alignment = LineAlignment.View;
             trail.shadowCastingMode = ShadowCastingMode.Off;
             trail.receiveShadows = false;
             Color head = bolt ? Tint : (allied ? new Color(1f, 0.92f, 0.75f) : CombatEffects.Corruption);
-            float strength = bolt ? 1f : 0.45f;
+            float strength = bolt ? 1f : 0.6f;
             Gradient gradient = new Gradient();
             gradient.SetKeys(new[] { new GradientColorKey(head, 0f), new GradientColorKey(head, 1f) },
                 new[] { new GradientAlphaKey(strength, 0f), new GradientAlphaKey(0f, 1f) });
@@ -134,6 +135,41 @@ namespace Lightbringer.Visuals
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.lightProbeUsage = LightProbeUsage.Off;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+
+        private static Mesh haloQuad;
+        private static readonly Dictionary<long, Material> halos = new Dictionary<long, Material>();
+
+        // Unit quad in the XY plane (faces -Z toward a camera looking down +Z) with white vertex colours.
+        public static Mesh HaloQuad
+        {
+            get
+            {
+                if (haloQuad != null) return haloQuad;
+                haloQuad = new Mesh { name = "LB Halo Quad", hideFlags = HideFlags.DontSave };
+                haloQuad.SetVertices(new List<Vector3> { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f) });
+                haloQuad.SetUVs(0, new List<Vector2> { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(1f, 0f) });
+                haloQuad.SetColors(new List<Color> { Color.white, Color.white, Color.white, Color.white });
+                haloQuad.SetTriangles(new[] { 0, 1, 2, 0, 2, 3 }, 0);
+                haloQuad.RecalculateBounds();
+                return haloQuad;
+            }
+        }
+
+        // Soft additive glow around a magic bolt, tinted per faction.
+        private static Material HaloMaterial(ArtStyleLibrary style, Color tint, bool allied)
+        {
+            Material source = style.vfxMaterial != null ? style.vfxMaterial : style.auraMotesMaterial;
+            if (source == null) return null;
+            long key = ((long)style.GetInstanceID() << 2) | (allied ? 1L : 2L);
+            if (halos.TryGetValue(key, out Material cached) && cached != null) return cached;
+            Material material = new Material(source) { name = allied ? "LB Bolt Halo" : "LB Dark Bolt Halo", hideFlags = HideFlags.DontSave };
+            if (material.HasProperty("_Shape")) material.SetFloat("_Shape", 0f);
+            if (material.HasProperty("_Additive")) material.SetFloat("_Additive", 1f);
+            material.SetFloat("_Softness", 2.2f);
+            material.SetColor("_Color", tint * 1.6f);
+            halos[key] = material;
+            return material;
         }
 
         // Neutral white so the gradient on each trail decides its colour.
@@ -182,16 +218,61 @@ namespace Lightbringer.Visuals
         }
     }
 
-    // Pulses and spins a magic bolt's orb while it flies.
+    // Pulses and spins a magic bolt's orb while it flies, keeps a soft halo facing the camera and sheds
+    // sparkles behind it.
     public sealed class BoltFlicker : MonoBehaviour
     {
+        private const float TrailInterval = 0.025f;
         private float seed;
+        private ArtStyleLibrary style;
+        private Color tint;
+        private Transform halo;
+        private float trailTimer;
+
+        public void Configure(ArtStyleLibrary library, Color color, Material haloMaterial)
+        {
+            style = library;
+            tint = color;
+            if (haloMaterial == null || halo != null) return;
+            GameObject item = new GameObject("Halo");
+            // Sibling of the orb so the orb's spin and pulse do not tumble the halo.
+            item.transform.SetParent(transform.parent, false);
+            item.transform.localScale = Vector3.one * 1.3f;
+            item.AddComponent<MeshFilter>().sharedMesh = AttackVfx.HaloQuad;
+            MeshRenderer renderer = item.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = haloMaterial;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            halo = item.transform;
+        }
+
         private void OnEnable() => seed = Random.value * 10f;
+
+        private void OnDestroy()
+        {
+            if (halo != null) Destroy(halo.gameObject);
+        }
+
         private void Update()
         {
             float t = Time.time * 22f + seed;
-            transform.localScale = Vector3.one * (1f + 0.18f * Mathf.Sin(t) + 0.08f * Mathf.Sin(t * 2.7f));
+            float pulse = 1f + 0.18f * Mathf.Sin(t) + 0.08f * Mathf.Sin(t * 2.7f);
+            transform.localScale = Vector3.one * pulse;
             transform.localRotation = Quaternion.Euler(Time.time * 360f, Time.time * 220f, 0f);
+            UnityEngine.Camera view = UnityEngine.Camera.main;
+            if (halo != null && view != null)
+            {
+                halo.rotation = Quaternion.LookRotation(halo.position - view.transform.position, view.transform.up);
+                halo.localScale = Vector3.one * (1.3f * (0.9f + 0.1f * pulse));
+            }
+            // Only a bolt still in flight sheds sparkles (the orb stays parented to its projectile until it lands).
+            if (style == null || transform.parent == null || transform.parent.GetComponent<Projectile>() == null) return;
+            trailTimer -= Time.deltaTime;
+            if (trailTimer > 0f) return;
+            trailTimer = TrailInterval;
+            CombatEffects.Trail(style, transform.position, tint);
         }
     }
 }

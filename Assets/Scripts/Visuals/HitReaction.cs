@@ -75,8 +75,9 @@ namespace Lightbringer.Visuals
             hitDirection = hitDirection.sqrMagnitude > 0.0001f ? hitDirection.normalized : -transform.forward;
             float weight = Mathf.Clamp(amount / 14f, 0.4f, 2.5f);
 
-            ProjectileKind shot = attacker != null && attacker.TryGetComponent(out UnitCombat combat)
-                ? combat.ProjectileType : ProjectileKind.None;
+            UnitCombat combat = attacker != null ? attacker.GetComponent<UnitCombat>() : null;
+            bool fighter = combat != null;
+            ProjectileKind shot = fighter ? combat.ProjectileType : ProjectileKind.None;
             bool alliedAttacker = attacker == null || attacker.Faction == Faction.Allied;
             Vector3 contact = ContactPoint(unit, from);
             // Spell impacts are drawn by the shooter's burst; a melee blow or arrow sprays sparks here.
@@ -84,7 +85,7 @@ namespace Lightbringer.Visuals
                 CombatEffects.Muzzle(style, contact, alliedAttacker ? CombatEffects.AlliedLight : CombatEffects.Corruption);
             else
                 CombatEffects.Hit(style, contact, hitDirection, alliedAttacker ? CombatEffects.SteelSpark : CombatEffects.Corruption,
-                    shot == ProjectileKind.Arrow ? weight * 0.6f : weight);
+                    shot == ProjectileKind.Arrow ? weight * 0.6f : weight, fighter && shot == ProjectileKind.None);
 
             // Big blows (charges, breath, slams, area spells) and any hit on the hero give the view some weight.
             float shake = Mathf.Clamp01((amount - 12f) / 45f) * 0.7f;

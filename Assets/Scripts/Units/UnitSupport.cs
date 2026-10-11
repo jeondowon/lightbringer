@@ -17,6 +17,7 @@ namespace Lightbringer.Units
         private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
         public float HealAmount => amount;
         public float Interval => interval;
+        public float Radius => radius;
         // Raised after a pulse that restored health to at least one wounded unit (drives the cast animation).
         public event System.Action Pulsed;
 

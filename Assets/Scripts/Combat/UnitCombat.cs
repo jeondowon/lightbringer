@@ -67,6 +67,17 @@ namespace Lightbringer.Combat
         }
         private readonly HashSet<HeroAura> auras = new HashSet<HeroAura>();
 
+        // True while at least one hero aura currently boosts this unit (drives the blessing visual).
+        public bool IsEmpowered
+        {
+            get
+            {
+                foreach (HeroAura aura in auras)
+                    if (aura != null && aura.Affects(this)) return true;
+                return false;
+            }
+        }
+
         // Repeated registration is harmless; overlapping hero auras use only the strongest bonus.
         public void AddAura(HeroAura aura)
         {

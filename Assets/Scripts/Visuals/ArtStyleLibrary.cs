@@ -73,6 +73,10 @@ namespace Lightbringer.Visuals
         public Material propsMaterial;
         [Tooltip("Lightbringer/Sky Gradient skybox.")]
         public Material skyMaterial;
+        [Tooltip("Lightbringer/VFX Shape: procedural sprite for sparks, flares, rings, slashes, flames and dust.")]
+        public Material vfxMaterial;
+        [Tooltip("Lightbringer/Aura Blessing: additive shell on allied troop models inside the hero aura.")]
+        public Material auraBlessingMaterial;
 
         [Header("Allied palette (character sheet v1)")]
         public Color ivory = new Color(0.93f, 0.91f, 0.86f);

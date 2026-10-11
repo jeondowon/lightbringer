@@ -38,8 +38,8 @@ namespace Lightbringer.UI
                     if (viewport.z <= 0f || viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f) continue;
                     Vector2 position = RuntimePanelUtils.CameraTransformWorldToPanel(panel, world, battle.Camera);
                     VisualElement bar = Get(shown++);
-                    bar.style.left = position.x;
-                    bar.style.top = position.y;
+                    // A translate only moves the drawn bar; left/top would re-run layout every frame.
+                    bar.style.translate = new Translate(position.x, position.y);
                     bar.EnableInClassList("lb-unit-bar--ally", unit.Faction == Faction.Allied);
                     bar.EnableInClassList("lb-unit-bar--enemy", unit.Faction == Faction.Enemy);
                     Hud.Fraction(fills[shown - 1], unit.CurrentHealth / unit.MaximumHealth);

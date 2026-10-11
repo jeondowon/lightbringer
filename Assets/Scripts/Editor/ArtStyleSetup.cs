@@ -23,6 +23,8 @@ namespace Lightbringer.EditorTools
         public const string SkyShader = "Lightbringer/Sky Gradient";
         public const string TerrainShader = "Lightbringer/Terrain";
         public const string GrassShader = "Lightbringer/Grass";
+        public const string VfxShader = "Lightbringer/VFX Shape";
+        public const string BlessingShader = "Lightbringer/Aura Blessing";
 
         [MenuItem("Lightbringer/Art/Build Art Style Assets")]
         private static void BuildMenu()
@@ -68,6 +70,9 @@ namespace Lightbringer.EditorTools
             if (library.propsMaterial == null) library.propsMaterial = LoadOrCreate("LB_EnvProps", toon, ConfigureProps);
             Shader sky = Shader.Find(SkyShader);
             if (library.skyMaterial == null && sky != null) library.skyMaterial = LoadOrCreate("LB_Sky", sky, null);
+            Shader vfx = Shader.Find(VfxShader), blessing = Shader.Find(BlessingShader);
+            if (library.vfxMaterial == null && vfx != null) library.vfxMaterial = LoadOrCreate("LB_Vfx", vfx, null);
+            if (library.auraBlessingMaterial == null && blessing != null) library.auraBlessingMaterial = LoadOrCreate("LB_AuraBlessing", blessing, null);
             // v2 grading: more contrast and saturation, cool shadows / warm highlights, gentler bloom.
             // A profile assigned by hand is left alone.
             if (library.postProcessing == null)
@@ -106,6 +111,9 @@ namespace Lightbringer.EditorTools
             library.propsMaterial = Create(toon, ConfigureProps);
             Shader sky = Shader.Find(SkyShader);
             if (sky != null) library.skyMaterial = Create(sky, null);
+            Shader vfx = Shader.Find(VfxShader), blessing = Shader.Find(BlessingShader);
+            if (vfx != null) library.vfxMaterial = Create(vfx, null);
+            if (blessing != null) library.auraBlessingMaterial = Create(blessing, null);
             return library;
         }
 
@@ -122,6 +130,8 @@ namespace Lightbringer.EditorTools
             if (library.grassMaterial != null) Object.DestroyImmediate(library.grassMaterial);
             if (library.propsMaterial != null) Object.DestroyImmediate(library.propsMaterial);
             if (library.skyMaterial != null) Object.DestroyImmediate(library.skyMaterial);
+            if (library.vfxMaterial != null) Object.DestroyImmediate(library.vfxMaterial);
+            if (library.auraBlessingMaterial != null) Object.DestroyImmediate(library.auraBlessingMaterial);
             Object.DestroyImmediate(library);
             SilhouetteFactory.ClearCache();
         }

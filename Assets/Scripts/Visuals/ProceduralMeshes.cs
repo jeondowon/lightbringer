@@ -26,6 +26,22 @@ namespace Lightbringer.Visuals
                 return groundQuad;
             }
         }
+        private static Mesh glowQuad;
+
+        // GroundQuad with white vertex colours, for shaders that tint by vertex colour (VFX Shape).
+        public static Mesh GlowQuad
+        {
+            get
+            {
+                if (glowQuad != null) return glowQuad;
+                glowQuad = Object.Instantiate(GroundQuad);
+                glowQuad.name = "LB Glow Quad";
+                glowQuad.hideFlags = HideFlags.DontSave;
+                glowQuad.SetColors(new List<Color> { Color.white, Color.white, Color.white, Color.white });
+                return glowQuad;
+            }
+        }
+
         private static readonly Dictionary<int, Mesh> Frustums = new Dictionary<int, Mesh>();
 
         // Unit cube centred on the origin.

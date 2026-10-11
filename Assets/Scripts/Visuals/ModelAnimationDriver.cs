@@ -21,6 +21,9 @@ namespace Lightbringer.Visuals
         private Vector3 lastPosition;
         private float smoothedSpeed;
         private bool hasMove, hasAction, hasIdle;
+        // Cached states: indexing the Animation by name every frame is a string lookup per unit.
+        private AnimationState idle, move, action;
+        private AnimationState baseState;
         private PropStabilizer[] props = new PropStabilizer[0];
 
         public void Configure(VisualOverride source)
@@ -34,14 +37,18 @@ namespace Lightbringer.Visuals
             hasAction = AddClip(source.actionClip, ActionState, WrapMode.Once);
             moveClipSpeed = Mathf.Max(0.1f, source.moveClipSpeed);
             props = GetComponentsInChildren<PropStabilizer>(true);
+            idle = hasIdle ? player[IdleState] : null;
+            move = hasMove ? player[MoveState] : null;
+            action = hasAction ? player[ActionState] : null;
             if (hasAction)
             {
-                player[ActionState].layer = 1;
+                action.layer = 1;
                 // Long casts are compressed so the hero reads responsive at short cooldowns.
-                player[ActionState].speed = Mathf.Max(1f, source.actionClip.length / 1.2f);
+                action.speed = Mathf.Max(1f, source.actionClip.length / 1.2f);
             }
             player.Stop();
-            if (hasIdle) player.Play(IdleState);
+            baseState = null;
+            if (hasIdle) { player.Play(IdleState); baseState = idle; }
         }
 
         private bool AddClip(AnimationClip clip, string state, WrapMode wrap)
@@ -89,7 +96,7 @@ namespace Lightbringer.Visuals
         private void OnAttacked()
         {
             if (!hasAction || player == null) return;
-            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, combat.ActionDuration);
+            action.speed = action.length / Mathf.Max(0.1f, combat.ActionDuration);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
         }
@@ -98,7 +105,7 @@ namespace Lightbringer.Visuals
         private void OnSupported()
         {
             if (!hasAction || player == null) return;
-            player[ActionState].speed = player[ActionState].length / Mathf.Max(0.1f, support.Interval * 0.9f);
+            action.speed = action.length / Mathf.Max(0.1f, support.Interval * 0.9f);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
         }
@@ -112,14 +119,21 @@ namespace Lightbringer.Visuals
             lastPosition = owner.position;
             smoothedSpeed = Mathf.Lerp(smoothedSpeed, step.magnitude / delta, 1f - Mathf.Exp(-delta * 10f));
             bool moving = smoothedSpeed > 0.3f;
-            bool casting = hasAction && player.IsPlaying(ActionState);
-            foreach (PropStabilizer prop in props) if (prop != null) prop.SetCasting(casting);
-            if (moving && hasMove)
+            if (props.Length > 0)
             {
-                player.CrossFade(MoveState, 0.2f);
-                player[MoveState].speed = Mathf.Clamp(smoothedSpeed / moveClipSpeed, 0.5f, 1.6f);
+                bool casting = hasAction && action.enabled;
+                foreach (PropStabilizer prop in props) if (prop != null) prop.SetCasting(casting);
             }
-            else if (hasIdle) player.CrossFade(IdleState, 0.25f);
+            AnimationState target = moving && hasMove ? move : hasIdle ? idle : null;
+            if (target == move && move != null)
+                move.speed = Mathf.Clamp(smoothedSpeed / moveClipSpeed, 0.5f, 1.6f);
+            // Cross-fade only on a change (or if the state was stopped); re-issuing it every frame was a
+            // per-unit cost with no visible effect.
+            if (target != null && (target != baseState || !target.enabled))
+            {
+                player.CrossFade(target == move ? MoveState : IdleState, target == move ? 0.2f : 0.25f);
+                baseState = target;
+            }
         }
     }
 }

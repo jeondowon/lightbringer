@@ -45,6 +45,9 @@ namespace Lightbringer.Visuals
             {
                 if (Time.time < pending[i].time) continue;
                 LightningStrikeVfx.Spawn(style, pending[i].point, pending[i].radius, pending[i].strength, transform.parent);
+                // Shock ring, flare and embers where the bolt meets the ground; a dust skirt for area spells.
+                CombatEffects.Burst(style, pending[i].point + Vector3.up * 0.3f, CombatEffects.AlliedLight, pending[i].radius);
+                if (pending[i].strength > 1.2f) CombatEffects.DustRing(pending[i].point, Mathf.Max(1f, pending[i].radius * 0.6f), 12);
                 pending.RemoveAt(i);
             }
         }

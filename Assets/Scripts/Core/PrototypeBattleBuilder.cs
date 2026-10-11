@@ -97,7 +97,7 @@ namespace Lightbringer.Core
             Combatant baseHealth = objective.AddComponent<Combatant>();
             baseHealth.Configure(Faction.Enemy, 150 + stage * 50);
             baseHealth.SetAttackSurface(objective.GetComponent<BoxCollider>());
-            UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f);
+            StrongholdVfx.Attach(UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f), false, art);
             battle.Objective = battle.Root.AddComponent<StageObjective>();
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
@@ -131,7 +131,7 @@ namespace Lightbringer.Core
             battle.AlliedBase = stronghold.AddComponent<Combatant>();
             battle.AlliedBase.Configure(Faction.Allied, 400 + stage * 50);
             battle.AlliedBase.SetAttackSurface(stronghold.GetComponent<BoxCollider>());
-            UnitAppearance.Attach(stronghold, VisualId.AlliedStronghold, art, -2f);
+            StrongholdVfx.Attach(UnitAppearance.Attach(stronghold, VisualId.AlliedStronghold, art, -2f), true, art);
             battle.DeployPoint = Child("Deploy Point", root).transform;
             battle.DeployPoint.localPosition = new Vector3(0, 0, -17.5f);
             battle.Summoner.ConfigureSpawnAnchor(battle.DeployPoint);

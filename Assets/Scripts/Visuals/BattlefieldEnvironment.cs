@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Shapes = Lightbringer.Visuals.SilhouetteFactory.Shapes;
 using Shape = Lightbringer.Visuals.SilhouetteFactory.Shape;
+using Surface = Lightbringer.Visuals.SilhouetteFactory.Surface;
 
 namespace Lightbringer.Visuals
 {
@@ -18,8 +19,18 @@ namespace Lightbringer.Visuals
         private const float LaneClearance = 4.5f;
 
         private readonly List<Object> owned = new List<Object>();
+        // Lower graphics tiers skip grass chunks far from the camera (see GraphicsQuality.GrassDistance).
+        private readonly List<(MeshRenderer renderer, Bounds bounds)> grass = new List<(MeshRenderer, Bounds)>();
+        private float grassCheck;
         private readonly List<(Vector2 a, Vector2 b)> lanes = new List<(Vector2, Vector2)>();
         private readonly List<Vector2> keepClear = new List<Vector2>();
+        private static readonly int LanesId = Shader.PropertyToID("_LB_Lanes");
+        private static readonly int LaneCountId = Shader.PropertyToID("_LB_LaneCount");
+        private const int MaxShaderLanes = 16;
+        // clearPoints[0] is the allied deploy gate, [1] the enemy gate; the strongholds stand behind them.
+        private const float StrongholdBehindGate = 4.5f, EnemyStrongholdBehindGate = 5f;
+
+        private Vector2? alliedGate, enemyGate;
         private System.Random random;
         private float seed;
         private ArtStyleLibrary style;
@@ -56,6 +67,9 @@ namespace Lightbringer.Visuals
                 }
             }
             foreach (Vector3 point in clearPoints) keepClear.Add(Local(point));
+            if (clearPoints.Length > 0) alliedGate = Local(clearPoints[0]);
+            if (clearPoints.Length > 1) enemyGate = Local(clearPoints[1]);
+            PublishLanes();
 
             BuildTerrain();
             if (style.grassMaterial != null) BuildGrass();
@@ -63,6 +77,8 @@ namespace Lightbringer.Visuals
             ScatterTrees(near, far);
             ScatterRocks(near);
             BuildRuins(near);
+            BuildAlliedGrounds(near);
+            BuildCorruptedGrounds(near);
             BuildBackdrop(backdrop);
             AddMesh("Props (Near)", near.Bake("LB Env Props Near"), style.propsMaterial, true);
             AddMesh("Props (Far)", far.Bake("LB Env Props Far"), style.propsMaterial, false);
@@ -126,6 +142,14 @@ namespace Lightbringer.Visuals
             Color[] colors = new Color[vertices.Length];
             for (int i = 0; i < vertices.Length; i++) colors[i] = GroundColor(vertices[i], normals[i]);
             mesh.colors = colors;
+            // Terrain shader masks: lane distance (fallback for the per-pixel lanes), plaza, corruption, "present".
+            List<Vector4> masks = new List<Vector4>(vertices.Length);
+            foreach (Vector3 vertex in vertices)
+            {
+                Vector2 flat = Flat(vertex);
+                masks.Add(new Vector4(Mathf.Min(DistanceToLanes(flat), 30f), PlazaMask(flat), CorruptionMask(flat), 1f));
+            }
+            mesh.SetUVs(0, masks);
             mesh.RecalculateBounds();
             MeshRenderer renderer = AddMesh("Terrain", mesh, style.terrainMaterial, false);
             renderer.receiveShadows = true;
@@ -187,7 +211,11 @@ namespace Lightbringer.Visuals
                         if (slope > 0.7f) continue;
                         Vector3 root = new Vector3(x, Height(x, z), z);
                         Color ground = GroundColor(root, Vector3.up);
+                        // Corrupted ground near the enemy stronghold grows sparse, withered grass.
+                        float corruption = CorruptionMask(flat);
+                        if (random.NextDouble() < corruption * 0.75f) continue;
                         Color blade = Color.Lerp(Color.Lerp(ground, style.grassLight, 0.3f), style.dirt * 1.1f, road * 0.6f);
+                        blade = Color.Lerp(blade, Color.Lerp(style.corruptStone, style.dirt, 0.4f) * 1.2f, corruption);
                         Blade(vertices, colors, uvs, triangles, root, blade, outside > 0f);
                     }
                     if (vertices.Count == 0) continue;
@@ -203,6 +231,7 @@ namespace Lightbringer.Visuals
                     mesh.bounds = bounds;
                     MeshRenderer renderer = AddMesh("Grass " + chunks++, mesh, style.grassMaterial, false);
                     renderer.receiveShadows = true;
+                    grass.Add((renderer, mesh.bounds));
                     GrassChunks++;
                 }
         }
@@ -310,17 +339,22 @@ namespace Lightbringer.Visuals
             Color leaves = Color.Lerp(style.foliageDark, style.foliage, Range(0.1f, 0.8f));
             Vector3 centre = ground + Vector3.up * 0.35f * scale;
             int clumps = random.Next(2, 4);
+            // Foliage never takes the stone pattern of the rocks or ruins it grows beside.
+            Surface pattern = target.Pattern;
+            target.Pattern = Surface.None;
             for (int c = 0; c < clumps; c++)
             {
                 Vector3 offset = new Vector3(Range(-0.45f, 0.45f), Range(0f, 0.2f), Range(-0.45f, 0.45f)) * scale;
                 target.Piece(ProceduralMeshes.Lumpy(random.Next(6)), leaves, centre + offset, new Vector3(1.2f, 0.85f, 1.2f) * scale * Range(0.8f, 1.1f),
                     new Vector3(0f, Range(0f, 360f), 0f), sway: 0.35f, softCenter: centre, softBlend: 0.7f, groundY: ground.y);
             }
+            target.Pattern = pattern;
         }
 
         private void ScatterRocks(Shapes target)
         {
             Color moss = Color.Lerp(style.grassDark, style.foliage, 0.4f);
+            target.Pattern = Surface.Rock;
             for (int i = 0; i < 70; i++)
             {
                 float x = Range(-60f, 60f), z = Range(-55f, 80f);
@@ -341,6 +375,7 @@ namespace Lightbringer.Visuals
                 }
                 if (d <= 0f && random.NextDouble() < 0.5) Bush(target, ground + new Vector3(Range(-1.5f, 1.5f), 0f, Range(-1.5f, 1.5f)), Range(0.7f, 1.1f));
             }
+            target.Pattern = Surface.None;
         }
 
         private void BuildRuins(Shapes target)
@@ -348,6 +383,7 @@ namespace Lightbringer.Visuals
             // Old Lightbringer shrines: plinthed pillars with broken, rubble-capped tops, an occasional arch with a
             // gilded lintel, scattered rubble and moss. Kept well clear of the lanes.
             Color moss = Color.Lerp(style.grassDark, style.foliage, 0.35f);
+            target.Pattern = Surface.Masonry;
             int built = 0;
             for (int attempt = 0; attempt < 80 && built < 5; attempt++)
             {
@@ -415,6 +451,7 @@ namespace Lightbringer.Visuals
                 Bush(target, c + new Vector3(Range(-3.5f, 3.5f), 0f, Range(-3.5f, 3.5f)), Range(0.8f, 1.2f));
                 Bush(target, c + new Vector3(Range(-3.5f, 3.5f), 0f, Range(-3.5f, 3.5f)), Range(0.7f, 1.1f));
             }
+            target.Pattern = Surface.None;
         }
 
         private void BuildBackdrop(Shapes target)
@@ -452,6 +489,181 @@ namespace Lightbringer.Visuals
             }
         }
 
+        // ---------- Stronghold grounds ----------
+
+        private Vector2? AlliedKeep => alliedGate.HasValue ? alliedGate.Value + Vector2.down * StrongholdBehindGate : (Vector2?)null;
+        private Vector2? EnemyKeep => enemyGate.HasValue ? enemyGate.Value + Vector2.up * EnemyStrongholdBehindGate : (Vector2?)null;
+
+        // 1 at the enemy stronghold, fading out over ~24 m: drives the corrupted soil and withered grass.
+        private float CorruptionMask(Vector2 flat)
+        {
+            if (!EnemyKeep.HasValue) return 0f;
+            return 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(5f, 24f, Vector2.Distance(flat, EnemyKeep.Value)));
+        }
+
+        // Dressing stays off the lanes and out of both stronghold footprints.
+        private bool Dressable(Vector2 point, float clearance = LaneClearance)
+        {
+            if (!ClearOfPlay(point, clearance, 0f)) return false;
+            foreach (Vector2? keep in new[] { AlliedKeep, EnemyKeep })
+                if (keep.HasValue && Mathf.Abs(point.x - keep.Value.x) < 4.6f && Mathf.Abs(point.y - keep.Value.y) < 3.4f) return false;
+            return true;
+        }
+
+        private Vector3 GroundAt(Vector2 point) => new Vector3(point.x, Height(point.x, point.y), point.y);
+
+        private void BuildAlliedGrounds(Shapes target)
+        {
+            if (!AlliedKeep.HasValue) return;
+            Vector2 keep = AlliedKeep.Value;
+            Color stone = style.ivory, dark = style.ivory * 0.8f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                // Curtain walls in 2 m bays running out from the keep, ending in a roofed watchtower.
+                for (float x = 5.8f; x < 12f; x += 2f)
+                {
+                    Vector2 at = keep + new Vector2(side * x, 0.6f);
+                    if (!Dressable(at)) continue;
+                    Vector3 ground = GroundAt(at);
+                    target.Pattern = Surface.Masonry;
+                    target.Piece(ProceduralMeshes.Box, stone, ground + Vector3.up * 1.1f, new Vector3(2.04f, 2.2f, 1.0f), groundY: ground.y);
+                    target.Piece(ProceduralMeshes.Box, dark, ground + Vector3.up * 0.3f, new Vector3(2.08f, 0.6f, 1.12f), groundY: ground.y);
+                    for (int c = 0; c < 3; c++)
+                        foreach (float z in new[] { -0.36f, 0.36f })
+                            target.Piece(ProceduralMeshes.Box, stone, ground + new Vector3(-0.66f + c * 0.66f, 2.45f, z), new Vector3(0.38f, 0.5f, 0.28f));
+                    target.Pattern = Surface.None;
+                }
+                Vector2 towerAt = keep + new Vector2(side * 13.1f, 0.6f);
+                if (Dressable(towerAt))
+                {
+                    Vector3 foot = GroundAt(towerAt);
+                    target.Pattern = Surface.Masonry;
+                    target.Piece(ProceduralMeshes.Frustum(0.88f, 14), stone, foot - Vector3.up * 0.1f, new Vector3(2.2f, 4.2f, 2.2f), groundY: foot.y);
+                    target.Piece(ProceduralMeshes.Frustum(1f, 14), dark, foot + Vector3.up * 3.75f, new Vector3(2.15f, 0.4f, 2.15f));
+                    target.Pattern = Surface.RoofTiles;
+                    target.Piece(ProceduralMeshes.Frustum(0f, 14), style.royalBlue, foot + Vector3.up * 4.15f, new Vector3(2.5f, 2.6f, 2.5f));
+                    target.Pattern = Surface.None;
+                    target.Piece(ProceduralMeshes.Frustum(0f, 6), style.gold, foot + Vector3.up * 6.7f, new Vector3(0.16f, 0.8f, 0.16f), spec: 1f);
+                    target.Add(SilhouetteFactory.Shape.Cube, style.holyGlow, foot + new Vector3(0f, 2.6f, 0.95f), new Vector3(0.18f, 0.55f, 0.08f), emission: 0.8f);
+                }
+            }
+
+            // Stone lanterns with glowing cages along the plaza and banner poles by the gate.
+            foreach (Vector2 offset in new[] { new Vector2(-6.2f, 4.8f), new Vector2(6.2f, 4.8f), new Vector2(-8.5f, 8.5f), new Vector2(8.5f, 8.5f) })
+            {
+                Vector2 at = keep + offset;
+                if (!Dressable(at)) continue;
+                Vector3 foot = GroundAt(at);
+                target.Pattern = Surface.Masonry;
+                target.Piece(ProceduralMeshes.Box, dark, foot + Vector3.up * 0.2f, new Vector3(0.7f, 0.4f, 0.7f), groundY: foot.y);
+                target.Piece(ProceduralMeshes.Frustum(0.8f, 8), stone, foot + Vector3.up * 0.4f, new Vector3(0.36f, 1.4f, 0.36f));
+                target.Pattern = Surface.None;
+                target.Add(SilhouetteFactory.Shape.Cube, style.holyGlow, foot + Vector3.up * 2.05f, new Vector3(0.34f, 0.42f, 0.34f), emission: 1f);
+                target.Piece(ProceduralMeshes.Box, style.gold, foot + Vector3.up * 1.82f, new Vector3(0.5f, 0.06f, 0.5f), spec: 1f);
+                target.Piece(ProceduralMeshes.Frustum(0f, 4), style.gold, foot + Vector3.up * 2.26f, new Vector3(0.62f, 0.45f, 0.62f), new Vector3(0f, 45f, 0f), spec: 1f);
+            }
+            foreach (Vector2 offset in new[] { new Vector2(-5.2f, 2.4f), new Vector2(5.2f, 2.4f) })
+            {
+                Vector2 at = keep + offset;
+                if (!Dressable(at)) continue;
+                Vector3 foot = GroundAt(at);
+                target.Piece(ProceduralMeshes.Frustum(1f, 6), style.gold, foot, new Vector3(0.1f, 4.2f, 0.1f), spec: 1f);
+                target.Piece(ProceduralMeshes.Box, style.royalBlue, foot + new Vector3(0f, 3.1f, 0.06f), new Vector3(0.8f, 1.9f, 0.04f), sway: 0.4f);
+                target.Piece(ProceduralMeshes.Box, style.gold, foot + new Vector3(0f, 3.25f, 0.09f), new Vector3(0.26f, 0.26f, 0.02f), new Vector3(0f, 0f, 45f), spec: 1f);
+                target.Piece(ProceduralMeshes.Box, style.gold, foot + new Vector3(0f, 4.05f, 0.06f), new Vector3(0.95f, 0.06f, 0.06f), spec: 1f);
+            }
+
+            // Supply stacks against the walls: plank crates and banded barrels.
+            foreach (Vector2 offset in new[] { new Vector2(-7.4f, -1.1f), new Vector2(7.6f, -1.3f), new Vector2(-10.2f, 1.9f), new Vector2(10.4f, 2.0f) })
+            {
+                Vector2 at = keep + offset;
+                if (!Dressable(at)) continue;
+                Vector3 foot = GroundAt(at);
+                Color wood = Color.Lerp(style.bark * 1.3f, style.bark * 1.6f, Range(0f, 1f));
+                target.Pattern = Surface.Planks;
+                int crates = random.Next(2, 4);
+                for (int c = 0; c < crates; c++)
+                {
+                    float size = Range(0.7f, 0.95f);
+                    Vector3 place = c < 2 ? new Vector3((c - 0.5f) * 1.0f, size * 0.5f, Range(-0.15f, 0.15f)) : new Vector3(Range(-0.2f, 0.2f), 1.25f, 0f);
+                    target.Piece(ProceduralMeshes.Box, wood, foot + place, Vector3.one * size, new Vector3(0f, Range(-12f, 12f), 0f), groundY: foot.y);
+                }
+                target.Piece(ProceduralMeshes.Frustum(1f, 12), wood * 0.9f, foot + new Vector3(1.2f, 0f, 0.5f), new Vector3(0.7f, 0.95f, 0.7f), groundY: foot.y);
+                target.Pattern = Surface.None;
+                foreach (float y in new[] { 0.2f, 0.75f })
+                    target.Piece(ProceduralMeshes.Frustum(1f, 12), style.leather, foot + new Vector3(1.2f, y, 0.5f), new Vector3(0.73f, 0.06f, 0.73f));
+            }
+        }
+
+        private void BuildCorruptedGrounds(Shapes target)
+        {
+            if (!EnemyKeep.HasValue) return;
+            Vector2 keep = EnemyKeep.Value;
+            Color obsidian = style.corruptStone * 0.75f;
+            // Obsidian shards and glowing crystal clusters erupting from the corrupted soil.
+            for (int i = 0; i < 40; i++)
+            {
+                float angle = Range(0f, Mathf.PI * 2f), distance = Range(7f, 22f);
+                Vector2 at = keep + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+                if (!Dressable(at, LaneClearance + 0.5f)) continue;
+                Vector3 ground = GroundAt(at);
+                float height = Range(1.4f, 3.8f) * Mathf.Lerp(1.2f, 0.6f, distance / 22f);
+                target.Pattern = Surface.Rock;
+                target.Piece(ProceduralMeshes.Faceted(random.Next(6)), obsidian * Range(0.85f, 1.15f), ground + Vector3.up * height * 0.32f,
+                    new Vector3(Range(0.8f, 1.4f), height, Range(0.8f, 1.4f)), new Vector3(Range(-18f, 18f), Range(0f, 360f), Range(-18f, 18f)), groundY: ground.y);
+                target.Pattern = Surface.None;
+                if (random.NextDouble() > 0.45) continue;
+                Vector3 cluster = ground + new Vector3(Range(-1f, 1f), -0.1f, Range(-1f, 1f));
+                for (int c = 0; c < 3; c++)
+                    target.Cone(0f, style.corruptGlow, cluster, new Vector3(0.35f, Range(0.8f, 1.6f), 0.35f) * Mathf.Lerp(1f, 0.6f, c / 2f),
+                        new Vector3(Range(-30f, 30f), Range(0f, 360f), Range(-30f, 30f)), 4, emission: 0.85f);
+            }
+            // Bone-spike palisades flanking the gate, leaning toward the battlefield.
+            for (int side = -1; side <= 1; side += 2)
+                for (float x = 5.5f; x < 14f; x += 1.05f)
+                {
+                    Vector2 at = keep + new Vector2(side * x, -1.2f + Range(-0.25f, 0.25f));
+                    if (!Dressable(at)) continue;
+                    Vector3 ground = GroundAt(at);
+                    target.Piece(ProceduralMeshes.Frustum(0f, 5), style.bone * Range(0.85f, 1f), ground - Vector3.up * 0.2f,
+                        new Vector3(0.28f, Range(1.4f, 2.1f), 0.28f), new Vector3(-28f + Range(-6f, 6f), Range(-10f, 10f), Range(-6f, 6f)));
+                    target.Piece(ProceduralMeshes.Box, style.corruptArmor, ground + Vector3.up * 0.55f, new Vector3(1.1f, 0.12f, 0.12f), new Vector3(0f, Range(-6f, 6f), 0f));
+                }
+            // War totems along the approach: stacked dark stones, a horned skull with glowing eyes.
+            foreach (Vector2 offset in new[] { new Vector2(-8f, -6f), new Vector2(8f, -6f), new Vector2(-12.5f, -2.5f), new Vector2(12.5f, -2.5f) })
+            {
+                Vector2 at = keep + offset;
+                if (!Dressable(at)) continue;
+                Vector3 foot = GroundAt(at);
+                target.Pattern = Surface.Rock;
+                target.Piece(ProceduralMeshes.Faceted(random.Next(6)), obsidian, foot + Vector3.up * 0.35f, new Vector3(1.1f, 0.8f, 1.1f), groundY: foot.y);
+                target.Pattern = Surface.CorruptMasonry;
+                target.Piece(ProceduralMeshes.Frustum(0.7f, 6), style.corruptStone, foot + Vector3.up * 0.6f, new Vector3(0.7f, 1.8f, 0.7f));
+                target.Pattern = Surface.None;
+                Vector3 head = foot + Vector3.up * 2.75f;
+                target.Add(SilhouetteFactory.Shape.Ball, style.bone, head, new Vector3(0.6f, 0.55f, 0.6f));
+                foreach (float eye in new[] { -0.13f, 0.13f })
+                    target.Add(SilhouetteFactory.Shape.Ball, style.corruptGlow, head + new Vector3(eye, 0.04f, -0.26f), new Vector3(0.14f, 0.12f, 0.06f), emission: 1f);
+                target.Cone(0f, style.bone, head + new Vector3(0.22f, 0.15f, 0f), new Vector3(0.14f, 0.7f, 0.14f), new Vector3(0f, 0f, -55f), 5);
+                target.Cone(0f, style.bone, head + new Vector3(-0.22f, 0.15f, 0f), new Vector3(0.14f, 0.7f, 0.14f), new Vector3(0f, 0f, 55f), 5);
+            }
+        }
+
+        // Lane segments for the terrain shader's per-pixel road (world XZ).
+        private void PublishLanes()
+        {
+            Vector4[] data = new Vector4[MaxShaderLanes];
+            int count = Mathf.Min(lanes.Count, MaxShaderLanes);
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 a = transform.TransformPoint(new Vector3(lanes[i].a.x, 0f, lanes[i].a.y));
+                Vector3 b = transform.TransformPoint(new Vector3(lanes[i].b.x, 0f, lanes[i].b.y));
+                data[i] = new Vector4(a.x, a.z, b.x, b.z);
+            }
+            Shader.SetGlobalVectorArray(LanesId, data);
+            Shader.SetGlobalFloat(LaneCountId, count);
+        }
+
         // ---------- Helpers ----------
 
         private MeshRenderer AddMesh(string name, Mesh mesh, Material material, bool shadows)
@@ -484,6 +696,22 @@ namespace Lightbringer.Visuals
         // Terrain and props are authored in this component's local space; Paths come in world space.
         private Vector2 Local(Vector3 world) => Flat(transform.InverseTransformPoint(world));
 
+        // Four times a second is plenty: the camera moves at most a few metres between checks.
+        private void Update()
+        {
+            if ((grassCheck -= Time.unscaledDeltaTime) > 0f || grass.Count == 0) return;
+            grassCheck = 0.25f;
+            Camera view = Camera.main;
+            float range = Lightbringer.Core.GraphicsQuality.GrassDistance;
+            Vector3 eye = view != null ? view.transform.position : Vector3.zero;
+            foreach ((MeshRenderer chunk, Bounds bounds) in grass)
+            {
+                if (chunk == null) continue;
+                bool visible = range <= 0f || view == null || bounds.SqrDistance(chunk.transform.InverseTransformPoint(eye)) <= range * range;
+                if (chunk.enabled != visible) chunk.enabled = visible;
+            }
+        }
+
         private void OnDestroy()
         {
             foreach (Object item in owned)
@@ -492,6 +720,8 @@ namespace Lightbringer.Visuals
                     if (Application.isPlaying) Destroy(item); else DestroyImmediate(item);
                 }
             owned.Clear();
+            // Roads fall back to the mesh masks once this battlefield is gone.
+            Shader.SetGlobalFloat(LaneCountId, 0f);
         }
     }
 }

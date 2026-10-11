@@ -11,6 +11,7 @@ namespace Lightbringer.UI
     internal sealed class BattleMinimap
     {
         private const float Padding = 5f, MinimumWidth = 40f;
+        private const float RepaintInterval = 1f / 15f;
         private static readonly Color PathIdle = new Color(0.93f, 0.9f, 0.82f, 0.32f);
         private static readonly Color PathSelected = new Color(1f, 0.82f, 0.38f);
         private static readonly Color PathGlow = new Color(1f, 0.82f, 0.38f, 0.22f);
@@ -27,6 +28,7 @@ namespace Lightbringer.UI
         private BattlefieldReadability readability;
         private Vector2 worldCentre, worldSize;
         private int selected = -1;
+        private float repaintTimer;
 
         public BattleMinimap(VisualElement parent)
         {
@@ -58,8 +60,13 @@ namespace Lightbringer.UI
             {
                 selected = selectedPath;
                 for (int i = 0; i < labels.Count; i++) labels[i].EnableInClassList("lb-minimap-label--selected", i == selected);
+                repaintTimer = 0f; // A new Path selection shows at once.
             }
-            // Troops and the hero move every frame.
+            // Troops and the hero move every frame, but a minimap dot moves under a pixel per frame:
+            // redraw (re-tessellating hundreds of dots) at 15 Hz instead of every frame.
+            repaintTimer -= Time.unscaledDeltaTime;
+            if (repaintTimer > 0f) return;
+            repaintTimer = RepaintInterval;
             Map.MarkDirtyRepaint();
         }
 

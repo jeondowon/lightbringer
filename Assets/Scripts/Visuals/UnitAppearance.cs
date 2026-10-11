@@ -61,6 +61,7 @@ namespace Lightbringer.Visuals
                 // Unrigged stand-in models still get stride bob and lean until real animation exists.
                 else if (model.GetComponentInChildren<Animator>() == null)
                     visual.AddComponent<VisualMotion>().Configure(new Silhouette { BobHeight = 0.035f, BobRate = 9f, LeanDegrees = 5f }, null);
+                AddSupportFeedback(owner, id, root, style, feetOffset);
                 return root;
             }
 
@@ -77,7 +78,25 @@ namespace Lightbringer.Visuals
                 parts[i] = part.transform;
             }
             visual.AddComponent<VisualMotion>().Configure(silhouette, parts);
+            AddSupportFeedback(owner, id, root, style, feetOffset);
             return root;
+        }
+
+        // Allied fighters show the hero aura's blessing on any model; healers show their heal pulse.
+        // The hero and objectives get neither.
+        private static void AddSupportFeedback(GameObject owner, VisualId id, Transform root, ArtStyleLibrary style, float feetOffset)
+        {
+            if (id == VisualId.Hero || !owner.TryGetComponent(out CharacterController _)) return;
+            if (!ArtStyleLibrary.IsEnemy(id) && owner.TryGetComponent(out UnitCombat combat) && combat.enabled)
+            {
+                if (!owner.TryGetComponent(out AuraBlessingVisual blessing)) blessing = owner.AddComponent<AuraBlessingVisual>();
+                blessing.Configure(style, feetOffset, root);
+            }
+            if (owner.TryGetComponent(out Units.UnitSupport _))
+            {
+                if (!owner.TryGetComponent(out SupportVfx heal)) heal = owner.AddComponent<SupportVfx>();
+                heal.Configure(style, feetOffset);
+            }
         }
 
         // Hit flashes and squash for anything that can be damaged; shot and impact effects for fighters.
