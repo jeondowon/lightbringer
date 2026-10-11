@@ -25,6 +25,12 @@ namespace Lightbringer.Visuals
         public Vector3 localScale = Vector3.one;
         [Tooltip("Keep the prop mostly upright on top of empty-hand animation clips.")]
         public bool stabilize = true;
+        [Tooltip("Stabilized props: how much the prop follows the wrist (0 = always upright).")]
+        [Range(0f, 1f)] public float follow = 0.3f;
+        [Tooltip("Stabilized props: forward lean while the action clip plays (staff casts). 0 keeps a bow upright.")]
+        [Range(0f, 80f)] public float castLean = 35f;
+        [Tooltip("Grip height as a fraction of the prop's length from its bottom.")]
+        [Range(0f, 1f)] public float gripFraction = 0.38f;
     }
 
     // A finished model replaces the procedural silhouette for one VisualId.
@@ -56,7 +62,7 @@ namespace Lightbringer.Visuals
     public sealed class ArtStyleLibrary : ScriptableObject
     {
         [Header("Materials")]
-        [Tooltip("Lightbringer/Toon with baked vertex palette and aura reaction on.")]
+        [Tooltip("Lightbringer/Toon with baked vertex palette. Aura feedback is a separate foot effect.")]
         public Material alliedMaterial;
         [Tooltip("Lightbringer/Toon with baked vertex palette, no aura reaction.")]
         public Material enemyMaterial;
@@ -65,6 +71,8 @@ namespace Lightbringer.Visuals
         public Material auraMotesMaterial;
         [Tooltip("Lightbringer/Lightning, used by hero strike spells.")]
         public Material lightningMaterial;
+        [Tooltip("Descending light column and impact sigil for the Light Staff.")]
+        public Material celestialStrikeMaterial;
         [Tooltip("Lightbringer/Terrain: painterly ground (vertex palette, alpha = road mask).")]
         public Material terrainMaterial;
         [Tooltip("Lightbringer/Grass: wind-swayed grass blades.")]
@@ -75,11 +83,12 @@ namespace Lightbringer.Visuals
         public Material skyMaterial;
         [Tooltip("Lightbringer/VFX Shape: procedural sprite for sparks, flares, rings, slashes, flames and dust.")]
         public Material vfxMaterial;
-        [Tooltip("Lightbringer/Aura Blessing: additive shell on allied troop models inside the hero aura.")]
+        [Tooltip("Lightbringer/Aura Blessing: low circular light veil around empowered allies' feet.")]
         public Material auraBlessingMaterial;
 
         [Header("Stage environment overrides")]
         public ForestEnvironmentProfile forestEnvironment;
+        public BattlefieldPropProfile battlefieldProps;
 
         [Header("Allied palette (character sheet v1)")]
         public Color ivory = new Color(0.93f, 0.91f, 0.86f);

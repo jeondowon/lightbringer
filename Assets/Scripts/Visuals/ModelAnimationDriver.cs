@@ -121,7 +121,7 @@ namespace Lightbringer.Visuals
             bool moving = smoothedSpeed > 0.3f;
             if (props.Length > 0)
             {
-                bool casting = hasAction && action.enabled;
+                bool casting = hasAction && action != null && action.enabled;
                 foreach (PropStabilizer prop in props) if (prop != null) prop.SetCasting(casting);
             }
             AnimationState target = moving && hasMove ? move : hasIdle ? idle : null;

@@ -12,6 +12,8 @@ namespace Lightbringer.Visuals
     {
         public const string StyledName = "Styled Visual";
         public const string GreyboxName = "Visual";
+        // Bring 1.65-1.7 m infantry close to the 2 m hero while preserving troop size differences.
+        private const float TroopVisualScale = 1.2f;
 
         [SerializeField] private ArtStyleLibrary style;
         [Tooltip("Ground contact relative to the unit pivot (CharacterController bottom).")]
@@ -43,6 +45,8 @@ namespace Lightbringer.Visuals
             Vector3 scale = ownerTransform.lossyScale;
             root.localScale = new Vector3(1f / Mathf.Max(scale.x, 0.0001f), 1f / Mathf.Max(scale.y, 0.0001f), 1f / Mathf.Max(scale.z, 0.0001f));
             root.localPosition = new Vector3(0f, feetOffset / Mathf.Max(scale.y, 0.0001f), 0f);
+            if (id != VisualId.Hero && id != VisualId.AlliedStronghold && id != VisualId.EnemyStronghold)
+                root.localScale *= TroopVisualScale;
 
             AddCombatFeedback(owner, root, style);
             VisualOverride replacement = style.FindOverride(id);
@@ -59,7 +63,8 @@ namespace Lightbringer.Visuals
                 if (replacement.HasAnimation)
                     model.AddComponent<ModelAnimationDriver>().Configure(replacement);
                 // Unrigged stand-in models still get stride bob and lean until real animation exists.
-                else if (model.GetComponentInChildren<Animator>() == null)
+                else if (id != VisualId.EnemyStronghold && id != VisualId.AlliedStronghold
+                    && model.GetComponentInChildren<Animator>() == null)
                     visual.AddComponent<VisualMotion>().Configure(new Silhouette { BobHeight = 0.035f, BobRate = 9f, LeanDegrees = 5f }, null);
                 AddSupportFeedback(owner, id, root, style, feetOffset);
                 return root;
@@ -128,7 +133,14 @@ namespace Lightbringer.Visuals
                 item.transform.localPosition = prop.localPosition;
                 item.transform.localRotation = Quaternion.Euler(prop.localEuler);
                 item.transform.localScale = prop.localScale;
-                if (prop.stabilize) item.AddComponent<PropStabilizer>().Configure(bone, model);
+                if (prop.stabilize)
+                {
+                    PropStabilizer stabilizer = item.AddComponent<PropStabilizer>();
+                    stabilizer.follow = prop.follow;
+                    stabilizer.castLean = prop.castLean;
+                    stabilizer.gripFraction = prop.gripFraction;
+                    stabilizer.Configure(bone, model);
+                }
             }
         }
 

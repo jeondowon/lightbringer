@@ -149,7 +149,7 @@ namespace Lightbringer.EditorTools
                 Check(enemies.Length > 0 && enemies.All(e => e.transform.Find(UnitAppearance.StyledName) != null
                     && e.transform.Find(UnitAppearance.StyledName).GetComponent<MeshRenderer>().sharedMaterial == style.enemyMaterial),
                     "Enemy waves spawn as corrupted silhouettes with the enemy material");
-                Check(enemies.Any(e => e.name == "Enemy Archer"), "Late-stage waves include the distinct enemy archer");
+                Check(enemies.Any(e => e.name == EnemyCatalog.Names[(int)EnemyKind.Archer]), "Late-stage waves include the distinct enemy archer");
 
                 // A finished model replaces one troop without touching gameplay code; its colliders are stripped.
                 overrideModel = GameObject.CreatePrimitive(PrimitiveType.Cube);

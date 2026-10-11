@@ -199,7 +199,7 @@ namespace Lightbringer.Core
             catch (Exception exception)
             {
                 Debug.LogWarning("Playtest log could not be written: " + exception.Message);
-                return "Playtest log could not be written.";
+                return "전투 기록을 저장하지 못했습니다.";
             }
         }
 

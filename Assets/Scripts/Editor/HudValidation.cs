@@ -48,7 +48,7 @@ namespace Lightbringer.EditorTools
                 Check(view.EnemyBaseShielded && !view.BossVisible, "Boss stage shows the shielded enemy stronghold before the Warlord arrives");
                 view.Refresh(session);
                 Check(view.MinimapSelectedPath == 0, "The battlefield map highlights the first Path at the start");
-                Check(battle.Summoner.TryCyclePath() && RefreshAndRead(view, session).Contains("PATH 2") && view.MinimapSelectedPath == 1,
+                Check(battle.Summoner.TryCyclePath() && RefreshAndRead(view, session).Contains("진로 2") && view.MinimapSelectedPath == 1,
                     "The battlefield map names and highlights the Path that new troops will take");
 
                 Physics.SyncTransforms();
@@ -86,7 +86,7 @@ namespace Lightbringer.EditorTools
                 battle.Objective.EnemyBase.TakeDamage(1000000f, battle.Hero);
                 while (session.IsChoosing) levelUp.Choose(0);
                 result.Refresh(session);
-                Check(result.Visible && result.Title == "VICTORY", "Victory screen appears when the stage is won");
+                Check(result.Visible && result.Title == "승리", "Victory screen appears when the stage is won");
                 result.SetRating(4);
                 Check(result.Rating == 4 && result.Return() && session.Battle == null, "The result screen records the rating and returns to preparation");
                 view.Bind(session.Battle);
@@ -114,13 +114,13 @@ namespace Lightbringer.EditorTools
                 EditorAssets.ConfigureSession(session, material);
                 PreparationView view = new PreparationView(new VisualElement());
                 view.Refresh(session);
-                Check(view.Visible && view.StartText == "START STAGE 3" && view.IsStageSelected(3)
+                Check(view.Visible && view.StartText == "출전 · 스테이지 3" && view.IsStageSelected(3)
                     && view.IsStageEnabled(3) && !view.IsStageEnabled(4) && view.TroopCount == 3,
                     "Preparation opens on the newest stage, locks later stages and lists unlocked troops");
                 Check(session.SelectStage(2) && RefreshAndSelected(view, session, 2), "Selecting a stage highlights it and retargets START");
 
-                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("in Q")
-                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "LOCKED" && view.IsItemEnabled(2),
+                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("Q 장착 중")
+                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "미해금" && view.IsItemEnabled(2),
                     "Items worn in another slot or not yet owned cannot be equipped");
                 Check(view.Equip(2) && profile.loadout[0] == 2 && view.SlotText(0) == EquipmentCatalog.Names[2],
                     "Clicking an item equips it into the active slot");
@@ -142,7 +142,7 @@ namespace Lightbringer.EditorTools
         private static bool RefreshAndSelected(PreparationView view, CampaignSession session, int stage)
         {
             view.Refresh(session);
-            return view.IsStageSelected(stage) && view.StartText == "START STAGE " + stage;
+            return view.IsStageSelected(stage) && view.StartText == "출전 · 스테이지 " + stage;
         }
 
         private static string RefreshAndRead(BattleHudView view, CampaignSession session)

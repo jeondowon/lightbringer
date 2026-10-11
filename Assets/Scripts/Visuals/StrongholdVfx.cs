@@ -33,13 +33,28 @@ namespace Lightbringer.Visuals
             Material flame = Make(5f, 1.6f, true);
             Material dot = Make(0f, 1.8f, true);
             Material puff = Make(6f, 1.2f, false);
-            foreach (Vector3 brazier in allied ? SilhouetteFactory.AlliedBraziers : SilhouetteFactory.EnemyBraziers)
+            // Imported gates have no procedural brazier bowls; keep their smoke and embers without floating flames.
+            bool imported = library.FindOverride(allied ? VisualId.AlliedStronghold : VisualId.EnemyStronghold) != null;
+            Vector3[] braziers = imported ? System.Array.Empty<Vector3>()
+                : allied ? SilhouetteFactory.AlliedBraziers : SilhouetteFactory.EnemyBraziers;
+            foreach (Vector3 brazier in braziers)
             {
                 Flames(brazier, flame, core, edge);
                 Embers(brazier + Vector3.up * 0.2f, dot, core);
             }
             if (allied)
-                Orbit(new Vector3(0f, SilhouetteFactory.AlliedCrystalHeight, -0.4f), dot, style.lightGlow * 1.4f);
+            {
+                Vector3 crystal = new Vector3(0f, SilhouetteFactory.AlliedCrystalHeight, -0.4f);
+                if (imported)
+                {
+                    // The imported keep is shorter than the procedural one. Anchor motes at its crown.
+                    float top = 0f;
+                    foreach (Renderer renderer in transform.parent.GetComponentsInChildren<Renderer>())
+                        top = Mathf.Max(top, transform.InverseTransformPoint(renderer.bounds.max).y);
+                    crystal = new Vector3(0f, Mathf.Max(0f, top - 0.4f), 0f);
+                }
+                Orbit(crystal, dot, style.lightGlow * 1.4f);
+            }
             else
             {
                 Rising(new Vector3(0f, 3f, 0.3f), new Vector3(6.5f, 4f, 4f), dot, style.corruptGlow * 1.3f);

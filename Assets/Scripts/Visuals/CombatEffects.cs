@@ -157,8 +157,8 @@ namespace Lightbringer.Visuals
         {
             if (!Ready(style)) return;
             Vector2 offset = Random.insideUnitCircle * spread;
-            Emit(motes, feet + new Vector3(offset.x, Random.Range(0.1f, 0.9f), offset.y), Vector3.up * Random.Range(0.8f, 1.6f),
-                Color.Lerp(color, Color.white, Random.value * 0.5f), Random.Range(0.05f, 0.1f), Random.Range(0.6f, 1f));
+            Emit(motes, feet + new Vector3(offset.x, Random.Range(0.06f, 0.2f), offset.y), Vector3.up * Random.Range(0.18f, 0.35f),
+                Color.Lerp(color, Color.white, Random.value * 0.3f), Random.Range(0.025f, 0.06f), Random.Range(0.6f, 1f));
         }
 
         // Healing pulse: a rune circle across the heal radius, a soft ring and motes rising around the healer.

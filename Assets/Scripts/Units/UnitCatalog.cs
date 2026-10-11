@@ -9,7 +9,7 @@ namespace Lightbringer.Units
     public static class UnitCatalog
     {
         public const int Count = 8;
-        public static readonly string[] Names = { "Swordsman", "Archer", "Shieldbearer", "Spearman", "Priest", "Mage", "Knight", "Dragon" };
+        public static readonly string[] Names = { "검병", "궁병", "방패병", "창병", "사제", "마법사", "기사", "드래곤" };
         private static readonly float[] Costs = { 10, 15, 20, 25, 30, 40, 55, 90 };
         private static readonly float[] Health = { 30, 22, 100, 45, 35, 30, 170, 300 };
         private static readonly float[] Damage = { 10, 7, 8, 14, 0, 18, 32, 40 };
@@ -39,7 +39,7 @@ namespace Lightbringer.Units
         // (inside its 6 m heal pulse, so troops in melee are still mended).
         public const float PriestFollowGap = 2.5f;
         public const float PriestKeepAway = 4.5f;
-        public static float Speed(UnitKind kind) => kind == UnitKind.Shieldbearer ? 2.2f : kind == UnitKind.Knight ? 4f : 3f;
+        public static float Speed(UnitKind kind) => kind == UnitKind.Shieldbearer ? 1.1f : kind == UnitKind.Knight ? 4f : 1.5f;
         public static Vector3 VisualScale(UnitKind kind) => kind == UnitKind.Dragon
             ? new Vector3(2.4f, 1.4f, 3f) : kind == UnitKind.Shieldbearer
             ? new Vector3(1f, 0.9f, 0.6f) : kind == UnitKind.Archer

@@ -23,6 +23,7 @@ namespace Lightbringer.EditorTools
         static ForestEnvironmentSetup()
         {
             EditorRequests.Register(Path.Combine(Diagnostics, "forest-setup.request"), Configure);
+            EditorRequests.Register(Path.Combine(Diagnostics, "forest-ground.request"), ConfigureGroundDetail);
         }
 
         [MenuItem("Lightbringer/Art/Set Up Fantasy Worlds Forest")]
@@ -69,6 +70,7 @@ namespace Lightbringer.EditorTools
                         profile.terrain = ground;
                     }
                 }
+                if (profile.terrain.GetTexture("_ForestGrassNormal") == null) TuneGroundMaterial(profile.terrain);
                 style.forestEnvironment = profile;
                 EditorUtility.SetDirty(profile);
                 EditorUtility.SetDirty(style);
@@ -88,6 +90,47 @@ namespace Lightbringer.EditorTools
                 Directory.CreateDirectory(Diagnostics);
                 File.WriteAllText(Path.Combine(Diagnostics, "ForestSetup.txt"), report.ToString());
             }
+        }
+
+        [MenuItem("Lightbringer/Art/Improve Forest Ground Detail")]
+        public static void ConfigureGroundDetail()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            AssetDatabase.Refresh();
+            ForestEnvironmentProfile profile = AssetDatabase.LoadAssetAtPath<ForestEnvironmentProfile>(ProfilePath);
+            if (profile == null || profile.terrain == null) throw new InvalidOperationException("Set up the forest first.");
+            TuneGroundMaterial(profile.terrain);
+            AssetDatabase.SaveAssets();
+            Directory.CreateDirectory(Diagnostics);
+            File.WriteAllText(Path.Combine(Diagnostics, "ForestGround.txt"),
+                "PASS | " + DateTime.UtcNow.ToString("O") + "\nForest grass/soil: colour and normal maps, trilinear filtering, anisotropy 8, 2 m tiles.\n");
+        }
+
+        private static void TuneGroundMaterial(Material ground)
+        {
+            string[] files = { "T_fwOF_GrassTerrain_01_BC", "T_fwOF_Soil_01_BC", "T_fwOF_GrassTerrain_01_N", "T_fwOF_Soil_01_N" };
+            string[] slots = { "_ForestGrassTex", "_ForestSoilTex", "_ForestGrassNormal", "_ForestSoilNormal" };
+            for (int i = 0; i < files.Length; i++)
+            {
+                string path = Source + "/Textures/Terrain/" + files[i] + ".png";
+                TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null) throw new InvalidOperationException("Missing ground texture: " + path);
+                importer.filterMode = FilterMode.Trilinear;
+                importer.anisoLevel = 8;
+                importer.mipmapEnabled = true;
+                if (i >= 2) importer.textureType = TextureImporterType.NormalMap;
+                importer.SaveAndReimport();
+                ground.SetTexture(slots[i], AssetDatabase.LoadAssetAtPath<Texture2D>(path));
+            }
+            ground.SetFloat("_ForestTextureScale", 0.5f);
+            ground.SetFloat("_ForestTextureStrength", 0.9f);
+            ground.SetColor("_ForestGroundTint", new Color(2f, 1.9f, 1.6f, 1f));
+            ground.SetFloat("_ForestNormalStrength", 0.7f);
+            ground.SetFloat("_FlowerAmount", 0f);
+            ground.SetFloat("_StrokeStrength", 0.025f);
+            ground.SetFloat("_BumpStrength", 0.1f);
+            ground.SetFloat("_GravelAmount", 0.1f);
+            EditorUtility.SetDirty(ground);
         }
 
         private static GameObject MakeProp(string sourceName, string name, float height, bool shadows, StringBuilder report)

@@ -64,6 +64,8 @@ namespace Lightbringer.EditorTools
             library.auraMotesMaterial = library.auraMotesMaterial != null ? library.auraMotesMaterial : LoadOrCreate("LB_AuraMotes", glow, m => m.SetColor("_Color", new Color(0.7f, 0.85f, 1.5f)));
             Shader lightning = Shader.Find(LightningShader);
             if (library.lightningMaterial == null && lightning != null) library.lightningMaterial = LoadOrCreate("LB_Lightning", lightning, null);
+            Shader celestial = Shader.Find("Lightbringer/Celestial Strike");
+            if (library.celestialStrikeMaterial == null && celestial != null) library.celestialStrikeMaterial = LoadOrCreate("LB_CelestialStrike", celestial, null);
             Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
             if (library.terrainMaterial == null && terrain != null) library.terrainMaterial = LoadOrCreate("LB_EnvTerrain", terrain, null);
             if (library.grassMaterial == null && grass != null) library.grassMaterial = LoadOrCreate("LB_Grass", grass, null);
@@ -105,6 +107,8 @@ namespace Lightbringer.EditorTools
             library.auraMotesMaterial = Create(glow, null);
             Shader lightning = Shader.Find(LightningShader);
             if (lightning != null) library.lightningMaterial = Create(lightning, null);
+            Shader celestial = Shader.Find("Lightbringer/Celestial Strike");
+            if (celestial != null) library.celestialStrikeMaterial = Create(celestial, null);
             Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
             if (terrain != null) library.terrainMaterial = Create(terrain, null);
             if (grass != null) library.grassMaterial = Create(grass, null);
@@ -126,6 +130,7 @@ namespace Lightbringer.EditorTools
             Object.DestroyImmediate(library.auraRunesMaterial);
             Object.DestroyImmediate(library.auraMotesMaterial);
             if (library.lightningMaterial != null) Object.DestroyImmediate(library.lightningMaterial);
+            if (library.celestialStrikeMaterial != null) Object.DestroyImmediate(library.celestialStrikeMaterial);
             if (library.terrainMaterial != null) Object.DestroyImmediate(library.terrainMaterial);
             if (library.grassMaterial != null) Object.DestroyImmediate(library.grassMaterial);
             if (library.propsMaterial != null) Object.DestroyImmediate(library.propsMaterial);

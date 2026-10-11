@@ -38,7 +38,7 @@ namespace Lightbringer.Units
             if (!isActiveAndEnabled || index < 0 || index >= UnitCatalog.Count) return false;
             if (index >= unlockedUnitCount)
             {
-                LastFeedback = UnitCatalog.Names[index] + " is not unlocked yet.";
+                LastFeedback = UnitCatalog.Names[index] + " 병종은 아직 해금되지 않았습니다.";
                 return false;
             }
             return TrySelectUnit(index) && TrySummon();

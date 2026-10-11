@@ -10,6 +10,38 @@ namespace Lightbringer.Visuals
         private static Mesh box;
         private static Mesh sphere;
         private static Mesh groundQuad;
+        private static Mesh auraVeil;
+
+        // Open circular wall: diameter 1, height 1, UV.y measured upward from the feet.
+        public static Mesh AuraVeil
+        {
+            get
+            {
+                if (auraVeil != null) return auraVeil;
+                const int segments = 48;
+                var vertices = new List<Vector3>();
+                var uv = new List<Vector2>();
+                var triangles = new List<int>();
+                for (int i = 0; i <= segments; i++)
+                {
+                    float u = (float)i / segments;
+                    Vector3 radial = new Vector3(Mathf.Cos(u * Mathf.PI * 2f), 0f, Mathf.Sin(u * Mathf.PI * 2f));
+                    vertices.Add(radial * 0.5f);
+                    vertices.Add(radial * 0.56f + Vector3.up);
+                    uv.Add(new Vector2(u, 0f));
+                    uv.Add(new Vector2(u, 1f));
+                    if (i == segments) continue;
+                    int a = i * 2;
+                    triangles.AddRange(new[] { a, a + 1, a + 2, a + 2, a + 1, a + 3 });
+                }
+                auraVeil = new Mesh { name = "LB Aura Leg Veil", hideFlags = HideFlags.DontSave };
+                auraVeil.SetVertices(vertices);
+                auraVeil.SetUVs(0, uv);
+                auraVeil.SetTriangles(triangles, 0);
+                auraVeil.RecalculateBounds();
+                return auraVeil;
+            }
+        }
 
         // Unit quad on the XZ plane facing up, UV 0..1; used for ground decals such as the aura.
         public static Mesh GroundQuad

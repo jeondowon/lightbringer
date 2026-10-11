@@ -1,4 +1,4 @@
-PASS | CampaignPlay.v1 | 2026-10-11T11:44:15.1582508Z
+PASS | CampaignPlay.v1 | 2026-10-11T16:57:19.5117147Z
 PASS: Campaign preparation releases menu input
 PASS: Actual Play mode can start a campaign with isolated progress
 PASS: Stage 1 renders the imported forest profile
@@ -7,71 +7,60 @@ PASS: Imported forest renderers have supported materials
 PASS: Imported forest replaces the procedural grass carpet
 PASS: Forest tree mesh reaches the terrain at (-23.6, -31.8)
 PASS: Forest tree mesh reaches the terrain at (-25.3, -23.2)
-PASS: Forest tree mesh reaches the terrain at (-23.1, -13.5)
-PASS: Forest tree mesh reaches the terrain at (-24.6, 0.9)
-PASS: Forest tree mesh reaches the terrain at (-22.7, 12.5)
-PASS: Forest tree mesh reaches the terrain at (-21.2, 28.8)
-PASS: Forest tree mesh reaches the terrain at (-23.0, 35.2)
-PASS: Forest tree mesh reaches the terrain at (-23.2, 50.3)
-PASS: Forest tree mesh reaches the terrain at (-20.7, 64.1)
-PASS: Forest tree mesh reaches the terrain at (-22.3, 74.0)
-PASS: Forest tree mesh reaches the terrain at (-23.4, 87.9)
-PASS: Forest tree mesh reaches the terrain at (-41.7, -34.5)
-PASS: Forest tree mesh reaches the terrain at (-38.4, -19.0)
-PASS: Forest tree mesh reaches the terrain at (-41.5, -13.7)
-PASS: Forest tree mesh reaches the terrain at (-38.2, 5.1)
-PASS: Forest tree mesh reaches the terrain at (-40.3, 16.5)
-PASS: Forest tree mesh reaches the terrain at (-42.7, 22.7)
-PASS: Forest tree mesh reaches the terrain at (-40.0, 34.9)
-PASS: Forest tree mesh reaches the terrain at (-39.7, 47.3)
-PASS: Forest tree mesh reaches the terrain at (-41.1, 59.3)
-PASS: Forest tree mesh reaches the terrain at (-42.9, 75.5)
-PASS: Forest tree mesh reaches the terrain at (-39.9, 87.2)
-PASS: Forest tree mesh reaches the terrain at (-59.1, -35.8)
-PASS: Forest tree mesh reaches the terrain at (-56.4, -23.6)
-PASS: Forest tree mesh reaches the terrain at (-61.3, -11.2)
-PASS: Forest tree mesh reaches the terrain at (-56.7, 0.6)
-PASS: Forest tree mesh reaches the terrain at (-60.1, 12.2)
-PASS: Forest tree mesh reaches the terrain at (-56.1, 28.3)
-PASS: Forest tree mesh reaches the terrain at (-56.0, 37.0)
-PASS: Forest tree mesh reaches the terrain at (-60.4, 47.6)
-PASS: Forest tree mesh reaches the terrain at (-58.9, 60.0)
-PASS: Forest tree mesh reaches the terrain at (-58.6, 75.5)
-PASS: Forest tree mesh reaches the terrain at (-58.4, 84.1)
-PASS: Forest tree mesh reaches the terrain at (22.1, -35.1)
-PASS: Forest tree mesh reaches the terrain at (24.5, -25.1)
-PASS: Forest tree mesh reaches the terrain at (21.8, -12.4)
-PASS: Forest tree mesh reaches the terrain at (20.3, 4.4)
-PASS: Forest tree mesh reaches the terrain at (22.3, 10.7)
-PASS: Forest tree mesh reaches the terrain at (24.1, 27.4)
-PASS: Forest tree mesh reaches the terrain at (25.0, 41.1)
-PASS: Forest tree mesh reaches the terrain at (22.3, 49.0)
-PASS: Forest tree mesh reaches the terrain at (21.2, 58.5)
-PASS: Forest tree mesh reaches the terrain at (22.5, 73.3)
-PASS: Forest tree mesh reaches the terrain at (21.5, 87.0)
-PASS: Forest tree mesh reaches the terrain at (39.1, -31.9)
-PASS: Forest tree mesh reaches the terrain at (39.2, -24.5)
-PASS: Forest tree mesh reaches the terrain at (39.4, -6.7)
-PASS: Forest tree mesh reaches the terrain at (40.0, -1.3)
-PASS: Forest tree mesh reaches the terrain at (41.6, 17.7)
-PASS: Forest tree mesh reaches the terrain at (39.1, 24.4)
-PASS: Forest tree mesh reaches the terrain at (39.7, 40.9)
-PASS: Forest tree mesh reaches the terrain at (38.9, 49.2)
-PASS: Forest tree mesh reaches the terrain at (43.0, 63.9)
-PASS: Forest tree mesh reaches the terrain at (43.2, 77.1)
-PASS: Forest tree mesh reaches the terrain at (42.7, 87.7)
-PASS: Forest tree mesh reaches the terrain at (59.4, -31.3)
-PASS: Forest tree mesh reaches the terrain at (60.5, -25.4)
-PASS: Forest tree mesh reaches the terrain at (61.8, -6.7)
-PASS: Forest tree mesh reaches the terrain at (57.4, -1.7)
-PASS: Forest tree mesh reaches the terrain at (61.4, 14.9)
-PASS: Forest tree mesh reaches the terrain at (58.9, 25.4)
-PASS: Forest tree mesh reaches the terrain at (58.4, 38.8)
-PASS: Forest tree mesh reaches the terrain at (57.0, 49.7)
-PASS: Forest tree mesh reaches the terrain at (60.7, 59.9)
-PASS: Forest tree mesh reaches the terrain at (59.3, 77.6)
-PASS: Forest tree mesh reaches the terrain at (58.3, 83.2)
-PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.27]
+PASS: Forest tree mesh reaches the terrain at (-24.6, 12.9)
+PASS: Forest tree mesh reaches the terrain at (-24.4, 62.0)
+PASS: Forest tree mesh reaches the terrain at (-25.8, 71.1)
+PASS: Forest tree mesh reaches the terrain at (-21.7, 83.4)
+PASS: Forest tree mesh reaches the terrain at (-38.2, -32.3)
+PASS: Forest tree mesh reaches the terrain at (-38.2, -24.7)
+PASS: Forest tree mesh reaches the terrain at (-40.0, -9.4)
+PASS: Forest tree mesh reaches the terrain at (-40.0, 0.2)
+PASS: Forest tree mesh reaches the terrain at (-39.3, 15.0)
+PASS: Forest tree mesh reaches the terrain at (-39.5, 28.0)
+PASS: Forest tree mesh reaches the terrain at (-40.6, 39.9)
+PASS: Forest tree mesh reaches the terrain at (-43.1, 53.9)
+PASS: Forest tree mesh reaches the terrain at (-39.9, 58.1)
+PASS: Forest tree mesh reaches the terrain at (-39.1, 77.6)
+PASS: Forest tree mesh reaches the terrain at (-38.1, 85.7)
+PASS: Forest tree mesh reaches the terrain at (-61.3, -37.5)
+PASS: Forest tree mesh reaches the terrain at (-56.4, -20.8)
+PASS: Forest tree mesh reaches the terrain at (-59.6, -13.4)
+PASS: Forest tree mesh reaches the terrain at (-60.1, 2.0)
+PASS: Forest tree mesh reaches the terrain at (-60.7, 16.1)
+PASS: Forest tree mesh reaches the terrain at (-60.8, 26.2)
+PASS: Forest tree mesh reaches the terrain at (-61.7, 41.6)
+PASS: Forest tree mesh reaches the terrain at (-58.1, 49.3)
+PASS: Forest tree mesh reaches the terrain at (-57.4, 65.0)
+PASS: Forest tree mesh reaches the terrain at (-61.5, 75.5)
+PASS: Forest tree mesh reaches the terrain at (-60.0, 83.0)
+PASS: Forest tree mesh reaches the terrain at (22.9, -37.5)
+PASS: Forest tree mesh reaches the terrain at (23.5, -0.6)
+PASS: Forest tree mesh reaches the terrain at (20.4, 63.8)
+PASS: Forest tree mesh reaches the terrain at (23.0, 75.6)
+PASS: Forest tree mesh reaches the terrain at (20.1, 87.4)
+PASS: Forest tree mesh reaches the terrain at (38.2, -31.1)
+PASS: Forest tree mesh reaches the terrain at (41.1, -18.0)
+PASS: Forest tree mesh reaches the terrain at (38.1, -8.0)
+PASS: Forest tree mesh reaches the terrain at (41.1, 3.1)
+PASS: Forest tree mesh reaches the terrain at (43.6, 15.0)
+PASS: Forest tree mesh reaches the terrain at (43.0, 24.3)
+PASS: Forest tree mesh reaches the terrain at (38.1, 39.0)
+PASS: Forest tree mesh reaches the terrain at (41.5, 48.4)
+PASS: Forest tree mesh reaches the terrain at (40.9, 63.5)
+PASS: Forest tree mesh reaches the terrain at (42.0, 76.9)
+PASS: Forest tree mesh reaches the terrain at (42.0, 89.3)
+PASS: Forest tree mesh reaches the terrain at (59.1, -30.1)
+PASS: Forest tree mesh reaches the terrain at (57.7, -18.2)
+PASS: Forest tree mesh reaches the terrain at (58.6, -13.5)
+PASS: Forest tree mesh reaches the terrain at (60.1, -1.5)
+PASS: Forest tree mesh reaches the terrain at (60.8, 11.6)
+PASS: Forest tree mesh reaches the terrain at (59.1, 24.3)
+PASS: Forest tree mesh reaches the terrain at (57.9, 36.6)
+PASS: Forest tree mesh reaches the terrain at (56.1, 48.2)
+PASS: Forest tree mesh reaches the terrain at (56.7, 65.0)
+PASS: Forest tree mesh reaches the terrain at (58.1, 72.7)
+PASS: Forest tree mesh reaches the terrain at (56.9, 88.6)
+PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.26]
 PASS: Actual runtime summon initializes and activates one allied soldier
 PASS: Summoned soldier advances automatically across real rendered frames
 PASS: Hero staff deals damage during actual Play mode
@@ -83,19 +72,19 @@ PASS: Result screen can return and start the next unlocked stage
 PASS: Runtime hero death keeps permanent growth and grants no victory reward
 PASS: Defeat can return to preparation without reloading Unity
 PASS: Late campaign runtime builds three independent fronts
-PASS: Runtime deployment: Swordsman
-PASS: Runtime deployment: Archer
-PASS: Runtime deployment: Shieldbearer
-PASS: Runtime deployment: Spearman
-PASS: Runtime deployment: Priest
-PASS: Runtime deployment: Mage
-PASS: Runtime deployment: Knight
-PASS: Runtime deployment: Dragon
+PASS: Runtime deployment: 검병
+PASS: Runtime deployment: 궁병
+PASS: Runtime deployment: 방패병
+PASS: Runtime deployment: 창병
+PASS: Runtime deployment: 사제
+PASS: Runtime deployment: 마법사
+PASS: Runtime deployment: 기사
+PASS: Runtime deployment: 드래곤
 PASS: Runtime Dragon stays grounded on its assigned Path
-MEASURE: 100 rendered stress units (+hero/base): frame mean 33.444 ms, p95 34.023 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 100 rendered stress units (+hero/base): frame mean 9.672 ms, p95 11.338 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 100 rendered stress units stay active through sustained real-time combat
 PASS: 100 rendered stress units exchange damage
-MEASURE: 300 rendered stress units (+hero/base): frame mean 33.425 ms, p95 34.136 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 300 rendered stress units (+hero/base): frame mean 9.916 ms, p95 13.377 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 300 rendered stress units stay active through sustained real-time combat
 PASS: 300 rendered stress units exchange damage
 PASS: Stress battle can clean up and return to campaign preparation

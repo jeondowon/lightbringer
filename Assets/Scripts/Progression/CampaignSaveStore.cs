@@ -18,11 +18,11 @@ namespace Lightbringer.Progression
             if (TryRead(path, out CampaignProgress progress)) return progress;
             if (TryRead(path + ".bak", out progress))
             {
-                Error = "Recovered campaign from backup.";
+                Error = "백업에서 캠페인 데이터를 복구했습니다.";
                 return progress;
             }
             CanSave = false;
-            Error = "Save could not be read. Original files are preserved; this session will not overwrite them.";
+            Error = "저장 데이터를 읽을 수 없습니다. 원본 보호를 위해 이번 진행 내용은 저장하지 않습니다.";
             return new CampaignProgress();
         }
 
@@ -71,7 +71,7 @@ namespace Lightbringer.Progression
             }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is NotSupportedException)
             {
-                Error = "Campaign save failed: " + exception.Message;
+                Error = "캠페인 저장 실패: " + exception.Message;
                 return false;
             }
         }

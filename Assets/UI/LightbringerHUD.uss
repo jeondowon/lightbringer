@@ -4,6 +4,11 @@
 
 /* ---------- Shared ---------- */
 
+/* Bundle the Korean font so player builds do not depend on OS fallback fonts. */
+:root {
+    -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf");
+}
+
 .lb-panel {
     background-color: rgba(12, 18, 34, 0.78);
     border-width: 1px;
@@ -974,6 +979,7 @@
     width: 640px;
     padding: 18px 24px;
     align-items: center;
+    color: rgb(244, 238, 226);
 }
 
 .lb-title {
@@ -1047,7 +1053,7 @@
    Lightbringer/UI/Build Preparation Art; Cinzel (OFL) is the display face. */
 
 .lb-display {
-    -unity-font-definition: url("Fonts/Cinzel.ttf");
+    -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf");
     -unity-font-style: bold;
 }
 
@@ -1150,6 +1156,7 @@
 }
 
 .lb-prep-title {
+    -unity-font-definition: url("Fonts/Cinzel.ttf");
     margin: 0;
     padding: 0;
     font-size: 46px;

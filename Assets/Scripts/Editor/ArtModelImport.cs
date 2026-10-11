@@ -283,9 +283,10 @@ namespace Lightbringer.EditorTools
             Debug.Log("Staff attached to the hero's right hand from " + staff + ".");
         }
 
-        // Places a long prop upright in the bone's bind pose: gripped ~38% up its length, a little past the
-        // wrist, and sized to `gameLength` metres in play. Stored as bone-local values so it follows animation.
-        public static bool AttachProp(ArtStyleLibrary library, VisualOverride owner, string propPath, string boneName, float gameLength)
+        // Places a long prop upright in the bone's bind pose: gripped `gripFraction` up its length, a little past
+        // the wrist, and sized to `gameLength` metres in play. Stored as bone-local values so it follows animation.
+        public static bool AttachProp(ArtStyleLibrary library, VisualOverride owner, string propPath, string boneName, float gameLength,
+            float gripFraction = 0.38f)
         {
             GameObject prop = AssetDatabase.LoadAssetAtPath<GameObject>(propPath);
             if (prop == null || owner.prefab == null || !TryMeasure(prop, out Bounds propBounds, out _) || propBounds.size.y < 1e-4f)
@@ -308,7 +309,7 @@ namespace Lightbringer.EditorTools
                 float propScale = length / propBounds.size.y;
                 Vector3 along = hand.parent != null ? (hand.position - hand.parent.position).normalized : Vector3.down;
                 Vector3 grip = hand.position + along * (0.07f / Mathf.Max(owner.scale, 1e-4f));
-                Vector3 bottom = grip - Vector3.up * (0.38f * length);
+                Vector3 bottom = grip - Vector3.up * (gripFraction * length);
                 Vector3 origin = bottom - propScale * new Vector3(propBounds.center.x, propBounds.min.y, propBounds.center.z);
                 Vector3 boneScale = hand.lossyScale;
                 PropAttachment attachment = new PropAttachment
@@ -317,7 +318,8 @@ namespace Lightbringer.EditorTools
                     boneName = boneName,
                     localPosition = hand.InverseTransformPoint(origin),
                     localEuler = (Quaternion.Inverse(hand.rotation)).eulerAngles,
-                    localScale = new Vector3(propScale / boneScale.x, propScale / boneScale.y, propScale / boneScale.z)
+                    localScale = new Vector3(propScale / boneScale.x, propScale / boneScale.y, propScale / boneScale.z),
+                    gripFraction = gripFraction
                 };
                 Undo.RecordObject(library, "Attach prop");
                 List<PropAttachment> list = (owner.attachments ?? new PropAttachment[0])

@@ -26,8 +26,16 @@ namespace Lightbringer.EditorTools
             Combatant enemy = CreateCombatUnit(origin + Vector3.forward * 5, Faction.Enemy);
             enemy.Configure(Faction.Enemy, 100);
             Physics.SyncTransforms();
-            Check(abilities.TryCast(0, enemy) && enemy.CurrentHealth == 82 && mana.Current == 92,
-                "Hero Light Staff consumes Mana and damages an aimed enemy");
+            Check(abilities.TryCast(0, enemy) && enemy.CurrentHealth == 100 && mana.Current == 92,
+                "Light Staff spends Mana on cast but waits for the descending light before damage");
+            abilities.Tick(HeroAbilities.LightStaffImpactDelay - 0.005f);
+            Check(enemy.CurrentHealth == 100, "Light Staff does not damage the enemy before ground impact");
+            abilities.Tick(0);
+            Check(enemy.CurrentHealth == 100, "Paused Light Staff timing cannot deal early damage");
+            abilities.Tick(0.006f);
+            Check(enemy.CurrentHealth == 82, "Light Staff deals damage when the light reaches the ground");
+            abilities.Tick(0.02f);
+            Check(enemy.CurrentHealth == 82, "Light Staff impact deals damage only once");
             Check(!abilities.TryCast(0, enemy) && mana.Current == 92,
                 "Hero ability cooldown prevents extra damage and extra Mana spending");
             abilities.Tick(1);
@@ -75,6 +83,19 @@ namespace Lightbringer.EditorTools
             mana.Tick(100);
             Check(mana.Current == mana.Maximum && !mana.TrySpend(float.NaN) && !mana.TrySpend(-1),
                 "Mana regeneration is capped and invalid costs are rejected");
+
+            Check(abilities.TryCast(0, enemy), "Light Staff can queue another impact after cooldown");
+            Invoke(abilities, "OnDisable");
+            abilities.Tick(1);
+            Check(enemy.CurrentHealth == 52, "Disabling abilities cancels pending Light Staff damage");
+            Combatant doomed = CreateCombatUnit(origin + new Vector3(-2, 0, 5), Faction.Enemy);
+            doomed.Configure(Faction.Enemy, 100);
+            Physics.SyncTransforms();
+            Check(abilities.TryCast(0, doomed), "Light Staff accepts a living target before impact");
+            doomed.TakeDamage(1000);
+            abilities.Tick(1);
+            Check(doomed.CurrentHealth == 0 && enemy.CurrentHealth == 52,
+                "A target killed before impact receives no second hit or redirected damage");
 
             GameObject battle = new GameObject("Defeat battle");
             heroObject.transform.SetParent(battle.transform);

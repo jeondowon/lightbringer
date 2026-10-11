@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace Lightbringer.Aura
 {
     // Art Pass aura: a rotating rune circle on the ground, light motes rising inside the radius,
-    // and a global aura sphere that makes allied toon materials glow while inside.
+    // with a shared world-space origin for other aura presentation effects.
     // Radius always follows HeroAura, so Aura Size growth is visible immediately.
     [DisallowMultipleComponent]
     [RequireComponent(typeof(HeroAura))]
@@ -13,7 +13,6 @@ namespace Lightbringer.Aura
     {
         private static readonly int AuraSphereId = Shader.PropertyToID("_LB_AuraSphere");
         private static readonly int AuraColorId = Shader.PropertyToID("_LB_AuraColor");
-        private static readonly int GlyphCountId = Shader.PropertyToID("_GlyphCount");
 
         [SerializeField] private ArtStyleLibrary style;
         [Tooltip("Ground height relative to the hero pivot.")]
@@ -22,6 +21,8 @@ namespace Lightbringer.Aura
         private HeroAura aura;
         private GameObject disc;
         private Material discMaterial;
+        private GameObject ribbons;
+        private Material ribbonMaterial;
         private ParticleSystem motes;
         private float appliedRadius = -1f;
 
@@ -53,6 +54,18 @@ namespace Lightbringer.Aura
             renderer.receiveShadows = false;
             renderer.lightProbeUsage = LightProbeUsage.Off;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            ribbons = new GameObject("Aura Floating Light Arcs (Runtime)");
+            ribbons.transform.SetParent(disc.transform, false);
+            ribbons.AddComponent<MeshFilter>().sharedMesh = ProceduralMeshes.AuraVeil;
+            ribbonMaterial = new Material(discMaterial) { name = "Aura Floating Arcs (Instance)" };
+            ribbonMaterial.SetFloat("_Layer", 1f);
+            MeshRenderer ribbonRenderer = ribbons.AddComponent<MeshRenderer>();
+            ribbonRenderer.sharedMaterial = ribbonMaterial;
+            ribbonRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            ribbonRenderer.receiveShadows = false;
+            ribbonRenderer.lightProbeUsage = LightProbeUsage.Off;
+            ribbonRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            ribbons.transform.localScale = new Vector3(0.94f, 0.55f, 0.94f);
             motes = CreateMotes(disc.transform.parent);
             appliedRadius = -1f;
             LateUpdate();
@@ -69,8 +82,8 @@ namespace Lightbringer.Aura
             main.loop = true;
             main.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.4f);
             main.startSpeed = 0f;
-            main.startSize = new ParticleSystem.MinMaxCurve(0.07f, 0.17f);
-            main.startColor = new ParticleSystem.MinMaxGradient(Color.white, new Color(0.7f, 0.85f, 1f));
+            main.startSize = new ParticleSystem.MinMaxCurve(0.035f, 0.09f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1.8f, 1.25f, 0.55f), new Color(0.6f, 0.9f, 1.8f));
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.maxParticles = 400;
             main.playOnAwake = true;
@@ -83,7 +96,7 @@ namespace Lightbringer.Aura
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.World;
             velocity.x = new ParticleSystem.MinMaxCurve(-0.05f, 0.05f);
-            velocity.y = new ParticleSystem.MinMaxCurve(0.5f, 1.2f);
+            velocity.y = new ParticleSystem.MinMaxCurve(0.18f, 0.4f);
             velocity.z = new ParticleSystem.MinMaxCurve(-0.05f, 0.05f);
             ParticleSystem.ColorOverLifetimeModule fade = system.colorOverLifetime;
             fade.enabled = true;
@@ -117,8 +130,8 @@ namespace Lightbringer.Aura
             if (Mathf.Approximately(radius, appliedRadius)) return;
             appliedRadius = radius;
             disc.transform.localScale = new Vector3(radius * 2f, 1f, radius * 2f);
-            // Keep glyphs a similar world size as the aura grows.
-            discMaterial.SetFloat(GlyphCountId, Mathf.Clamp(Mathf.Round(radius * 5f), 16f, 96f));
+            // Preserve readable line widths in world metres as the aura grows.
+            discMaterial.SetFloat("_LineWidth", Mathf.Clamp(0.015f / radius, 0.0007f, 0.006f));
             if (motes == null) return;
             ParticleSystem.ShapeModule shape = motes.shape;
             shape.radius = radius;
@@ -132,7 +145,8 @@ namespace Lightbringer.Aura
             Release(disc);
             if (motes != null) Release(motes.gameObject);
             Release(discMaterial);
-            disc = null; motes = null; discMaterial = null;
+            Release(ribbonMaterial);
+            disc = null; motes = null; discMaterial = null; ribbons = null; ribbonMaterial = null;
         }
 
         private static void Release(Object target)

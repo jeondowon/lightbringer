@@ -1,7 +1,6 @@
 // Premium-stylized toon surface for Lightbringer characters, troops and props.
 // Soft two-tone ramp, shadow tint, rim light, optional emission and inverted-hull outline.
-// Allied materials (_AuraReact = 1) glow when inside the hero aura. The aura position is a
-// global set once per frame, so no per-unit CPU work or per-renderer property blocks are needed.
+// Aura feedback is rendered separately at the feet, preserving character surface colours.
 Shader "Lightbringer/Toon"
 {
     Properties
@@ -238,10 +237,7 @@ Shader "Lightbringer/Toon"
                 color += fresnel * _RimStrength * _RimColor.rgb * (0.4h + 0.6h * lit);
 
                 // Hero aura reaction: allies inside the radius gain a light rim and lift.
-                float2 offset = input.positionWS.xz - _LB_AuraSphere.xz;
-                float radius = max(_LB_AuraSphere.w, 0.001);
-                half inside = _AuraReact * (1.0h - smoothstep(radius * 0.92, radius, length(offset))) * step(0.001, _LB_AuraSphere.w);
-                color += inside * _LB_AuraColor.rgb * (0.12h + fresnel * 1.4h);
+                // Buff feedback is owned by AuraBlessingVisual's foot rune and leg veil.
 
                 color += _EmissionColor.rgb + input.color.rgb * input.color.a * _EmissionStrength;
                 color = MixFog(color, input.fogFactor);

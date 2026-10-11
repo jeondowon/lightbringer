@@ -73,12 +73,12 @@ namespace Lightbringer.Units
             float cost = SelectedCost;
             if (!food.CanAfford(cost))
             {
-                LastFeedback = $"Not enough Food: {food.CurrentFood:F1} / {cost:F1}.";
+                LastFeedback = $"식량이 부족합니다: {food.CurrentFood:F1} / {cost:F1}";
                 return false;
             }
             if (!TryFindSpawnPosition(out Vector3 position))
             {
-                LastFeedback = "No free ground nearby. Move to an open area.";
+                LastFeedback = "소환할 공간이 없습니다. 넓은 곳으로 이동하세요.";
                 return false;
             }
 
@@ -90,11 +90,11 @@ namespace Lightbringer.Units
                 Destroy(soldier.gameObject);
                 return false;
             }
+            soldier.GetComponent<UnitPathFollower>().ConfigureSpeed(UnitCatalog.Speed(selectedUnit));
             if (selectedUnit != UnitKind.Swordsman)
             {
                 soldier.GetComponent<Combatant>()?.Configure(Faction.Allied, UnitCatalog.MaxHealth(selectedUnit));
                 soldier.GetComponent<UnitCombat>()?.Configure(UnitCatalog.AttackDamage(selectedUnit), UnitCatalog.Range(selectedUnit), 1f);
-                soldier.GetComponent<UnitPathFollower>().ConfigureSpeed(UnitCatalog.Speed(selectedUnit));
                 Transform visual = soldier.transform.Find("Visual");
                 if (visual != null) visual.localScale = UnitCatalog.VisualScale(selectedUnit);
                 if (selectedUnit == UnitKind.Shieldbearer) soldier.GetComponent<Combatant>().DamageReduction = 0.35f;
@@ -121,7 +121,7 @@ namespace Lightbringer.Units
             Summoned?.Invoke(soldier.GetComponent<Combatant>());
             // Make consecutive spawns see this collider even before the next physics step.
             Physics.SyncTransforms();
-            LastFeedback = UnitCatalog.Names[(int)selectedUnit] + " deployed.";
+            LastFeedback = UnitCatalog.Names[(int)selectedUnit] + " 소환 완료";
             return true;
         }
 

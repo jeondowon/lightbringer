@@ -11,11 +11,14 @@ namespace Lightbringer.Visuals
     {
         private readonly List<GameObject> groundCover = new List<GameObject>();
         private readonly List<Vector2> trunks = new List<Vector2>();
+        private readonly List<Vector2> grassCentres = new List<Vector2>();
+        private readonly Dictionary<Material, Material> grassMaterials = new Dictionary<Material, Material>();
         private System.Random random;
         private BattlefieldEnvironment terrain;
         private float nextCull;
         public int TreeCount { get; private set; }
         public int PropCount { get; private set; }
+        public int GrassCount { get; private set; }
 
         public static ForestEnvironmentDressing Build(ForestEnvironmentProfile profile,
             BattlefieldEnvironment terrain, int stage)
@@ -40,7 +43,7 @@ namespace Lightbringer.Visuals
                     {
                         Vector2 p = new Vector2(side * (23f + row * 18f + Range(-3f, 3f)),
                             -34f + i * 12f + Range(-4f, 4f));
-                        if (!terrain.ClearOfPlay(p, 12f, 18f)) continue;
+                        if (!terrain.ClearOfPlay(p, 12f, 18f) || !terrain.ClearOfProps(p, 11f)) continue;
                         Spawn(profile.tree, p, Range(0.8f, 1.35f), 1.5f);
                         trunks.Add(p);
                         TreeCount++;
@@ -51,7 +54,7 @@ namespace Lightbringer.Visuals
             Scatter(profile.rock, 40, 7f, 13f, 0.7f, 1.7f, false);
             Scatter(profile.stone, 70, 4.5f, 10f, 0.6f, 1.4f, false);
             Scatter(profile.plant, 95, 4f, 10f, 0.7f, 1.2f, true);
-            Scatter(profile.grass, 230, 5f, 11f, 0.45f, 0.85f, true);
+            BuildGrassPatches(profile.grass);
             if (profile.wind != null)
             {
                 GameObject wind = Instantiate(profile.wind, transform);
@@ -59,6 +62,73 @@ namespace Lightbringer.Visuals
                 wind.transform.localPosition = Vector3.zero;
                 wind.transform.localRotation = Quaternion.Euler(0f, 35f, 0f);
             }
+        }
+
+        private void BuildGrassPatches(GameObject prefab)
+        {
+            // Cull whole patches, sharing the supplier mesh and instanced material between tufts.
+            // Gaps between patches leave the ground texture visible instead of making a solid carpet.
+            for (int attempt = 0, placed = 0; attempt < 1400 && placed < 140; attempt++)
+            {
+                Vector2 centre = new Vector2(Range(-33f, 33f), Range(-27f, 62f));
+                if (!terrain.ClearOfPlay(centre, 5f, 11f)) continue;
+                bool overlaps = false;
+                foreach (Vector2 other in grassCentres)
+                    if ((centre - other).sqrMagnitude < 16f) { overlaps = true; break; }
+                if (overlaps) continue;
+                GameObject patch = new GameObject("Forest Grass Patch");
+                patch.transform.SetParent(transform, false);
+                patch.transform.localPosition = new Vector3(centre.x, terrain.SurfaceHeight(centre.x, centre.y), centre.y);
+                float radius = Range(2.2f, 3.5f);
+                int count = random.Next(24, 37);
+                for (int i = 0; i < count; i++)
+                {
+                    float angle = Range(0f, Mathf.PI * 2f);
+                    float distance = Mathf.Sqrt(Range(0f, 1f)) * radius;
+                    Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+                    // Test every tuft, including the patch edge, with room for the blade width.
+                    if (!terrain.ClearOfPlay(point, 4.8f, 10.5f) || NearTrunk(point)) continue;
+                    float slope = Mathf.Abs(terrain.SurfaceHeight(point.x + 0.5f, point.y) - terrain.SurfaceHeight(point.x - 0.5f, point.y))
+                        + Mathf.Abs(terrain.SurfaceHeight(point.x, point.y + 0.5f) - terrain.SurfaceHeight(point.x, point.y - 0.5f));
+                    if (slope > 0.6f) continue;
+                    GameObject tuft = Spawn(prefab, point, 1f);
+                    foreach (Renderer renderer in tuft.GetComponentsInChildren<Renderer>())
+                    {
+                        Material[] materials = renderer.sharedMaterials;
+                        for (int m = 0; m < materials.Length; m++)
+                        {
+                            Material source = materials[m];
+                            if (source == null) continue;
+                            if (!grassMaterials.TryGetValue(source, out Material shared))
+                            {
+                                shared = new Material(source) { name = "Forest Grass (Instance)", enableInstancing = true };
+                                // Match the warmer field palette without modifying the supplier asset.
+                                if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.3f, 0.38f, 0.14f));
+                                if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.95f, 1f, 0.72f));
+                                if (shared.HasProperty("_RootMaskStrength")) shared.SetFloat("_RootMaskStrength", 0.1f);
+                                grassMaterials.Add(source, shared);
+                            }
+                            materials[m] = shared;
+                        }
+                        renderer.sharedMaterials = materials;
+                    }
+                    float width = Range(1.3f, 2f);
+                    float height = Range(0.7f, 1.1f) * Mathf.Lerp(1f, 0.7f, distance / radius);
+                    tuft.transform.localScale = new Vector3(width, height, width);
+                    tuft.transform.SetParent(patch.transform, true);
+                    GrassCount++;
+                }
+                grassCentres.Add(centre);
+                groundCover.Add(patch);
+                placed++;
+            }
+        }
+
+        private bool NearTrunk(Vector2 point)
+        {
+            foreach (Vector2 trunk in trunks)
+                if ((point - trunk).sqrMagnitude < 4f) return true;
+            return false;
         }
 
         private void Scatter(GameObject prefab, int count, float lane, float bases,
@@ -69,10 +139,7 @@ namespace Lightbringer.Visuals
                 Vector2 p = new Vector2(Range(-43f, 43f), Range(-32f, 69f));
                 if (!terrain.ClearOfPlay(p, lane, bases)) continue;
                 // Don't bury shrubs inside the large trunks.
-                bool blocked = false;
-                foreach (Vector2 trunk in trunks)
-                    if ((p - trunk).sqrMagnitude < 4f) { blocked = true; break; }
-                if (blocked) continue;
+                if (NearTrunk(p)) continue;
                 GameObject instance = Spawn(prefab, p, Range(minScale, maxScale));
                 if (cull) groundCover.Add(instance);
                 placed++;
@@ -101,6 +168,16 @@ namespace Lightbringer.Visuals
             }
             PropCount++;
             return instance;
+        }
+
+        private void OnDestroy()
+        {
+            foreach (Material material in grassMaterials.Values)
+                if (material != null)
+                {
+                    if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
+                }
+            grassMaterials.Clear();
         }
 
         private void Update()

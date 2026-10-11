@@ -11,8 +11,8 @@ namespace Lightbringer.Progression
     {
         public const int StageCount = 8;
         public const int GrowthCount = 8;
-        public static readonly string[] GrowthNames = { "Aura radius +0.6m", "Food production +1/s", "Mana recovery +2/s",
-            "Max Food and Mana +10", "Summon cost -2.5% (max 50%)", "Aura damage bonus +5%", "Hero power +10%", "Hero health +20" };
+        public static readonly string[] GrowthNames = { "오라 반경 +0.6m", "초당 식량 생산 +1", "초당 마나 회복 +2",
+            "최대 식량·마나 +10", "소환 비용 -2.5% (최대 50%)", "오라 공격력 보너스 +5%", "영웅 피해량 +10%", "영웅 체력 +20" };
         public int version = 1;
         public int unlockedStage = 1;
         public bool[] cleared = new bool[StageCount];

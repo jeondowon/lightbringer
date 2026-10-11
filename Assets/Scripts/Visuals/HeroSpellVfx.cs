@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Lightbringer.Visuals
 {
-    // Turns the hero's offensive spells into lightning strikes from above, timed to the staff-raise
-    // of the cast animation. Damage timing is unchanged; this is presentation only.
+    // Turns offensive spells into sky strikes, timed to the staff-raise
+    // of the cast animation. Light Staff damage and visuals share the same windup/descent timing.
     [DisallowMultipleComponent]
     [RequireComponent(typeof(HeroAbilities))]
     public sealed class HeroSpellVfx : MonoBehaviour
@@ -35,6 +35,12 @@ namespace Lightbringer.Visuals
 
         private void OnSpellLanded(int equipment, Vector3 impact, float radius)
         {
+            if (equipment == (int)EquipmentKind.LightStaff)
+            {
+                // Start the clock at cast time, not in a later Update after a queued delay.
+                CelestialStrikeVfx.Spawn(style, GroundBelow(impact), transform.parent, HeroAbilities.LightStaffWindup);
+                return;
+            }
             float strength = equipment == (int)EquipmentKind.RuneStaff ? AreaStrength : 1f;
             pending.Add((Time.time + StrikeDelay, GroundBelow(impact), radius, strength));
         }

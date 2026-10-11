@@ -161,7 +161,7 @@ namespace Lightbringer.EditorTools
             return folder + "/" + Path.GetFileName(file);
         }
 
-        private static Texture2D ImportTexture(string path, bool normal)
+        internal static Texture2D ImportTexture(string path, bool normal)
         {
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -173,7 +173,7 @@ namespace Lightbringer.EditorTools
         }
 
         // URP Lit: metallic in R, smoothness (1 - roughness) in A.
-        private static void PackMetallicSmoothness(string metallicPath, string roughnessPath, string packedPath)
+        internal static void PackMetallicSmoothness(string metallicPath, string roughnessPath, string packedPath)
         {
             var metallic = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
             var roughness = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);

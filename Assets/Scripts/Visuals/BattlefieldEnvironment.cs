@@ -24,6 +24,7 @@ namespace Lightbringer.Visuals
         private float grassCheck;
         private readonly List<(Vector2 a, Vector2 b)> lanes = new List<(Vector2, Vector2)>();
         private readonly List<Vector2> keepClear = new List<Vector2>();
+        private readonly List<(Vector2 point, float radius)> propFootprints = new List<(Vector2, float)>();
         private static readonly int LanesId = Shader.PropertyToID("_LB_Lanes");
         private static readonly int LaneCountId = Shader.PropertyToID("_LB_LaneCount");
         private const int MaxShaderLanes = 16;
@@ -75,6 +76,7 @@ namespace Lightbringer.Visuals
             PublishLanes();
 
             BuildTerrain();
+            BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length);
             // Imported forest tufts replace the old solid-colour blade carpet.
             if (forest == null && style.grassMaterial != null) BuildGrass();
             Shapes near = new Shapes(), far = new Shapes(), backdrop = new Shapes();
@@ -84,9 +86,7 @@ namespace Lightbringer.Visuals
                 ScatterRocks(near);
             }
             else ForestEnvironmentDressing.Build(forest, this, stage);
-            BuildRuins(near);
-            BuildAlliedGrounds(near);
-            BuildCorruptedGrounds(near);
+
             BuildBackdrop(backdrop);
             AddMesh("Props (Near)", near.Bake("LB Env Props Near"), style.propsMaterial, true);
             AddMesh("Props (Far)", far.Bake("LB Env Props Far"), style.propsMaterial, false);
@@ -228,6 +228,7 @@ namespace Lightbringer.Visuals
                         float outside = OutsideDistance(x, z);
                         float density = outside <= 0f ? 1f : Mathf.Clamp01(1f - outside / 26f) * 0.5f;
                         Vector2 flat = new Vector2(x, z);
+                        if (!ClearOfProps(flat, 0.25f)) continue;
                         if (density <= 0f || random.NextDouble() > density) continue;
                         float road = RoadMask(flat);
                         if (random.NextDouble() < Mathf.Max(road * 1.3f, PlazaMask(flat))) continue;
@@ -289,8 +290,38 @@ namespace Lightbringer.Visuals
 
         public bool ClearOfPlay(Vector2 point, float lane, float bases)
         {
+            if (!ClearOfProps(point, 1.5f)) return false;
+            // Leave both expanded castle courtyards free of scattered props as well as retired dressing.
+            if (AlliedKeep.HasValue && Mathf.Abs(point.x - AlliedKeep.Value.x) < 12f
+                && Mathf.Abs(point.y - AlliedKeep.Value.y) < 10f) return false;
+            if (EnemyKeep.HasValue && Mathf.Abs(point.x - EnemyKeep.Value.x) < 12f
+                && Mathf.Abs(point.y - EnemyKeep.Value.y) < 10f) return false;
             if (DistanceToLanes(point) < lane) return false;
             foreach (Vector2 clear in keepClear) if (Vector2.Distance(point, clear) < bases) return false;
+            return true;
+        }
+
+        public void ReserveProp(Vector2 point, float radius) => propFootprints.Add((point, radius));
+
+        public bool ClearOfProps(Vector2 point, float radius)
+        {
+            foreach (var footprint in propFootprints)
+                if (Vector2.Distance(point, footprint.point) < radius + footprint.radius) return false;
+            return true;
+        }
+
+        public bool ClearForProp(Vector2 point, float radius)
+        {
+            if (DistanceToLanes(point) < LaneClearance + radius || !ClearOfProps(point, radius)) return false;
+            foreach (Vector2 gate in keepClear)
+                if (Vector2.Distance(point, gate) < 6f + radius) return false;
+            foreach (Vector2? keep in new[] { AlliedKeep, EnemyKeep })
+                if (keep.HasValue && Mathf.Abs(point.x - keep.Value.x) < 9f + radius
+                    && Mathf.Abs(point.y - keep.Value.y) < 8f + radius) return false;
+            // Large plinths stay on the flat field; a tiny edge slope can be buried without floating.
+            float y = SurfaceHeight(point.x, point.y);
+            foreach (Vector2 offset in new[] { Vector2.left, Vector2.right, Vector2.up, Vector2.down })
+                if (Mathf.Abs(SurfaceHeight(point.x + offset.x * radius, point.y + offset.y * radius) - y) > 0.2f) return false;
             return true;
         }
 
@@ -302,12 +333,13 @@ namespace Lightbringer.Visuals
                 float x = Range(-105f, 105f), z = Range(-90f, 140f);
                 float d = OutsideDistance(x, z);
                 if (d < 2f || d > 75f) continue;
+                if (!ClearOfProps(new Vector2(x, z), 8f)) continue;
                 Tree(d < 22f ? near : far, new Vector3(x, Height(x, z), z), Range(1.2f, 2.4f));
             }
             for (int i = 0; i < 60; i++)
             {
                 Vector2 point = new Vector2(Range(-PlayHalfWidth + 2f, PlayHalfWidth - 2f), Range(PlayMinZ + 2f, PlayMaxZ - 2f));
-                if (!ClearOfPlay(point, 8f, 13f)) continue;
+                if (!ClearOfPlay(point, 8f, 13f) || !ClearOfProps(point, 6f)) continue;
                 Tree(near, new Vector3(point.x, 0f, point.y), Range(1f, 1.8f));
             }
         }
@@ -402,82 +434,6 @@ namespace Lightbringer.Visuals
             target.Pattern = Surface.None;
         }
 
-        private void BuildRuins(Shapes target)
-        {
-            // Old Lightbringer shrines: plinthed pillars with broken, rubble-capped tops, an occasional arch with a
-            // gilded lintel, scattered rubble and moss. Kept well clear of the lanes.
-            Color moss = Color.Lerp(style.grassDark, style.foliage, 0.35f);
-            target.Pattern = Surface.Masonry;
-            int built = 0;
-            for (int attempt = 0; attempt < 80 && built < 5; attempt++)
-            {
-                Vector2 centre = new Vector2(Range(-PlayHalfWidth + 4f, PlayHalfWidth - 4f), Range(PlayMinZ + 6f, PlayMaxZ - 6f));
-                if (!ClearOfPlay(centre, LaneClearance + 3.5f, 14f)) continue;
-                built++;
-                Vector3 c = new Vector3(centre.x, 0f, centre.y);
-                float floorYaw = Range(0f, 90f);
-                // Cracked floor: a few offset slabs instead of one block.
-                for (int s = 0; s < 4; s++)
-                {
-                    Vector3 slab = c + Quaternion.Euler(0f, floorYaw, 0f) * new Vector3((s % 2 - 0.5f) * 3.1f, 0f, (s / 2 - 0.5f) * 3.1f);
-                    target.Piece(ProceduralMeshes.Box, Color.Lerp(style.ruinStone * 0.85f, style.ruinStone * 0.95f, Range(0f, 1f)),
-                        slab + Vector3.up * Range(0.02f, 0.12f), new Vector3(3f, 0.28f, 3f),
-                        new Vector3(Range(-2f, 2f), floorYaw + Range(-3f, 3f), Range(-2f, 2f)), top: moss, groundY: 0f);
-                }
-                int pillars = random.Next(4, 7);
-                float start = Range(0f, 360f);
-                bool arch = random.NextDouble() < 0.5;
-                for (int p = 0; p < pillars; p++)
-                {
-                    float angle = (start + p * 360f / 7f) * Mathf.Deg2Rad;
-                    Vector3 basePoint = c + new Vector3(Mathf.Cos(angle) * 2.8f, 0.2f, Mathf.Sin(angle) * 2.8f);
-                    bool intact = arch ? p < 2 : random.NextDouble() < 0.3;
-                    float height = intact ? 4.2f : Range(1.1f, 3f);
-                    Color stone = Color.Lerp(style.ruinStone * 0.92f, style.ruinStone, Range(0f, 1f));
-                    target.Piece(ProceduralMeshes.Box, stone * 0.95f, basePoint + Vector3.up * 0.18f, new Vector3(1.05f, 0.36f, 1.05f),
-                        new Vector3(0f, Range(0f, 90f), 0f), top: moss, groundY: 0f);
-                    target.Piece(ProceduralMeshes.Frustum(0.88f, 12), stone, basePoint + Vector3.up * 0.36f, new Vector3(0.72f, height, 0.72f), top: moss, groundY: 0f);
-                    if (intact)
-                    {
-                        target.Piece(ProceduralMeshes.Frustum(1f, 12), style.gold, basePoint + Vector3.up * (0.36f + height), new Vector3(0.86f, 0.16f, 0.86f), spec: 1f);
-                        target.Piece(ProceduralMeshes.Box, stone, basePoint + Vector3.up * (0.75f + height), new Vector3(1.05f, 0.42f, 1.05f), top: moss, groundY: 0f);
-                    }
-                    else
-                    {
-                        // Broken top: a chipped chunk and rubble at the foot.
-                        target.Piece(ProceduralMeshes.Faceted(random.Next(6)), stone, basePoint + Vector3.up * (0.36f + height), new Vector3(0.7f, 0.45f, 0.7f),
-                            new Vector3(Range(-20f, 20f), Range(0f, 360f), 0f), top: moss, groundY: 0f);
-                        for (int r = 0; r < 3; r++)
-                            target.Piece(ProceduralMeshes.Faceted(random.Next(6)), stone * 0.95f,
-                                basePoint + new Vector3(Range(-1.2f, 1.2f), -0.05f, Range(-1.2f, 1.2f)), Vector3.one * Range(0.25f, 0.5f),
-                                new Vector3(Range(0f, 360f), Range(0f, 360f), 0f), top: moss, groundY: 0f);
-                    }
-                }
-                if (arch)
-                {
-                    // Lintel spanning the two intact pillars.
-                    Vector3 a = c + new Vector3(Mathf.Cos(start * Mathf.Deg2Rad), 0f, Mathf.Sin(start * Mathf.Deg2Rad)) * 2.8f;
-                    Vector3 b = c + new Vector3(Mathf.Cos((start + 360f / 7f) * Mathf.Deg2Rad), 0f, Mathf.Sin((start + 360f / 7f) * Mathf.Deg2Rad)) * 2.8f;
-                    Vector3 middle = (a + b) * 0.5f + Vector3.up * 5.3f;
-                    float span = Vector3.Distance(a, b) + 1.2f;
-                    float lintelYaw = Mathf.Atan2(b.x - a.x, b.z - a.z) * Mathf.Rad2Deg;
-                    target.Piece(ProceduralMeshes.Box, style.ruinStone, middle, new Vector3(0.9f, 0.6f, span), new Vector3(0f, lintelYaw, 0f), top: moss, groundY: 0f);
-                    target.Piece(ProceduralMeshes.Box, style.gold, middle - Vector3.up * 0.33f, new Vector3(0.95f, 0.08f, span * 0.96f),
-                        new Vector3(0f, lintelYaw, 0f), spec: 1f);
-                }
-                // A fallen column in pieces and a couple of bushes reclaiming the shrine.
-                Vector3 fallen = c + new Vector3(Range(-1.5f, 1.5f), 0.32f, Range(-1.5f, 1.5f));
-                float fallYaw = Range(0f, 360f);
-                Vector3 along = Quaternion.Euler(0f, fallYaw, 0f) * Vector3.forward;
-                for (int s = 0; s < 3; s++)
-                    target.Piece(ProceduralMeshes.Frustum(0.9f, 12), style.ruinStone * 0.93f, fallen + along * s * 1.15f + Vector3.up * Range(-0.05f, 0.05f),
-                        new Vector3(0.65f, 1.0f, 0.65f), new Vector3(90f, fallYaw + Range(-8f, 8f), 0f), top: moss, groundY: 0f);
-                Bush(target, c + new Vector3(Range(-3.5f, 3.5f), 0f, Range(-3.5f, 3.5f)), Range(0.8f, 1.2f));
-                Bush(target, c + new Vector3(Range(-3.5f, 3.5f), 0f, Range(-3.5f, 3.5f)), Range(0.7f, 1.1f));
-            }
-            target.Pattern = Surface.None;
-        }
-
         private void BuildBackdrop(Shapes target)
         {
             // Mountain ring inside the far fog band so it reads as a soft silhouette.
@@ -491,26 +447,6 @@ namespace Lightbringer.Visuals
                 target.Cone(0f, Color.Lerp(style.mountain, Color.white, 0.6f), foot + Vector3.up * height * 0.72f,
                     new Vector3(width * 0.3f, height * 0.3f, width * 0.3f), new Vector3(0f, Range(0f, 360f), 0f), 7);
             }
-            // The Lightbringer citadel behind the allied stronghold.
-            Vector3 citadel = new Vector3(0f, 0f, -72f);
-            for (int i = -2; i <= 2; i++)
-            {
-                float height = 22f - Mathf.Abs(i) * 4f;
-                Vector3 tower = citadel + new Vector3(i * 9f, Height(i * 9f, citadel.z) - 1f, Mathf.Abs(i) * 3f);
-                target.Cone(0.9f, style.ivory, tower, new Vector3(5f, height, 5f), segments: 10);
-                target.Cone(0f, style.royalBlue, tower + Vector3.up * height, new Vector3(6f, 7f, 6f), segments: 10);
-                target.Cone(0f, style.gold, tower + Vector3.up * (height + 6.6f), new Vector3(0.6f, 2.5f, 0.6f), segments: 6, spec: 1f);
-            }
-            target.Add(Shape.Cube, style.ivory, citadel + new Vector3(0f, Height(0f, citadel.z) + 6f, 2f), new Vector3(36f, 12f, 6f));
-            // Corrupted spires behind the enemy stronghold.
-            Vector3 spires = new Vector3(0f, 0f, 92f);
-            for (int i = -3; i <= 3; i++)
-            {
-                float height = 20f + (3 - Mathf.Abs(i)) * 6f;
-                Vector3 spire = spires + new Vector3(i * 8f, Height(i * 8f, spires.z) - 2f, Mathf.Abs(i) * 2.5f);
-                target.Cone(0.05f, style.corruptStone, spire, new Vector3(5f, height, 5f), new Vector3(0f, i * 13f, 0f), 6);
-                target.Add(Shape.Cube, style.corruptGlow, spire + Vector3.up * height * 0.6f, new Vector3(0.6f, 2.5f, 0.6f), emission: 0.8f);
-            }
         }
 
         // ---------- Stronghold grounds ----------
@@ -523,154 +459,6 @@ namespace Lightbringer.Visuals
         {
             if (!EnemyKeep.HasValue) return 0f;
             return 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(5f, 24f, Vector2.Distance(flat, EnemyKeep.Value)));
-        }
-
-        // Dressing stays off the lanes and out of both stronghold footprints.
-        private bool Dressable(Vector2 point, float clearance = LaneClearance)
-        {
-            if (!ClearOfPlay(point, clearance, 0f)) return false;
-            foreach (Vector2? keep in new[] { AlliedKeep, EnemyKeep })
-                if (keep.HasValue && Mathf.Abs(point.x - keep.Value.x) < 4.6f && Mathf.Abs(point.y - keep.Value.y) < 3.4f) return false;
-            return true;
-        }
-
-        private Vector3 GroundAt(Vector2 point) => new Vector3(point.x, Height(point.x, point.y), point.y);
-
-        private void BuildAlliedGrounds(Shapes target)
-        {
-            if (!AlliedKeep.HasValue) return;
-            Vector2 keep = AlliedKeep.Value;
-            Color stone = style.ivory, dark = style.ivory * 0.8f;
-            for (int side = -1; side <= 1; side += 2)
-            {
-                // Curtain walls in 2 m bays running out from the keep, ending in a roofed watchtower.
-                for (float x = 5.8f; x < 12f; x += 2f)
-                {
-                    Vector2 at = keep + new Vector2(side * x, 0.6f);
-                    if (!Dressable(at)) continue;
-                    Vector3 ground = GroundAt(at);
-                    target.Pattern = Surface.Masonry;
-                    target.Piece(ProceduralMeshes.Box, stone, ground + Vector3.up * 1.1f, new Vector3(2.04f, 2.2f, 1.0f), groundY: ground.y);
-                    target.Piece(ProceduralMeshes.Box, dark, ground + Vector3.up * 0.3f, new Vector3(2.08f, 0.6f, 1.12f), groundY: ground.y);
-                    for (int c = 0; c < 3; c++)
-                        foreach (float z in new[] { -0.36f, 0.36f })
-                            target.Piece(ProceduralMeshes.Box, stone, ground + new Vector3(-0.66f + c * 0.66f, 2.45f, z), new Vector3(0.38f, 0.5f, 0.28f));
-                    target.Pattern = Surface.None;
-                }
-                Vector2 towerAt = keep + new Vector2(side * 13.1f, 0.6f);
-                if (Dressable(towerAt))
-                {
-                    Vector3 foot = GroundAt(towerAt);
-                    target.Pattern = Surface.Masonry;
-                    target.Piece(ProceduralMeshes.Frustum(0.88f, 14), stone, foot - Vector3.up * 0.1f, new Vector3(2.2f, 4.2f, 2.2f), groundY: foot.y);
-                    target.Piece(ProceduralMeshes.Frustum(1f, 14), dark, foot + Vector3.up * 3.75f, new Vector3(2.15f, 0.4f, 2.15f));
-                    target.Pattern = Surface.RoofTiles;
-                    target.Piece(ProceduralMeshes.Frustum(0f, 14), style.royalBlue, foot + Vector3.up * 4.15f, new Vector3(2.5f, 2.6f, 2.5f));
-                    target.Pattern = Surface.None;
-                    target.Piece(ProceduralMeshes.Frustum(0f, 6), style.gold, foot + Vector3.up * 6.7f, new Vector3(0.16f, 0.8f, 0.16f), spec: 1f);
-                    target.Add(SilhouetteFactory.Shape.Cube, style.holyGlow, foot + new Vector3(0f, 2.6f, 0.95f), new Vector3(0.18f, 0.55f, 0.08f), emission: 0.8f);
-                }
-            }
-
-            // Stone lanterns with glowing cages along the plaza and banner poles by the gate.
-            foreach (Vector2 offset in new[] { new Vector2(-6.2f, 4.8f), new Vector2(6.2f, 4.8f), new Vector2(-8.5f, 8.5f), new Vector2(8.5f, 8.5f) })
-            {
-                Vector2 at = keep + offset;
-                if (!Dressable(at)) continue;
-                Vector3 foot = GroundAt(at);
-                target.Pattern = Surface.Masonry;
-                target.Piece(ProceduralMeshes.Box, dark, foot + Vector3.up * 0.2f, new Vector3(0.7f, 0.4f, 0.7f), groundY: foot.y);
-                target.Piece(ProceduralMeshes.Frustum(0.8f, 8), stone, foot + Vector3.up * 0.4f, new Vector3(0.36f, 1.4f, 0.36f));
-                target.Pattern = Surface.None;
-                target.Add(SilhouetteFactory.Shape.Cube, style.holyGlow, foot + Vector3.up * 2.05f, new Vector3(0.34f, 0.42f, 0.34f), emission: 1f);
-                target.Piece(ProceduralMeshes.Box, style.gold, foot + Vector3.up * 1.82f, new Vector3(0.5f, 0.06f, 0.5f), spec: 1f);
-                target.Piece(ProceduralMeshes.Frustum(0f, 4), style.gold, foot + Vector3.up * 2.26f, new Vector3(0.62f, 0.45f, 0.62f), new Vector3(0f, 45f, 0f), spec: 1f);
-            }
-            foreach (Vector2 offset in new[] { new Vector2(-5.2f, 2.4f), new Vector2(5.2f, 2.4f) })
-            {
-                Vector2 at = keep + offset;
-                if (!Dressable(at)) continue;
-                Vector3 foot = GroundAt(at);
-                target.Piece(ProceduralMeshes.Frustum(1f, 6), style.gold, foot, new Vector3(0.1f, 4.2f, 0.1f), spec: 1f);
-                target.Piece(ProceduralMeshes.Box, style.royalBlue, foot + new Vector3(0f, 3.1f, 0.06f), new Vector3(0.8f, 1.9f, 0.04f), sway: 0.4f);
-                target.Piece(ProceduralMeshes.Box, style.gold, foot + new Vector3(0f, 3.25f, 0.09f), new Vector3(0.26f, 0.26f, 0.02f), new Vector3(0f, 0f, 45f), spec: 1f);
-                target.Piece(ProceduralMeshes.Box, style.gold, foot + new Vector3(0f, 4.05f, 0.06f), new Vector3(0.95f, 0.06f, 0.06f), spec: 1f);
-            }
-
-            // Supply stacks against the walls: plank crates and banded barrels.
-            foreach (Vector2 offset in new[] { new Vector2(-7.4f, -1.1f), new Vector2(7.6f, -1.3f), new Vector2(-10.2f, 1.9f), new Vector2(10.4f, 2.0f) })
-            {
-                Vector2 at = keep + offset;
-                if (!Dressable(at)) continue;
-                Vector3 foot = GroundAt(at);
-                Color wood = Color.Lerp(style.bark * 1.3f, style.bark * 1.6f, Range(0f, 1f));
-                target.Pattern = Surface.Planks;
-                int crates = random.Next(2, 4);
-                for (int c = 0; c < crates; c++)
-                {
-                    float size = Range(0.7f, 0.95f);
-                    Vector3 place = c < 2 ? new Vector3((c - 0.5f) * 1.0f, size * 0.5f, Range(-0.15f, 0.15f)) : new Vector3(Range(-0.2f, 0.2f), 1.25f, 0f);
-                    target.Piece(ProceduralMeshes.Box, wood, foot + place, Vector3.one * size, new Vector3(0f, Range(-12f, 12f), 0f), groundY: foot.y);
-                }
-                target.Piece(ProceduralMeshes.Frustum(1f, 12), wood * 0.9f, foot + new Vector3(1.2f, 0f, 0.5f), new Vector3(0.7f, 0.95f, 0.7f), groundY: foot.y);
-                target.Pattern = Surface.None;
-                foreach (float y in new[] { 0.2f, 0.75f })
-                    target.Piece(ProceduralMeshes.Frustum(1f, 12), style.leather, foot + new Vector3(1.2f, y, 0.5f), new Vector3(0.73f, 0.06f, 0.73f));
-            }
-        }
-
-        private void BuildCorruptedGrounds(Shapes target)
-        {
-            if (!EnemyKeep.HasValue) return;
-            Vector2 keep = EnemyKeep.Value;
-            Color obsidian = style.corruptStone * 0.75f;
-            // Obsidian shards and glowing crystal clusters erupting from the corrupted soil.
-            for (int i = 0; i < 40; i++)
-            {
-                float angle = Range(0f, Mathf.PI * 2f), distance = Range(7f, 22f);
-                Vector2 at = keep + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
-                if (!Dressable(at, LaneClearance + 0.5f)) continue;
-                Vector3 ground = GroundAt(at);
-                float height = Range(1.4f, 3.8f) * Mathf.Lerp(1.2f, 0.6f, distance / 22f);
-                target.Pattern = Surface.Rock;
-                target.Piece(ProceduralMeshes.Faceted(random.Next(6)), obsidian * Range(0.85f, 1.15f), ground + Vector3.up * height * 0.32f,
-                    new Vector3(Range(0.8f, 1.4f), height, Range(0.8f, 1.4f)), new Vector3(Range(-18f, 18f), Range(0f, 360f), Range(-18f, 18f)), groundY: ground.y);
-                target.Pattern = Surface.None;
-                if (random.NextDouble() > 0.45) continue;
-                Vector3 cluster = ground + new Vector3(Range(-1f, 1f), -0.1f, Range(-1f, 1f));
-                for (int c = 0; c < 3; c++)
-                    target.Cone(0f, style.corruptGlow, cluster, new Vector3(0.35f, Range(0.8f, 1.6f), 0.35f) * Mathf.Lerp(1f, 0.6f, c / 2f),
-                        new Vector3(Range(-30f, 30f), Range(0f, 360f), Range(-30f, 30f)), 4, emission: 0.85f);
-            }
-            // Bone-spike palisades flanking the gate, leaning toward the battlefield.
-            for (int side = -1; side <= 1; side += 2)
-                for (float x = 5.5f; x < 14f; x += 1.05f)
-                {
-                    Vector2 at = keep + new Vector2(side * x, -1.2f + Range(-0.25f, 0.25f));
-                    if (!Dressable(at)) continue;
-                    Vector3 ground = GroundAt(at);
-                    target.Piece(ProceduralMeshes.Frustum(0f, 5), style.bone * Range(0.85f, 1f), ground - Vector3.up * 0.2f,
-                        new Vector3(0.28f, Range(1.4f, 2.1f), 0.28f), new Vector3(-28f + Range(-6f, 6f), Range(-10f, 10f), Range(-6f, 6f)));
-                    target.Piece(ProceduralMeshes.Box, style.corruptArmor, ground + Vector3.up * 0.55f, new Vector3(1.1f, 0.12f, 0.12f), new Vector3(0f, Range(-6f, 6f), 0f));
-                }
-            // War totems along the approach: stacked dark stones, a horned skull with glowing eyes.
-            foreach (Vector2 offset in new[] { new Vector2(-8f, -6f), new Vector2(8f, -6f), new Vector2(-12.5f, -2.5f), new Vector2(12.5f, -2.5f) })
-            {
-                Vector2 at = keep + offset;
-                if (!Dressable(at)) continue;
-                Vector3 foot = GroundAt(at);
-                target.Pattern = Surface.Rock;
-                target.Piece(ProceduralMeshes.Faceted(random.Next(6)), obsidian, foot + Vector3.up * 0.35f, new Vector3(1.1f, 0.8f, 1.1f), groundY: foot.y);
-                target.Pattern = Surface.CorruptMasonry;
-                target.Piece(ProceduralMeshes.Frustum(0.7f, 6), style.corruptStone, foot + Vector3.up * 0.6f, new Vector3(0.7f, 1.8f, 0.7f));
-                target.Pattern = Surface.None;
-                Vector3 head = foot + Vector3.up * 2.75f;
-                target.Add(SilhouetteFactory.Shape.Ball, style.bone, head, new Vector3(0.6f, 0.55f, 0.6f));
-                foreach (float eye in new[] { -0.13f, 0.13f })
-                    target.Add(SilhouetteFactory.Shape.Ball, style.corruptGlow, head + new Vector3(eye, 0.04f, -0.26f), new Vector3(0.14f, 0.12f, 0.06f), emission: 1f);
-                target.Cone(0f, style.bone, head + new Vector3(0.22f, 0.15f, 0f), new Vector3(0.14f, 0.7f, 0.14f), new Vector3(0f, 0f, -55f), 5);
-                target.Cone(0f, style.bone, head + new Vector3(-0.22f, 0.15f, 0f), new Vector3(0.14f, 0.7f, 0.14f), new Vector3(0f, 0f, 55f), 5);
-            }
         }
 
         // Lane segments for the terrain shader's per-pixel road (world XZ).

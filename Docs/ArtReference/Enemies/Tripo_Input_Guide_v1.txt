@@ -1,0 +1,50 @@
+Lightbringer 적군 원화 v1 — 2026-10-12
+
+현재 상태: 원화 준비 완료. GLB 생성, 리깅, Unity 모델 연결은 아직 수행하지 않음.
+제작 도구: 내장 image_gen. 각 PNG 옆의 .prompt.txt에 생성 프롬프트 기록.
+정식 병종: Raider, Archer, Swarmling, Brute, Shaman, Warlord.
+코드 대응: Swarmling = EnemyKind.Swarm, Warlord = EnemyKind.Boss.
+
+파일 구분
+01_Design: 무기를 든 디자인 참고용. Tripo 몸체 입력에 사용하지 않음.
+02_Body_Apose: 무기 없는 정면 전신, 빈 주먹 A포즈. Tripo 몸체 입력용.
+03_Weapon: 캐릭터와 손이 없는 개별 장비 이미지.
+검과 방패, 활과 화살통을 분리했으므로 6종 각 3장 기준에 2장이 추가됨.
+총 20 PNG: 디자인 6장, 몸체 6장, 장비 8장.
+상위 Enemies 폴더의 기존 Enemy_* 이미지는 이전 후보 시안. 이번 제작 입력은 병종별 하위 폴더를 사용.
+
+Tripo 몸체 입력
+Raider/Raider_02_Body_Apose_v1.png
+Archer/Archer_02_Body_Apose_v1.png
+Swarmling/Swarmling_02_Body_Apose_v1.png
+Brute/Brute_02_Body_Apose_v1.png
+Shaman/Shaman_02_Body_Apose_v1.png
+Warlord/Warlord_02_Body_Apose_v1.png
+
+장비
+Raider: 검 Sword + 둥근 방패 Shield. 각각 별도 생성.
+Archer: 활 Bow + 화살통 Quiver. 결정한 기존 코드 재사용/색 변경용 참고.
+Swarmling: 단검 Dagger. 코드 제작용 참고.
+Brute: 큰 몽둥이 Club. Tripo 별도 생성.
+Shaman: 해골 토템 지팡이 Staff. 전체 Tripo 생성 또는 코드 지팡이 제작 참고.
+Warlord: 대검 Greatsword. Tripo 별도 생성.
+
+후속 모델 조건 (사용자 결정)
+몸체: GLB, 20,000~30,000 삼각형 목표.
+무기: GLB, 2,000~5,000 삼각형 목표.
+원화만으로 삼각형 수나 자동 리깅 성공 여부를 검증할 수 없음.
+몸체와 장비는 합치지 않고, 손에 드는 장비는 리깅 후 손 뼈에 장착.
+화살통은 등/몸통 부착 장비로 분리 관리.
+GLB 저장 위치: Assets/Art/Characters/Enemy<이름>/
+예: Assets/Art/Characters/EnemyRaider/EnemyRaider_Body.glb
+예: Assets/Art/Characters/EnemyRaider/EnemyRaider_Sword.glb
+예: Assets/Art/Characters/EnemyRaider/EnemyRaider_Shield.glb
+
+리깅 계획 (사용자 결정)
+Raider, Archer, Brute, Warlord: Higgsfield 대기/이동, 공격은 자체 스크립트.
+Swarmling: 자체 스크립트.
+Shaman: 로브형 RobedHumanoid 자체 스크립트.
+Higgsfield 업로드/리깅은 사용자 진행.
+무기 장착 후 대기/이동 클립의 간섭 및 부착 각도 확인.
+GeneratedRig 변환 코드 등 게임 코드는 이번 원화 작업에서 변경하지 않음.
+

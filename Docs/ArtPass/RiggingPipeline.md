@@ -150,6 +150,24 @@ Tripo FBX는 위쪽 축이 +Z로 나온다. 먼저 X축 −90° 회전으로 세
 - 관절·소매·로브의 늘어남, 방패병 다리와 코트 겹침은 수동으로 확인 필요.
 - 정점 수가 많음 (기사+말 59만, 사제 31만, 방패병 30만, 마법사 28만, 창병 19만, 드래곤 13.5만) → Step 6 벤치마크 때 최적화.
 
+## Higgsfield 리깅 적 (적 궁병)
+
+인간형 적은 자체 리그 대신 Higgsfield `3d_rigging`(Meshy 오토리깅)을 쓴다. 호출당 5 크레딧, 클립 1개 포함 8 크레딧.
+
+1. GPT 원화(무기 없는 A포즈, 주먹 쥔 손) → Tripo → GLB. 원본은 `<Enemy>/Source/`에 보관.
+2. GLB를 Higgsfield에 업로드 → `3d_rigging`, `height_meters` 1.7, `enable_animation` + 클립 id (대기 0 `Idle`, 이동 30 `Casual_Walk`).
+   호출마다 같은 메시·뼈대에 클립 1개가 든 GLB가 나온다 → `<Enemy>/Animations/Source/<Enemy>_Anim_Idle.glb`, `_Walk.glb`.
+3. `Lightbringer/Art/Build Enemy Archer Model` (`Editor/EnemyArcherModelSetup.cs`, 요청 파일 `Docs/Validation/EnemyArcherModel.request`)
+   - 대기 GLB로 프리팹 생성, 메시를 군중용으로 축소 (24만 → 약 2만 삼각형, 가중치·UV 유지), 고정 bounds
+   - `ArtModelImport.Assign` / `AssignAnimations`로 오버라이드와 대기·이동 클립 연결
+   - Meshy 아마추어는 0.01 축척(엉덩이 이동이 cm 단위)이라 `moveClipSpeed`는 직접 지정 (1.25 m/s × 축척 × 1.2)
+   - 활: 아군 궁수 활 메시 재사용, 적군 색. `LeftHand`에 `PropStabilizer`로 붙임 (`PropAttachment.follow` 0, `castLean` 0 → 항상 똑바로 서서 정면을 향함, `gripFraction` 0.47). 화살통은 `Spine` 자식
+   - 사격 클립 `EnemyArcher_Shoot` (1초, 크레딧 0): 아군 궁수와 같은 타이밍 — 0에서 발사(적 궁병 strike phase 0) → 반동 → 활을 당겨와 시위 걸기 → 밀고 당기며 턱까지 → 유지
+     - 척추 3개·목·머리·양팔만 키를 찍음 (엉덩이·다리 없음) → 레거시 레이어 블렌딩으로 다리는 대기/걷기 모션캡처 유지
+     - Meshy 뼈는 기본 회전이 identity가 아니므로 모든 변화를 월드 회전으로 bind 위에 곱함 (`bone.rotation = delta * bone.rotation`). 팔은 2본 IK, 손바닥 = 손목 + 전완 방향
+     - 시위·화살: 활 프리팹의 `Visuals/BowString` — 오른손바닥이 시위 정지점 근처(0.08 활 단위)에 오면 잡고, 이후 시위·화살이 손을 따라감. `UnitCombat.Attacked`(발사) 또는 손이 당김 영역을 벗어나면 놓음
+   - 리포트: `Docs/Validation/EnemyArcherModelChecks.txt` (활 손·시위 손 IK 오차, 시위 잡는 거리, 당김 길이, 활 위치)
+
 ## 새 유닛에 적용할 때
 
 1. 소스를 `Assets/Art/Characters/<Unit>/`에 넣고 `UnitModelSetup`에 배치 단계 추가

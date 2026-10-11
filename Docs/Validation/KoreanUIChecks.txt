@@ -1,0 +1,56 @@
+한국어 기본 UI 적용 — 2026-10-12
+
+적용 범위
+- 출전 준비, 전투 HUD, 성장 선택, 승리/패배 결과, 소환/스킬 안내, 저장 안내.
+- 아군/적군 병종, 장비, 영구 성장 이름과 설명.
+- Lightbringer 제목, 키 이름, LV/HP/MP, 수치 단위는 필요한 곳에 영문 유지.
+- 성장 카드의 스타일 식별자는 유지하고 표시용 분류 이름만 한글로 분리.
+- 기존 밸런스 변경과 아트 작업은 보존.
+
+폰트
+- Assets/UI/Fonts/NanumGothic-Regular.ttf (나눔고딕, SIL OFL 1.1)
+- 라이선스: Assets/UI/Fonts/NanumGothic-OFL.txt
+- 출처: https://github.com/google/fonts/tree/main/ofl/nanumgothic
+- UI 스타일시트가 폰트를 직접 참조하며 includeFontData가 활성화됨.
+- LIGHTBRINGER 제목은 기존 Cinzel 폰트 유지.
+
+검증
+- Unity Editor 컴파일 및 Greybox 검증 315개 통과 (GreyboxChecks.txt).
+- 1920x1080 출전 준비, 전투 HUD, 성장 선택, 결과 화면에서 한글 표시와 배치 확인.
+- 결과 화면 설명과 통계의 글자 색을 밝게 조정하여 배경 대비 개선.
+- 플레이어 빌드와 macOS 실행은 이번 작업에서 별도로 수행하지 않음.
+- Unity Editor에서 CampaignPrototype 씬을 재생하면 별도 설정 없이 적용됨.
+
+수정 파일
+Assets/Scripts/UI/PreparationView.cs
+Assets/Scripts/UI/BattleHudView.cs
+Assets/Scripts/UI/LevelUpView.cs
+Assets/Scripts/UI/ResultView.cs
+Assets/Scripts/Player/EquipmentCatalog.cs
+Assets/Scripts/Player/HeroAbilities.cs
+Assets/Scripts/Units/UnitCatalog.cs
+Assets/Scripts/Units/EnemyCatalog.cs
+Assets/Scripts/Units/UnitSummoner.cs
+Assets/Scripts/Units/UnitSummoner.Selection.cs
+Assets/Scripts/Progression/GrowthCatalog.cs
+Assets/Scripts/Progression/CampaignProgress.cs
+Assets/Scripts/Progression/CampaignSaveStore.cs
+Assets/Scripts/Core/CampaignSession.cs
+Assets/Scripts/Core/PlaytestRecorder.cs
+Assets/Scripts/Editor/HudValidation.cs
+Assets/Scripts/Editor/CampaignIntegrationValidation.cs
+Assets/Scripts/Editor/ArtStyleValidation.cs
+Assets/Scripts/Editor/PreparationPreview.cs
+Assets/UI/LightbringerHUD.uss
+AGENTS.md (로컬 프로젝트 지침에 한국어 기본 UI 원칙 추가)
+
+추가 파일
+Assets/UI/Fonts/NanumGothic-Regular.ttf 및 .meta
+Assets/UI/Fonts/NanumGothic-OFL.txt 및 .meta
+Docs/Validation/KoreanUIChecks.txt
+Docs/Validation/ResultPreview.png
+
+갱신한 UI 화면 캡처
+Docs/Validation/PreparationPreview.png
+Docs/Validation/BattleHudPreview.png
+Docs/Validation/LevelUpPreview.png

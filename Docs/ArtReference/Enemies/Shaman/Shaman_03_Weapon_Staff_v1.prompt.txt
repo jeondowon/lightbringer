@@ -1,0 +1,5 @@
+Generation mode: built-in image_gen
+Reference: Shaman_01_Design_v1.png
+Purpose: Standalone equipment reference. Archer equipment is for existing code reuse.
+
+Use case: precise-object-edit. Reference image is a character holding equipment. Extract and reconstruct ONLY the specified equipment as a standalone product render, faithfully preserve its exact design, silhouette, colors and materials from reference. Remove all character, hands, arms, clothing and other props. Entire object visible with generous margin on all sides, centered, flat LIGHT GRAY background #eeeeee, no cast shadow, no floor or stand. Orthographic-like front view showing broad readable surface, no perspective foreshortening. Premium Stylized Fantasy 3D sculpted game asset, clean sturdy forms, no text, no watermark, no collage, no extra views. Only the complete wooden SKULL TOTEM STAFF, same carved ivory skull with tiny violet forehead stone, iron collar, twisted wooden shaft, dark leather wrapped grip and metal bands. Upright vertical, skull at top, whole shaft and bottom tip visible, skull front facing viewer. No character, no hands, no robes, no floating elements. One complete staff.

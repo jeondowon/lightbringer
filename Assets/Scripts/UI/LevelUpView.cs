@@ -14,8 +14,8 @@ namespace Lightbringer.UI
         private const int CardCount = 3;
         // Number keys summon troops in battle; ignore them briefly so a held summon key cannot pick a card by accident.
         private const float KeyDelay = 0.45f;
-        private const string SelectHint = "Click a card or press  1  ·  2  ·  3";
-        private const string ConfirmHint = "Press CONFIRM or Enter to accept";
+        private const string SelectHint = "카드를 클릭하거나 1 · 2 · 3 키를 누르세요";
+        private const string ConfirmHint = "확인 버튼 또는 Enter 키로 선택을 확정하세요";
         private static readonly string[] Categories = { "aura", "supply", "magic", "command", "hero" };
 
         public readonly VisualElement Root;
@@ -45,7 +45,7 @@ namespace Lightbringer.UI
             VisualElement header = Hud.Box(Root, "lb-levelup-header");
             VisualElement titleRow = Hud.Box(header, "lb-levelup-title-row");
             Ornament(titleRow, false);
-            Hud.Text(titleRow, "LEVEL UP", "lb-display", "lb-levelup-title");
+            Hud.Text(titleRow, "레벨 상승", "lb-display", "lb-levelup-title");
             Ornament(titleRow, true);
             subtitle = Hud.Text(header, "", "lb-levelup-subtitle");
             remaining = Hud.Text(header, "", "lb-levelup-remaining");
@@ -82,10 +82,10 @@ namespace Lightbringer.UI
             }
 
             VisualElement prompt = Hud.Box(Root, "lb-levelup-prompt");
-            Hud.Text(prompt, "CHOOSE A BLESSING", "lb-display", "lb-levelup-prompt-title");
+            Hud.Text(prompt, "축복을 선택하세요", "lb-display", "lb-levelup-prompt-title");
             hint = Hud.Text(prompt, SelectHint, "lb-levelup-prompt-hint");
             Hud.IgnorePicking(header); Hud.IgnorePicking(prompt); Hud.IgnorePicking(rune);
-            confirm = new Button(() => Confirm()) { text = "CONFIRM" };
+            confirm = new Button(() => Confirm()) { text = "확인" };
             confirm.AddToClassList("lb-display");
             confirm.AddToClassList("lb-levelup-confirm");
             Root.Add(confirm);
@@ -112,8 +112,8 @@ namespace Lightbringer.UI
                 shownChoices = key;
                 shownAt = Time.unscaledTime;
                 int reached = profile.level - profile.pendingLevels + 1;
-                Hud.Set(subtitle, $"LEVEL {reached}  ·  CHOOSE A PERMANENT BLESSING");
-                Hud.Set(remaining, profile.pendingLevels > 1 ? $"{profile.pendingLevels} BLESSINGS TO CHOOSE" : "");
+                Hud.Set(subtitle, $"레벨 {reached} · 영구 적용할 축복을 선택하세요");
+                Hud.Set(remaining, profile.pendingLevels > 1 ? $"선택할 축복 {profile.pendingLevels}개 남음" : "");
                 Hud.Show(remaining, profile.pendingLevels > 1);
                 for (int i = 0; i < CardCount; i++) Fill(cards[i], profile.choices[i], profile.ranks[profile.choices[i]]);
                 SetSelected(-1);
@@ -141,12 +141,12 @@ namespace Lightbringer.UI
             string category = GrowthCatalog.Categories[growth].ToLowerInvariant();
             foreach (string name in Categories) card.Button.EnableInClassList("lb-lvcard--" + name, name == category);
             bool maxed = GrowthCatalog.IsMaxed(kind, rank);
-            Hud.Set(card.Category, GrowthCatalog.Categories[growth]);
+            Hud.Set(card.Category, GrowthCatalog.CategoryNames[growth]);
             Hud.Set(card.Title, GrowthCatalog.Titles[growth]);
             Hud.Set(card.Description, GrowthCatalog.Descriptions[growth]);
-            Hud.Set(card.Effect, maxed ? "Already at maximum" : GrowthCatalog.Effects[growth]);
+            Hud.Set(card.Effect, maxed ? "최대 단계 달성" : GrowthCatalog.Effects[growth]);
             // A first rank has no current bonus to compare against.
-            Hud.Set(card.Rank, rank == 0 ? "NEW" : $"RANK {rank}  ›  {rank + 1}");
+            Hud.Set(card.Rank, rank == 0 ? "신규" : $"단계 {rank}  ›  {rank + 1}");
             Hud.Set(card.Total, maxed ? GrowthCatalog.Total(kind, rank)
                 : rank == 0 ? GrowthCatalog.Total(kind, 1) : $"{GrowthCatalog.Total(kind, rank)}  ›  {GrowthCatalog.Total(kind, rank + 1)}");
         }

@@ -7,22 +7,24 @@ namespace Lightbringer.Progression
     {
         public const int LeadershipMaxRank = 20;
 
-        public static readonly string[] Titles = { "Radiant Reach", "Bountiful Harvest", "Arcane Wellspring", "Deep Reserves",
-            "Commander's Call", "Blessed Aura", "Lightbringer's Might", "Steadfast Heart" };
+        public static readonly string[] Titles = { "찬란한 빛", "풍요로운 수확", "마력의 샘", "넉넉한 비축",
+            "지휘관의 부름", "축복의 오라", "빛의 권능", "굳건한 심장" };
         public static readonly string[] Categories = { "AURA", "SUPPLY", "MAGIC", "SUPPLY", "COMMAND", "AURA", "HERO", "HERO" };
+        // Style identifiers above remain stable; these names are shown to the player.
+        public static readonly string[] CategoryNames = { "오라", "보급", "마법", "보급", "지휘", "오라", "영웅", "영웅" };
         public static readonly string[] Descriptions =
         {
-            "Your aura spreads wider, covering more troops on the front.",
-            "Food flows in faster, so troops can be summoned more often.",
-            "Mana refills faster between staff abilities.",
-            "Hold more Food and Mana before they reach the cap.",
-            "Every troop costs less Food to summon.",
-            "Troops inside your aura strike harder.",
-            "Your staff strikes and spells hit harder.",
-            "Raise your hero's maximum health.",
+            "오라 범위가 넓어져 더 많은 아군을 지원합니다.",
+            "식량 생산이 빨라져 병력을 더 자주 소환할 수 있습니다.",
+            "마나 회복 속도가 증가합니다.",
+            "식량과 마나의 최대 보유량이 증가합니다.",
+            "모든 병종의 소환 식량 비용이 감소합니다.",
+            "오라 안에 있는 아군의 공격력이 증가합니다.",
+            "영웅의 지팡이 공격과 마법 피해가 증가합니다.",
+            "영웅의 최대 체력이 증가합니다.",
         };
-        public static readonly string[] Effects = { "+0.6 m aura radius", "+1 Food per second", "+2 Mana per second",
-            "+10 max Food and Mana", "-2.5% summon cost", "+5% aura attack bonus", "+10% hero damage", "+20 max health" };
+        public static readonly string[] Effects = { "오라 반경 +0.6m", "초당 식량 생산 +1", "초당 마나 회복 +2",
+            "최대 식량·마나 +10", "소환 비용 -2.5%", "오라 공격력 보너스 +5%", "영웅 피해량 +10%", "최대 체력 +20" };
 
         public static bool IsMaxed(GrowthKind kind, int rank) => kind == GrowthKind.Leadership && rank >= LeadershipMaxRank;
 

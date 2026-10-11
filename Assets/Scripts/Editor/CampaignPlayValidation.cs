@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Lightbringer.Combat;
 using Lightbringer.Core;
+using Lightbringer.Player;
 using Lightbringer.Progression;
 using Lightbringer.Resources;
 using Lightbringer.Units;
@@ -192,7 +193,9 @@ namespace Lightbringer.EditorTools
                     victim.transform.position = battle.Hero.transform.position + Vector3.forward * 4;
                     Physics.SyncTransforms();
                     float hp = victim.CurrentHealth;
-                    Assert(battle.Abilities.TryCast(0, victim) && victim.CurrentHealth < hp, "Hero staff deals damage during actual Play mode");
+                    Assert(battle.Abilities.TryCast(0, victim) && victim.CurrentHealth == hp, "Hero staff defers damage until light impact");
+                    battle.Abilities.Tick(HeroAbilities.LightStaffImpactDelay + 0.001f);
+                    Assert(victim.CurrentHealth < hp, "Hero staff deals damage after advancing to light impact in Play mode");
                     victim.TakeDamage(10000, battle.Hero);
                     session.Progress.GainExperience(60);
                     Advance(); break;
@@ -253,7 +256,7 @@ namespace Lightbringer.EditorTools
                 case 10:
                     if (elapsed < 1.5f) return;
                     // The rigged Dragon became a ground unit (Docs/Roadmap.md, 2026-10-03).
-                    Assert(soldier != null && soldier.name.StartsWith("Dragon")
+                    Assert(soldier != null && soldier.name.StartsWith(UnitCatalog.Names[(int)UnitKind.Dragon], StringComparison.Ordinal)
                         && soldier.GetComponent<CharacterController>().isGrounded
                         && soldier.GetComponent<UnitPathFollower>().AssignedPath != null,
                         "Runtime Dragon stays grounded on its assigned Path");

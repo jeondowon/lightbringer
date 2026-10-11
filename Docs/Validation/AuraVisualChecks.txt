@@ -1,0 +1,9 @@
+Aura visual shader checks
+Lightbringer/Aura Blessing: PASS
+Lightbringer/Aura Runes: PASS
+Lightbringer/Toon: PASS
+Shared veil mesh: 98 vertices; height 0.65 m.
+PASS: radius growth scales the circle and keeps floating arcs low.
+PASS: zero radius hides both disc and arcs.
+PASS: disabling releases visuals and clears the global radius.
+Static presentation preview; runtime entry/exit remains a Play-mode check.

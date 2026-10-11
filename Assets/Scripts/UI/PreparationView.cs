@@ -64,22 +64,22 @@ namespace Lightbringer.UI
             Hud.Box(header, "lb-prep-emblem");
             VisualElement titles = Hud.Box(header, "lb-prep-titles");
             Hud.Text(titles, "LIGHTBRINGER", "lb-display", "lb-prep-title");
-            Hud.Text(titles, "CAMPAIGN PREPARATION", "lb-prep-subtitle");
+            Hud.Text(titles, "출전 준비", "lb-prep-subtitle");
 
             VisualElement plate = Hud.Box(Root, "lb-prep-frame", "lb-prep-plate");
             VisualElement medal = Hud.Box(plate, "lb-prep-medal");
             Hud.Text(medal, "LV", "lb-prep-medal-label");
             level = Hud.Text(medal, "", "lb-display", "lb-prep-medal-value");
             VisualElement identity = Hud.Box(plate, "lb-prep-identity");
-            Hud.Text(identity, "MAGE COMMANDER", "lb-display", "lb-prep-hero-name");
-            Hud.Text(identity, "Hero of the Lightbringers", "lb-prep-hero-role");
+            Hud.Text(identity, "마법 지휘관", "lb-display", "lb-prep-hero-name");
+            Hud.Text(identity, "라이트브링어의 영웅", "lb-prep-hero-role");
             experience = new HudBar(identity, "lb-bar--exp");
 
             VisualElement content = Hud.Box(Root, "lb-prep-content");
             VisualElement campaign = Hud.Box(content, "lb-prep-column", "lb-prep-column--campaign");
             VisualElement army = Hud.Box(content, "lb-prep-column", "lb-prep-column--army");
 
-            VisualElement route = Hud.Box(Panel(campaign, "CAMPAIGN", "Choose your battlefield"), "lb-route");
+            VisualElement route = Hud.Box(Panel(campaign, "캠페인", "전장을 선택하세요"), "lb-route");
             VisualElement track = Hud.Box(route, "lb-route-track");
             routeFill = Hud.Box(track, "lb-route-fill");
             for (int i = 0; i < stages.Length; i++)
@@ -92,14 +92,14 @@ namespace Lightbringer.UI
                 Decorate(button);
             }
 
-            VisualElement briefing = Panel(campaign, "BRIEFING", "", "lb-prep-panel--briefing");
+            VisualElement briefing = Panel(campaign, "작전 개요", "", "lb-prep-panel--briefing");
             runeBriefing = Hud.Box(briefing, "lb-briefing-rune");
             VisualElement titleRow = Hud.Box(briefing, "lb-briefing-title-row");
             stageTitle = Hud.Text(titleRow, "", "lb-display", "lb-briefing-title");
             stageTag = Hud.Text(titleRow, "", "lb-briefing-tag");
-            Hud.Text(briefing, "ENEMY FORCES", "lb-prep-caption");
+            Hud.Text(briefing, "등장 적군", "lb-prep-caption");
             enemies = Hud.Box(briefing, "lb-chips");
-            Hud.Text(briefing, "FIRST CLEAR REWARD", "lb-prep-caption");
+            Hud.Text(briefing, "최초 승리 보상", "lb-prep-caption");
             rewards = Hud.Box(briefing, "lb-rewards");
             mapCaption = Hud.Text(briefing, "", "lb-prep-caption");
             VisualElement map = Hud.Box(briefing, "lb-map");
@@ -107,19 +107,19 @@ namespace Lightbringer.UI
             {
                 mapPaths[i] = Hud.Box(map, "lb-map-path");
                 Hud.Box(mapPaths[i], "lb-map-path-line");
-                Hud.Text(mapPaths[i], "PATH " + (i + 1), "lb-map-path-label");
+                Hud.Text(mapPaths[i], "진로 " + (i + 1), "lb-map-path-label");
             }
             mapStronghold = Hud.Text(map, "", "lb-map-base", "lb-map-base--enemy");
-            Hud.Text(map, "LIGHTBRINGER GATE", "lb-map-base", "lb-map-base--ally");
+            Hud.Text(map, "아군 본진", "lb-map-base", "lb-map-base--ally");
             Hud.IgnorePicking(map);
             briefingNote = Hud.Text(briefing, "", "lb-briefing-note");
 
             VisualElement launch = Hud.Box(campaign, "lb-launch");
             startGlow = Hud.Box(launch, "lb-launch-glow");
             start = Clickable(launch, () => Start(), "lb-display", "lb-launch-button");
-            Hud.Text(campaign, "Prototype balance. First clears award a staff or ring; upgraded gear replaces lower levels.", "lb-prep-footnote");
+            Hud.Text(campaign, "최초 승리 시 지팡이 또는 반지를 획득합니다. 상위 강화 장비는 기존 장비를 대체합니다.", "lb-prep-footnote");
 
-            VisualElement loadout = Panel(army, "LOADOUT", "Choose a slot, then an item");
+            VisualElement loadout = Panel(army, "장비", "슬롯을 선택한 뒤 장비를 선택하세요");
             VisualElement socketRow = Hud.Box(loadout, "lb-sockets");
             for (int i = 0; i < slots.Length; i++)
             {
@@ -143,7 +143,7 @@ namespace Lightbringer.UI
                 Decorate(button);
             }
 
-            VisualElement roster = Hud.Box(Panel(army, "TROOPS", "Every unlocked troop joins each battle"), "lb-troops-grid");
+            VisualElement roster = Hud.Box(Panel(army, "아군 병력", "해금한 모든 병종을 전투에서 소환할 수 있습니다"), "lb-troops-grid");
             for (int i = 0; i < troops.Length; i++)
             {
                 VisualElement card = Hud.Box(roster, "lb-troop", "lb-troop--" + i);
@@ -154,7 +154,7 @@ namespace Lightbringer.UI
                 Hud.IgnorePicking(card);
             }
 
-            growth = Hud.Box(Panel(army, "PERMANENT GROWTH", "", "lb-prep-panel--growth"), "lb-chips");
+            growth = Hud.Box(Panel(army, "영구 성장", "", "lb-prep-panel--growth"), "lb-chips");
             status = Hud.Text(Root, "", "lb-prep-status");
 
             Hud.IgnorePicking(runeOuter); Hud.IgnorePicking(runeInner); Hud.IgnorePicking(hero);
@@ -206,7 +206,7 @@ namespace Lightbringer.UI
             if (!visible) return;
 
             Hud.Set(level, profile.level.ToString());
-            experience.Set(profile.experience, profile.ExperienceToNext, $"EXP {profile.experience} / {profile.ExperienceToNext}");
+            experience.Set(profile.experience, profile.ExperienceToNext, $"경험치 {profile.experience} / {profile.ExperienceToNext}");
 
             Hud.Fraction(routeFill, (profile.unlockedStage - 1) / (float)(stages.Length - 1));
             for (int i = 0; i < stages.Length; i++)
@@ -214,7 +214,7 @@ namespace Lightbringer.UI
                 int stage = i + 1;
                 bool unlocked = stage <= profile.unlockedStage;
                 Tile tile = stages[i];
-                Hud.Set(tile.Note, !unlocked ? "LOCKED" : profile.cleared[i] ? "CLEARED" : stage == EnemyCatalog.BossStage ? "BOSS" : "NEW");
+                Hud.Set(tile.Note, !unlocked ? "미해금" : profile.cleared[i] ? "완료" : stage == EnemyCatalog.BossStage ? "보스" : "신규");
                 tile.Root.SetEnabled(unlocked);
                 tile.Root.EnableInClassList("lb-stage--selected", stage == session.SelectedStage);
                 tile.Root.EnableInClassList("lb-stage--cleared", unlocked && profile.cleared[i]);
@@ -237,8 +237,8 @@ namespace Lightbringer.UI
                 int owner = System.Array.IndexOf(profile.loadout, id);
                 bool owned = profile.equipmentLevels[id] > 0;
                 Tile tile = items[id];
-                Hud.Set(tile.Note, !owned ? "LOCKED"
-                    : owner >= 0 && owner != ActiveSlot ? $"+{profile.equipmentLevels[id]}  ·  in {SlotKeys[owner]}"
+                Hud.Set(tile.Note, !owned ? "미해금"
+                    : owner >= 0 && owner != ActiveSlot ? $"+{profile.equipmentLevels[id]}  ·  {SlotKeys[owner]} 장착 중"
                     : $"+{profile.equipmentLevels[id]}  ·  {Describe(id)}");
                 // An item already worn in another slot cannot be duplicated.
                 tile.Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
@@ -251,11 +251,11 @@ namespace Lightbringer.UI
             {
                 bool unlocked = i < profile.UnlockedUnits;
                 troops[i].Root.EnableInClassList("lb-troop--locked", !unlocked);
-                Hud.Set(troops[i].Note, unlocked ? UnitCatalog.Cost((UnitKind)i).ToString("0.#") + " FOOD" : "UNLOCK AT STAGE " + (i + 1));
+                Hud.Set(troops[i].Note, unlocked ? UnitCatalog.Cost((UnitKind)i).ToString("0.#") + " 식량" : "해금 스테이지: " + (i + 1));
             }
             RefreshGrowth(profile);
 
-            Hud.Set(start, "START STAGE " + session.SelectedStage);
+            Hud.Set(start, "출전 · 스테이지 " + session.SelectedStage);
             start.SetEnabled(!session.IsChoosing);
             string message = string.IsNullOrEmpty(session.PlaytestStatus) ? session.SaveStatus
                 : session.PlaytestStatus + " " + session.SaveStatus;
@@ -274,8 +274,8 @@ namespace Lightbringer.UI
             shownBriefing = key;
 
             bool boss = EnemyCatalog.HasBoss(stage);
-            Hud.Set(stageTitle, "STAGE " + stage);
-            Hud.Set(stageTag, boss ? "BOSS BATTLE" : cleared ? "CLEARED" : "NEW BATTLE");
+            Hud.Set(stageTitle, "스테이지 " + stage);
+            Hud.Set(stageTag, boss ? "보스 전투" : cleared ? "완료" : "새로운 전투");
             stageTag.EnableInClassList("lb-briefing-tag--boss", boss);
             stageTag.EnableInClassList("lb-briefing-tag--cleared", cleared && !boss);
 
@@ -287,34 +287,34 @@ namespace Lightbringer.UI
                 VisualElement chip = Hud.Box(enemies, "lb-chip", "lb-chip--enemy");
                 if (EnemyCatalog.IsHeavy(kind)) chip.AddToClassList("lb-chip--heavy");
                 Hud.Box(chip, "lb-chip-dot");
-                Hud.Text(chip, EnemyCatalog.Names[k].Replace("Enemy ", ""), "lb-chip-name");
-                if (!EnemyCatalog.AppearsIn(kind, stage - 1)) Hud.Text(chip, "NEW", "lb-chip-badge");
+                Hud.Text(chip, EnemyCatalog.Names[k], "lb-chip-name");
+                if (!EnemyCatalog.AppearsIn(kind, stage - 1)) Hud.Text(chip, "신규", "lb-chip-badge");
             }
 
             rewards.Clear();
             if (cleared)
-                Hud.Text(rewards, "Claimed. Replays award battle EXP only.", "lb-prep-hint");
+                Hud.Text(rewards, "보상 획득 완료. 재도전 시 전투 경험치만 획득합니다.", "lb-prep-hint");
             else
             {
                 int item = CampaignProgress.ClearRewardItem(stage), rank = CampaignProgress.ClearRewardLevel(stage);
                 VisualElement gear = Hud.Box(rewards, "lb-reward");
                 Hud.Box(gear, "lb-reward-icon", "lb-icon", "lb-icon--" + item);
                 Hud.Text(gear, EquipmentCatalog.Names[item] + " +" + rank, "lb-reward-value");
-                if (profile.equipmentLevels[item] >= rank) Hud.Text(gear, "owned", "lb-prep-hint");
+                if (profile.equipmentLevels[item] >= rank) Hud.Text(gear, "보유 중", "lb-prep-hint");
             }
 
             int paths = PrototypeBattleBuilder.PathCount(stage);
-            Hud.Set(mapCaption, $"BATTLEFIELD  ·  {paths} {(paths == 1 ? "PATH" : "PATHS")}  ·  {EnemyWaveSpawner.WaveCount(stage)} WAVES");
+            Hud.Set(mapCaption, $"전장 · 진로 {paths}개 · 적 공세 {EnemyWaveSpawner.WaveCount(stage)}회");
             for (int i = 0; i < mapPaths.Length; i++)
             {
                 Hud.Show(mapPaths[i], i < paths);
                 mapPaths[i].style.left = Length.Percent(50f + (i - (paths - 1) * 0.5f) * 30f);
             }
-            Hud.Set(mapStronghold, boss ? "WARLORD'S STRONGHOLD" : "ENEMY STRONGHOLD");
+            Hud.Set(mapStronghold, boss ? "군주의 본진" : "적군 본진");
             mapStronghold.EnableInClassList("lb-map-base--boss", boss);
 
-            Hud.Set(briefingNote, profile.IsComplete ? "Campaign complete. Every stage can be replayed."
-                : boss ? "The enemy stronghold stays shielded until the Warlord falls." : "");
+            Hud.Set(briefingNote, profile.IsComplete ? "캠페인을 완료했습니다. 모든 스테이지에 다시 도전할 수 있습니다."
+                : boss ? "군주를 처치해야 적군 본진의 보호막이 해제됩니다." : "");
             Hud.Show(briefingNote, !string.IsNullOrEmpty(briefingNote.text));
         }
 
@@ -332,7 +332,7 @@ namespace Lightbringer.UI
                 Hud.Text(chip, CampaignProgress.GrowthNames[i], "lb-chip-name");
                 Hud.Text(chip, "x" + profile.ranks[i], "lb-chip-detail");
             }
-            if (growth.childCount == 0) Hud.Text(growth, "None yet. Level up in battle to choose upgrades.", "lb-prep-hint");
+            if (growth.childCount == 0) Hud.Text(growth, "아직 없습니다. 전투 중 레벨을 올려 성장 효과를 선택하세요.", "lb-prep-hint");
         }
 
         // Transform and opacity only: these animate without re-running layout.
@@ -355,7 +355,7 @@ namespace Lightbringer.UI
             }
         }
 
-        private static string Describe(int id) => EquipmentCatalog.IsActive(id) ? EquipmentCatalog.Cost(id).ToString("0") + " mana" : "passive";
+        private static string Describe(int id) => EquipmentCatalog.IsActive(id) ? EquipmentCatalog.Cost(id).ToString("0") + " 마나" : "지속 효과";
 
         public void SelectSlot(int slot)
         {

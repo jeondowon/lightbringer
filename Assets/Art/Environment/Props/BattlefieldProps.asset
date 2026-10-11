@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4112722ebe90644498d1eb2c6af099e7, type: 3}
+  m_Name: BattlefieldProps
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Visuals.BattlefieldPropProfile
+  assets:
+  - kind: 0
+    prefab: {fileID: 7402609348308229936, guid: 631da73306d859e4199f7084b268b663, type: 3}
+    size: {x: 1.200952, y: 4.8, z: 1.1972176}
+  - kind: 1
+    prefab: {fileID: 2805515270926939470, guid: 2a16efa7257cdff438e0b97d0a029198, type: 3}
+    size: {x: 1.4050986, y: 3.3, z: 0.74178034}
+  - kind: 2
+    prefab: {fileID: 4316927568216961438, guid: 80f2da2aa875cd1478af2a3b60430876, type: 3}
+    size: {x: 0.88309413, y: 1.2, z: 0.88115287}
+  - kind: 3
+    prefab: {fileID: 7673470641934631106, guid: b5c086d189fc2a14db2ea89458c9ada1, type: 3}
+    size: {x: 1.4234219, y: 1.0999999, z: 1.2941662}
+  - kind: 4
+    prefab: {fileID: 5135995807138727723, guid: b75b1443e93cfa440ad355c40b96c920, type: 3}
+    size: {x: 3.5696497, y: 3.6000001, z: 3.0484974}
+  - kind: 5
+    prefab: {fileID: 2204528137534953512, guid: 838afbcd27f5d594fb1c94e5a25abe0e, type: 3}
+    size: {x: 4.6, y: 2.3942473, z: 1.1904224}
+  - kind: 6
+    prefab: {fileID: 20284361857671110, guid: ef24c0eba55a5d6479fe5d0159fb227e, type: 3}
+    size: {x: 1.209955, y: 2.8, z: 1.2417862}
+  - kind: 7
+    prefab: {fileID: 80516182779533850, guid: a7a6a698a06f93343840bef2358a557f, type: 3}
+    size: {x: 1.2873613, y: 4.1999993, z: 1.1917123}
+  - kind: 8
+    prefab: {fileID: 8145237612543806498, guid: 416dd09b50b344d4fa878d60e52e58a8, type: 3}
+    size: {x: 3.9393256, y: 4.7999997, z: 1.2759966}

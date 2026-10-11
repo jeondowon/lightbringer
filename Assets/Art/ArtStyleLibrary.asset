@@ -18,6 +18,7 @@ MonoBehaviour:
   auraRunesMaterial: {fileID: 2100000, guid: 8517546322a0a01429914918a7ffcd45, type: 2}
   auraMotesMaterial: {fileID: 2100000, guid: 407c555f41deeff45917357e1b6f53b6, type: 2}
   lightningMaterial: {fileID: 2100000, guid: db6ebeccd580e4e40994f2231d286c99, type: 2}
+  celestialStrikeMaterial: {fileID: 2100000, guid: 29e0bf9d37cfb4e4ea0a641935cca6f6, type: 2}
   terrainMaterial: {fileID: 2100000, guid: cdfac254b786c1e44a7ff332bb427db8, type: 2}
   grassMaterial: {fileID: 2100000, guid: d0ca5325729be9243bd92d36d8f4708c, type: 2}
   propsMaterial: {fileID: 2100000, guid: 58e2ba22f98e381478958791a4eade1d, type: 2}
@@ -25,6 +26,7 @@ MonoBehaviour:
   vfxMaterial: {fileID: 2100000, guid: fd7cd9feb92cf2d40bb29dab415d9729, type: 2}
   auraBlessingMaterial: {fileID: 2100000, guid: e5a3898ac1352c44696898373f61ffcd, type: 2}
   forestEnvironment: {fileID: 11400000, guid: 5545f2b8d6060e0488c0e1dfc1e864b1, type: 2}
+  battlefieldProps: {fileID: 11400000, guid: 65f5ba2494d696d43a4e33c82a4fdeed, type: 2}
   ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
   royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
   gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}
@@ -82,6 +84,9 @@ MonoBehaviour:
       localEuler: {x: 349.6733, y: 204.9089, z: 155.09108}
       localScale: {x: 170.00003, y: 169.99992, z: 169.99998}
       stabilize: 1
+      follow: 0.3
+      castLean: 35
+      gripFraction: 0.38
   - id: 1
     prefab: {fileID: 419721511994296569, guid: 1038946768625aa44bc5c8eef4db4890, type: 3}
     localOffset: {x: 0, y: 0, z: 0}
@@ -162,3 +167,42 @@ MonoBehaviour:
     actionClip: {fileID: 7400000, guid: f6b05bcc35c864f40a1d5c8970c8d847, type: 2}
     moveClipSpeed: 4
     attachments: []
+  - id: 11
+    prefab: {fileID: 5088097661024832212, guid: f62955a0adf8f9c41b468d70c6b54517, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 180, z: 0}
+    scale: 2
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []
+  - id: 12
+    prefab: {fileID: 5020236660104333929, guid: 5aa72b925c0a8bd43a30f678df150941, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 2.2
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []
+  - id: 10
+    prefab: {fileID: 8200918118935619611, guid: 783e43b3180129446b0eb7b4c1645b62, type: 3}
+    localOffset: {x: -0.0012975116, y: -0.0001036936, z: 0.000071330345}
+    localEuler: {x: 0, y: -0, z: 0}
+    scale: 1.0003967
+    idleClip: {fileID: 7400000, guid: 74ae116231495334d89b9bfb0530481b, type: 2}
+    moveClip: {fileID: 7400000, guid: d3397a2a050d74446a1e9b421d6cd647, type: 2}
+    actionClip: {fileID: 7400000, guid: d57774d5a1d4190438a1b6158df9d069, type: 2}
+    moveClipSpeed: 1.5005952
+    attachments:
+    - prefab: {fileID: 7705048249904401589, guid: 1571b94c902a20d47a35c29fe4a627eb, type: 3}
+      boneName: LeftHand
+      localPosition: {x: 0.2120159, y: 5.7821846, z: 5.566005}
+      localEuler: {x: 334.18948, y: 321.3293, z: 194.68828}
+      localScale: {x: 92.19643, y: 92.196434, z: 92.19641}
+      stabilize: 1
+      follow: 0
+      castLean: 0
+      gripFraction: 0.47

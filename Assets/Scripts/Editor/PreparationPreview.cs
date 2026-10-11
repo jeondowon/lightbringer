@@ -36,12 +36,32 @@ namespace Lightbringer.EditorTools
             EditorRequests.Register(Request, Capture);
             EditorRequests.Register(LevelUpRequest, CaptureLevelUp);
             EditorRequests.Register(BattleHudRequest, CaptureBattleHud);
+            EditorRequests.Register("Docs/Validation/ResultPreview.request", CaptureResult);
             // A capture cut short by a domain reload or Play mode would leave its hidden battlefield behind: it then runs
             // in Play mode and its units block spawn slots in Greybox validation, which builds at the same coordinates.
             EditorApplication.delayCall += Purge;
             AssemblyReloadEvents.beforeAssemblyReload += Purge;
             EditorApplication.playModeStateChanged += state => { if (state == PlayModeStateChange.ExitingEditMode) Purge(); };
         }
+
+        [MenuItem("Lightbringer/UI/Capture Result Preview")]
+        public static void CaptureResult() => Render("Docs/Validation/ResultPreview.png", profile => { }, (root, session) =>
+        {
+            if (!session.StartBattle()) throw new InvalidOperationException("Result preview could not start a battle.");
+            PrototypeBattle battle = session.Battle;
+            // Edit-mode captures do not receive the normal OnEnable callback after activating the battle.
+            battle.Objective.Configure(battle.Objective.EnemyBase, battle.Hero, battle.Root.transform,
+                battle.Root.GetComponentInChildren<Lightbringer.CameraSystem.ThirdPersonCamera>(), battle.AlliedBase);
+            battle.Objective.EnemyBase.TakeDamage(1000000f, battle.Hero);
+            while (session.IsChoosing) session.ChooseGrowth(0);
+            ResultView view = new ResultView(root);
+            return () =>
+            {
+                view.Refresh(session);
+                view.Root.MarkDirtyRepaint();
+                EditorApplication.QueuePlayerLoopUpdate();
+            };
+        });
 
         // Aborts any capture in progress and destroys every hidden object a capture created.
         internal static void Purge()

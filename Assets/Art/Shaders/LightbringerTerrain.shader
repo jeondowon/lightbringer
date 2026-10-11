@@ -1,7 +1,7 @@
 // Painterly toon terrain. Vertex colour rgb = ground palette, alpha = road mask (0 grass, 1 dirt road).
 // uv0 (when w = 1): x = distance to the nearest lane (m), y = stronghold plaza mask, z = corruption mask.
-// Procedural detail, no textures: brush-stroke grass with clumps and wildflowers, roads with wheel ruts,
-// gravel and a ragged grass fringe, flagstone plazas with mossy grout, corrupted soil with glowing cracks
+// Optional forest colour/normal textures over procedural grass, roads with wheel ruts,
+// fine gravel and a ragged grass fringe, flagstone plazas with mossy grout, corrupted soil with glowing cracks
 // near the enemy stronghold, layered rock on steep slopes, a noise bump for the lighting, and SSAO.
 Shader "Lightbringer/Terrain"
 {
@@ -21,6 +21,10 @@ Shader "Lightbringer/Terrain"
         _CorruptSoil ("Corrupted Soil", Color) = (0.24, 0.19, 0.27, 1)
         _ForestGrassTex ("Forest Ground", 2D) = "white" {}
         _ForestSoilTex ("Forest Soil", 2D) = "white" {}
+        [Normal] _ForestGrassNormal ("Forest Ground Normal", 2D) = "bump" {}
+        [Normal] _ForestSoilNormal ("Forest Soil Normal", 2D) = "bump" {}
+        _ForestNormalStrength ("Forest Normal Strength", Range(0, 2)) = 0.7
+        [HDR] _ForestGroundTint ("Forest Ground Tint", Color) = (1, 1, 1, 1)
         _ForestTextureStrength ("Forest Texture Blend", Range(0, 1)) = 0
         _ForestTextureScale ("Forest Texture Repeats Per Metre", Float) = 0.25
     }
@@ -46,9 +50,13 @@ Shader "Lightbringer/Terrain"
             half4 _CorruptSoil;
             half _ForestTextureStrength;
             float _ForestTextureScale;
+            half _ForestNormalStrength;
+            half4 _ForestGroundTint;
         CBUFFER_END
         TEXTURE2D(_ForestGrassTex); SAMPLER(sampler_ForestGrassTex);
         TEXTURE2D(_ForestSoilTex); SAMPLER(sampler_ForestSoilTex);
+        TEXTURE2D(_ForestGrassNormal); SAMPLER(sampler_ForestGrassNormal);
+        TEXTURE2D(_ForestSoilNormal); SAMPLER(sampler_ForestSoilNormal);
         ENDHLSL
 
         Pass
@@ -181,7 +189,7 @@ Shader "Lightbringer/Terrain"
                     float2 forestUV = p * _ForestTextureScale;
                     half3 forestGrass = SAMPLE_TEXTURE2D(_ForestGrassTex, sampler_ForestGrassTex, forestUV).rgb;
                     half3 forestSoil = SAMPLE_TEXTURE2D(_ForestSoilTex, sampler_ForestSoilTex, forestUV).rgb;
-                    half3 forestGround = lerp(forestGrass, forestSoil, road) * lerp(0.9h, 1.08h, broad);
+                    half3 forestGround = lerp(forestGrass, forestSoil, road) * _ForestGroundTint.rgb * lerp(0.9h, 1.08h, broad);
                     albedo = lerp(albedo, forestGround, _ForestTextureStrength * (1.0h - plaza));
                 }
                 float2 strokeA = float2(p.x * 0.9 + p.y * 0.35, p.y * 4.5 - p.x * 1.2);
@@ -200,15 +208,11 @@ Shader "Lightbringer/Terrain"
                 petal = lerp(petal, half3(0.72h, 0.62h, 1.0h), step(0.8h, ValueNoise(p * 0.7 + 19.0)));
                 albedo = lerp(albedo, petal, flower);
 
-                // Road surface: packed earth, two wheel ruts, gravel and scattered pebbles with tiny shadows.
+                // Road surface: packed earth, two wheel ruts and fine gravel variation.
                 half rut = hasMasks ? exp(-pow((laneDistance - 0.8) / 0.22, 2.0)) * road : 0.0h;
                 albedo *= 1.0h - rut * _RutStrength * 0.35h * (0.7h + 0.3h * ValueNoise(p * 2.0));
                 half pebble = ValueNoise(p * 4.5 + 11.0);
                 albedo *= 1.0h - road * _GravelAmount * (step(0.75h, pebble) * 0.18h - step(pebble, 0.12h) * 0.12h);
-                float3 stones = Voronoi(p * 2.6);
-                half stone = road * (1.0h - smoothstep(0.16, 0.26, stones.x)) * step(0.72, stones.z) * detail;
-                half3 stoneColor = lerp(half3(0.58h, 0.56h, 0.53h), half3(0.75h, 0.72h, 0.66h), Hash(floor(p * 2.6) + stones.z));
-                albedo = lerp(albedo, stoneColor, stone * 0.85h);
                 // Ragged grass fringe along the road border.
                 half fringe = smoothstep(0.15h, 0.5h, road) * (1.0h - smoothstep(0.5h, 0.85h, road));
                 albedo = lerp(albedo, albedo * half3(0.86h, 0.95h, 0.82h), fringe * 0.5h);
@@ -252,10 +256,25 @@ Shader "Lightbringer/Terrain"
                 float hz = GrassHeight(p + float2(0, 0.08)) * grassMask - GrassHeight(p) * grassMask;
                 float3 normalWS = normalize(geometricNormal + float3(-hx, 0, -hz) * (_BumpStrength * 6.0 * detail));
                 normalWS = normalize(lerp(normalWS, geometricNormal, pave * 0.5));
+                half forestSurface = _ForestTextureStrength * (1.0h - pave) * (1.0h - corrupt);
+                if (forestSurface > 0.001h)
+                {
+                    float2 uv = p * _ForestTextureScale;
+                    half3 grassNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestGrassNormal, sampler_ForestGrassNormal, uv), _ForestNormalStrength);
+                    half3 soilNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestSoilNormal, sampler_ForestSoilNormal, uv), _ForestNormalStrength);
+                    half3 mapped = normalize(lerp(grassNormal, soilNormal, road));
+                    // UVs are world XZ: +U is X and +V is Z, including on the hills.
+                    float3 tangent = normalize(float3(geometricNormal.y, -geometricNormal.x, 0));
+                    float3 bitangent = normalize(cross(tangent, geometricNormal));
+                    float3 mappedWS = normalize(tangent * mapped.x + bitangent * mapped.y + geometricNormal * mapped.z);
+                    normalWS = normalize(lerp(normalWS, mappedWS, forestSurface));
+                }
 
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half ndl = dot(normalWS, light.direction);
                 half lit = smoothstep(_RampThreshold - _RampSoftness, _RampThreshold + _RampSoftness, ndl);
+                // Retain the stylized palette while letting small ground relief catch the light.
+                lit = lerp(lit, saturate(ndl) * 0.8h + 0.2h, forestSurface * 0.65h);
                 lit *= lerp(1.0h, light.shadowAttenuation, 0.85h) * CloudShadow(input.positionWS);
                 AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(GetNormalizedScreenSpaceUV(input.positionCS));
                 half3 shade = lerp(_ShadowColor.rgb, half3(1, 1, 1), lit * ao.directAmbientOcclusion);

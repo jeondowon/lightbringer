@@ -13,6 +13,11 @@ namespace Lightbringer.Player
     [RequireComponent(typeof(Combatant), typeof(ManaResource))]
     public sealed class HeroAbilities : MonoBehaviour
     {
+        public const float LightStaffWindup = 0.15f;
+        public const float LightStaffDescent = 0.075f;
+        public const float LightStaffImpactDelay = LightStaffWindup + LightStaffDescent;
+        private readonly List<(Combatant target, float damage, float remaining)> pendingLightHits =
+            new List<(Combatant, float, float)>();
         [SerializeField] private UnityEngine.Camera aimCamera;
         [SerializeField] private int[] equipment = { 0, 1, 3 };
         [SerializeField] private int[] levels = { 1, 1, 0, 1, 0, 0 };
@@ -108,7 +113,25 @@ namespace Lightbringer.Player
         {
             if (!isActiveAndEnabled || delta <= 0) return;
             for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Mathf.Max(0, cooldowns[i] - delta);
+            for (int i = pendingLightHits.Count - 1; i >= 0; i--)
+            {
+                var hit = pendingLightHits[i];
+                hit.remaining -= delta;
+                if (hit.remaining > 0)
+                {
+                    pendingLightHits[i] = hit;
+                    continue;
+                }
+                // Remove before damage: a lethal hit can end the battle and disable this component.
+                pendingLightHits.RemoveAt(i);
+                if (self != null && self.IsAlive && hit.target != null && hit.target.IsAlive
+                    && hit.target.Faction != self.Faction && hit.target.gameObject.scene == gameObject.scene)
+                    hit.target.TakeDamage(hit.damage, self);
+                if (!isActiveAndEnabled) break;
+            }
         }
+
+        private void OnDisable() => pendingLightHits.Clear();
 
         public bool TryCast(int slot, Combatant target)
         {
@@ -116,16 +139,16 @@ namespace Lightbringer.Player
             if (!isActiveAndEnabled || !self.IsAlive || slot < 0 || slot >= equipment.Length || cooldowns[slot] > 0)
                 return false;
             int id = equipment[slot];
-            if (!EquipmentCatalog.IsActive(id)) { Feedback = "This slot contains a passive ring."; return false; }
+            if (!EquipmentCatalog.IsActive(id)) { Feedback = "이 슬롯의 반지는 지속 효과를 제공합니다."; return false; }
             if (id != (int)EquipmentKind.HealingStaff && !CanAttack(target))
-            { Feedback = "Aim at a visible enemy within 15 metres."; return false; }
-            if (!mana.TrySpend(EquipmentCatalog.Cost(id))) { Feedback = "Not enough Mana."; return false; }
+            { Feedback = "15m 이내에 보이는 적을 조준하세요."; return false; }
+            if (!mana.TrySpend(EquipmentCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return false; }
             cooldowns[slot] = EquipmentCatalog.Cooldown(id);
             float power = (1f + 0.2f * (levels[id] - 1)) * damageMultiplier;
             if (id == (int)EquipmentKind.LightStaff)
             {
+                pendingLightHits.Add((target, 18f * power, LightStaffImpactDelay));
                 SpellLanded?.Invoke(id, target.GetAimPoint(transform.position), 0.6f);
-                target.TakeDamage(18f * power, self);
             }
             else if (id == (int)EquipmentKind.HealingStaff)
             {

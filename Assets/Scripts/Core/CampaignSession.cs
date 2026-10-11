@@ -24,7 +24,7 @@ namespace Lightbringer.Core
         public PrototypeBattle Battle { get; private set; }
         public int SelectedStage { get; private set; } = 1;
         public string LastResult { get; private set; } = "";
-        public string SaveStatus => store == null ? "Validation session" : store.Error;
+        public string SaveStatus => store == null ? "검증 세션" : store.Error;
         public bool IsChoosing => Progress != null && Progress.pendingLevels > 0;
         public bool IsBattlePaused => simulation.IsPaused;
         public PlaytestRecord PlaytestRecord => playtest.Current;
@@ -103,8 +103,8 @@ namespace Lightbringer.Core
             playtest.Finish(victory ? "victory" : "defeat");
             bool rewarded = victory && Progress.CompleteStage(SelectedStage);
             LastResult = victory
-                ? rewarded ? "Victory! Earned first-clear equipment and campaign unlocks." : "Victory! First-clear rewards were already claimed."
-                : "Defeat. Your permanent growth and equipment are retained.";
+                ? rewarded ? "최초 승리! 장비 보상을 획득하고 다음 콘텐츠를 해금했습니다." : "승리! 최초 승리 보상은 이미 획득했습니다."
+                : "패배했습니다. 영구 성장과 장비는 유지됩니다.";
             dirty = true;
             Flush();
         }

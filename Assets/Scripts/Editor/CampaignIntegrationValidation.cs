@@ -27,7 +27,7 @@ namespace Lightbringer.EditorTools
                 Invoke(battle.Objective, "OnEnable");
                 Check(battle.Paths.Length == 1 && battle.Summoner.UnlockedUnitCount == 1,
                     "First campaign stage begins with one Path and only the first troop");
-                Check(!battle.Summoner.TrySummonKind(1) && battle.Summoner.LastFeedback.Contains("not unlocked")
+                Check(!battle.Summoner.TrySummonKind(1) && battle.Summoner.LastFeedback.Contains("아직 해금되지")
                     && !battle.Summoner.TryCyclePath(),
                     "Number keys for locked troops and Tab on a single Path do nothing");
                 Check(!session.TryEquip(0, 1), "Equipment cannot change while a stage is active");

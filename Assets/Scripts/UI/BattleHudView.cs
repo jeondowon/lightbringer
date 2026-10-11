@@ -47,10 +47,10 @@ namespace Lightbringer.UI
 
             // The map also names the Path new troops will take; Tab cycles it.
             VisualElement mapPanel = Hud.Box(Root, "lb-minimap", "lb-hud-frame");
-            Heading(mapPanel, "BATTLEFIELD");
+            Heading(mapPanel, "전장");
             minimap = new BattleMinimap(mapPanel);
             VisualElement route = Hud.Box(mapPanel, "lb-minimap-route");
-            Hud.Text(route, "NEW TROOPS", "lb-route-caption");
+            Hud.Text(route, "소환 진로", "lb-route-caption");
             pathHint = Hud.Text(route, "", "lb-display", "lb-path-hint");
             pathKey = Key(route, "TAB");
 
@@ -63,13 +63,13 @@ namespace Lightbringer.UI
             Hud.Box(row, "lb-hud-icon", "lb-hud-icon--wave");
             waves = Hud.Text(row, "", "lb-waves");
             VisualElement bases = Hud.Box(top, "lb-bases");
-            alliedBase = Base(bases, "LIGHTBRINGER GATE", "lb-base--ally", "lb-bar--ally");
-            enemyBase = Base(bases, "ENEMY STRONGHOLD", "lb-base--enemy", "lb-bar--enemy");
+            alliedBase = Base(bases, "아군 본진", "lb-base--ally", "lb-bar--ally");
+            enemyBase = Base(bases, "적군 본진", "lb-base--enemy", "lb-bar--enemy");
 
             boss = Hud.Box(Root, "lb-boss");
             VisualElement bossTitle = Hud.Box(boss, "lb-boss-title");
             Hud.Box(bossTitle, "lb-hud-icon", "lb-hud-icon--enemy");
-            Hud.Text(bossTitle, "THE WARLORD", "lb-display", "lb-boss-name");
+            Hud.Text(bossTitle, "군주", "lb-display", "lb-boss-name");
             Hud.Box(bossTitle, "lb-hud-icon", "lb-hud-icon--enemy");
             bossBar = new HudBar(boss, "lb-bar--boss");
 
@@ -86,7 +86,7 @@ namespace Lightbringer.UI
             VisualElement badge = Hud.Box(portrait, "lb-level");
             level = Hud.Text(badge, "", "lb-display", "lb-level-value");
             VisualElement gauges = Hud.Box(vitals, "lb-gauges");
-            Hud.Text(gauges, "MAGE COMMANDER", "lb-display", "lb-hero-name");
+            Hud.Text(gauges, "마법 지휘관", "lb-display", "lb-hero-name");
             health = Vital(gauges, "HP", "lb-bar--hp");
             mana = Vital(gauges, "MP", "lb-bar--mana");
             VisualElement foodRow = Hud.Box(gauges, "lb-vital-row");
@@ -99,8 +99,8 @@ namespace Lightbringer.UI
             troops = Hud.Box(Root, "lb-troops");
 
             VisualElement hints = Hud.Box(Root, "lb-hints", "lb-hud-panel");
-            Hint(hints, ("WASD", "Move"), ("Mouse", "Look"), ("Wheel", "Zoom"));
-            Hint(hints, ("1-8", "Summon"), ("F", "Repeat"), ("Tab", "Path"), ("Esc", "Cursor"));
+            Hint(hints, ("WASD", "이동"), ("마우스", "시점"), ("휠", "확대·축소"));
+            Hint(hints, ("1-8", "소환"), ("F", "재소환"), ("Tab", "진로 변경"), ("Esc", "커서"));
             Hud.IgnorePicking(Root);
         }
 
@@ -225,8 +225,8 @@ namespace Lightbringer.UI
         public void Refresh(CampaignSession session)
         {
             if (battle == null || session == null) return;
-            Hud.Set(stage, "STAGE " + session.SelectedStage);
-            Hud.Set(waves, $"WAVE {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
+            Hud.Set(stage, "스테이지 " + session.SelectedStage);
+            Hud.Set(waves, $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
             if (session.Progress != null) Hud.Set(level, session.Progress.level.ToString());
             RefreshFronts();
             RefreshBases();
@@ -239,7 +239,7 @@ namespace Lightbringer.UI
             RefreshAbilities(manaStore);
             RefreshTroops(foodStore);
             int selected = System.Array.IndexOf(battle.Paths, battle.Summoner.SelectedPath);
-            Hud.Set(pathHint, $"PATH {selected + 1}");
+            Hud.Set(pathHint, $"진로 {selected + 1}");
             Hud.Show(pathKey, battle.Paths.Length > 1);
             minimap.Refresh(selected);
             RefreshToast();
@@ -271,7 +271,7 @@ namespace Lightbringer.UI
             if (theirs != null)
             {
                 enemyBase.Set(theirs.CurrentHealth, theirs.MaximumHealth,
-                    theirs.Invulnerable ? "SHIELDED  -  defeat the Warlord" : $"{theirs.CurrentHealth:0} / {theirs.MaximumHealth:0}");
+                    theirs.Invulnerable ? "보호막 · 군주를 처치하세요" : $"{theirs.CurrentHealth:0} / {theirs.MaximumHealth:0}");
                 enemyBase.Root.EnableInClassList("lb-bar--shielded", theirs.Invulnerable);
             }
             Combatant warlord = battle.Waves.Boss;
@@ -296,7 +296,7 @@ namespace Lightbringer.UI
                     slot.Shown = id;
                 }
                 Hud.Set(slot.Name, valid ? EquipmentCatalog.Names[id] : "-");
-                Hud.Set(slot.Cost, active ? EquipmentCatalog.Cost(id).ToString("0") + " MP" : "PASSIVE");
+                Hud.Set(slot.Cost, active ? EquipmentCatalog.Cost(id).ToString("0") + " MP" : "지속 효과");
                 float remaining = battle.Abilities.CooldownRemaining(i);
                 bool cooling = active && remaining > 0f;
                 slot.Dial.Set(cooling ? remaining / EquipmentCatalog.Cooldown(id) : 0f);

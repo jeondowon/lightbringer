@@ -21,7 +21,7 @@ namespace Lightbringer.EditorTools
         private const string SourceMesh = Folder + "/ShadowHood/Archer_ShadowHood.asset";
         private const string Request = "Docs/Validation/ArcherRig.request";
         private const string PrefabPath = RigFolder + "/Archer_Rigged.prefab";
-        private const float BowHalf = .5f, Brace = .11f, ArrowLength = .5f;
+        internal const float BowHalf = .5f, Brace = .11f, ArrowLength = .5f;
         // Full-draw anchor under the right jaw, just in front of the hood (root space; the archer faces +Z).
         private static readonly Vector3 Anchor = new Vector3(.07f, 1.38f, .2f);
         private static readonly Vector3 ArrowRest = new Vector3(-.018f, .025f, 0f);
@@ -304,7 +304,7 @@ namespace Lightbringer.EditorTools
         }
 
         // Arrow along +Z with its pivot at the nock.
-        private static void BuildArrow(Transform parent, Material shaft, Material steel, Material fletch)
+        internal static void BuildArrow(Transform parent, Material shaft, Material steel, Material fletch)
         {
             Part(parent, "Shaft", PrimitiveType.Cylinder, new Vector3(0, 0, ArrowLength * .5f), new Vector3(.008f, ArrowLength * .5f, .008f), shaft)
                 .localRotation = Quaternion.Euler(90f, 0f, 0f);
@@ -315,7 +315,7 @@ namespace Lightbringer.EditorTools
         }
 
         // Recurve-like limbs in the bow's YZ plane: back faces +Z (the target), tips sweep towards the string.
-        private static Mesh LimbMesh()
+        internal static Mesh LimbMesh()
         {
             const int rings = 41, sides = 8;
             var vertices = new List<Vector3>();

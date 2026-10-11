@@ -11,7 +11,7 @@ namespace Lightbringer.Units
     {
         public const int Count = 6;
         public const int BossStage = 8;
-        public static readonly string[] Names = { "Enemy Raider", "Enemy Archer", "Enemy Swarmling", "Enemy Brute", "Enemy Shaman", "Enemy Warlord" };
+        public static readonly string[] Names = { "약탈자", "적 궁병", "군집병", "파괴자", "주술사", "군주" };
         // First stage in which each kind can appear.
         private static readonly int[] FirstStage = { 1, 2, 3, 4, 5, BossStage };
         // Value at stage 0 plus growth per stage.
@@ -21,7 +21,7 @@ namespace Lightbringer.Units
         private static readonly float[] DamageGrowth = { 1, 1, 0.5f, 2, 0.5f, 1 };
         private static readonly float[] Ranges = { 1.25f, 6, 1.1f, 1.5f, 5, 2.2f };
         private static readonly float[] Intervals = { 1.2f, 1.4f, 0.8f, 1.8f, 1.6f, 2f };
-        private static readonly float[] Speeds = { 3, 3, 4.2f, 2, 2.6f, 1.8f };
+        private static readonly float[] Speeds = { 1.5f, 1.5f, 2.1f, 1f, 1.3f, 0.9f };
         private static readonly float[] Radii = { 0.35f, 0.35f, 0.3f, 0.5f, 0.35f, 0.75f };
         // Bonus EXP steps for tougher roles (x2 per step).
         private static readonly int[] Experience = { 0, 0, 0, 3, 2, 0 };

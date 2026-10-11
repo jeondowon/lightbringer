@@ -23,6 +23,7 @@ namespace Lightbringer.EditorTools
         static ArtAnimationPreview()
         {
             EditorRequests.Register(Path.Combine(PreviewFolder, "battlefield.request"), CaptureBattlefield);
+            EditorRequests.Register(Path.Combine(PreviewFolder, "forest-ground.request"), CaptureForestGround);
             EditorRequests.Register(Path.Combine(PreviewFolder, "capture.request"), Capture);
         }
 
@@ -119,10 +120,10 @@ namespace Lightbringer.EditorTools
             Object.DestroyImmediate(tile);
         }
 
-        // One row: the hero mid-cast and a lightning strike 5 m ahead, sampled across the strike's life.
+        // One row: the hero mid-cast and the Light Staff's celestial strike 5 m ahead.
         private static void RenderStrike(Camera camera, GameObject model, VisualOverride hero, ArtStyleLibrary library)
         {
-            if (library.lightningMaterial == null) { Debug.LogWarning("Preview: no lightning material."); return; }
+            if (library.celestialStrikeMaterial == null) { Debug.LogWarning("Preview: no celestial strike material."); return; }
             if (hero.actionClip != null) hero.actionClip.SampleAnimation(model, hero.actionClip.length * 0.35f);
             foreach (PropStabilizer prop in model.GetComponentsInChildren<PropStabilizer>(true)) { prop.SetCasting(true); prop.Apply(10f); }
             Transform holder = new GameObject("Preview Strikes").transform;
@@ -130,14 +131,14 @@ namespace Lightbringer.EditorTools
             camera.fieldOfView = 55f;
             camera.transform.position = Stage + new Vector3(11f, 4.5f, -5f);
             camera.transform.LookAt(Stage + new Vector3(0f, 4.5f, 3f));
-            float[] ages = { 0.02f, 0.06f, 0.12f, 0.2f, 0.3f, 0.42f };
+            float[] ages = { 0.03f, 0.09f, 0.18f, 0.35f, 0.6f, 0.95f };
             Texture2D sheet = new Texture2D(TileWidth * ages.Length, TileHeight, TextureFormat.RGB24, false);
             Texture2D tile = new Texture2D(TileWidth, TileHeight, TextureFormat.RGB24, false);
             try
             {
                 for (int i = 0; i < ages.Length; i++)
                 {
-                    LightningStrikeVfx strike = LightningStrikeVfx.Spawn(library, Stage + new Vector3(0f, 0f, 5f), 3f, 1.6f, holder);
+                    CelestialStrikeVfx strike = CelestialStrikeVfx.Spawn(library, Stage + new Vector3(0f, 0f, 5f), holder);
                     strike.Tick(ages[i]);
                     foreach (ParticleSystem system in strike.GetComponentsInChildren<ParticleSystem>(true))
                         system.Simulate(ages[i], true, true);
@@ -164,7 +165,12 @@ namespace Lightbringer.EditorTools
         // Stage 8 battlefield built exactly as in play (styled), with a few troops and an enemy wave,
         // rendered from behind the hero and from a high overview. Output: Battlefield_Hero/Overview.png.
         [MenuItem("Lightbringer/Art/Capture Battlefield Preview")]
-        public static void CaptureBattlefield()
+        public static void CaptureBattlefield() => CaptureBattlefieldStage(8);
+
+        [MenuItem("Lightbringer/Art/Capture Forest Ground Preview")]
+        public static void CaptureForestGround() => CaptureBattlefieldStage(1);
+
+        private static void CaptureBattlefieldStage(int stageNumber)
         {
             if (Application.isPlaying) { Debug.LogWarning("Stop Play mode before capturing the battlefield preview."); return; }
             // Async shader compilation would render not-yet-compiled variants as missing in the first frames.
@@ -186,7 +192,7 @@ namespace Lightbringer.EditorTools
                 session.InitializeForValidation(profile);
                 EditorAssets.ConfigureSession(session, material);
                 session.ConfigureArt(library);
-                session.SelectStage(8);
+                session.SelectStage(stageNumber);
                 if (!session.StartBattle()) { Debug.LogError("Preview: battle did not start."); return; }
                 Lightbringer.Core.PrototypeBattle battle = session.Battle;
                 Lightbringer.Resources.FoodResource food = battle.Hero.GetComponent<Lightbringer.Resources.FoodResource>();
@@ -213,10 +219,11 @@ namespace Lightbringer.EditorTools
                 Vector3 hero = battle.Hero.transform.position;
                 // The first Editor render happens before shadows and ambient are ready; render once and discard it.
                 camera.Render();
-                RenderView(camera, Stage + new Vector3(-55f, 38f, -40f), Stage + new Vector3(0f, 0f, 10f), "Battlefield_Overview.png");
-                RenderView(camera, hero + new Vector3(0f, 3.6f, -7.5f), hero + new Vector3(0f, 1.2f, 6f), "Battlefield_Hero.png");
+                string prefix = stageNumber == 1 ? "ForestGround" : "Battlefield";
+                RenderView(camera, Stage + new Vector3(-55f, 38f, -40f), Stage + new Vector3(0f, 0f, 10f), prefix + "_Overview.png");
+                RenderView(camera, hero + new Vector3(0f, 3.6f, -7.5f), hero + new Vector3(0f, 1.2f, 6f), prefix + "_Hero.png");
                 Vector3 field = hero + new Vector3(9f, -1.05f, 4f);
-                RenderView(camera, field + new Vector3(0f, 1.2f, -3f), field + new Vector3(0f, 0.2f, 2f), "Battlefield_GrassCloseup.png");
+                RenderView(camera, field + new Vector3(0f, 1.2f, -3f), field + new Vector3(0f, 0.2f, 2f), prefix + "_GrassCloseup.png");
                 camera.targetTexture = null;
                 Debug.Log("Battlefield preview written to " + PreviewFolder);
             }

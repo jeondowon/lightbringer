@@ -95,7 +95,8 @@ namespace Lightbringer.EditorTools
             return count;
         }
 
-        private static Mesh Simplify(Mesh source, Material[] materials, int budget, out Material[] merged)
+        // Also used for static environment props; Compact preserves only attributes present on the source.
+        internal static Mesh Simplify(Mesh source, Material[] materials, int budget, out Material[] merged)
         {
             Mesh work = Object.Instantiate(source);
             try
