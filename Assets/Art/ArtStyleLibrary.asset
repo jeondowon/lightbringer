@@ -24,6 +24,7 @@ MonoBehaviour:
   skyMaterial: {fileID: 2100000, guid: 6a604490472de0248a20f7dba289a624, type: 2}
   vfxMaterial: {fileID: 2100000, guid: fd7cd9feb92cf2d40bb29dab415d9729, type: 2}
   auraBlessingMaterial: {fileID: 2100000, guid: e5a3898ac1352c44696898373f61ffcd, type: 2}
+  forestEnvironment: {fileID: 11400000, guid: 5545f2b8d6060e0488c0e1dfc1e864b1, type: 2}
   ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
   royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
   gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}

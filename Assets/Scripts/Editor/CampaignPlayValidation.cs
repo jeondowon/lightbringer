@@ -29,6 +29,7 @@ namespace Lightbringer.EditorTools
         private static Material material;
         private static int phase;
         private static float phaseTime;
+        private static float battleStartTime;
         private static double started;
         private static double nextProbe;
         private static int lastFrame;
@@ -128,11 +129,13 @@ namespace Lightbringer.EditorTools
             session = host.AddComponent<CampaignSession>();
             material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             EditorAssets.ConfigureSession(session, material);
+            session.ConfigureArt(AssetDatabase.LoadAssetAtPath<Lightbringer.Visuals.ArtStyleLibrary>(ArtStyleSetup.LibraryPath));
             session.InitializeForValidation(new CampaignProgress());
             host.AddComponent<Lightbringer.UI.CampaignHUD>();
             host.SetActive(true);
             Assert(Cursor.lockState == CursorLockMode.None && Cursor.visible, "Campaign preparation releases menu input");
             Assert(session.StartBattle(), "Actual Play mode can start a campaign with isolated progress");
+            battleStartTime = Time.time;
             phase = 1; phaseTime = Time.realtimeSinceStartup;
         }
 
@@ -146,10 +149,36 @@ namespace Lightbringer.EditorTools
             switch (phase)
             {
                 case 1:
-                    if (elapsed < 2.2f) return;
+                    // Food advances on scaled simulation time; asset loading and shader compilation
+                    // can consume wall time without giving Update enough time to produce it.
+                    if (Time.time - battleStartTime < 2.2f) return;
+                    if (session.ArtStyle != null && session.ArtStyle.forestEnvironment != null)
+                    {
+                        Lightbringer.Visuals.ForestEnvironmentDressing forest = battle.Root.GetComponentInChildren<Lightbringer.Visuals.ForestEnvironmentDressing>();
+                        Assert(forest != null && forest.TreeCount >= 40 && forest.PropCount >= 400,
+                            "Stage 1 renders the imported forest profile");
+                        Assert(forest.GetComponentsInChildren<Collider>(true).Length == 0,
+                            "Imported forest decoration adds no gameplay colliders");
+                        Assert(forest.GetComponentsInChildren<MeshRenderer>(true).All(r =>
+                            r.sharedMaterials.All(m => m != null && m.shader != null && m.shader.isSupported)),
+                            "Imported forest renderers have supported materials");
+                        Lightbringer.Visuals.BattlefieldEnvironment terrain = forest.GetComponentInParent<Lightbringer.Visuals.BattlefieldEnvironment>();
+                        Assert(terrain.GrassChunks == 0, "Imported forest replaces the procedural grass carpet");
+                        foreach (Transform tree in forest.transform)
+                        {
+                            if (tree.name != session.ArtStyle.forestEnvironment.tree.name) continue;
+                            float lowest = float.PositiveInfinity;
+                            foreach (MeshFilter mesh in tree.GetComponentsInChildren<MeshFilter>(true))
+                                foreach (Vector3 vertex in mesh.sharedMesh.vertices)
+                                    lowest = Mathf.Min(lowest, terrain.transform.InverseTransformPoint(mesh.transform.TransformPoint(vertex)).y);
+                            Vector3 foot = terrain.transform.InverseTransformPoint(tree.position);
+                            Assert(lowest <= terrain.SurfaceHeight(foot.x, foot.z) + 0.02f,
+                                $"Forest tree mesh reaches the terrain at ({foot.x:F1}, {foot.z:F1})");
+                        }
+                    }
                     Assert(battle.Hero.IsAlive && battle.Hero.CurrentHealth == 120
                         && battle.Hero.GetComponent<FoodResource>().CurrentFood >= 10,
-                        "Awake/Start initialize hero stats and live Food generation");
+                        $"Awake/Start initialize hero stats and live Food generation [health={battle.Hero.CurrentHealth}, food={battle.Hero.GetComponent<FoodResource>().CurrentFood:F2}]");
                     battle.Summoner.Summoned += unit => soldier = unit;
                     Assert(battle.Summoner.TrySummon(), "Actual runtime summon initializes and activates one allied soldier");
                     soldierStart = soldier.transform.position;

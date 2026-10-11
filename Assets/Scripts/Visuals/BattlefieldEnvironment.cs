@@ -34,6 +34,7 @@ namespace Lightbringer.Visuals
         private System.Random random;
         private float seed;
         private ArtStyleLibrary style;
+        private ForestEnvironmentProfile forest;
 
         public MeshCollider Terrain { get; private set; }
         public int GrassChunks { get; private set; }
@@ -53,6 +54,8 @@ namespace Lightbringer.Visuals
         private void Generate(ArtStyleLibrary library, int stage, WaypointPath[] paths, Vector3 deploy, Vector3[] clearPoints, Light sun)
         {
             style = library;
+            forest = library.forestEnvironment != null && library.forestEnvironment.AppliesTo(stage)
+                ? library.forestEnvironment : null;
             random = new System.Random(stage * 7919 + 13);
             seed = stage * 17.31f;
             foreach (WaypointPath path in paths)
@@ -72,10 +75,15 @@ namespace Lightbringer.Visuals
             PublishLanes();
 
             BuildTerrain();
-            if (style.grassMaterial != null) BuildGrass();
+            // Imported forest tufts replace the old solid-colour blade carpet.
+            if (forest == null && style.grassMaterial != null) BuildGrass();
             Shapes near = new Shapes(), far = new Shapes(), backdrop = new Shapes();
-            ScatterTrees(near, far);
-            ScatterRocks(near);
+            if (forest == null)
+            {
+                ScatterTrees(near, far);
+                ScatterRocks(near);
+            }
+            else ForestEnvironmentDressing.Build(forest, this, stage);
             BuildRuins(near);
             BuildAlliedGrounds(near);
             BuildCorruptedGrounds(near);
@@ -111,6 +119,21 @@ namespace Lightbringer.Visuals
             float hills = 4f + 9f * Mathf.PerlinNoise(x * 0.025f + seed, z * 0.025f + seed);
             float ridges = Mathf.SmoothStep(0f, 1f, d / 60f) * 14f * Mathf.PerlinNoise(x * 0.012f - seed, z * 0.012f + 3.1f);
             return rise * hills + ridges;
+        }
+
+        // Match the actual terrain triangles, not the smooth function between mesh vertices.
+        public float SurfaceHeight(float x, float z)
+        {
+            const float dx = 2.2f, dz = 2.45f;
+            float gx = Mathf.Clamp((x + 110f) / dx, 0f, 99.9999f);
+            float gz = Mathf.Clamp((z + 95f) / dz, 0f, 99.9999f);
+            int c = Mathf.FloorToInt(gx), r = Mathf.FloorToInt(gz);
+            float u = gx - c, v = gz - r;
+            float x0 = -110f + c * dx, z0 = -95f + r * dz;
+            float a = Height(x0, z0), b = Height(x0, z0 + dz);
+            float right = Height(x0 + dx, z0);
+            return u + v <= 1f ? a + u * (right - a) + v * (b - a)
+                : Height(x0 + dx, z0 + dz) * (u + v - 1f) + right * (1f - v) + b * (1f - u);
         }
 
         private void BuildTerrain()
@@ -151,7 +174,8 @@ namespace Lightbringer.Visuals
             }
             mesh.SetUVs(0, masks);
             mesh.RecalculateBounds();
-            MeshRenderer renderer = AddMesh("Terrain", mesh, style.terrainMaterial, false);
+            MeshRenderer renderer = AddMesh("Terrain", mesh,
+                forest != null && forest.terrain != null ? forest.terrain : style.terrainMaterial, false);
             renderer.receiveShadows = true;
             Terrain = renderer.gameObject.AddComponent<MeshCollider>();
             Terrain.sharedMesh = mesh;
@@ -263,7 +287,7 @@ namespace Lightbringer.Visuals
 
         private float Range(float min, float max) => min + (float)random.NextDouble() * (max - min);
 
-        private bool ClearOfPlay(Vector2 point, float lane, float bases)
+        public bool ClearOfPlay(Vector2 point, float lane, float bases)
         {
             if (DistanceToLanes(point) < lane) return false;
             foreach (Vector2 clear in keepClear) if (Vector2.Distance(point, clear) < bases) return false;

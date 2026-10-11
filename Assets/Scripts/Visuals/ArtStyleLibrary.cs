@@ -78,6 +78,9 @@ namespace Lightbringer.Visuals
         [Tooltip("Lightbringer/Aura Blessing: additive shell on allied troop models inside the hero aura.")]
         public Material auraBlessingMaterial;
 
+        [Header("Stage environment overrides")]
+        public ForestEnvironmentProfile forestEnvironment;
+
         [Header("Allied palette (character sheet v1)")]
         public Color ivory = new Color(0.93f, 0.91f, 0.86f);
         public Color royalBlue = new Color(0.2f, 0.33f, 0.68f);

@@ -19,6 +19,10 @@ Shader "Lightbringer/Terrain"
         _StoneSize ("Flagstone Size (m)", Range(0.4, 3)) = 1.1
         [HDR] _CorruptGlow ("Corruption Crack Glow", Color) = (2.2, 0.35, 0.8, 1)
         _CorruptSoil ("Corrupted Soil", Color) = (0.24, 0.19, 0.27, 1)
+        _ForestGrassTex ("Forest Ground", 2D) = "white" {}
+        _ForestSoilTex ("Forest Soil", 2D) = "white" {}
+        _ForestTextureStrength ("Forest Texture Blend", Range(0, 1)) = 0
+        _ForestTextureScale ("Forest Texture Repeats Per Metre", Float) = 0.25
     }
 
     SubShader
@@ -40,7 +44,11 @@ Shader "Lightbringer/Terrain"
             float _StoneSize;
             half4 _CorruptGlow;
             half4 _CorruptSoil;
+            half _ForestTextureStrength;
+            float _ForestTextureScale;
         CBUFFER_END
+        TEXTURE2D(_ForestGrassTex); SAMPLER(sampler_ForestGrassTex);
+        TEXTURE2D(_ForestSoilTex); SAMPLER(sampler_ForestSoilTex);
         ENDHLSL
 
         Pass
@@ -168,6 +176,14 @@ Shader "Lightbringer/Terrain"
                 half broad = ValueNoise(p * 0.11);
                 half fine = ValueNoise(p * 0.55 + 7.3);
                 half3 albedo = input.color.rgb * (1.0h + (broad - 0.5h) * 2.0h * _PatchStrength) * lerp(0.96h, 1.04h, fine);
+                if (_ForestTextureStrength > 0.001h)
+                {
+                    float2 forestUV = p * _ForestTextureScale;
+                    half3 forestGrass = SAMPLE_TEXTURE2D(_ForestGrassTex, sampler_ForestGrassTex, forestUV).rgb;
+                    half3 forestSoil = SAMPLE_TEXTURE2D(_ForestSoilTex, sampler_ForestSoilTex, forestUV).rgb;
+                    half3 forestGround = lerp(forestGrass, forestSoil, road) * lerp(0.9h, 1.08h, broad);
+                    albedo = lerp(albedo, forestGround, _ForestTextureStrength * (1.0h - plaza));
+                }
                 float2 strokeA = float2(p.x * 0.9 + p.y * 0.35, p.y * 4.5 - p.x * 1.2);
                 float2 strokeB = float2(p.y * 0.9 - p.x * 0.3, p.x * 4.5 + p.y * 1.1);
                 half strokes = (ValueNoise(strokeA) * 0.5 + ValueNoise(strokeB + 13.0) * 0.5 - 0.5) * 2.0;
