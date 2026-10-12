@@ -49,3 +49,5 @@
 4. **최종 동시전:** 마왕 별도 AI, 두 보스의 공격 조율, 복수 보스 HUD와 승리 조건을 만든다. 현재의 단일 보스 사망 승리 조건은 이 단계에서 확장한다.
 
 구현된 첫 군주전의 수치와 기술 설명은 [BossEncounter.md](BossEncounter.md)를 참고한다.
+
+최종전 마왕의 사용자 지정 콘셉트(하늘을 뒤덮는 어둠, 붉은 눈, 하늘에서의 마법 공격)와 외형·전투 구현 제안은 [DemonKingFinalBattle.md](../../GameDesign/DemonKingFinalBattle.md)에 정리했다. 지상 핵을 통한 피해 전달 등 세부 제안은 아직 미확정이다.

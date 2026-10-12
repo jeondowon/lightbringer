@@ -1,0 +1,18 @@
+Lightbringer — 마왕 움직임·사실성 시험 영상 v1
+작성일: 2026-10-13
+도구: Higgsfield generate_video
+모델: seedance_2_0_mini
+설정: 4초, 480p, 16:9, 무음, 1개
+사전 견적: 2크레딧
+생성 전 조회 잔액: 110.56크레딧
+작업 ID: 68df7939-442c-46dc-a4b1-7a8c79e7f615
+입력: DemonKing_SkyReveal_Reference_v4.png (start_image)
+업로드 미디어 ID: 87632ddc-6143-4c46-baef-efb9972d1cd9
+목적: 사용자 요청에 따라 비용을 최소화한 짧은 사실적 3D 영상 시험. 기존 이미지에서 시작하여 눈빛과 어둠의 움직임을 검토한다. 눈이 없는 장면에서 시작하는 전체 등장 영상은 아니다.
+상태: 생성 완료(completed), 프로젝트에 MP4 저장 확인. 영상의 실제 화질·동작에 대한 재생 검토는 별도 필요.
+결과 파일: DemonKing_SkyMotion_Test_v1.mp4
+결과 URL: https://d8j0ntlcm91z4.cloudfront.net/user_3JJUT0MKENj8oBi491QAY0Jiqty/hf_20261012_200414_68df7939-442c-46dc-a4b1-7a8c79e7f615.mp4
+생성 후 조회 잔액: 108.56크레딧 (전후 차감 2크레딧)
+
+Final prompt:
+Single continuous four-second cinematic shot based precisely on the supplied fortress image. Realistic high-end 3D CGI fantasy, physically plausible light, volumetric storm clouds and smoke, believable depth and atmospheric scattering, no comic or painted animation. Preserve the castle, central spire, bridge, rocky plateau, all architecture and composition without morphing. Camera nearly locked with an extremely slow subtle push forward. The demon king is a vast nonhuman darkness directly above this castle: two crimson eyes remain anchored in the same sky position. Animate the black inky shadow currents so they slowly stream and curl THROUGH the cloud volumes toward the space above the castle; wispy edges split and dissolve like smoke, never solid tentacles, ropes or rubber. Cloud banks billow slowly at different depths, soft wisps cross in front of the eyes; the red eye glow gradually intensifies slightly and holds at the end. Keep castle and eyes readable. Ominous vast scale, restrained movement. No humanoid body, face anatomy, mouth, horns, lightning, beams, explosions, new characters, scene cuts, camera shake, architecture destruction, subtitles or logos. Silent motion-and-realism test, not the full introductory sequence.
