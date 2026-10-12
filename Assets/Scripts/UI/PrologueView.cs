@@ -17,7 +17,7 @@ namespace Lightbringer.UI
         private readonly VisualElement frame, whiteout, captionPanel, credits;
         private readonly Image picture;
         private readonly PrologueEffects effects;
-        private readonly Label caption;
+        private readonly Label caption, progress;
         private readonly Button previous, next;
         private readonly Action finished;
         private PrologueSequence sequence;
@@ -58,6 +58,8 @@ namespace Lightbringer.UI
             caption = Hud.Text(captionPanel, "", "lb-prologue-caption");
             VisualElement controls = Hud.Box(captionPanel, "lb-prologue-controls");
             previous = AddButton(controls, "이전", Previous);
+            progress = Hud.Text(controls, "", "lb-prologue-progress");
+            progress.pickingMode = PickingMode.Ignore;
             next = AddButton(controls, "다음", Advance);
             VisualElement music = Hud.Box(Root, "lb-prologue-music");
             AddButton(music, "음악 정보", () => Hud.Show(credits, credits.ClassListContains("lb-hidden")));
@@ -77,20 +79,22 @@ namespace Lightbringer.UI
             return button;
         }
 
-        public bool Open(PrologueSequence value)
+        public bool Open(PrologueSequence value, int startSlide = 0, int startCaption = 0)
         {
             if (IsOpen || value == null || !value.IsReady) return false;
+            if (startSlide < 0 || startSlide >= value.slides.Length
+                || startCaption < 0 || startCaption >= value.slides[startSlide].captions.Length) return false;
             sequence = value;
             IsOpen = true;
             closing = false;
             Hud.Show(credits, false);
             Hud.Show(Root, true);
             Root.style.opacity = 1f;
-            ShowSlide(0, 0);
+            ShowSlide(startSlide, startCaption);
             fadingOut = false;
             flash = false;
             whiteout.style.opacity = 0f;
-            duration = transition = OpeningFade;
+            duration = transition = startSlide == 0 && startCaption == 0 ? OpeningFade : FadeDuration;
             SetContentOpacity(0);
             Fit();
             return true;
@@ -193,6 +197,14 @@ namespace Lightbringer.UI
             effects.SetCaption(line);
             PrologueSlide slide = sequence.slides[SlideIndex];
             caption.text = slide.captions[line];
+            int current = line + 1, total = 0;
+            for (int i = 0; i < sequence.slides.Length; i++)
+            {
+                int count = sequence.slides[i].captions.Length;
+                total += count;
+                if (i < SlideIndex) current += count;
+            }
+            progress.text = $"{current}/{total}";
             previous.SetEnabled(SlideIndex != 0 || line != 0);
             next.text = SlideIndex == sequence.slides.Length - 1 && line == slide.captions.Length - 1 ? "여정 시작" : "다음";
         }

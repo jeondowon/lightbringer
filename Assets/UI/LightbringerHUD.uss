@@ -28,7 +28,9 @@
 .lb-prologue-top .lb-atlas-brand { margin-bottom: 0; }
 .lb-prologue-caption-panel { position: absolute; left: 0; right: 0; bottom: 0; padding: 64px 14% 26px 14%; background-color: rgba(4, 6, 9, 0.0); border-width: 0; }
 .lb-prologue-caption { font-size: 26px; color: rgb(244, 238, 220); white-space: normal; -unity-text-align: middle-center; min-height: 76px; margin-bottom: 14px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95); }
-.lb-prologue-controls { flex-direction: row; justify-content: center; }
+.lb-prologue-controls { flex-direction: row; justify-content: center; align-items: center; }
+.lb-prologue-controls .lb-prologue-button { width: 84px; flex-grow: 0; flex-shrink: 0; -unity-text-align: middle-center; }
+.lb-prologue-progress { height: 30px; width: 58px; flex-grow: 0; flex-shrink: 0; margin: 0 6px; padding: 0; border-width: 0; font-size: 13px; color: rgb(190, 182, 160); -unity-text-align: middle-center; }
 .lb-prologue-button { height: 30px; min-width: 84px; padding: 0 14px; margin: 0 6px; background-color: rgba(0, 0, 0, 0); border-width: 0 0 1px 0; border-color: rgba(197, 180, 140, 0.25); border-radius: 0; color: rgb(190, 182, 160); font-size: 13px; letter-spacing: 1px; }
 .lb-prologue-button:hover { background-color: rgba(0, 0, 0, 0); border-color: rgb(226, 208, 160); color: rgb(246, 238, 214); }
 .lb-prologue-button:disabled { opacity: 0.3; }

@@ -133,26 +133,59 @@ namespace Lightbringer.UI
         };
         private static readonly Vector2[] QuarrelWoman = { P(1180f, 520f), P(1200f, 600f), P(1240f, 680f) };
         private static readonly Vector2[] QuarrelMan = { P(1380f, 560f), P(1420f, 640f), P(1460f, 700f) };
-        // Second caption: the separate streams gather and creep along the street out of the picture.
-        private static readonly Vector2[] GatheringStream =
+        // Trace the actual painted streams from the villagers down their clothes and across the lane.
+        private static readonly Vector2[] QuarrelInkLeft =
         {
-            P(270f, 360f), P(330f, 430f), P(420f, 520f), P(470f, 620f), P(540f, 700f), P(600f, 760f),
-            P(720f, 790f), P(900f, 800f), P(1100f, 790f), P(1300f, 770f), P(1450f, 760f), P(1560f, 750f), P(1700f, 735f),
+            P(259f, 292f), P(283f, 330f), P(321f, 360f), P(332f, 395f), P(359f, 432f),
+            P(400f, 464f), P(430f, 496f), P(424f, 532f), P(452f, 557f), P(488f, 583f),
+            P(494f, 627f), P(523f, 666f), P(541f, 707f), P(581f, 742f), P(637f, 767f),
+            P(702f, 789f), P(813f, 798f), P(915f, 785f), P(1017f, 800f), P(1101f, 819f),
+            P(1203f, 822f), P(1306f, 803f), P(1410f, 799f), P(1512f, 774f), P(1594f, 757f),
         };
-        private static readonly Vector2[] GatheringWoman = { P(1180f, 520f), P(1200f, 600f), P(1240f, 690f), P(1330f, 765f), P(1460f, 758f), P(1700f, 735f) };
-        private static readonly Vector2[] GatheringMan = { P(1380f, 560f), P(1420f, 640f), P(1470f, 710f), P(1560f, 750f), P(1700f, 735f) };
+        private static readonly Vector2[] QuarrelInkWoman =
+        {
+            P(1171f, 511f), P(1191f, 552f), P(1200f, 599f), P(1202f, 642f),
+            P(1224f, 681f), P(1260f, 711f), P(1310f, 737f), P(1376f, 757f), P(1450f, 774f),
+        };
+        private static readonly Vector2[] QuarrelInkMan =
+        {
+            P(1388f, 477f), P(1376f, 520f), P(1354f, 563f), P(1333f, 608f),
+            P(1334f, 644f), P(1355f, 681f), P(1351f, 720f), P(1390f, 746f), P(1450f, 768f),
+        };
+        private static readonly Vector2[] QuarrelInkFar =
+        {
+            P(1576f, 558f), P(1564f, 601f), P(1570f, 645f), P(1551f, 684f),
+            P(1562f, 721f), P(1600f, 744f), P(1633f, 776f), P(1608f, 797f), P(1510f, 814f),
+        };
+        // Second caption: the separate streams gather and creep along the street out of the picture.
+        private static readonly Vector2[] GatheringLane =
+        {
+            P(637f, 767f), P(702f, 789f), P(813f, 798f), P(915f, 785f), P(1017f, 800f),
+            P(1101f, 819f), P(1203f, 822f), P(1306f, 803f), P(1410f, 799f),
+            P(1512f, 774f), P(1594f, 757f), P(1660f, 751f), P(1730f, 737f),
+        };
+        private static readonly Vector2[] GatheringJunction =
+        {
+            P(1351f, 720f), P(1390f, 746f), P(1450f, 774f), P(1510f, 797f),
+            P(1580f, 790f), P(1633f, 776f), P(1690f, 754f), P(1730f, 737f),
+        };
 
         private void BirthOfDarkness()
         {
+            // Keep the same moving strands and phase across both captions; the second thickens them
+            // and feeds a wider current along the painted lane instead of replacing them with faint smoke.
+            float gather = captionIndex >= 1 ? CaptionRamp(1.5f) : 0f;
+            fx.DarkInkFlow(QuarrelInkLeft, Mathf.Lerp(23f, 33f, gather), 68f, 1f, 51);
+            fx.DarkInkFlow(QuarrelInkWoman, Mathf.Lerp(17f, 25f, gather), 53f, 1f, 52);
+            fx.DarkInkFlow(QuarrelInkMan, Mathf.Lerp(15f, 23f, gather), 58f, 1f, 53);
+            fx.DarkInkFlow(QuarrelInkFar, Mathf.Lerp(15f, 22f, gather), 50f, 0.9f, 54);
             fx.DarkWisps(QuarrelStream, 40, 70f, 1f, 1f, 7);
             fx.DarkWisps(QuarrelWoman, 8, 60f, 0.8f, 0.8f, 8);
             fx.DarkWisps(QuarrelMan, 8, 60f, 0.8f, 0.8f, 9);
             if (captionIndex >= 1)
             {
-                float gather = CaptionRamp(1.5f);
-                fx.DarkFlow(GatheringStream, 44, 38f, 1.1f, gather, 31);
-                fx.DarkFlow(GatheringWoman, 12, 34f, 0.9f, gather, 32);
-                fx.DarkFlow(GatheringMan, 12, 34f, 0.9f, gather, 33);
+                fx.DarkInkFlow(GatheringLane, 34f, 84f, gather, 55);
+                fx.DarkInkFlow(GatheringJunction, 25f, 76f, gather, 56);
             }
             fx.Lamp(P(213f, 318f), 1.1f, 1.1f, 1);
             fx.Lamp(P(1105f, 385f), 0.6f, 0.7f, 2);
@@ -164,16 +197,56 @@ namespace Lightbringer.UI
         private static readonly Vector2[] DemonBody = { P(900f, 600f), P(1000f, 450f), P(1100f, 260f), P(1200f, 450f), P(1350f, 600f) };
         private static readonly Vector2[] DemonVillage = { P(60f, 560f), P(100f, 568f), P(170f, 572f), P(205f, 578f) };
 
-        // Darkness creeping across the land from both sides into the Demon King's body.
-        private static readonly Vector2[] DemonFlowLeft = { P(-40f, 760f), P(200f, 720f), P(420f, 700f), P(620f, 720f), P(800f, 690f), P(950f, 620f), P(1050f, 560f) };
-        private static readonly Vector2[] DemonFlowLow = { P(-40f, 900f), P(300f, 860f), P(520f, 830f), P(700f, 780f), P(880f, 700f), P(1000f, 600f) };
-        private static readonly Vector2[] DemonFlowRight = { P(1712f, 640f), P(1500f, 620f), P(1350f, 610f), P(1220f, 580f), P(1130f, 520f) };
+        // Trace the painted charcoal currents into the body, then curl around its lower silhouette,
+        // chest and shoulders. The crown and red eyes stay clear of the added ink.
+        private static readonly Vector2[] DemonFlowLeft =
+        {
+            P(-40f, 659f), P(70f, 646f), P(154f, 669f), P(206f, 655f), P(264f, 680f),
+            P(321f, 692f), P(366f, 720f), P(406f, 709f), P(464f, 741f), P(511f, 727f),
+            P(574f, 746f), P(624f, 768f), P(685f, 738f), P(746f, 705f), P(804f, 668f),
+            P(850f, 626f), P(909f, 588f), P(961f, 547f), P(1007f, 498f), P(1052f, 439f),
+        };
+        private static readonly Vector2[] DemonFlowLow =
+        {
+            P(-40f, 850f), P(61f, 818f), P(131f, 819f), P(214f, 848f), P(289f, 833f),
+            P(365f, 814f), P(449f, 829f), P(522f, 813f), P(594f, 781f), P(664f, 759f),
+            P(723f, 718f), P(787f, 704f), P(829f, 665f), P(883f, 656f), P(923f, 615f),
+            P(954f, 569f), P(986f, 531f), P(1009f, 478f), P(1050f, 424f), P(1080f, 365f),
+        };
+        private static readonly Vector2[] DemonFlowRight =
+        {
+            P(1712f, 560f), P(1630f, 543f), P(1567f, 563f), P(1501f, 537f),
+            P(1440f, 520f), P(1390f, 485f), P(1332f, 477f), P(1280f, 436f),
+            P(1246f, 404f), P(1204f, 379f), P(1176f, 343f), P(1140f, 318f),
+        };
+        private static readonly Vector2[] DemonLowerWrap =
+        {
+            P(888f, 685f), P(938f, 651f), P(976f, 604f), P(960f, 559f),
+            P(982f, 521f), P(1028f, 498f), P(1090f, 485f), P(1152f, 471f),
+            P(1210f, 441f), P(1240f, 400f), P(1231f, 361f), P(1200f, 321f),
+        };
+        private static readonly Vector2[] DemonChestWrap =
+        {
+            P(1320f, 509f), P(1279f, 468f), P(1232f, 451f), P(1183f, 421f),
+            P(1127f, 402f), P(1070f, 373f), P(1030f, 338f), P(1026f, 302f),
+            P(1058f, 267f), P(1095f, 247f), P(1140f, 230f), P(1180f, 204f),
+        };
+        private static readonly Vector2[] DemonShoulderWrap =
+        {
+            P(809f, 384f), P(849f, 347f), P(884f, 311f), P(933f, 284f),
+            P(969f, 249f), P(1010f, 227f), P(1055f, 209f), P(1085f, 230f),
+            P(1123f, 236f), P(1160f, 213f), P(1200f, 237f), P(1240f, 270f),
+            P(1284f, 287f), P(1320f, 323f), P(1362f, 363f), P(1389f, 412f),
+        };
 
         private void DemonKingBirth()
         {
-            fx.DarkFlow(DemonFlowLeft, 34, 42f, 1.2f, 1f, 34);
-            fx.DarkFlow(DemonFlowLow, 30, 46f, 1.3f, 0.9f, 35);
-            fx.DarkFlow(DemonFlowRight, 22, 40f, 1.1f, 0.9f, 36);
+            fx.DarkInkFlow(DemonFlowLeft, 34f, 76f, 1f, 61);
+            fx.DarkInkFlow(DemonFlowLow, 40f, 82f, 1f, 62);
+            fx.DarkInkFlow(DemonFlowRight, 32f, 67f, 1f, 63);
+            fx.DarkInkFlow(DemonLowerWrap, 38f, 72f, 1f, 64);
+            fx.DarkInkFlow(DemonChestWrap, 30f, 64f, 1f, 65);
+            fx.DarkInkFlow(DemonShoulderWrap, 28f, 60f, 1f, 66);
             fx.DarkWisps(DemonBody, 46, 160f, 1.6f, 1f, 11);
             for (int i = 0; i < DemonVillage.Length; i++) fx.Lamp(DemonVillage[i], 0.35f, 0.6f, 40 + i);
             var red = new Color(1f, 0.22f, 0.08f);
@@ -327,22 +400,97 @@ namespace Lightbringer.UI
             fx.Beacon(P(355f, 215f), 0.55f, 0.45f, 6);
         }
 
-        // 05A: a lit window above, scattered coins catching the light below.
+        // 05A: darkness leaks from the thief and the two passers-by who turn away, gathering along
+        // the cobbles. Keep faces, the stolen purse, the victim's reaching hand and the coins readable.
         private static readonly Vector2[] Coins = { P(585f, 744f), P(625f, 753f), P(552f, 759f), P(599f, 766f), P(627f, 781f), P(582f, 795f) };
+        private static readonly Vector2[] GreedThiefCloak =
+        {
+            P(1260f, 292f), P(1229f, 316f), P(1190f, 338f), P(1155f, 365f),
+            P(1130f, 406f), P(1090f, 452f), P(1074f, 489f), P(1040f, 531f),
+            P(1021f, 578f), P(981f, 623f), P(930f, 651f), P(867f, 669f),
+            P(810f, 691f), P(755f, 700f), P(710f, 682f),
+        };
+        private static readonly Vector2[] GreedThiefHem =
+        {
+            P(1306f, 428f), P(1320f, 477f), P(1301f, 524f), P(1274f, 563f),
+            P(1290f, 608f), P(1263f, 653f), P(1250f, 702f), P(1228f, 747f),
+            P(1242f, 785f), P(1290f, 808f), P(1355f, 811f), P(1420f, 788f),
+            P(1480f, 779f), P(1540f, 795f), P(1624f, 783f), P(1720f, 754f),
+        };
+        private static readonly Vector2[] GreedPasserMan =
+        {
+            P(587f, 336f), P(566f, 370f), P(571f, 410f), P(594f, 443f),
+            P(582f, 482f), P(594f, 524f), P(590f, 563f), P(616f, 591f),
+            P(665f, 603f), P(716f, 627f), P(771f, 638f), P(818f, 665f), P(867f, 669f),
+        };
+        private static readonly Vector2[] GreedPasserWoman =
+        {
+            P(707f, 348f), P(726f, 381f), P(720f, 421f), P(702f, 457f),
+            P(709f, 497f), P(730f, 534f), P(726f, 570f), P(751f, 601f),
+            P(793f, 623f), P(818f, 665f), P(867f, 669f),
+        };
+        private static readonly Vector2[] GreedStreet =
+        {
+            P(716f, 627f), P(771f, 638f), P(818f, 665f), P(867f, 669f),
+            P(930f, 687f), P(946f, 724f), P(975f, 760f), P(1020f, 788f),
+            P(1100f, 790f), P(1160f, 822f), P(1230f, 834f), P(1290f, 808f),
+            P(1355f, 811f), P(1420f, 788f), P(1480f, 779f), P(1540f, 795f),
+            P(1624f, 783f), P(1720f, 754f),
+        };
 
         private void Greed()
         {
+            float darkness = 0.6f + 0.4f * CaptionRamp(2f);
+            fx.DarkInkFlow(GreedThiefCloak, 28f, 66f, darkness, 71);
+            fx.DarkInkFlow(GreedThiefHem, 25f, 61f, darkness, 72);
+            fx.DarkInkFlow(GreedPasserMan, 17f, 49f, darkness, 73);
+            fx.DarkInkFlow(GreedPasserWoman, 17f, 53f, darkness, 74);
+            fx.DarkInkFlow(GreedStreet, 34f, 76f, darkness, 75);
             fx.Lamp(P(684f, 75f), 0.7f, 0.8f, 1);
             for (int i = 0; i < Coins.Length; i++) fx.Glint(Coins[i], 7f, Warm, 4.5f + i * 0.7f, 120 + i);
         }
 
-        // 05B: a brawl under the lantern, faint darkness gathering at the fighters' feet.
+        // 05B: hatred seeps from both fighters' chests, coils down their clothes and joins on the
+        // street. Keep their faces and hands, the intervening man and the sheltered child unobscured.
         private static readonly Vector2[] BrawlFeet = { P(480f, 780f), P(620f, 700f), P(760f, 760f), P(900f, 720f), P(1050f, 790f) };
         private static readonly Vector2[] BrawlWindows = { P(72f, 288f), P(825f, 150f), P(1088f, 380f), P(380f, 490f) };
+        private static readonly Vector2[] BrawlLeftInk =
+        {
+            P(640f, 347f), P(612f, 381f), P(578f, 416f), P(570f, 457f),
+            P(599f, 496f), P(613f, 538f), P(658f, 569f), P(704f, 606f),
+            P(730f, 652f), P(748f, 695f), P(752f, 740f), P(794f, 777f),
+            P(852f, 786f), P(910f, 772f),
+        };
+        private static readonly Vector2[] BrawlLeftHem =
+        {
+            P(574f, 457f), P(535f, 488f), P(508f, 528f), P(474f, 555f),
+            P(489f, 597f), P(463f, 635f), P(448f, 677f), P(417f, 714f),
+            P(406f, 758f), P(388f, 807f), P(421f, 840f), P(480f, 851f),
+            P(551f, 831f), P(624f, 816f), P(696f, 827f),
+        };
+        private static readonly Vector2[] BrawlRightInk =
+        {
+            P(960f, 389f), P(991f, 426f), P(1004f, 465f), P(979f, 501f),
+            P(947f, 539f), P(968f, 579f), P(944f, 614f), P(903f, 645f),
+            P(921f, 683f), P(891f, 716f), P(880f, 750f), P(910f, 772f),
+            P(977f, 778f), P(1038f, 761f), P(1104f, 742f),
+        };
+        private static readonly Vector2[] BrawlStreetInk =
+        {
+            P(298f, 842f), P(365f, 826f), P(421f, 840f), P(480f, 851f),
+            P(551f, 831f), P(624f, 816f), P(696f, 827f), P(766f, 813f),
+            P(823f, 801f), P(871f, 775f), P(910f, 772f), P(977f, 778f),
+            P(1038f, 761f), P(1104f, 742f), P(1150f, 710f), P(1168f, 665f),
+        };
 
         private void Hatred()
         {
-            fx.DarkWisps(BrawlFeet, 14, 120f, 1f, 0.55f, 13);
+            float darkness = 0.65f + 0.35f * CaptionRamp(1.8f);
+            fx.DarkInkFlow(BrawlLeftInk, 29f, 70f, darkness, 81);
+            fx.DarkInkFlow(BrawlLeftHem, 25f, 65f, darkness, 82);
+            fx.DarkInkFlow(BrawlRightInk, 31f, 74f, darkness, 83);
+            fx.DarkInkFlow(BrawlStreetInk, 37f, 82f, darkness, 84);
+            fx.DarkWisps(BrawlFeet, 24, 100f, 1.2f, 0.85f, 13);
             for (int i = 0; i < BrawlWindows.Length; i++) fx.Lamp(BrawlWindows[i], 0.5f, 0.6f, 130 + i);
             fx.Lamp(P(1193f, 160f), 1.3f, 1.1f, 2);
         }
@@ -382,28 +530,44 @@ namespace Lightbringer.UI
         private void FirstStep()
         {
             fx.DarkWisps(FallenSkeleton, 22, 110f, 1.2f, 0.8f, 15);
-            fx.Glint(P(372f, 548f), 14f, Warm, 6f, 141);
-            fx.Glint(P(782f, 640f), 18f, Warm, 7f, 142);
+            fx.Glint(P(482f, 552f), 14f, Warm, 6f, 141);
+            fx.Glint(P(896f, 661f), 18f, Warm, 7f, 142);
             fx.Glint(P(1395f, 82f), 28f, Gold, 5f, 143);
         }
 
-        // 07(ForgottenBeacon): the hero's staff glows blue beside the dead beacon she touches.
+        // 07(ForgottenBeacon): first show the dead crystal, then carry light from her hand up the
+        // column. The crystal ignites once and stays lit; revisiting the page restarts the awakening.
         private void ForgottenBeacon()
         {
             float pulse = 0.75f + 0.25f * Mathf.Sin(elapsed * 1.1f);
-            fx.Glow(P(512f, 466f), P(26f, 26f), new Color(0.5f, 0.72f, 1f, 0.16f * pulse));
+            float charge = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.85f, 2.35f, elapsed));
+            float lit = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(2.1f, 3.7f, elapsed));
+            float ignition = Mathf.Sin(Mathf.InverseLerp(2.1f, 4.1f, elapsed) * Mathf.PI);
+            fx.Glow(P(510f, 480f), P(36f, 36f), new Color(0.65f, 0.78f, 1f, (0.14f + charge * 0.3f) * pulse));
+            Vector2 risingLight = Vector2.Lerp(P(475f, 478f), P(460f, 224f), charge);
+            fx.Glow(risingLight, P(22f, 42f), new Color(1f, 0.84f, 0.54f, charge * (1f - lit) * 0.75f));
+            fx.Spill(P(461f, 425f), P(86f, 205f), Gold, lit * 0.16f, 71);
+            fx.Spill(P(466f, 756f), P(250f, 90f), Gold, lit * 0.14f, 72);
+            fx.Spill(P(558f, 519f), P(95f, 120f), Warm, lit * 0.1f, 73);
+            fx.Beacon(P(460f, 224f), 1.35f, lit * (1.8f + 0.45f * ignition), 74);
+            // The broad round source brightens with the original ignition timing, then stays lit.
+            fx.Glow(P(460f, 224f), P(118f, 118f), new Color(1f, 0.76f, 0.35f, lit * 0.65f));
+            fx.Glow(P(460f, 224f), P(72f, 72f), new Color(1f, 0.93f, 0.68f, lit * 0.98f));
+            fx.Glow(P(460f, 224f), P(48f, 48f), new Color(1f, 0.99f, 0.9f, lit));
             fx.MagicGem(P(730f, 449f), 1.15f, 7);
         }
 
-        // 09: fog in the valley, the staff's blue light, and far beacons waiting to be lit.
-        private static readonly Vector2[] FarBeacons = { P(540f, 352f), P(940f, 292f), P(1482f, 196f), P(1555f, 432f) };
-
+        // 09: the beacon beside her stays lit after its awakening. All distant beacons remain dark.
         private void Journey()
         {
             var mist = new Color(0.62f, 0.64f, 0.74f);
             fx.Fog(P(650f, 520f), P(350f, 70f), 7, mist, 0.12f, 9f, 3);
             fx.Fog(P(1350f, 600f), P(200f, 40f), 4, mist, 0.1f, 7f, 4);
-            for (int i = 0; i < FarBeacons.Length; i++) fx.Glint(FarBeacons[i], 14f, Warm, 7f + i * 1.3f, 150 + i);
+            fx.Beacon(P(66f, 265f), 1.15f, 1.8f, 75);
+            // A broad, steady round source covers the dark crystal even at the flicker's minimum.
+            fx.Glow(P(66f, 265f), P(118f, 118f), new Color(1f, 0.76f, 0.35f, 0.65f));
+            fx.Glow(P(66f, 265f), P(72f, 72f), new Color(1f, 0.93f, 0.68f, 0.98f));
+            fx.Glow(P(66f, 265f), P(48f, 48f), new Color(1f, 0.99f, 0.9f, 1f));
             fx.MagicGem(P(400f, 543f), 0.9f, 8);
         }
     }

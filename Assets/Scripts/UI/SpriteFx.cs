@@ -21,12 +21,13 @@ namespace Lightbringer.UI
             public Layer(Func<Texture2D> texture) { Texture = texture; }
         }
 
-        private static Texture2D glowTexture, dotTexture, raysTexture, starTexture, streakTexture, shaftTexture, smokeTexture;
+        private static Texture2D glowTexture, dotTexture, raysTexture, starTexture, streakTexture, shaftTexture, smokeTexture, inkTexture;
 
         // Draw order: back to front.
         private readonly Layer fog = new Layer(() => smokeTexture);
         private readonly Layer back = new Layer(() => glowTexture);
         private readonly Layer dark = new Layer(() => smokeTexture);
+        private readonly Layer darkInk = new Layer(() => inkTexture);
         private readonly Layer fireGlow = new Layer(() => glowTexture);
         private readonly Layer halo = new Layer(() => glowTexture);
         private readonly Layer core = new Layer(() => dotTexture);
@@ -49,7 +50,7 @@ namespace Lightbringer.UI
 
         public SpriteFx()
         {
-            layers = new[] { fog, back, dark, fireGlow, halo, core, rays, shafts, glow, star, streak, frontHalo, frontCore };
+            layers = new[] { fog, back, dark, darkInk, fireGlow, halo, core, rays, shafts, glow, star, streak, frontHalo, frontCore };
         }
 
         // cover: true for scale-and-crop backgrounds, false for scale-to-fit images.
@@ -324,6 +325,58 @@ namespace Lightbringer.UI
             }
         }
 
+        // Connected, dry-edged ink strands follow the painted shadows. Travelling changes in width,
+        // opacity and sideways curl make their direction visible even over a dark illustration.
+        public void DarkInkFlow(Vector2[] path, float width, float speed, float strength, int seed)
+        {
+            if (path == null || path.Length < 2 || width <= 0f || strength <= 0.002f) return;
+            float length = 0f;
+            for (int i = 1; i < path.Length; i++) length += Vector2.Distance(path[i - 1], path[i]);
+            if (length < 1f) return;
+            int steps = Mathf.Clamp(Mathf.CeilToInt(length / 8f), 2, 512);
+
+            // A muted violet edge separates the charcoal core from the shadows already in the art.
+            for (int strand = 0; strand < 3; strand++)
+            {
+                if (darkInk.Vertices.Count + (steps + 1) * 2 > 60000) return;
+                int start = darkInk.Vertices.Count;
+                float phase = seed * 1.71f + (strand == 2 ? 2.2f : 0f);
+                for (int i = 0; i <= steps; i++)
+                {
+                    float u = (float)i / steps, distance = u * length;
+                    Vector2 point = PointAlong(path, distance, out _);
+                    Vector2 before = PointAlong(path, Mathf.Max(0f, distance - 12f), out _);
+                    Vector2 after = PointAlong(path, Mathf.Min(length, distance + 12f), out _);
+                    Vector2 direction = (after - before).normalized;
+                    Vector2 normal = new Vector2(-direction.y, direction.x);
+                    float travel = distance - Time * speed;
+                    float swell = 0.5f + 0.5f * Mathf.Sin(travel * 0.038f + phase);
+                    float curl = Mathf.Sin(travel * 0.026f + phase) * width * 0.18f
+                        + Mathf.Sin(travel * 0.067f + phase) * width * 0.06f;
+                    float offset = strand == 2 ? width * 0.52f : 0f;
+                    Vector2 centre = At(point + normal * (curl + offset));
+                    float taper = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(distance / 45f))
+                        * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((length - distance) / 55f));
+                    float half = width * (0.52f + 0.38f * swell) * Scale * taper;
+                    if (strand == 1) half *= 0.63f;
+                    if (strand == 2) half *= 0.23f;
+                    Color color = strand == 0 ? new Color(0.24f, 0.18f, 0.28f, 0.58f)
+                        : strand == 1 ? new Color(0.018f, 0.009f, 0.029f, 0.92f)
+                        : new Color(0.035f, 0.016f, 0.05f, 0.78f);
+                    color.a *= Mathf.Clamp01(strength) * taper * (0.48f + 0.52f * swell);
+                    if (CaptionFadeStart > 0f && viewHeight > 0f)
+                        color.a *= Mathf.Lerp(1f, 0.45f, Mathf.SmoothStep(0f, 1f,
+                            Mathf.InverseLerp(CaptionFadeStart, 0.97f, centre.y / viewHeight)));
+                    AddVertex(darkInk, centre - normal * half, new Vector2(u, 0f), color);
+                    AddVertex(darkInk, centre + normal * half, new Vector2(u, 1f), color);
+                    if (i == 0) continue;
+                    int a = start + (i - 1) * 2;
+                    AddTriangle(darkInk, a, a + 2, a + 3);
+                    AddTriangle(darkInk, a, a + 3, a + 1);
+                }
+            }
+        }
+
         private static Vector2 PointAlong(Vector2[] path, float distance, out Vector2 direction)
         {
             for (int k = 1; k < path.Length; k++)
@@ -505,6 +558,13 @@ namespace Lightbringer.UI
                     float strands = 0.72f + 0.28f * Mathf.Sin(x * 21f + 1.3f) * Mathf.Sin(x * 7.7f + 0.4f);
                     float along = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-1f, -0.35f, y)) * Mathf.Lerp(0.55f, 1f, Mathf.InverseLerp(1f, 0.75f, y));
                     return across * strands * along;
+                });
+            if (inkTexture == null)
+                inkTexture = MakeTexture("Fx Dry Ink", 256, 64, (x, y) =>
+                {
+                    float grain = Mathf.PerlinNoise(x * 39f + 47f, y * 17f + 31f);
+                    float edge = 1f - Mathf.SmoothStep(0.45f, 1f, Mathf.Abs(y) + (grain - 0.5f) * 0.24f);
+                    return edge * (0.72f + 0.28f * grain);
                 });
             if (smokeTexture == null)
                 smokeTexture = MakeTexture("Fx Smoke", 96, 96, (x, y) =>

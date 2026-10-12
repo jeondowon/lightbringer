@@ -1,4 +1,4 @@
-PASS | 2026-10-12T17:31:30.2559165Z
+PASS | 2026-10-12T18:36:07.2369679Z
 PASS: 22 complete slides are available in the player resource
 PASS: Every caption is shown, including those of planned pages awaiting artwork
 PASS: Order 0: 00A
