@@ -10,14 +10,12 @@
 .lb-prologue-picture { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .lb-prologue-top { position: absolute; left: 4%; right: 4%; top: 3%; flex-direction: row; justify-content: space-between; align-items: center; }
 .lb-prologue-top .lb-atlas-brand { margin-bottom: 0; }
-.lb-prologue-caption-panel { position: absolute; left: 10%; right: 10%; bottom: 3%; padding: 18px 28px 12px 28px; background-color: rgba(7, 11, 17, 0.88); border-top-width: 1px; border-top-color: rgba(180, 162, 120, 0.4); }
-.lb-prologue-counter { font-size: 12px; color: rgb(170, 161, 138); -unity-text-align: middle-center; margin-bottom: 12px; letter-spacing: 2px; }
-.lb-prologue-caption { font-size: 25px; color: rgb(239, 232, 212); white-space: normal; -unity-text-align: middle-center; min-height: 70px; margin-bottom: 10px; }
+.lb-prologue-caption-panel { position: absolute; left: 0; right: 0; bottom: 0; padding: 64px 14% 26px 14%; background-color: rgba(4, 6, 9, 0.0); border-width: 0; }
+.lb-prologue-caption { font-size: 26px; color: rgb(244, 238, 220); white-space: normal; -unity-text-align: middle-center; min-height: 76px; margin-bottom: 14px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95); }
 .lb-prologue-controls { flex-direction: row; justify-content: center; }
-.lb-prologue-button { height: 34px; min-width: 108px; padding: 0 16px; margin: 3px 8px; background-color: rgba(13, 20, 28, 0.9); border-width: 1px; border-color: rgba(197, 180, 140, 0.35); border-radius: 2px; color: rgb(208, 201, 182); font-size: 13px; }
-.lb-prologue-button:hover { background-color: rgb(41, 45, 46); border-color: rgb(202, 185, 140); }
+.lb-prologue-button { height: 30px; min-width: 84px; padding: 0 14px; margin: 0 6px; background-color: rgba(0, 0, 0, 0); border-width: 0 0 1px 0; border-color: rgba(197, 180, 140, 0.25); border-radius: 0; color: rgb(190, 182, 160); font-size: 13px; letter-spacing: 1px; }
+.lb-prologue-button:hover { background-color: rgba(0, 0, 0, 0); border-color: rgb(226, 208, 160); color: rgb(246, 238, 214); }
 .lb-prologue-button:disabled { opacity: 0.3; }
-.lb-prologue-hint { color: rgb(150, 153, 153); font-size: 11px; -unity-text-align: middle-center; margin-top: 7px; white-space: normal; }
 .lb-prologue-music { position: absolute; left: 4%; top: 9%; }
 .lb-prologue-credits { background-color: rgba(7, 11, 17, 0.96); padding: 18px; color: rgb(216, 211, 192); font-size: 14px; }
 

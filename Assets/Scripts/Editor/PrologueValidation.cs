@@ -52,9 +52,6 @@ namespace Lightbringer.EditorTools
                 view.Previous();
                 view.Tick(90f, false);
                 Require(view.CaptionIndex == 0, "Manual reading never advances on a timer", report);
-                view.ToggleAutomatic(); view.Tick(90f, false);
-                Require(view.CaptionIndex == 1, "Automatic mode advances after reading interval", report);
-                view.ToggleAutomatic();
                 int safety = 0;
                 while (view.IsOpen && ++safety < 100) { Settle(view); view.Advance(); }
                 Settle(view);

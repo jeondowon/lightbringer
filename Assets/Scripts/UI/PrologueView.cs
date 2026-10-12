@@ -13,16 +13,15 @@ namespace Lightbringer.UI
         public readonly VisualElement Root;
         private readonly VisualElement frame, captionPanel, credits;
         private readonly Image picture;
-        private readonly Label caption, counter;
-        private readonly Button previous, next, automatic;
+        private readonly Label caption;
+        private readonly Button previous, next;
         private readonly Action finished;
         private PrologueSequence sequence;
         private int pendingSlide = -1, pendingCaption;
-        private float transition, readingTime;
+        private float transition;
         private bool fadingOut, closing;
         public bool IsOpen { get; private set; }
         public bool IsTransitioning => transition > 0;
-        public bool Automatic { get; private set; }
         public int SlideIndex { get; private set; }
         public int CaptionIndex { get; private set; }
         public string CurrentId => sequence == null ? "" : sequence.slides[SlideIndex].id;
@@ -44,13 +43,10 @@ namespace Lightbringer.UI
             Hud.Text(top, "LIGHTBRINGER", "lb-atlas-brand");
             AddButton(top, "건너뛰기", Skip);
             captionPanel = Hud.Box(Root, "lb-prologue-caption-panel");
-            counter = Hud.Text(captionPanel, "", "lb-prologue-counter");
             caption = Hud.Text(captionPanel, "", "lb-prologue-caption");
             VisualElement controls = Hud.Box(captionPanel, "lb-prologue-controls");
-            previous = AddButton(controls, "← 이전", Previous);
-            automatic = AddButton(controls, "자동 넘김: 꺼짐", ToggleAutomatic);
-            next = AddButton(controls, "다음 →", Advance);
-            Hud.Text(captionPanel, "그림 클릭 / Space / → 다음     ← 이전     Esc 건너뛰기", "lb-prologue-hint");
+            previous = AddButton(controls, "이전", Previous);
+            next = AddButton(controls, "다음", Advance);
             VisualElement music = Hud.Box(Root, "lb-prologue-music");
             AddButton(music, "음악 정보", () => Hud.Show(credits, credits.ClassListContains("lb-hidden")));
             credits = Hud.Box(music, "lb-prologue-credits");
@@ -75,8 +71,6 @@ namespace Lightbringer.UI
             sequence = value;
             IsOpen = true;
             closing = false;
-            Automatic = false;
-            automatic.text = "자동 넘김: 꺼짐";
             Hud.Show(credits, false);
             Hud.Show(Root, true);
             Root.style.opacity = 1f;
@@ -103,13 +97,6 @@ namespace Lightbringer.UI
             if (CaptionIndex > 0) ShowCaption(CaptionIndex - 1);
             else if (SlideIndex > 0)
                 ChangeSlide(SlideIndex - 1, sequence.slides[SlideIndex - 1].captions.Length - 1);
-        }
-
-        public void ToggleAutomatic()
-        {
-            Automatic = !Automatic;
-            automatic.text = Automatic ? "자동 넘김: 켜짐" : "자동 넘김: 꺼짐";
-            readingTime = 0f;
         }
 
         public void Skip()
@@ -157,8 +144,6 @@ namespace Lightbringer.UI
                 if (keys.spaceKey.wasPressedThisFrame || keys.rightArrowKey.wasPressedThisFrame) { Advance(); return; }
                 if (keys.leftArrowKey.wasPressedThisFrame) { Previous(); return; }
             }
-            readingTime += delta;
-            if (Automatic && readingTime >= Mathf.Max(5f, Caption.Length * .13f + 2f)) Advance();
         }
 
         private void ChangeSlide(int index, int line)
@@ -179,12 +164,10 @@ namespace Lightbringer.UI
         private void ShowCaption(int line)
         {
             CaptionIndex = line;
-            readingTime = 0f;
             PrologueSlide slide = sequence.slides[SlideIndex];
             caption.text = slide.captions[line];
-            counter.text = $"서장   {SlideIndex + 1:00} / {sequence.slides.Length:00}   ·   {line + 1} / {slide.captions.Length}";
             previous.SetEnabled(SlideIndex != 0 || line != 0);
-            next.text = SlideIndex == sequence.slides.Length - 1 && line == slide.captions.Length - 1 ? "여정 시작 →" : "다음 →";
+            next.text = SlideIndex == sequence.slides.Length - 1 && line == slide.captions.Length - 1 ? "여정 시작" : "다음";
         }
 
         private void SetContentOpacity(float value)
