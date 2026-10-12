@@ -25,6 +25,7 @@ namespace Lightbringer.EditorTools
                 && BattleHudView.Evaluate(2, 0) == FrontStatus.Clear && BattleHudView.Evaluate(0, 2) == FrontStatus.Contested,
                 "A front is flagged in danger only when enemies clearly outnumber our troops");
             ValidatePreparationView();
+            ValidateBattleExit();
 
             Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             GameObject host = null;
@@ -140,6 +141,59 @@ namespace Lightbringer.EditorTools
             {
                 if (host != null) Object.DestroyImmediate(host);
                 Object.DestroyImmediate(material);
+                Physics.SyncTransforms();
+            }
+        }
+
+        private static void ValidateBattleExit()
+        {
+            float originalTimeScale = Time.timeScale;
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            GameObject host = null;
+            try
+            {
+                CampaignSession session = StartValidationStage(1, material, out host);
+                PrototypeBattle battle = session.Battle;
+                PauseView pause = new PauseView(new VisualElement());
+                pause.Refresh(session);
+                Check(!session.EndBattle() && !pause.RequestEnd() && !pause.ConfirmEnd(),
+                    "Battle exit requires a paused battle and an explicit confirmation");
+                battle.Waves.Tick(0.1f);
+                Combatant enemy = battle.Root.GetComponentsInChildren<Combatant>()
+                    .First(x => x.Faction == Faction.Enemy && x != battle.Objective.EnemyBase);
+                enemy.TakeDamage(100000f, battle.Hero);
+                while (session.IsChoosing) session.ChooseGrowth(0);
+                string progress = JsonUtility.ToJson(session.Progress);
+                PlaytestRecord record = session.PlaytestRecord;
+                Time.timeScale = 0.75f;
+                Check(session.SetPaused(true), "Battle exit menu opens from a running battle");
+                pause.Refresh(session);
+                Check(pause.Visible && pause.RequestEnd() && pause.IsConfirmingEnd && Time.timeScale == 0f,
+                    "Exit confirmation keeps the battlefield frozen");
+                pause.CancelEnd();
+                Check(!pause.IsConfirmingEnd && !pause.ConfirmEnd() && session.Battle == battle && session.IsUserPaused,
+                    "Cancelling exit keeps the current battle and returns to the pause menu");
+                pause.RequestEnd();
+                Check(pause.Resume(), "Exit confirmation can resume without ending the battle");
+                pause.Refresh(session);
+                session.SetPaused(true);
+                pause.Refresh(session);
+                Check(!pause.IsConfirmingEnd, "Reopening pause clears the previous exit confirmation");
+                Check(pause.RequestEnd() && pause.ConfirmEnd() && session.Battle == null && !pause.Visible,
+                    "Confirmed exit removes the battle and closes the pause overlay");
+                Check(!session.IsUserPaused && !session.IsBattlePaused && Time.timeScale == 0.75f
+                    && UnityEngine.Cursor.lockState == CursorLockMode.None && UnityEngine.Cursor.visible,
+                    "Leaving a paused battle restores time and the menu cursor");
+                Check(JsonUtility.ToJson(session.Progress) == progress && record.result == "abandoned",
+                    "Exit retains earned progress, grants no clear rewards and records an abandoned battle");
+                Check(!session.EndBattle() && session.StartBattle() && !session.IsBattlePaused,
+                    "Exit cannot repeat and the player can immediately start another battle");
+            }
+            finally
+            {
+                if (host != null) Object.DestroyImmediate(host);
+                Object.DestroyImmediate(material);
+                Time.timeScale = originalTimeScale;
                 Physics.SyncTransforms();
             }
         }

@@ -162,7 +162,26 @@ namespace Lightbringer.Core
         public bool ReturnToPreparation()
         {
             if (Battle == null || !Battle.Objective.HasEnded || IsChoosing) return false;
+            LeaveBattle();
+            return true;
+        }
+
+        public bool EndBattle()
+        {
+            if (!CanPause || !userPaused) return false;
+            playtest.Finish("abandoned");
+            LastResult = "전투를 종료했습니다. 획득한 경험치와 빛의 조각, 영구 성장은 유지됩니다.";
+            LeaveBattle();
+            return true;
+        }
+
+        private void LeaveBattle()
+        {
             PlaytestStatus = playtest.Commit();
+            Battle.Objective.Completed -= OnCompleted;
+            Battle.Waves.Spawned -= RegisterEnemy;
+            if (userPaused) Time.timeScale = resumeTimeScale;
+            userPaused = false;
             simulation.Resume(true);
             Battle.Root.SetActive(false);
             if (Application.isPlaying) Destroy(Battle.Root); else DestroyImmediate(Battle.Root);
@@ -171,7 +190,6 @@ namespace Lightbringer.Core
             SelectedStage = Progress.unlockedStage;
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             Flush();
-            return true;
         }
 
         // Player pause (Esc / P or the pause screen's button): suspends the battle like a level-up choice and also

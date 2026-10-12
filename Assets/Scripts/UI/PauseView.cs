@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
-    // Player pause: shown while the battle is paused with Esc / P. The button, Esc or P resumes.
+    // Player pause: resume or confirm leaving the current battle while keeping permanent progress.
     public sealed class PauseView
     {
         public readonly VisualElement Root;
@@ -12,11 +12,12 @@ namespace Lightbringer.UI
         private readonly Label volumeValue;
         private readonly Slider effectsVolume;
         private readonly Label effectsValue;
+        private readonly VisualElement menu, endConfirmation;
 
         public PauseView(VisualElement parent)
         {
             Root = Hud.Box(parent, "lb-overlay", "lb-flow", "lb-pause-screen");
-            VisualElement dialog = Hud.Box(Root, "lb-flow-dialog", "lb-pause-dialog");
+            VisualElement dialog = menu = Hud.Box(Root, "lb-flow-dialog", "lb-pause-dialog");
             Hud.Text(dialog, "LIGHTBRINGER  /  전투 중", "lb-flow-eyebrow");
             Hud.Text(dialog, "일시정지", "lb-flow-title");
             Hud.Text(dialog, "잠시 숨을 고르세요. 전투는 멈춰 있습니다.", "lb-flow-description");
@@ -49,16 +50,26 @@ namespace Lightbringer.UI
             Hud.Text(credits, BattleMusic.Credit, "lb-flow-muted");
             dialog.Add(credits);
             Hud.Button(dialog, "전투 재개", () => Resume(), "lb-atlas-primary", "lb-flow-primary");
+            Hud.Button(dialog, "전투 끝내기", () => RequestEnd(), "lb-pause-end");
             Hud.Text(dialog, "Esc 또는 P 키로도 돌아갈 수 있습니다", "lb-flow-footnote");
+            endConfirmation = Hud.Box(Root, "lb-flow-dialog", "lb-pause-dialog");
+            Hud.Text(endConfirmation, "전투를 끝낼까요?", "lb-flow-title");
+            Hud.Text(endConfirmation, "현재 전투를 종료하고 캠페인 지도로 돌아갑니다.\n획득한 경험치와 빛의 조각, 영구 성장은 유지됩니다.\n스테이지 클리어 및 승리 보상은 받을 수 없습니다.", "lb-flow-description");
+            Hud.Button(endConfirmation, "취소", () => CancelEnd(), "lb-atlas-primary", "lb-flow-primary");
+            Hud.Button(endConfirmation, "전투 끝내기", () => ConfirmEnd(), "lb-pause-end");
+            Hud.Text(endConfirmation, "Esc 또는 P 키를 누르면 전투를 재개합니다", "lb-flow-footnote");
+            CancelEnd();
             Hud.Show(Root, false);
         }
 
         public bool Visible => !Root.ClassListContains("lb-hidden");
+        public bool IsConfirmingEnd => !endConfirmation.ClassListContains("lb-hidden");
 
         public void Refresh(CampaignSession value)
         {
             session = value;
             bool visible = session != null && session.IsUserPaused;
+            if (!visible || !Visible) CancelEnd();
             if (visible && !Visible)
             {
                 musicVolume.SetValueWithoutNotify(BattleMusic.Volume);
@@ -70,5 +81,26 @@ namespace Lightbringer.UI
         }
 
         public bool Resume() => session != null && session.SetPaused(false);
+
+        public bool RequestEnd()
+        {
+            if (session == null || !session.IsUserPaused || !session.CanPause) return false;
+            Hud.Show(menu, false);
+            Hud.Show(endConfirmation, true);
+            return true;
+        }
+
+        public void CancelEnd()
+        {
+            Hud.Show(menu, true);
+            Hud.Show(endConfirmation, false);
+        }
+
+        public bool ConfirmEnd()
+        {
+            if (!IsConfirmingEnd || session == null || !session.EndBattle()) return false;
+            Refresh(session);
+            return true;
+        }
     }
 }
