@@ -36,6 +36,8 @@ namespace Lightbringer.EditorTools
             EditorRequests.Register(Request, Capture);
             EditorRequests.Register("Docs/Validation/BriefingCompactPreview.request", CaptureCompactBriefing);
             EditorRequests.Register("Docs/Validation/CampaignMapPreview.request", CaptureCampaignMap);
+            EditorRequests.Register("Docs/Validation/CampaignMapAct2Preview.request", CaptureCampaignMapAct2);
+            EditorRequests.Register("Docs/Validation/CampaignMapAct3Preview.request", CaptureCampaignMapAct3);
             EditorRequests.Register("Docs/Validation/TitlePreview.request", CaptureTitle);
             EditorRequests.Register(LevelUpRequest, CaptureLevelUp);
             EditorRequests.Register(BattleHudRequest, CaptureBattleHud);
@@ -132,9 +134,19 @@ namespace Lightbringer.EditorTools
         });
 
         [MenuItem("Lightbringer/UI/Capture Campaign Map Preview")]
-        public static void CaptureCampaignMap() => Render("Docs/Validation/CampaignMapPreview.png", profile => { }, (root, session) =>
+        public static void CaptureCampaignMap() => CaptureCampaignMapAct(1, "Docs/Validation/CampaignMapPreview.png");
+
+        [MenuItem("Lightbringer/UI/Capture Campaign Map Act 2 Preview")]
+        public static void CaptureCampaignMapAct2() => CaptureCampaignMapAct(2, "Docs/Validation/CampaignMapAct2Preview.png");
+
+        [MenuItem("Lightbringer/UI/Capture Campaign Map Act 3 Preview")]
+        public static void CaptureCampaignMapAct3() => CaptureCampaignMapAct(3, "Docs/Validation/CampaignMapAct3Preview.png");
+
+        private static void CaptureCampaignMapAct(int act, string output) => Render(output, profile => { }, (root, session) =>
         {
             CampaignMapView view = new CampaignMapView(root, null);
+            view.Refresh(session, true);
+            view.ShowAct(act);
             return () => view.Refresh(session, true);
         });
 

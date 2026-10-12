@@ -1,0 +1,48 @@
+캠페인 막별 지도 적용 — 2026-10-13
+
+변경
+- 1막: CampaignAtlas_Act1_v1.png, 꺼진 변경.
+- 봉화 8개를 남서 해안 → 서부 내륙 → 북서부 → 북부 계곡 → 중앙 → 남동부 → 동부 → 성채
+  순으로 분산했다. 지도 상단에 봉화 3/4를 두고 남부와 동부도 방문하게 한다.
+- 화면상의 봉화 좌표와 연결선만 조정했다. 1~8 해금 순서, 전투, 저장 데이터는 유지한다.
+- 2막: CampaignAtlas_Act2_v1.png, 옛 용사의 흔적.
+- 3막: CampaignAtlas_Act3_v1.png, 마왕의 영역.
+- 막마다 서로 다른 좌표를 사용해 2막 봉화 09~16, 3막 봉화 17~24를 북부/중앙/남부/동서에 분산했다.
+- 각 막의 마지막 봉화 08/16/24는 해당 지도의 성 위에 놓았다.
+- 진행 표시는 왼쪽 제목 아래로 옮겨 북동쪽 성과 봉화 표시에 겹치지 않게 했다.
+- 지도 좌우 중앙의 < / > 버튼으로 이전/다음 막의 지도와 지역 설명을 전환한다.
+- 1막은 오른쪽 >만, 2막은 양쪽 버튼, 3막은 왼쪽 <만 표시한다. 끝에서 처음으로 순환하지 않는다.
+- 화살표는 화면 전체가 아닌 16:9 지도 영역 가장자리에 맞춰 배치한다.
+- 현재 전투는 기존 8개 스테이지다. 2/3막의 봉화와 연결선은 보이지만 봉화는 준비 중/비활성 상태다.
+- 지도 열람은 선택 스테이지나 저장 데이터를 바꾸지 않는다.
+- 지도를 다시 열면 선택한 스테이지의 막으로 돌아온다.
+- 출전 준비 화면의 배경과 지도 삽화도 1막 이미지로 교체했다.
+
+검증
+- Unity 6000.3.20f1 스크립트 컴파일 성공.
+- GreyboxChecks.txt: 425개 PASS. 막 전환의 저장 데이터 보존, 2/3막의 봉화 8개 표시/번호/비활성화,
+  미구현 스테이지 및 잘못된 막 거부, 지도 재진입 시 1막 복원을 포함한다.
+- CampaignMapPreview.png: 최종 재배치 후 1920×1080 Unity UI 렌더링으로 지도 전역의 봉화,
+  북부 2개 스테이지, 지면 위 배치, 제목/버튼/하단 설명과의 비겹침을 확인했다.
+- CampaignMapAct2Preview.png, CampaignMapAct3Preview.png: 1920×1080 Unity UI 렌더링으로
+  각 막의 봉화 8개 분산, 마지막 봉화의 성 위 배치, 좌우 화살표, 준비 중 안내를 확인했다.
+- 실제 Play 입력 검사는 이번 작업에서 실행하지 않았다.
+- git diff --check 통과.
+
+수정 파일
+Assets/Scripts/UI/CampaignMapView.cs
+Assets/UI/LightbringerHUD.uss
+Assets/Scripts/Editor/PreparationPreview.cs
+Assets/Scripts/Editor/HudValidation.cs
+Docs/Validation/CampaignMapPreview.png
+
+추가 파일
+Docs/Validation/CampaignMapAct2Preview.png
+Docs/Validation/CampaignMapAct3Preview.png
+Docs/Validation/CampaignAtlasChecks.txt
+
+Unity 확인
+CampaignPrototype 씬에서 Play 후 캠페인 지도 좌우의 < / > 버튼으로 지역을 넘긴다.
+기존 저장 파일을 지우거나 씬을 다시 구성할 필요는 없다.
+Play 중이었다면 중지해 스크립트 재컴파일이 끝난 뒤 다시 실행한다.
+추가 캡처: Lightbringer/UI/Capture Campaign Map Act 2 Preview 또는 Act 3 Preview.

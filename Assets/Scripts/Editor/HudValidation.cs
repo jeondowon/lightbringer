@@ -216,6 +216,27 @@ namespace Lightbringer.EditorTools
                     "Campaign map rejects locked beacons without changing the destination");
                 Check(map.Select(1) && session.SelectedStage == 1 && map.Select(3),
                     "Campaign map allows replaying a lit beacon and selecting the current frontier");
+                string beforeBrowsing = JsonUtility.ToJson(profile);
+                Check(map.ShowAct(2) && map.ViewedAct == 2 && map.ShowAct(3) && map.ViewedAct == 3
+                    && session.SelectedStage == 3 && JsonUtility.ToJson(profile) == beforeBrowsing,
+                    "Browsing future act maps preserves the selected stage and all saved progress");
+                for (int act = 2; act <= 3; act++)
+                {
+                    map.ShowAct(act);
+                    var planned = map.Root.Query<Button>(className: "lb-beacon").ToList();
+                    var labels = map.Root.Query<Label>(className: "lb-beacon-name").ToList();
+                    Check(planned.Count == 8 && planned.TrueForAll(button => !button.ClassListContains("lb-hidden")
+                        && button.ClassListContains("lb-beacon--planned") && !button.enabledSelf)
+                        && labels[0].text == $"봉화 {(act - 1) * 8 + 1:00}" && labels[7].text == $"봉화 {act * 8:00}",
+                        $"Act {act} shows eight numbered future beacons without allowing battle entry");
+                }
+                Check(!map.Select(9) && !map.ShowAct(0) && !map.ShowAct(4) && map.ViewedAct == 3,
+                    "Atlas rejects unimplemented stages and invalid acts");
+                map.Refresh(session, false);
+                map.Refresh(session, true);
+                Check(map.ViewedAct == 1 && session.SelectedStage == 3
+                    && map.Root.Query<Button>(className: "lb-beacon").ToList().TrueForAll(button => !button.ClassListContains("lb-hidden")),
+                    "Reopening the atlas restores the current act and its eight beacons");
                 PreparationView view = new PreparationView(new VisualElement());
                 view.Refresh(session);
                 Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == "봉화 03" && view.TroopCount == 3,

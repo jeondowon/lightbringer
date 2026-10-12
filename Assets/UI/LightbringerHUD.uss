@@ -39,12 +39,19 @@
 .lb-atlas { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 14, 18); overflow: hidden; }
 .lb-atlas-canvas { position: absolute; }
 .lb-atlas-paper, .lb-atlas-roads { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
-.lb-atlas-paper { background-image: url("Art/CampaignAtlas_v1.png"); -unity-background-scale-mode: stretch-to-fill; }
+.lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act1_v1.png"); -unity-background-scale-mode: stretch-to-fill; }
+.lb-atlas--act2 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act2_v1.png"); }
+.lb-atlas--act3 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act3_v1.png"); }
+.lb-atlas-nav { position: absolute; top: 50%; width: 64px; height: 104px; margin: -52px 0 0 0; padding: 0; border-width: 0; border-radius: 4px; background-color: rgba(8, 14, 18, 0.25); color: rgb(212, 203, 178); font-size: 44px; -unity-text-align: middle-center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); transition-property: color, background-color; transition-duration: 0.18s; }
+.lb-atlas-nav--previous { left: 24px; }
+.lb-atlas-nav--next { right: 24px; }
+.lb-atlas-nav:hover, .lb-atlas-nav:focus { color: rgb(255, 238, 194); background-color: rgba(22, 32, 34, 0.8); }
+.lb-atlas-nav:active { background-color: rgba(45, 52, 48, 0.9); }
 .lb-atlas-header { position: absolute; top: 42px; left: 64px; right: 64px; flex-direction: row; justify-content: space-between; align-items: flex-start; }
 .lb-atlas-brand { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; letter-spacing: 5px; color: rgb(188, 174, 140); margin-bottom: 15px; }
 .lb-atlas-title { font-size: 32px; color: rgb(235, 234, 222); letter-spacing: 2px; }
 .lb-atlas-subtitle { font-size: 14px; color: rgb(153, 168, 167); margin-top: 9px; }
-.lb-atlas-progress { font-size: 14px; color: rgb(212, 203, 178); padding-top: 8px; letter-spacing: 1px; }
+.lb-atlas-progress { font-size: 14px; color: rgb(212, 203, 178); margin-top: 12px; letter-spacing: 1px; }
 .lb-atlas-footer { position: absolute; left: 64px; right: 64px; bottom: 40px; flex-direction: row; justify-content: space-between; align-items: center; border-top-width: 1px; border-top-color: rgba(210, 204, 176, 0.28); padding-top: 20px; padding-bottom: 12px; background-color: rgba(8, 14, 18, 0.86); }
 .lb-atlas-detail { flex-shrink: 1; padding-left: 18px; }
 .lb-atlas-eyebrow { font-size: 11px; letter-spacing: 2px; color: rgb(169, 158, 127); }
@@ -62,6 +69,9 @@
 .lb-beacon--selected { scale: 1.16 1.16; background-color: rgba(0, 0, 0, 0); }
 .lb-beacon--selected:hover, .lb-beacon--selected:focus { scale: 1.18 1.18; }
 .lb-beacon:disabled { opacity: 0.6; }
+.lb-beacon--planned:disabled { opacity: 0.85; }
+.lb-beacon--planned .lb-beacon-name { color: rgb(189, 198, 199); }
+.lb-beacon--planned .lb-beacon-state { color: rgb(170, 181, 183); }
 .lb-beacon-symbol { width: 74px; height: 88px; background-image: url("Art/Beacon_Dark.png"); -unity-background-scale-mode: scale-to-fit; }
 .lb-beacon--ready .lb-beacon-symbol { background-image: url("Art/Beacon_Ready.png"); }
 .lb-beacon--lit .lb-beacon-symbol { background-image: url("Art/Beacon_Lit.png"); }
@@ -1210,7 +1220,7 @@
 
 /* Destination briefing. Quiet surfaces and typography carry the hierarchy; gold marks decisions. */
 .lb-brief { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(10, 17, 21); color: rgb(223, 226, 217); }
-.lb-brief-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/CampaignAtlas_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(35, 45, 49); opacity: 0.22; }
+.lb-brief-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/CampaignAtlas_Act1_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(35, 45, 49); opacity: 0.22; }
 .lb-brief-header { position: absolute; left: 64px; right: 64px; top: 40px; height: 82px; flex-direction: row; justify-content: space-between; align-items: center; }
 .lb-brief-eyebrow { font-size: 12px; letter-spacing: 2px; color: rgb(181, 171, 141); margin: 0; padding: 0; }
 .lb-brief-title { font-size: 32px; letter-spacing: 1px; margin: 12px 0 0 0; padding: 0; color: rgb(235, 235, 220); }
@@ -1220,7 +1230,7 @@
 .lb-brief-mission { width: 31%; padding-right: 38px; border-right-width: 1px; border-right-color: rgba(183, 185, 164, 0.17); }
 .lb-brief-armory { flex-grow: 1; flex-basis: 0; margin-left: 46px; }
 .lb-brief .unity-scroll-view__content-container { flex-shrink: 0; }
-.lb-brief-landscape { height: 172px; flex-shrink: 0; background-image: url("Art/CampaignAtlas_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(91, 106, 110); padding: 23px 26px; margin-bottom: 8px; border-width: 1px; border-color: rgba(198, 191, 160, 0.25); }
+.lb-brief-landscape { height: 172px; flex-shrink: 0; background-image: url("Art/CampaignAtlas_Act1_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(91, 106, 110); padding: 23px 26px; margin-bottom: 8px; border-width: 1px; border-color: rgba(198, 191, 160, 0.25); }
 .lb-brief-destination { font-size: 46px; color: rgb(244, 239, 216); margin: 6px 0; padding: 0; }
 .lb-brief-tag { font-size: 13px; color: rgb(200, 198, 175); margin: 0; padding: 0; }
 .lb-brief-section { font-size: 12px; letter-spacing: 1px; color: rgb(166, 169, 152); margin: 20px 0 10px 0; padding: 0; }

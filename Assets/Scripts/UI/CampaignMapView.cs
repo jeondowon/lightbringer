@@ -9,20 +9,47 @@ namespace Lightbringer.UI
     // All marker coordinates share the atlas's fitted 16:9 canvas, including on ultrawide displays.
     public sealed class CampaignMapView
     {
-        private static readonly Vector2[] Sites = {
-            new Vector2(.19f, .72f), new Vector2(.30f, .60f),
-            new Vector2(.40f, .67f), new Vector2(.46f, .47f),
-            new Vector2(.57f, .54f), new Vector2(.64f, .34f),
-            new Vector2(.73f, .42f), new Vector2(.80f, .24f)
+        private const int StagesPerAct = 8, ActCount = 3;
+        private static readonly string[] ActTitles = { "꺼진 변경", "옛 용사의 흔적", "마왕의 영역" };
+        private static readonly string[] ActDescriptions = {
+            "숲과 계곡의 봉화를 밝혀, 군주의 성채로",
+            "옛 빛의 용사의 흔적을 따라, 군주의 거점과 보급로로",
+            "황폐해진 땅을 넘어, 두 어둠이 기다리는 성채로"
         };
+        // Sweep the western coast, northern valleys, central heartland and eastern frontier before
+        // reaching the fortress. The atlas should read as reclaiming a region, not a diagonal shortcut.
+        private static readonly Vector2[][] ActSites = {
+            new[] {
+                new Vector2(.19f, .72f), new Vector2(.28f, .39f),
+                new Vector2(.30f, .19f), new Vector2(.59f, .18f),
+                new Vector2(.43f, .56f), new Vector2(.83f, .55f),
+                new Vector2(.75f, .33f), new Vector2(.883f, .135f)
+            },
+            new[] {
+                new Vector2(.15f, .60f), new Vector2(.23f, .43f),
+                new Vector2(.35f, .12f), new Vector2(.61f, .18f),
+                new Vector2(.52f, .385f), new Vector2(.55f, .71f),
+                new Vector2(.82f, .52f), new Vector2(.93f, .085f)
+            },
+            new[] {
+                new Vector2(.17f, .70f), new Vector2(.24f, .36f),
+                new Vector2(.38f, .17f), new Vector2(.59f, .20f),
+                new Vector2(.47f, .49f), new Vector2(.70f, .70f),
+                new Vector2(.85f, .39f), new Vector2(.84f, .15f)
+            }
+        };
+        private Vector2[] Sites => ActSites[ViewedAct - 1];
         public readonly VisualElement Root;
         private readonly VisualElement canvas, roads;
-        private readonly Button[] beacons = new Button[CampaignProgress.StageCount];
-        private readonly Label[] states = new Label[CampaignProgress.StageCount];
-        private readonly Label progress, selected, description, status;
+        private readonly Button[] beacons = new Button[StagesPerAct];
+        private readonly Label[] states = new Label[StagesPerAct], names = new Label[StagesPerAct];
+        private readonly Button previousAct, nextAct;
+        private readonly Label progress, selected, description, status, title, subtitle, eyebrow;
         private readonly Action openPreparation;
         private CampaignSession session;
         private string revision;
+        private bool wasVisible;
+        public int ViewedAct { get; private set; } = 1;
 
         public CampaignMapView(VisualElement parent, Action openPreparation, Action backToTitle = null)
         {
@@ -37,14 +64,14 @@ namespace Lightbringer.UI
 
             for (int i = 0; i < beacons.Length; i++)
             {
-                int stage = i + 1;
-                Button beacon = Hud.Button(null, "", () => { if (Select(stage)) OpenPreparation(); });
+                int site = i;
+                Button beacon = Hud.Button(null, "", () => { if (Select((ViewedAct - 1) * StagesPerAct + site + 1)) OpenPreparation(); });
                 beacon.AddToClassList("lb-beacon");
                 beacon.style.left = Length.Percent(Sites[i].x * 100);
                 beacon.style.top = Length.Percent(Sites[i].y * 100);
                 canvas.Add(beacon);
                 Hud.Box(beacon, "lb-beacon-symbol");
-                Hud.Text(beacon, $"봉화 {stage:00}", "lb-beacon-name");
+                names[i] = Hud.Text(beacon, $"봉화 {i + 1:00}", "lb-beacon-name");
                 states[i] = Hud.Text(beacon, "", "lb-beacon-state");
                 foreach (VisualElement child in beacon.Children()) Hud.IgnorePicking(child);
                 beacons[i] = beacon;
@@ -53,14 +80,18 @@ namespace Lightbringer.UI
             VisualElement header = Hud.Box(Root, "lb-atlas-header");
             VisualElement heading = Hud.Box(header);
             Hud.Text(heading, "LIGHTBRINGER", "lb-atlas-brand");
-            Hud.Text(heading, "잊힌 봉화의 땅", "lb-atlas-title");
-            Hud.Text(heading, "꺼진 봉화를 따라, 빛을 되찾는 여정", "lb-atlas-subtitle");
-            progress = Hud.Text(header, "", "lb-atlas-progress");
+            title = Hud.Text(heading, "", "lb-atlas-title");
+            subtitle = Hud.Text(heading, "", "lb-atlas-subtitle");
+            // Keep the northeast corner clear for the fortress beacon in every act.
+            progress = Hud.Text(heading, "", "lb-atlas-progress");
             Hud.IgnorePicking(header);
+
+            previousAct = Hud.Button(canvas, "<", () => ShowAct(ViewedAct - 1), "lb-atlas-nav", "lb-atlas-nav--previous");
+            nextAct = Hud.Button(canvas, ">", () => ShowAct(ViewedAct + 1), "lb-atlas-nav", "lb-atlas-nav--next");
 
             VisualElement footer = Hud.Box(Root, "lb-atlas-footer");
             VisualElement detail = Hud.Box(footer, "lb-atlas-detail");
-            Hud.Text(detail, "선택한 목적지", "lb-atlas-eyebrow");
+            eyebrow = Hud.Text(detail, "선택한 목적지", "lb-atlas-eyebrow");
             selected = Hud.Text(detail, "", "lb-atlas-selected");
             description = Hud.Text(detail, "", "lb-atlas-description");
             VisualElement action = Hud.Box(footer, "lb-atlas-action");
@@ -85,7 +116,17 @@ namespace Lightbringer.UI
         public bool Select(int stage)
         {
             if (session == null || !session.SelectStage(stage)) return false;
+            ViewedAct = Mathf.Clamp((stage - 1) / StagesPerAct + 1, 1, ActCount);
             Refresh(session, true);
+            return true;
+        }
+
+        // Browsing future regions must not select a stage or mutate campaign progress.
+        public bool ShowAct(int act)
+        {
+            if (act < 1 || act > ActCount || session == null || session.Battle != null) return false;
+            ViewedAct = act;
+            Refresh(session, wasVisible);
             return true;
         }
 
@@ -99,28 +140,57 @@ namespace Lightbringer.UI
         {
             session = value;
             CampaignProgress profile = session != null ? session.Progress : null;
-            Hud.Show(Root, visible && profile != null && session.Battle == null);
-            if (!visible || profile == null || session.Battle != null) return;
+            bool show = visible && profile != null && session.Battle == null;
+            Hud.Show(Root, show);
+            if (show && !wasVisible)
+                ViewedAct = Mathf.Clamp((session.SelectedStage - 1) / StagesPerAct + 1, 1, ActCount);
+            wasVisible = show;
+            if (!show) return;
             Hud.Set(status, session.SaveStatus ?? "");
-            string key = session.SelectedStage + ":" + profile.unlockedStage + ":" + string.Join(",", profile.cleared);
+            string key = ViewedAct + ":" + session.SelectedStage + ":" + profile.unlockedStage + ":" + string.Join(",", profile.cleared);
             if (key == revision) return;
             revision = key;
+            int first = (ViewedAct - 1) * StagesPerAct;
+            int available = Mathf.Clamp(CampaignProgress.StageCount - first, 0, StagesPerAct);
+            for (int i = 0; i < ActCount; i++)
+            {
+                Root.EnableInClassList($"lb-atlas--act{i + 1}", ViewedAct == i + 1);
+            }
+            Hud.Show(previousAct, ViewedAct > 1);
+            Hud.Show(nextAct, ViewedAct < ActCount);
+            previousAct.SetEnabled(ViewedAct > 1);
+            nextAct.SetEnabled(ViewedAct < ActCount);
+            previousAct.tooltip = ViewedAct > 1 ? $"이전 지역 · {ActTitles[ViewedAct - 2]}" : "";
+            nextAct.tooltip = ViewedAct < ActCount ? $"다음 지역 · {ActTitles[ViewedAct]}" : "";
+            Hud.Set(title, $"{ViewedAct}막 · {ActTitles[ViewedAct - 1]}");
+            Hud.Set(subtitle, ActDescriptions[ViewedAct - 1]);
             int count = 0;
             for (int i = 0; i < beacons.Length; i++)
             {
-                bool lit = profile.cleared[i], unlocked = i < profile.unlockedStage;
+                beacons[i].style.left = Length.Percent(Sites[i].x * 100);
+                beacons[i].style.top = Length.Percent(Sites[i].y * 100);
+                int index = first + i;
+                bool implemented = i < available;
+                bool lit = implemented && profile.cleared[index], unlocked = implemented && index < profile.unlockedStage;
                 if (lit) count++;
+                Hud.Set(names[i], $"봉화 {index + 1:00}");
                 beacons[i].SetEnabled(unlocked);
                 beacons[i].EnableInClassList("lb-beacon--lit", lit);
                 beacons[i].EnableInClassList("lb-beacon--ready", unlocked && !lit);
-                beacons[i].EnableInClassList("lb-beacon--selected", i + 1 == session.SelectedStage);
-                Hud.Set(states[i], lit ? "밝혀진 봉화" : unlocked ? "탈환 가능" : "미해방");
-                beacons[i].tooltip = lit ? "해방한 전장에 다시 도전합니다." : unlocked ? "이 봉화를 탈환할 수 있습니다." : "앞선 봉화를 탈환하면 길이 열립니다.";
+                beacons[i].EnableInClassList("lb-beacon--planned", !implemented);
+                beacons[i].EnableInClassList("lb-beacon--selected", index + 1 == session.SelectedStage);
+                Hud.Set(states[i], !implemented ? "준비 중" : lit ? "밝혀진 봉화" : unlocked ? "탈환 가능" : "미해방");
+                beacons[i].tooltip = !implemented ? "이 봉화의 전투는 준비 중입니다."
+                    : lit ? "해방한 전장에 다시 도전합니다." : unlocked ? "이 봉화를 탈환할 수 있습니다." : "앞선 봉화를 탈환하면 길이 열립니다.";
             }
-            Hud.Set(progress, $"밝혀진 봉화   {count:00} / {beacons.Length:00}");
-            Hud.Set(selected, $"봉화 {session.SelectedStage:00}");
-            Hud.Set(description, profile.cleared[session.SelectedStage - 1]
-                ? "빛을 되찾은 전장입니다. 다시 도전할 수 있습니다."
+            Hud.Set(progress, available == 0 ? $"봉화 {first + 1:00}–{first + StagesPerAct:00} · 준비 중"
+                : $"밝혀진 봉화   {count:00} / {available:00}");
+            bool selectedHere = session.SelectedStage > first && session.SelectedStage <= first + available;
+            Hud.Set(eyebrow, selectedHere ? "선택한 목적지" : "다음 여정");
+            Hud.Set(selected, selectedHere ? $"봉화 {session.SelectedStage:00}" : ActTitles[ViewedAct - 1]);
+            Hud.Set(description, available == 0 ? "아직 열리지 않은 여정입니다. 이 지역의 전투는 준비 중입니다."
+                : !selectedHere ? "봉화를 선택해 출전을 준비하세요."
+                : profile.cleared[session.SelectedStage - 1] ? "빛을 되찾은 전장입니다. 다시 도전할 수 있습니다."
                 : "아직 빛을 잃은 봉화입니다. 전장을 돌파하고 이 땅을 되찾으세요.");
             roads.MarkDirtyRepaint();
         }
@@ -130,9 +200,10 @@ namespace Lightbringer.UI
             if (session?.Progress == null) return;
             Painter2D p = context.painter2D;
             Vector2 size = roads.contentRect.size;
-            for (int i = 0; i < Sites.Length - 1; i++)
+            int first = (ViewedAct - 1) * StagesPerAct;
+            for (int i = 0; i < StagesPerAct - 1; i++)
             {
-                bool reached = session.Progress.cleared[i];
+                bool reached = first + i < session.Progress.cleared.Length && session.Progress.cleared[first + i];
                 Vector2 a = Vector2.Scale(Sites[i], size), b = Vector2.Scale(Sites[i + 1], size);
                 p.strokeColor = reached ? new Color(.82f, .72f, .49f, .7f) : new Color(.72f, .76f, .75f, .25f);
                 p.lineWidth = reached ? 1.6f : 1f;
