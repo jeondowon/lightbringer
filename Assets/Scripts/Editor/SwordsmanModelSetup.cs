@@ -29,9 +29,9 @@ namespace Lightbringer.EditorTools
             Shader shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) throw new InvalidOperationException("URP Lit shader is missing.");
 
-            Texture2D color = ImportTexture("basecolor", false);
-            Texture2D normal = ImportTexture("normal", true);
-            PackMetallicSmoothness();
+            Texture2D color = ModelSurfaceImport.ImportTexture(TexturePath("basecolor"), false);
+            Texture2D normal = ModelSurfaceImport.ImportTexture(TexturePath("normal"), true);
+            ModelSurfaceImport.PackMetallicSmoothness(TexturePath("metallic"), TexturePath("roughness"), PackedPath);
             var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
             if (material == null)
             {
@@ -39,18 +39,8 @@ namespace Lightbringer.EditorTools
                 AssetDatabase.CreateAsset(material, MaterialPath);
             }
             material.shader = shader;
-            material.SetTexture("_BaseMap", color);
-            material.SetColor("_BaseColor", Color.white);
-            material.SetTexture("_BumpMap", normal);
-            material.SetFloat("_BumpScale", 1f);
-            material.EnableKeyword("_NORMALMAP");
-            material.SetTexture("_MetallicGlossMap", AssetDatabase.LoadAssetAtPath<Texture2D>(PackedPath));
-            material.SetFloat("_Metallic", 1f);
-            material.SetFloat("_Smoothness", 1f);
-            material.SetFloat("_SmoothnessTextureChannel", 0f);
-            material.EnableKeyword("_METALLICSPECGLOSSMAP");
-            material.DisableKeyword("_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A");
-            EditorUtility.SetDirty(material);
+            ModelSurfaceImport.ConfigureLit(material, color, normal,
+                AssetDatabase.LoadAssetAtPath<Texture2D>(PackedPath));
 
             var importer = (ModelImporter)AssetImporter.GetAtPath(ModelPath);
             foreach (Material source in model.GetComponentsInChildren<Renderer>(true)
@@ -112,53 +102,6 @@ namespace Lightbringer.EditorTools
         }
 
         private static string TexturePath(string suffix) => Folder + "/Swordsman.fbm/medieval_knight_3d_model_" + suffix + ".JPEG";
-
-        private static Texture2D ImportTexture(string suffix, bool normal)
-        {
-            string path = TexturePath(suffix);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            if (importer == null) throw new FileNotFoundException(path);
-            importer.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-            importer.sRGBTexture = !normal;
-            importer.SaveAndReimport();
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-
-        private static void PackMetallicSmoothness()
-        {
-            var metallic = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
-            var roughness = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
-            Texture2D packed = null;
-            try
-            {
-                if (!metallic.LoadImage(File.ReadAllBytes(TexturePath("metallic")))
-                    || !roughness.LoadImage(File.ReadAllBytes(TexturePath("roughness"))))
-                    throw new InvalidOperationException("Could not decode Swordsman surface textures.");
-                if (metallic.width != roughness.width || metallic.height != roughness.height)
-                    throw new InvalidOperationException("Metallic/roughness texture dimensions differ.");
-                Color32[] pixels = metallic.GetPixels32();
-                Color32[] rough = roughness.GetPixels32();
-                for (int i = 0; i < pixels.Length; i++)
-                    pixels[i] = new Color32(pixels[i].r, 0, 0, (byte)(255 - rough[i].r));
-                packed = new Texture2D(metallic.width, metallic.height, TextureFormat.RGBA32, false, true);
-                packed.SetPixels32(pixels);
-                packed.Apply();
-                File.WriteAllBytes(PackedPath, packed.EncodeToPNG());
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(metallic);
-                UnityEngine.Object.DestroyImmediate(roughness);
-                if (packed != null) UnityEngine.Object.DestroyImmediate(packed);
-            }
-            AssetDatabase.ImportAsset(PackedPath, ImportAssetOptions.ForceSynchronousImport);
-            var importer = (TextureImporter)AssetImporter.GetAtPath(PackedPath);
-            importer.sRGBTexture = false;
-            importer.alphaSource = TextureImporterAlphaSource.FromInput;
-            importer.alphaIsTransparency = false;
-            importer.SaveAndReimport();
-        }
 
         private static void Validate()
         {

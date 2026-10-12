@@ -67,10 +67,10 @@ namespace Lightbringer.EditorTools
             importer.importTangents = ModelImporterTangents.CalculateMikk;
             importer.SaveAndReimport();
             GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
-            Texture2D colour = UnitModelSetup.ImportTexture(folder + "/basecolor.jpg", false);
-            Texture2D normal = UnitModelSetup.ImportTexture(folder + "/normal.jpg", true);
+            Texture2D colour = ModelSurfaceImport.ImportTexture(folder + "/basecolor.jpg", false);
+            Texture2D normal = ModelSurfaceImport.ImportTexture(folder + "/normal.jpg", true);
             string packedPath = folder + "/MetallicSmoothness.png";
-            UnitModelSetup.PackMetallicSmoothness(folder + "/metallic.jpg", folder + "/roughness.jpg", packedPath);
+            ModelSurfaceImport.PackMetallicSmoothness(folder + "/metallic.jpg", folder + "/roughness.jpg", packedPath);
             string materialPath = folder + "/" + name + ".mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (material == null)
@@ -78,17 +78,8 @@ namespace Lightbringer.EditorTools
                 material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 AssetDatabase.CreateAsset(material, materialPath);
             }
-            material.SetTexture("_BaseMap", colour);
-            material.SetColor("_BaseColor", Color.white);
-            material.SetTexture("_BumpMap", normal);
-            material.SetFloat("_BumpScale", 0.65f);
-            material.EnableKeyword("_NORMALMAP");
-            material.SetTexture("_MetallicGlossMap", AssetDatabase.LoadAssetAtPath<Texture2D>(packedPath));
-            material.SetFloat("_Metallic", 1f);
-            material.SetFloat("_Smoothness", 0.65f);
-            material.SetFloat("_SmoothnessTextureChannel", 0f);
-            material.EnableKeyword("_METALLICSPECGLOSSMAP");
-            material.DisableKeyword("_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A");
+            ModelSurfaceImport.ConfigureLit(material, colour, normal,
+                AssetDatabase.LoadAssetAtPath<Texture2D>(packedPath), 0.65f, 0.65f);
             material.enableInstancing = true;
             EditorUtility.SetDirty(material);
 

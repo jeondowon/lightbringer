@@ -45,10 +45,10 @@ namespace Lightbringer.EditorTools
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
             if (model == null) throw new InvalidOperationException("Stronghold FBX import failed.");
             string Map(string kind) => folder + "/" + texturePrefix + kind;
-            var color = UnitModelSetup.ImportTexture(Map("basecolor.JPEG"), false);
-            var normal = UnitModelSetup.ImportTexture(Map("normal.PNG"), true);
+            var color = ModelSurfaceImport.ImportTexture(Map("basecolor.JPEG"), false);
+            var normal = ModelSurfaceImport.ImportTexture(Map("normal.PNG"), true);
             string packedPath = folder + "/" + assetName + "_MetallicSmoothness.png";
-            UnitModelSetup.PackMetallicSmoothness(Map("metallic.JPEG"), Map("roughness.JPEG"), packedPath);
+            ModelSurfaceImport.PackMetallicSmoothness(Map("metallic.JPEG"), Map("roughness.JPEG"), packedPath);
             string materialPath = folder + "/" + assetName + ".mat";
             var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (material == null)
@@ -56,18 +56,8 @@ namespace Lightbringer.EditorTools
                 material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 AssetDatabase.CreateAsset(material, materialPath);
             }
-            material.SetTexture("_BaseMap", color);
-            material.SetColor("_BaseColor", Color.white);
-            material.SetTexture("_BumpMap", normal);
-            material.SetFloat("_BumpScale", 0.7f);
-            material.EnableKeyword("_NORMALMAP");
-            material.SetTexture("_MetallicGlossMap", AssetDatabase.LoadAssetAtPath<Texture2D>(packedPath));
-            material.SetFloat("_Metallic", 1f);
-            material.SetFloat("_Smoothness", 0.7f);
-            material.SetFloat("_SmoothnessTextureChannel", 0f);
-            material.EnableKeyword("_METALLICSPECGLOSSMAP");
-            material.DisableKeyword("_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A");
-            EditorUtility.SetDirty(material);
+            ModelSurfaceImport.ConfigureLit(material, color, normal,
+                AssetDatabase.LoadAssetAtPath<Texture2D>(packedPath), 0.7f, 0.7f);
 
             var root = new GameObject(assetName);
             try
