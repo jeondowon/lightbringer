@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Lightbringer.Core;
 using Lightbringer.Progression;
@@ -19,13 +20,18 @@ namespace Lightbringer.EditorTools
             try
             {
                 PrologueSequence data = AssetDatabase.LoadAssetAtPath<PrologueSequence>(PrologueSetup.AssetPath);
-                Require(data != null && data.IsReady && data.slides.Length == 18, "18 complete slides are available in the player resource", report);
-                string[] expected = { "00A", "00B", "00C", "00D", "01", "02", "02B", "03", "03(V5)", "04", "05", "05A", "05B", "06", "07", "08", "07(ForgottenBeacon)", "09" };
+                PrologueSetup.Entry[] expected = PrologueSetup.Resolve();
+                int captionCount = expected.Sum(entry => entry.Captions.Length);
+                Require(data != null && data.IsReady && data.slides.Length == expected.Length,
+                    expected.Length + " complete slides are available in the player resource", report);
+                Require(captionCount == PrologueSetup.Entries.Sum(entry => entry.Captions.Length),
+                    "Every caption is shown, including those of planned pages awaiting artwork", report);
                 for (int i = 0; i < expected.Length; i++)
                 {
-                    Require(data.slides[i].id == expected[i], "Order " + i + ": " + expected[i], report);
-                    Require(data.slides[i].image.name == PrologueSetup.Entries[i].File,
-                        "Artwork " + expected[i] + ": " + data.slides[i].image.name, report);
+                    Require(data.slides[i].id == expected[i].Id, "Order " + i + ": " + expected[i].Id, report);
+                    Require(data.slides[i].image.name == expected[i].File,
+                        "Artwork " + expected[i].Id + ": " + data.slides[i].image.name, report);
+                    Require(data.slides[i].captions.SequenceEqual(expected[i].Captions), "Captions " + expected[i].Id, report);
                     foreach (string line in data.slides[i].captions)
                         if (string.IsNullOrWhiteSpace(line) || line.Contains("Warlord"))
                             throw new InvalidOperationException("Empty caption or premature identity reveal.");
@@ -55,7 +61,7 @@ namespace Lightbringer.EditorTools
                 int safety = 0;
                 while (view.IsOpen && ++safety < 100) { Settle(view); view.Advance(); }
                 Settle(view);
-                Require(!view.IsOpen && finishes == 1, "All 18 slides finish once", report);
+                Require(!view.IsOpen && finishes == 1, "All " + expected.Length + " slides finish once", report);
                 Require(view.Open(data), "Replay restarts after completion", report);
                 view.Skip(); view.Skip(); Settle(view);
                 Require(!view.IsOpen && finishes == 2, "Skip during initial fade completes exactly once", report);
@@ -88,7 +94,7 @@ namespace Lightbringer.EditorTools
                     if (material != null) UnityEngine.Object.DestroyImmediate(material);
                 }
                 File.WriteAllText("Docs/Validation/PrologueChecks.txt", "PASS | " + DateTime.UtcNow.ToString("O") + "\n" + report);
-                Debug.Log("Prologue validation passed: 18 slides, navigation, skip, replay, campaign handoff.");
+                Debug.Log("Prologue validation passed: " + expected.Length + " slides, navigation, skip, replay, campaign handoff.");
             }
             catch (Exception error)
             {
@@ -97,7 +103,8 @@ namespace Lightbringer.EditorTools
             }
         }
 
-        private static void Settle(PrologueView view) { view.Tick(1f, false); view.Tick(1f, false); }
+        // Long enough for the slowest transition (the opening fade from black and the white flash).
+        private static void Settle(PrologueView view) { for (int i = 0; i < 8; i++) view.Tick(1f, false); }
         private static void Require(bool condition, string description, StringBuilder report)
         {
             if (!condition) throw new InvalidOperationException(description);

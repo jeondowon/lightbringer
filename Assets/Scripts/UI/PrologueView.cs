@@ -10,16 +10,20 @@ namespace Lightbringer.UI
     public sealed class PrologueView
     {
         private const float FadeDuration = .65f;
+        // The story opens slowly out of black; the final clash whites out the screen before the empty castle.
+        private const float OpeningFade = 3f, FlashIn = 1.3f, FlashOut = 2.6f;
+        private const string FlashSlideId = "04B";
         public readonly VisualElement Root;
-        private readonly VisualElement frame, captionPanel, credits;
+        private readonly VisualElement frame, whiteout, captionPanel, credits;
         private readonly Image picture;
+        private readonly PrologueEffects effects;
         private readonly Label caption;
         private readonly Button previous, next;
         private readonly Action finished;
         private PrologueSequence sequence;
         private int pendingSlide = -1, pendingCaption;
-        private float transition;
-        private bool fadingOut, closing;
+        private float transition, duration = FadeDuration;
+        private bool fadingOut, closing, flash;
         public bool IsOpen { get; private set; }
         public bool IsTransitioning => transition > 0;
         public int SlideIndex { get; private set; }
@@ -37,6 +41,14 @@ namespace Lightbringer.UI
             picture = new Image { scaleMode = ScaleMode.ScaleToFit, pickingMode = PickingMode.Ignore };
             picture.AddToClassList("lb-prologue-picture");
             frame.Add(picture);
+            effects = new PrologueEffects();
+            frame.Add(effects);
+            whiteout = new VisualElement { name = "Prologue Whiteout", pickingMode = PickingMode.Ignore };
+            whiteout.style.position = Position.Absolute;
+            whiteout.style.left = whiteout.style.right = whiteout.style.top = whiteout.style.bottom = 0f;
+            whiteout.style.backgroundColor = new Color(1f, 0.98f, 0.93f);
+            whiteout.style.opacity = 0f;
+            frame.Add(whiteout);
             frame.RegisterCallback<ClickEvent>(evt => { if (evt.button == 0) Advance(); });
             Root.RegisterCallback<GeometryChangedEvent>(_ => Fit());
             VisualElement top = Hud.Box(Root, "lb-prologue-top");
@@ -76,7 +88,9 @@ namespace Lightbringer.UI
             Root.style.opacity = 1f;
             ShowSlide(0, 0);
             fadingOut = false;
-            transition = FadeDuration;
+            flash = false;
+            whiteout.style.opacity = 0f;
+            duration = transition = OpeningFade;
             SetContentOpacity(0);
             Fit();
             return true;
@@ -111,6 +125,7 @@ namespace Lightbringer.UI
         {
             if (!IsOpen) return;
             delta = Mathf.Max(0, delta);
+            effects.Tick(delta);
             // Escape also works during an image fade. The opaque root prevents clicks reaching the map.
             Keyboard keys = readInput ? Keyboard.current : null;
             bool creditsOpen = !credits.ClassListContains("lb-hidden");
@@ -128,14 +143,23 @@ namespace Lightbringer.UI
             if (transition > 0)
             {
                 transition = Mathf.Max(0, transition - delta);
-                SetContentOpacity(fadingOut ? transition / FadeDuration : 1f - transition / FadeDuration);
+                float remaining = transition / duration;
+                if (flash)
+                {
+                    // The picture stays put while white light swallows it, then the next page shows through.
+                    whiteout.style.opacity = fadingOut ? 1f - remaining : remaining;
+                    caption.style.opacity = fadingOut ? remaining : 1f - remaining;
+                }
+                else SetContentOpacity(fadingOut ? remaining : 1f - remaining);
                 if (transition == 0 && fadingOut)
                 {
                     ShowSlide(pendingSlide, pendingCaption);
                     fadingOut = false;
-                    transition = FadeDuration;
-                    SetContentOpacity(0);
+                    duration = transition = flash ? FlashOut : FadeDuration;
+                    if (flash) caption.style.opacity = 0f;
+                    else SetContentOpacity(0);
                 }
+                else if (transition == 0) flash = false;
                 return;
             }
             if (creditsOpen) return;
@@ -151,19 +175,22 @@ namespace Lightbringer.UI
             pendingSlide = index;
             pendingCaption = line;
             fadingOut = true;
-            transition = FadeDuration;
+            flash = index > SlideIndex && sequence.slides[index].id == FlashSlideId;
+            duration = transition = flash ? FlashIn : FadeDuration;
         }
 
         private void ShowSlide(int index, int line)
         {
             SlideIndex = index;
             picture.image = sequence.slides[index].image;
+            effects.Show(sequence.slides[index].id);
             ShowCaption(line);
         }
 
         private void ShowCaption(int line)
         {
             CaptionIndex = line;
+            effects.SetCaption(line);
             PrologueSlide slide = sequence.slides[SlideIndex];
             caption.text = slide.captions[line];
             previous.SetEnabled(SlideIndex != 0 || line != 0);
@@ -173,6 +200,7 @@ namespace Lightbringer.UI
         private void SetContentOpacity(float value)
         {
             picture.style.opacity = value;
+            effects.style.opacity = value;
             caption.style.opacity = value;
         }
 
@@ -190,8 +218,11 @@ namespace Lightbringer.UI
         {
             IsOpen = false;
             closing = false;
+            flash = false;
             transition = 0;
+            whiteout.style.opacity = 0f;
             picture.image = null;
+            effects.Show(null);
             sequence = null;
             Hud.Show(Root, false);
             finished?.Invoke();

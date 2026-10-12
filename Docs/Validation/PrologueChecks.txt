@@ -1,41 +1,72 @@
-PASS | 2026-10-12T11:57:54.2072201Z
-PASS: 18 complete slides are available in the player resource
+PASS | 2026-10-12T17:31:30.2559165Z
+PASS: 22 complete slides are available in the player resource
+PASS: Every caption is shown, including those of planned pages awaiting artwork
 PASS: Order 0: 00A
 PASS: Artwork 00A: Prologue_00A_Creation_Storybook_v1
+PASS: Captions 00A
 PASS: Order 1: 00B
-PASS: Artwork 00B: Prologue_00B_Peace_Storybook_v2
+PASS: Artwork 00B: Prologue_00B_Peace_Storybook_v3
+PASS: Captions 00B
 PASS: Order 2: 00C
 PASS: Artwork 00C: Prologue_00C_BirthOfDarkness_Storybook_v1
+PASS: Captions 00C
 PASS: Order 3: 00D
 PASS: Artwork 00D: Prologue_00D_DemonKingBirth_Storybook_v1
-PASS: Order 4: 01
+PASS: Captions 00D
+PASS: Order 4: 00E
+PASS: Artwork 00E: Prologue_00E_UndeadRising_Storybook_v1
+PASS: Captions 00E
+PASS: Order 5: 01
 PASS: Artwork 01: Prologue_01_Invasion_Storybook_v4
-PASS: Order 5: 02
+PASS: Captions 01
+PASS: Order 6: 02
 PASS: Artwork 02: Prologue_02_KnightOfLight_ColorManga_v3
-PASS: Order 6: 02B
+PASS: Captions 02
+PASS: Order 7: 02B
 PASS: Artwork 02B: Prologue_02B_KnightVictory_Storybook_v3
-PASS: Order 7: 03
+PASS: Captions 02B
+PASS: Order 8: 03
 PASS: Artwork 03: Prologue_03_Beacons_Storybook_v3
-PASS: Order 8: 03(V5)
+PASS: Captions 03
+PASS: Order 9: 03(V5)
 PASS: Artwork 03(V5): Prologue_03_Beacons_Storybook_v5
-PASS: Order 9: 04
+PASS: Captions 03(V5)
+PASS: Order 10: 03B
+PASS: Artwork 03B: Prologue_03B_BeaconWar_Storybook_v1
+PASS: Captions 03B
+PASS: Order 11: 04A
+PASS: Artwork 04A: Prologue_04A_ThroneHall_Storybook_v1
+PASS: Captions 04A
+PASS: Order 12: 04
 PASS: Artwork 04: Prologue_04_LastBattle_Storybook_v2
-PASS: Order 10: 05
+PASS: Captions 04
+PASS: Order 13: 04B
+PASS: Artwork 04B: Prologue_04B_EmptyCastle_Storybook_v1
+PASS: Captions 04B
+PASS: Order 14: 05
 PASS: Artwork 05: Prologue_05_ForgottenPromise_Storybook_v1
-PASS: Order 11: 05A
+PASS: Captions 05
+PASS: Order 15: 05A
 PASS: Artwork 05A: Prologue_05A_Greed_Storybook_v1
-PASS: Order 12: 05B
+PASS: Captions 05A
+PASS: Order 16: 05B
 PASS: Artwork 05B: Prologue_05B_Hatred_Storybook_v1
-PASS: Order 13: 06
+PASS: Captions 05B
+PASS: Order 17: 06
 PASS: Artwork 06: Prologue_06_DarknessReturns_Storybook_v1
-PASS: Order 14: 07
+PASS: Captions 06
+PASS: Order 18: 07
 PASS: Artwork 07: Prologue_07_LightStrikes_Storybook_v2
-PASS: Order 15: 08
+PASS: Captions 07
+PASS: Order 19: 08
 PASS: Artwork 08: Prologue_08_FirstStep_Storybook_v1
-PASS: Order 16: 07(ForgottenBeacon)
+PASS: Captions 08
+PASS: Order 20: 07(ForgottenBeacon)
 PASS: Artwork 07(ForgottenBeacon): Prologue_07_ForgottenBeacon_Storybook_v1
-PASS: Order 17: 09
+PASS: Captions 07(ForgottenBeacon)
+PASS: Order 21: 09
 PASS: Artwork 09: Prologue_09_Journey_Storybook_v1
+PASS: Captions 09
 PASS: Prologue music is referenced and streamed
 PASS: Bundled Korean font exists
 PASS: Missing data rejected; duplicate open rejected
@@ -44,8 +75,7 @@ PASS: Second caption stays on same image
 PASS: Last caption advances to next image
 PASS: Previous returns to preceding image's last caption
 PASS: Manual reading never advances on a timer
-PASS: Automatic mode advances after reading interval
-PASS: All 18 slides finish once
+PASS: All 22 slides finish once
 PASS: Replay restarts after completion
 PASS: Skip during initial fade completes exactly once
 PASS: View tests leave gameplay time and viewed preference untouched
