@@ -1,0 +1,14 @@
+Mode: built-in image_gen
+Reference: ../Prologue/Prologue_07_ForgottenBeacon_Storybook_v1.png
+Output: Title_LastLight_Storybook_v1.png
+
+Use case: illustration-story.
+Create a new Lightbringer title/menu background illustration, wide cinematic exact 16:9 composition (prefer 1536x864 or 2048x1152).
+Input image 1 is a STYLE AND BEACON ARCHITECTURE REFERENCE ONLY: Prologue_07_ForgottenBeacon_Storybook_v1.png. Match its hand-painted dark fantasy storybook aesthetic, visible confident ink linework, rough matte paper / dry pigment texture, textured painterly shading, subdued atmospheric depth, and aged stone tower with gold Gothic filigree, blue pointed roof and ivy. Create the NEW composition described below; do not copy its left-positioned tower or large foreground heroine.
+At dusk, a single ancient stone beacon tower with gold filigree and ivy stands on a grassy hilltop at the right-center of the frame, around 68-72% across the image. Show the whole tower with breathing room above the roof. Its glass lantern blazes with warm golden-white light piercing the surrounding darkness, painted luminous ivory and gold rather than glossy digital lens effects. Soft light motes and embers drift upward from it. Warm glow illuminates moss, weathered stones and tall grass around its base.
+Behind it lies a vast dark valley with a winding road, ruined village, and a few distant UNLIT beacon towers fading into fog. Heavy storm clouds fill the sky; far along the horizon is a thin, faint, ominous crimson-violet corruption glow.
+A TINY silhouette of a hooded commander holding a staff, seen from behind, stands near the beacon for scale. Keep this figure very small and subordinate, about 5-7% of image height, no portrait details.
+The LEFT THIRD of the image must remain calm dark sky and shadowed hillside, low contrast and quiet with generous continuous negative space for a future logo and menu. Do not render any actual logo/menu. Keep roads, village details, bright horizon accents, embers, the character and tower out of this left-third reserved area. Soft painterly texture and subtle dark cloud shapes are fine, no blank solid rectangle and no artificial division.
+Color palette: deep indigo and charcoal shadows, warm gold light, ivory highlights, faint crimson on the far horizon. Mood: lonely hope, the last light in the darkness.
+Visible ink contours and matte hand-painted shading, storybook illustration matching the supplied reference, not photorealistic, not 3D CGI.
+No text, letters, logo, watermark, UI, frame or border.

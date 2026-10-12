@@ -18,19 +18,23 @@ namespace Lightbringer.UI
         private CampaignSession session;
         private GameObject panelObject;
         private PrototypeBattle shownBattle;
-        private bool showingPreparation;
+        private bool showingPreparation, showingTitle;
         private VisualElement campaignRoot;
         private PrologueSequence prologueSequence;
         private AudioSource prologueMusic;
+        private AudioSource titleMusic;
+        private float titleMusicGain;
         private bool checkedPrologue;
         public PrologueView Prologue { get; private set; }
         public CampaignMapView Map { get; private set; }
+        public TitleView Title { get; private set; }
 
         public PreparationView Preparation { get; private set; }
         public BattleHudView BattleView { get; private set; }
         public LevelUpView LevelUp { get; private set; }
         public ResultView Result { get; private set; }
         public PauseView Pause { get; private set; }
+        public BossDialogueView BossDialogue { get; private set; }
 
         public void Configure(PanelSettings panel, StyleSheet style)
         {
@@ -67,12 +71,17 @@ namespace Lightbringer.UI
             campaignRoot.pickingMode = PickingMode.Ignore;
             Preparation = new PreparationView(campaignRoot);
             Preparation.BackRequested += () => showingPreparation = false;
-            Map = new CampaignMapView(campaignRoot, () => showingPreparation = true, () => PlayPrologue());
+            Map = new CampaignMapView(campaignRoot, () => showingPreparation = true, () => { showingTitle = true; showingPreparation = false; });
+            Title = new TitleView(campaignRoot);
+            Title.StartRequested += StartGame;
+            Title.PrologueRequested += () => PlayPrologue();
+            Title.QuitRequested += QuitGame;
             showingPreparation = false;
             BattleView = new BattleHudView(campaignRoot);
             LevelUp = new LevelUpView(campaignRoot);
             Result = new ResultView(campaignRoot);
             Pause = new PauseView(campaignRoot);
+            BossDialogue = new BossDialogueView(campaignRoot);
             Prologue = new PrologueView(root, FinishPrologue);
             checkedPrologue = false;
             shownBattle = null;
@@ -89,15 +98,18 @@ namespace Lightbringer.UI
         {
             if (session != null) session.IsPrologueActive = false;
             if (prologueMusic != null) prologueMusic.Stop();
+            RefreshTitleMusic(false);
             if (panelObject != null)
             {
                 if (Application.isPlaying) Destroy(panelObject); else DestroyImmediate(panelObject);
             }
             panelObject = null;
             prologueMusic = null;
+            titleMusic = null;
             Prologue = null;
             campaignRoot = null;
-            Preparation = null; Map = null; BattleView = null; LevelUp = null; Result = null; Pause = null;
+            Preparation = null; Map = null; Title = null; BattleView = null; LevelUp = null; Result = null; Pause = null;
+            BossDialogue = null;
         }
 
         private void LateUpdate()
@@ -106,9 +118,9 @@ namespace Lightbringer.UI
             if (!checkedPrologue)
             {
                 checkedPrologue = true;
-                if (Application.isPlaying && session.IsPersistentSession && PlayerPrefs.GetInt(PrologueSequence.ViewedKey, 0) == 0)
-                    PlayPrologue();
+                showingTitle = Application.isPlaying && session.IsPersistentSession;
             }
+            RefreshTitleMusic(showingTitle && session.Battle == null && !(Prologue != null && Prologue.IsOpen));
             if (Prologue != null && Prologue.IsOpen)
             {
                 Prologue.Tick(Time.unscaledDeltaTime);
@@ -117,6 +129,14 @@ namespace Lightbringer.UI
                         BattleMusic.Volume * Prologue.MusicGain, Time.unscaledDeltaTime);
                 return;
             }
+            if (showingTitle && session.Battle == null)
+            {
+                Preparation.Refresh(session, false);
+                Map.Refresh(session, false);
+                Title.Refresh(true);
+                return;
+            }
+            Title.Refresh(false);
             if (session.Battle != shownBattle)
             {
                 showingPreparation = false;
@@ -130,6 +150,58 @@ namespace Lightbringer.UI
             LevelUp.Refresh(session);
             Result.Refresh(session);
             Pause.Refresh(session);
+            BossDialogue.Refresh(session);
+            Hud.Show(BattleView.Root, session.Battle != null && !session.IsBossCinematic);
+        }
+
+        private void RefreshTitleMusic(bool playing)
+        {
+            if (!playing)
+            {
+                if (titleMusic != null && titleMusic.isPlaying) titleMusic.Stop();
+                titleMusicGain = 0f;
+                return;
+            }
+            if (!Application.isPlaying || panelObject == null) return;
+            if (titleMusic == null)
+            {
+                titleMusic = panelObject.AddComponent<AudioSource>();
+                titleMusic.playOnAwake = false;
+                titleMusic.spatialBlend = 0f;
+                titleMusic.dopplerLevel = 0f;
+                titleMusic.priority = 0;
+                titleMusic.loop = true;
+                titleMusic.volume = 0f;
+                titleMusic.clip = UnityEngine.Resources.Load<AudioClip>(BattleMusic.ResourcePath);
+                if (titleMusic.clip == null)
+                    Debug.LogWarning("시작 화면 음악을 불러오지 못했습니다: " + BattleMusic.ResourcePath, this);
+            }
+            if (titleMusic.clip == null) return;
+            if (!titleMusic.isPlaying)
+            {
+                titleMusic.volume = 0f;
+                titleMusic.Play();
+            }
+            titleMusicGain = Mathf.MoveTowards(titleMusicGain, 1f, Time.unscaledDeltaTime / 1.2f);
+            titleMusic.volume = BattleMusic.Volume * titleMusicGain;
+        }
+
+        private void StartGame()
+        {
+            if (session == null || session.IsPrologueActive) return;
+            showingTitle = false;
+            RefreshTitleMusic(false);
+            showingPreparation = false;
+            if (Application.isPlaying && PlayerPrefs.GetInt(PrologueSequence.ViewedKey, 0) == 0) PlayPrologue();
+        }
+
+        private static void QuitGame()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         public bool PlayPrologue()
@@ -138,6 +210,7 @@ namespace Lightbringer.UI
             if (prologueSequence == null)
                 prologueSequence = UnityEngine.Resources.Load<PrologueSequence>(PrologueSequence.ResourcePath);
             if (!Prologue.Open(prologueSequence)) return false;
+            RefreshTitleMusic(false);
             session.IsPrologueActive = true;
             showingPreparation = false;
             Hud.Show(campaignRoot, false);

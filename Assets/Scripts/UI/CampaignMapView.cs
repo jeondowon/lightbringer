@@ -20,12 +20,11 @@ namespace Lightbringer.UI
         private readonly Button[] beacons = new Button[CampaignProgress.StageCount];
         private readonly Label[] states = new Label[CampaignProgress.StageCount];
         private readonly Label progress, selected, description, status;
-        private readonly Button prepare;
         private readonly Action openPreparation;
         private CampaignSession session;
         private string revision;
 
-        public CampaignMapView(VisualElement parent, Action openPreparation, Action replayPrologue = null)
+        public CampaignMapView(VisualElement parent, Action openPreparation, Action backToTitle = null)
         {
             this.openPreparation = openPreparation;
             Root = Hud.Box(parent, "lb-atlas");
@@ -39,15 +38,12 @@ namespace Lightbringer.UI
             for (int i = 0; i < beacons.Length; i++)
             {
                 int stage = i + 1;
-                Button beacon = new Button(() => Select(stage));
+                Button beacon = Hud.Button(null, "", () => { if (Select(stage)) OpenPreparation(); });
                 beacon.AddToClassList("lb-beacon");
                 beacon.style.left = Length.Percent(Sites[i].x * 100);
                 beacon.style.top = Length.Percent(Sites[i].y * 100);
                 canvas.Add(beacon);
-                Hud.Box(beacon, "lb-beacon-halo");
-                VisualElement symbol = Hud.Box(beacon, "lb-beacon-symbol");
-                int index = i;
-                symbol.generateVisualContent += context => DrawBeacon(context, index);
+                Hud.Box(beacon, "lb-beacon-symbol");
                 Hud.Text(beacon, $"봉화 {stage:00}", "lb-beacon-name");
                 states[i] = Hud.Text(beacon, "", "lb-beacon-state");
                 foreach (VisualElement child in beacon.Children()) Hud.IgnorePicking(child);
@@ -68,11 +64,9 @@ namespace Lightbringer.UI
             selected = Hud.Text(detail, "", "lb-atlas-selected");
             description = Hud.Text(detail, "", "lb-atlas-description");
             VisualElement action = Hud.Box(footer, "lb-atlas-action");
-            Hud.Text(action, "봉화 선택  ·  출전 정보에서 장비 정비", "lb-atlas-hint");
-            prepare = Hud.Button(action, "출전 정보 보기  →", OpenPreparation, "lb-atlas-primary");
-            if (replayPrologue != null)
+            if (backToTitle != null)
             {
-                Hud.Button(action, "프롤로그 다시 보기", replayPrologue, "lb-prologue-button");
+                Hud.Button(action, "← 타이틀로", backToTitle, "lb-prologue-button");
             }
             status = Hud.Text(Root, "", "lb-atlas-status");
             Hud.Show(Root, false);
@@ -107,7 +101,6 @@ namespace Lightbringer.UI
             CampaignProgress profile = session != null ? session.Progress : null;
             Hud.Show(Root, visible && profile != null && session.Battle == null);
             if (!visible || profile == null || session.Battle != null) return;
-            prepare.SetEnabled(!session.IsChoosing);
             Hud.Set(status, session.SaveStatus ?? "");
             string key = session.SelectedStage + ":" + profile.unlockedStage + ":" + string.Join(",", profile.cleared);
             if (key == revision) return;
@@ -119,10 +112,10 @@ namespace Lightbringer.UI
                 if (lit) count++;
                 beacons[i].SetEnabled(unlocked);
                 beacons[i].EnableInClassList("lb-beacon--lit", lit);
+                beacons[i].EnableInClassList("lb-beacon--ready", unlocked && !lit);
                 beacons[i].EnableInClassList("lb-beacon--selected", i + 1 == session.SelectedStage);
                 Hud.Set(states[i], lit ? "밝혀진 봉화" : unlocked ? "탈환 가능" : "미해방");
                 beacons[i].tooltip = lit ? "해방한 전장에 다시 도전합니다." : unlocked ? "이 봉화를 탈환할 수 있습니다." : "앞선 봉화를 탈환하면 길이 열립니다.";
-                beacons[i].Q(className: "lb-beacon-symbol").MarkDirtyRepaint();
             }
             Hud.Set(progress, $"밝혀진 봉화   {count:00} / {beacons.Length:00}");
             Hud.Set(selected, $"봉화 {session.SelectedStage:00}");
@@ -153,28 +146,6 @@ namespace Lightbringer.UI
                     p.Stroke();
                 }
             }
-        }
-
-        private void DrawBeacon(MeshGenerationContext context, int index)
-        {
-            bool lit = session?.Progress != null && session.Progress.cleared[index];
-            Painter2D p = context.painter2D;
-            Color stone = new Color(.39f, .44f, .45f);
-            Color edge = lit ? new Color(.96f, .83f, .52f) : new Color(.73f, .78f, .77f);
-            Polygon(p, stone, edge, new Vector2(13, 49), new Vector2(35, 49), new Vector2(42, 55), new Vector2(6, 55));
-            Polygon(p, new Color(.17f, .23f, .25f), edge, new Vector2(19, 30), new Vector2(29, 30), new Vector2(33, 48), new Vector2(15, 48));
-            Polygon(p, lit ? new Color(1f, .89f, .61f) : new Color(.28f, .36f, .39f), edge,
-                new Vector2(24, 5), new Vector2(33, 20), new Vector2(24, 36), new Vector2(15, 20));
-            Polygon(p, lit ? new Color(1f, .97f, .84f) : new Color(.50f, .59f, .59f), edge,
-                new Vector2(24, 5), new Vector2(24, 36), new Vector2(15, 20));
-        }
-
-        private static void Polygon(Painter2D p, Color fill, Color stroke, params Vector2[] points)
-        {
-            p.BeginPath(); p.MoveTo(points[0]);
-            for (int i = 1; i < points.Length; i++) p.LineTo(points[i]);
-            p.ClosePath(); p.fillColor = fill; p.Fill();
-            p.strokeColor = stroke; p.lineWidth = 1f; p.Stroke();
         }
     }
 }

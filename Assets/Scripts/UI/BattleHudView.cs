@@ -217,7 +217,8 @@ namespace Lightbringer.UI
         {
             if (battle == null || session == null) return;
             Hud.Set(stage, $"봉화 {session.SelectedStage:00}");
-            Hud.Set(waves, $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
+            Hud.Set(waves, battle.Encounter != null && battle.Waves.AssaultCleared ? battle.Encounter.ObjectiveText
+                : $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
             if (session.Progress != null) Hud.Set(level, session.Progress.level.ToString());
             RefreshFronts();
             RefreshBases();
@@ -262,8 +263,13 @@ namespace Lightbringer.UI
             if (theirs != null)
             {
                 enemyBase.Set(theirs.CurrentHealth, theirs.MaximumHealth,
-                    theirs.Invulnerable ? "보호막 · 군주를 처치하세요" : $"{theirs.CurrentHealth:0} / {theirs.MaximumHealth:0}");
+                    theirs.Invulnerable ? "보호막 · 공세를 모두 격퇴하세요" : $"{theirs.CurrentHealth:0} / {theirs.MaximumHealth:0}");
                 enemyBase.Root.EnableInClassList("lb-bar--shielded", theirs.Invulnerable);
+            }
+            if (battle.Objective.IsBaseDestroyed)
+            {
+                enemyBase.Set(0, 1, "적 본진 파괴됨");
+                enemyBase.Root.EnableInClassList("lb-bar--shielded", false);
             }
             Combatant warlord = battle.Waves.Boss;
             bool bossAlive = warlord != null && warlord.IsAlive;

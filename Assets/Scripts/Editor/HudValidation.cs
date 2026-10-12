@@ -82,8 +82,52 @@ namespace Lightbringer.EditorTools
                 result.Refresh(session);
                 Check(!levelUp.Visible && !result.Visible, "Overlays close once choices are done and the battle continues");
 
-                battle.Objective.EnemyBase.Invulnerable = false;
+                ClearFinalAssault(battle);
                 battle.Objective.EnemyBase.TakeDamage(1000000f, battle.Hero);
+                BossDialogueView dialogue = new BossDialogueView(root);
+                dialogue.Refresh(session);
+                Check(dialogue.Visible && !session.IsChoosing, "Boss cinematic takes priority over pending growth UI");
+                battle.Encounter.Tick(BossEncounter.WaveSeconds);
+                battle.Encounter.Tick(BossEncounter.ArrivalSeconds);
+                dialogue.Refresh(session);
+                Check(dialogue.LineText == BossEncounter.Lines[0], "Boss dialogue displays the Korean encounter script");
+                Check(dialogue.StoryVisible && dialogue.StoryImage != null,
+                    "The encounter dialogue uses a bundled full-screen story illustration");
+                Texture arrivalArt = dialogue.StoryImage;
+                Vector3 dialogueCamera = battle.Camera.transform.position;
+                battle.Encounter.Tick(1);
+                Check(battle.Camera.transform.position == dialogueCamera, "Dialogue never moves the battlefield camera");
+                var arrivalShots = new System.Collections.Generic.HashSet<Texture>();
+                for (int i = 0; i < BossEncounter.Lines.Length; i++)
+                {
+                    dialogue.Refresh(session);
+                    Check(dialogue.StoryImage != null && dialogue.LineText == BossEncounter.Lines[i],
+                        "Every opening dialogue line has an imported illustration and matching caption");
+                    arrivalShots.Add(dialogue.StoryImage);
+                    battle.Encounter.Tick(.3f); battle.Encounter.AdvanceDialogue();
+                }
+                Check(arrivalShots.Count == 3, "The opening dialogue presents three distinct story shots");
+                while (session.IsChoosing) levelUp.Choose(0);
+                battle.Waves.Boss.TakeDamage(1000000f, battle.Hero);
+                dialogue.Refresh(session);
+                result.Refresh(session);
+                levelUp.Refresh(session);
+                Check(dialogue.StoryVisible && dialogue.StoryImage != null && dialogue.StoryImage != arrivalArt
+                    && dialogue.LineText == BossEncounter.RetreatLines[0] && !result.Visible && !levelUp.Visible,
+                    "The retreat illustration replaces the battle before results or growth can cover it");
+                var retreatShots = new System.Collections.Generic.HashSet<Texture>();
+                for (int i = 0; i < BossEncounter.RetreatLines.Length; i++)
+                {
+                    dialogue.Refresh(session);
+                    Check(dialogue.StoryImage != null && dialogue.LineText == BossEncounter.RetreatLines[i]
+                        && !battle.Objective.HasEnded,
+                        "Every retreat shot remains visible with its caption before victory");
+                    retreatShots.Add(dialogue.StoryImage);
+                    battle.Encounter.Tick(.8f); battle.Encounter.AdvanceDialogue();
+                }
+                Check(retreatShots.Count == 3 && dialogue.StoryImage.name == "Aftermath_v1",
+                    "The retreat shows three distinct shots and ends on the abandoned battlefield");
+                battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds);
                 while (session.IsChoosing) levelUp.Choose(0);
                 result.Refresh(session);
                 Check(result.Visible && result.Title == "승리", "Victory screen appears when the stage is won");

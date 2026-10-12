@@ -36,6 +36,7 @@ namespace Lightbringer.EditorTools
             EditorRequests.Register(Request, Capture);
             EditorRequests.Register("Docs/Validation/BriefingCompactPreview.request", CaptureCompactBriefing);
             EditorRequests.Register("Docs/Validation/CampaignMapPreview.request", CaptureCampaignMap);
+            EditorRequests.Register("Docs/Validation/TitlePreview.request", CaptureTitle);
             EditorRequests.Register(LevelUpRequest, CaptureLevelUp);
             EditorRequests.Register(BattleHudRequest, CaptureBattleHud);
             EditorRequests.Register("Docs/Validation/ResultPreview.request", CaptureResult);
@@ -50,6 +51,14 @@ namespace Lightbringer.EditorTools
             AssemblyReloadEvents.beforeAssemblyReload += Purge;
             EditorApplication.playModeStateChanged += state => { if (state == PlayModeStateChange.ExitingEditMode) Purge(); };
         }
+
+        [MenuItem("Lightbringer/UI/Capture Title Preview")]
+        public static void CaptureTitle() => Render("Docs/Validation/TitlePreview.png", profile => { }, (root, session) =>
+        {
+            TitleView view = new TitleView(root);
+            view.Refresh(true);
+            return () => { };
+        });
 
         [MenuItem("Lightbringer/UI/Capture Result Preview")]
         public static void CaptureResult() => CaptureOutcome(true);

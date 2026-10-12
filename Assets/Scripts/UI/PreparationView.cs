@@ -11,7 +11,6 @@ namespace Lightbringer.UI
     public sealed class PreparationView
     {
         private static readonly string[] SlotKeys = { "LMB", "Q", "E" };
-        private static readonly string[] Roles = { "근접 전투", "원거리 지원", "전선 유지", "중장갑 대응", "아군 회복", "광역 마법", "돌격", "최상위 병력" };
         private static readonly string[] Effects = {
             "조준한 적에게 빛을 내려 단일 대상을 공격합니다.", "영웅 주변 6m 안의 아군을 회복합니다.",
             "조준한 적을 중심으로 3m 안의 적을 공격합니다.", "장착 중 식량 생성 속도가 증가합니다.",
@@ -20,12 +19,12 @@ namespace Lightbringer.UI
         public readonly VisualElement Root;
         public event System.Action BackRequested;
         private readonly Label stageTitle, stageTag, objective, paths, waves, rewards, rewardNote, heroLevel, experience;
-        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, feedback, status, troopSummary;
+        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, feedback, status;
         private readonly VisualElement enemies, rewardIcon, detailIcon, growth, growthPanel;
         private readonly Tile[] slots = new Tile[EquipmentCatalog.Slots];
         private readonly Tile[] items = new Tile[EquipmentCatalog.Count];
-        private readonly Tile[] troops = new Tile[UnitCatalog.Count];
         private readonly Button start, equip, growthToggle;
+        private readonly UnitUpgradeView upgradeView;
         private CampaignSession session;
         private string revision;
         private bool growthOpen;
@@ -40,7 +39,8 @@ namespace Lightbringer.UI
             VisualElement heading = Hud.Box(header);
             Hud.Text(heading, "LIGHTBRINGER  /  출전 준비", "lb-brief-eyebrow");
             Hud.Text(heading, "전장으로 향하기 전에", "lb-brief-title");
-            Button back = Hud.Button(header, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
+            VisualElement actions = Hud.Box(header, "lb-brief-actions");
+            Button back = Hud.Button(actions, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
             back.tooltip = "선택한 봉화를 유지한 채 지도로 돌아갑니다.";
 
             VisualElement body = Hud.Box(Root, "lb-brief-body");
@@ -107,25 +107,9 @@ namespace Lightbringer.UI
             equip = Hud.Button(detail, "", () => EquipSelected(), "lb-brief-equip");
             feedback = Hud.Text(armory.contentContainer, "", "lb-brief-feedback");
 
-            VisualElement roster = Hud.Box(Root, "lb-brief-roster");
-            VisualElement rosterHeading = Hud.Box(roster, "lb-brief-roster-heading");
-            Hud.Text(rosterHeading, "함께할 병력", "lb-brief-section");
-            troopSummary = Hud.Text(rosterHeading, "", "lb-brief-muted");
-            VisualElement troopRow = Hud.Box(roster, "lb-brief-troops");
-            for (int i = 0; i < troops.Length; i++)
-            {
-                VisualElement tile = Hud.Box(troopRow, "lb-brief-troop", "lb-brief-unit--" + i);
-                Hud.Box(tile, "lb-brief-unit-art");
-                VisualElement text = Hud.Box(tile, "lb-brief-copy");
-                Label name = Hud.Text(text, UnitCatalog.Names[i], "lb-brief-troop-name");
-                Hud.Text(text, Roles[i], "lb-brief-troop-role");
-                troops[i] = new Tile { Root = tile, Main = name,
-                    Note = Hud.Text(text, "", "lb-brief-troop-cost") };
-                tile.tooltip = Roles[i];
-            }
             VisualElement footer = Hud.Box(Root, "lb-brief-footer");
             status = Hud.Text(footer, "", "lb-brief-muted");
-            start = Hud.Button(footer, "", () => Start(), "lb-atlas-primary", "lb-brief-start");
+            start = Hud.Button(footer, "", () => OpenUpgrade(), "lb-atlas-primary", "lb-brief-start");
 
             growthPanel = Hud.Box(Root, "lb-brief-growth-overlay");
             VisualElement growthDialog = Hud.Box(growthPanel, "lb-brief-growth-dialog");
@@ -137,7 +121,7 @@ namespace Lightbringer.UI
             Root.RegisterCallback<KeyDownEvent>(evt =>
             {
                 if (evt.keyCode != KeyCode.Escape) return;
-                if (growthOpen) ToggleGrowth(); else BackRequested?.Invoke();
+                if (upgradeView.IsOpen) upgradeView.Close(); else if (growthOpen) ToggleGrowth(); else BackRequested?.Invoke();
                 evt.StopPropagation();
             });
             Root.RegisterCallback<FocusInEvent>(evt =>
@@ -145,6 +129,10 @@ namespace Lightbringer.UI
                 if (growthOpen && evt.target is VisualElement target && !growthPanel.Contains(target))
                     growthPanel.Q<Button>().Focus();
             });
+            upgradeView = new UnitUpgradeView(Root);
+            upgradeView.Closed += () => { if (session != null) Refresh(session); start.Focus(); };
+            upgradeView.StartRequested += () => Start();
+            upgradeView.Upgraded += () => { if (session != null) Refresh(session); };
             Hud.Show(growthPanel, false); Hud.Show(Root, false);
         }
 
@@ -184,23 +172,24 @@ namespace Lightbringer.UI
             bool visible = showPreparation && profile != null && session.Battle == null;
             bool opening = visible && !Visible;
             Hud.Show(Root, visible);
-            if (!visible) { growthOpen = false; Hud.Show(growthPanel, false); return; }
+            if (!visible) { growthOpen = false; Hud.Show(growthPanel, false); Hud.Show(upgradeView.Root, false); return; }
             if (opening) { Hud.Set(feedback, ""); slots[ActiveSlot].Root.Focus(); }
             if (selectedItem < 0 || selectedItem >= EquipmentCatalog.Count) selectedItem = profile.loadout[ActiveSlot];
             start.SetEnabled(!session.IsChoosing);
-            Hud.Set(start, $"봉화 {session.SelectedStage:00} · 출전하기  →");
+            Hud.Set(start, $"봉화 {session.SelectedStage:00} · 병력 준비  →");
             string message = session.SaveStatus;
-            Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "장착한 장비와 영구 성장 효과가 전투에 적용됩니다.");
+            Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "영웅 장비를 정비한 뒤 병력 준비로 넘어갑니다.");
             string key = session.SelectedStage + "|" + profile.unlockedStage + "|" + profile.level + "|" + profile.experience
                 + "|" + ActiveSlot + "|" + selectedItem + "|" + string.Join(",", profile.cleared)
-                + "|" + string.Join(",", profile.equipmentLevels) + "|" + string.Join(",", profile.loadout) + "|" + string.Join(",", profile.ranks);
+                + "|" + string.Join(",", profile.equipmentLevels) + "|" + string.Join(",", profile.loadout) + "|" + string.Join(",", profile.ranks)
+                + "|" + profile.gold + "|" + string.Join(",", profile.unitRanks);
             if (key == revision) return;
             revision = key;
             int stage = session.SelectedStage;
             bool cleared = profile.cleared[stage - 1], boss = EnemyCatalog.HasBoss(stage);
             Hud.Set(stageTitle, $"봉화 {stage:00}");
             Hud.Set(stageTag, cleared ? "해방한 전장 · 재도전" : boss ? "미해방 지역 · 보스 전투" : "미해방 지역 · 탈환 작전");
-            Hud.Set(objective, boss ? "군주를 처치해 보호막을 해제하고\n적군 본진을 파괴하세요." : "적군 본진을 파괴하고\n봉화에 다시 빛을 밝혀주세요.");
+            Hud.Set(objective, boss ? "공세를 격퇴하고 적 본진을 파괴하세요.\n등장한 어둠의 군주를 격퇴하세요." : "적군 본진을 파괴하고\n봉화에 다시 빛을 밝혀주세요.");
             Hud.Set(paths, PrototypeBattleBuilder.PathCount(stage) + "개");
             Hud.Set(waves, EnemyWaveSpawner.WaveCount(stage) + "회");
             enemies.Clear();
@@ -213,7 +202,7 @@ namespace Lightbringer.UI
             Icon(rewardIcon, reward);
             Hud.Set(rewards, EquipmentCatalog.Names[reward] + " +" + rank);
             Hud.Set(rewardNote, cleared ? "획득 완료 · 재도전 시 전투 경험치 획득"
-                : stage < CampaignProgress.StageCount ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금" : "캠페인의 마지막 전장");
+                : stage < CampaignProgress.StageCount ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금" : "첫 군주전 · 이후 여정은 준비 중");
             Hud.Set(heroLevel, "마법 지휘관   ·   LV " + profile.level);
             Hud.Set(experience, $"경험치 {profile.experience} / {profile.ExperienceToNext}");
             Hud.Set(inventoryHint, $"보유 장비  /  {SlotKeys[ActiveSlot]} 슬롯에 사용할 장비를 확인하세요");
@@ -233,15 +222,6 @@ namespace Lightbringer.UI
                 items[id].Root.EnableInClassList("lb-brief-item--selected", id == selectedItem);
             }
             RefreshItem(profile);
-            float costMultiplier = Mathf.Clamp(1f - profile.ranks[(int)GrowthKind.Leadership] * .025f, .5f, 1f);
-            Hud.Set(troopSummary, $"해금 {profile.UnlockedUnits} / {UnitCatalog.Count} · 해금한 병종은 모두 소환할 수 있습니다");
-            for (int i = 0; i < troops.Length; i++)
-            {
-                bool unlocked = i < profile.UnlockedUnits;
-                troops[i].Root.EnableInClassList("lb-brief-troop--locked", !unlocked);
-                Hud.Set(troops[i].Note, unlocked ? $"식량 {UnitCatalog.Cost((UnitKind)i) * costMultiplier:0.#}" : "미해금");
-                troops[i].Root.tooltip = unlocked ? Roles[i] : $"봉화 {i:00} 최초 승리 후 해금";
-            }
             growth.Clear();
             for (int i = 0; i < profile.ranks.Length; i++)
                 if (profile.ranks[i] > 0) Hud.Text(growth, CampaignProgress.GrowthNames[i] + "  × " + profile.ranks[i], "lb-brief-growth-row");
@@ -258,7 +238,7 @@ namespace Lightbringer.UI
             Hud.Set(itemStats, EquipmentCatalog.IsActive(id)
                 ? $"소모 {EquipmentCatalog.Cost(id):0} MP   ·   재사용 {EquipmentCatalog.Cooldown(id):0.#}초"
                 : id == (int)EquipmentKind.FoodRing ? $"초당 식량 +{rank}"
-                : id == (int)EquipmentKind.ManaRing ? $"최대 MP +{rank * 15}   ·   초당 MP +{rank * 2}" : $"최대 HP +{rank * 30}");
+                : id == (int)EquipmentKind.ManaRing ? $"최대 MP +{rank * 15}   ·   초당 MP +{rank * EquipmentCatalog.ManaRecoveryPerRingLevel:0.#}" : $"최대 HP +{rank * 30}");
             int owner = System.Array.IndexOf(profile.loadout, id);
             Hud.Set(equip, owner == ActiveSlot ? "현재 장착 중" : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
             equip.SetEnabled(rank > 0 && owner < 0);
@@ -289,5 +269,12 @@ namespace Lightbringer.UI
             return equipped;
         }
         public bool Start() => session != null && session.StartBattle();
+        public UnitUpgradeView Upgrade => upgradeView;
+        public bool OpenTroops() => OpenUpgrade();
+        public bool OpenUpgrade()
+        {
+            if (session?.Progress == null || !Visible || growthOpen) return false;
+            upgradeView.Open(session); return true;
+        }
     }
 }

@@ -4,6 +4,22 @@
 
 /* ---------- Shared ---------- */
 
+.lb-boss-cinematic { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(12, 2, 24, 0.12); }
+.lb-boss-letterbox { position: absolute; left: 0; right: 0; top: 0; height: 8%; background-color: rgba(3, 2, 8, 0.95); }
+.lb-boss-chapter { position: absolute; left: 8%; right: 8%; bottom: 12%; font-size: 40px; letter-spacing: 5px; color: rgb(230, 212, 250); -unity-text-align: middle-center; text-shadow: 0 3px 12px rgb(0, 0, 0); }
+.lb-boss-dialogue { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 10% 24px 10%; background-color: rgba(8, 4, 17, 0.96); border-top-width: 2px; border-top-color: rgb(119, 74, 151); }
+.lb-boss-speaker { font-size: 22px; color: rgb(203, 159, 235); margin-bottom: 12px; }
+.lb-boss-line { font-size: 24px; white-space: normal; min-height: 65px; color: rgb(245, 239, 251); }
+.lb-boss-dialogue-controls { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 14px; }
+.lb-boss-dialogue-count { font-size: 14px; color: rgb(166, 151, 181); }
+.lb-boss-next { padding: 10px 22px; background-color: rgb(43, 24, 61); border-width: 1px; border-color: rgb(129, 88, 160); color: rgb(240, 230, 251); font-size: 17px; }
+.lb-boss-next:hover { background-color: rgb(71, 38, 96); }
+.lb-boss-story { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(4, 3, 8); }
+.lb-boss-story-caption { padding: 18px 8% 20px 8%; background-color: rgba(5, 4, 11, 0.84); border-top-width: 0; }
+.lb-boss-story-caption .lb-boss-speaker { font-size: 20px; margin-bottom: 8px; }
+.lb-boss-story-caption .lb-boss-line { font-size: 24px; min-height: 50px; }
+.lb-boss-story-caption .lb-boss-dialogue-controls { margin-top: 8px; }
+
 .lb-campaign-content { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .lb-prologue { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(4, 6, 9); overflow: hidden; }
 .lb-prologue-frame { position: absolute; }
@@ -41,17 +57,21 @@
 .lb-atlas-primary:active { background-color: rgb(169, 149, 103); }
 .lb-atlas-primary:disabled { opacity: 0.4; }
 .lb-atlas-status { position: absolute; bottom: 8px; left: 64px; color: rgb(212, 184, 145); font-size: 12px; }
-.lb-beacon { position: absolute; width: 120px; height: 112px; margin: -48px 0 0 -60px; padding: 0; background-color: rgba(8, 14, 18, 0.40); border-width: 1px; border-color: rgba(204, 211, 194, 0.12); border-radius: 3px; align-items: center; }
-.lb-beacon:hover, .lb-beacon:focus { background-color: rgba(17, 29, 32, 0.88); border-color: rgba(222, 215, 187, 0.85); }
-.lb-beacon--selected { background-color: rgba(13, 25, 28, 0.9); border-color: rgb(192, 175, 126); }
-.lb-beacon:disabled { opacity: 0.52; }
-.lb-beacon-symbol { width: 48px; height: 57px; margin-top: 3px; }
-.lb-beacon-name { color: rgb(233, 233, 219); font-size: 14px; margin-top: 5px; -unity-text-align: middle-center; }
-.lb-beacon-state { color: rgb(155, 173, 173); font-size: 10px; margin-top: 3px; -unity-text-align: middle-center; }
-.lb-beacon--selected .lb-beacon-state { color: rgb(224, 209, 161); }
-.lb-beacon--lit .lb-beacon-name, .lb-beacon--lit .lb-beacon-state { color: rgb(239, 217, 161); }
-.lb-beacon-halo { display: none; position: absolute; width: 116px; height: 116px; top: -28px; background-image: url("Art/Prep_Glow.png"); -unity-background-image-tint-color: rgba(248, 209, 121, 0.55); }
-.lb-beacon--lit .lb-beacon-halo { display: flex; }
+.lb-beacon { position: absolute; width: 132px; height: 136px; margin: -38px 0 0 -66px; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; align-items: center; transition-duration: 0.15s; transition-property: scale; }
+.lb-beacon:hover, .lb-beacon:focus { scale: 1.06 1.06; background-color: rgba(0, 0, 0, 0); }
+.lb-beacon--selected { scale: 1.16 1.16; background-color: rgba(0, 0, 0, 0); }
+.lb-beacon--selected:hover, .lb-beacon--selected:focus { scale: 1.18 1.18; }
+.lb-beacon:disabled { opacity: 0.6; }
+.lb-beacon-symbol { width: 74px; height: 88px; background-image: url("Art/Beacon_Dark.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-beacon--ready .lb-beacon-symbol { background-image: url("Art/Beacon_Ready.png"); }
+.lb-beacon--lit .lb-beacon-symbol { background-image: url("Art/Beacon_Lit.png"); }
+.lb-beacon-name { color: rgb(127, 144, 156); font-size: 13px; margin-top: 2px; padding: 3px 14px; background-color: rgba(8, 13, 20, 0.88); border-width: 1px; border-color: rgba(120, 140, 155, 0.35); -unity-text-align: middle-center; letter-spacing: 1px; }
+.lb-beacon-state { color: rgb(120, 138, 150); font-size: 10px; margin-top: 3px; -unity-text-align: middle-center; }
+.lb-beacon--ready .lb-beacon-name { color: rgb(236, 246, 255); border-color: rgba(191, 228, 255, 0.65); }
+.lb-beacon--ready .lb-beacon-state { color: rgb(191, 228, 255); }
+.lb-beacon--lit .lb-beacon-name { color: rgb(243, 227, 180); border-color: rgba(214, 178, 100, 0.65); }
+.lb-beacon--lit .lb-beacon-state { color: rgb(239, 217, 161); }
+.lb-beacon--selected .lb-beacon-name { color: rgb(255, 255, 255); border-color: rgb(240, 216, 144); background-color: rgba(18, 32, 48, 0.95); }
 
 /* Bundle the Korean font so player builds do not depend on OS fallback fonts. */
 :root {
@@ -1197,7 +1217,7 @@
 .lb-brief-title { font-size: 32px; letter-spacing: 1px; margin: 12px 0 0 0; padding: 0; color: rgb(235, 235, 220); }
 .lb-brief-back, .lb-brief-text-button { border-radius: 2px; border-width: 1px; border-color: rgba(183, 185, 164, 0.24); background-color: rgba(21, 31, 35, 0.8); color: rgb(196, 201, 186); font-size: 14px; padding: 10px 18px; margin: 0; }
 .lb-brief-back:hover, .lb-brief-back:focus, .lb-brief-text-button:hover, .lb-brief-text-button:focus { border-color: rgb(196, 179, 133); background-color: rgb(37, 45, 46); color: rgb(235, 222, 187); }
-.lb-brief-body { position: absolute; left: 64px; right: 64px; top: 151px; bottom: 265px; flex-direction: row; }
+.lb-brief-body { position: absolute; left: 64px; right: 64px; top: 151px; bottom: 140px; flex-direction: row; }
 .lb-brief-mission { width: 31%; padding-right: 38px; border-right-width: 1px; border-right-color: rgba(183, 185, 164, 0.17); }
 .lb-brief-armory { flex-grow: 1; flex-basis: 0; margin-left: 46px; }
 .lb-brief .unity-scroll-view__content-container { flex-shrink: 0; }
@@ -1408,3 +1428,84 @@
 .lb-hidden {
     display: none;
 }
+
+/* ---------- Gold + troop upgrade ---------- */
+.lb-coin { width: 18px; height: 18px; border-radius: 9px; background-color: rgb(233, 190, 86); border-width: 2px; border-color: rgb(255, 238, 178); margin-right: 9px; flex-shrink: 0; }
+.lb-coin--large { width: 30px; height: 30px; border-radius: 15px; margin-right: 12px; }
+.lb-upg-purse { flex-direction: row; align-items: center; padding: 7px 20px 7px 16px; background-color: rgba(7, 12, 19, 0.92); border-width: 1px; border-color: rgba(214, 178, 100, 0.55); border-radius: 2px; margin-right: 16px; }
+.lb-upg-gold { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; letter-spacing: 1px; color: rgb(246, 224, 160); }
+.lb-brief-actions { flex-direction: row; align-items: center; }
+.lb-brief-upgrade { margin-right: 16px; border-color: rgba(214, 178, 100, 0.6); color: rgb(244, 226, 170); }
+
+.lb-upg { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
+.lb-upg-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(6, 10, 15); }
+.lb-upg-dialog { width: 1240px; height: 780px; max-width: 96%; max-height: 96%; padding: 36px 48px 34px 48px; background-color: rgb(9, 15, 23); border-width: 2px; border-color: rgb(190, 154, 80); border-radius: 3px; }
+.lb-upg-inner { position: absolute; left: 6px; right: 6px; top: 6px; bottom: 6px; border-width: 1px; border-color: rgba(214, 178, 100, 0.22); }
+.lb-upg-header { flex-direction: row; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; }
+.lb-upg-header-right { flex-direction: row; align-items: center; }
+.lb-upg-eyebrow { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 12px; letter-spacing: 5px; color: rgb(196, 172, 120); }
+.lb-upg-heading { font-size: 40px; letter-spacing: 3px; color: rgb(246, 232, 192); margin-top: 8px; }
+.lb-upg-close { height: 40px; padding: 0 24px; margin: 0; background-color: rgba(21, 31, 44, 0.9); border-width: 1px; border-color: rgba(214, 178, 100, 0.5); border-radius: 2px; color: rgb(232, 218, 176); font-size: 15px; }
+.lb-upg-close:hover, .lb-upg-close:focus { border-color: rgb(244, 222, 156); background-color: rgb(36, 46, 56); }
+.lb-upg-body { flex-direction: row; flex-grow: 1; }
+.lb-upg-grid { width: 574px; flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
+.lb-upg-tile { width: 172px; height: 152px; margin: 0 14px 14px 0; padding: 0; background-color: rgb(15, 24, 35); border-width: 1px; border-color: rgba(214, 178, 100, 0.32); border-radius: 3px; overflow: hidden; }
+.lb-upg-tile:hover, .lb-upg-tile:focus { border-color: rgb(226, 200, 130); background-color: rgb(22, 34, 47); }
+.lb-upg-tile--selected { border-width: 2px; border-color: rgb(244, 214, 128); background-color: rgb(28, 42, 58); }
+.lb-upg-tile--locked { opacity: 0.45; }
+.lb-upg-tile--maxed .lb-upg-tile-rank { color: rgb(255, 236, 160); }
+.lb-upg-art { position: absolute; left: 0; right: 0; top: 0; height: 112px; background-size: cover; background-position-y: top; }
+.lb-upg-tile-cost { position: absolute; left: 8px; top: 8px; min-width: 30px; padding: 2px 8px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; color: rgb(246, 224, 160); background-color: rgba(5, 9, 14, 0.82); border-width: 1px; border-color: rgba(214, 178, 100, 0.55); border-radius: 2px; -unity-text-align: middle-center; }
+.lb-upg-tile-rank { position: absolute; left: 0; right: 0; bottom: 0; height: 34px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 16px; letter-spacing: 1px; color: rgb(218, 196, 140); background-color: rgba(5, 9, 14, 0.88); border-top-width: 1px; border-color: rgba(214, 178, 100, 0.35); -unity-text-align: middle-center; }
+.lb-upg-art--0 { background-image: url("Art/Unit_Swordsman.png"); }
+.lb-upg-art--1 { background-image: url("Art/Unit_Archer.png"); }
+.lb-upg-art--2 { background-image: url("Art/Unit_Shieldbearer.png"); }
+.lb-upg-art--3 { background-image: url("Art/Unit_Spearman.png"); }
+.lb-upg-art--4 { background-image: url("Art/Unit_Priest.png"); }
+.lb-upg-art--5 { background-image: url("Art/Unit_Mage.png"); }
+.lb-upg-art--6 { background-image: url("Art/Unit_Knight.png"); }
+.lb-upg-art--7 { background-image: url("Art/Unit_Dragon.png"); }
+.lb-upg-panel { flex-grow: 1; flex-basis: 0; padding: 26px 30px; background-color: rgba(18, 28, 41, 0.92); border-width: 1px; border-color: rgba(214, 178, 100, 0.45); border-radius: 3px; }
+.lb-upg-panel-top { flex-direction: row; align-items: center; }
+.lb-upg-portrait { width: 120px; height: 140px; margin-right: 24px; background-size: cover; background-position-y: top; background-color: rgb(8, 13, 20); border-width: 1px; border-color: rgb(214, 178, 100); border-radius: 3px; flex-shrink: 0; }
+.lb-upg-identity { flex-grow: 1; }
+.lb-upg-name { font-size: 32px; color: rgb(246, 232, 192); letter-spacing: 2px; }
+.lb-upg-rank { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; letter-spacing: 2px; color: rgb(196, 172, 120); margin-top: 6px; }
+.lb-upg-pips { flex-direction: row; flex-wrap: wrap; margin-top: 12px; }
+.lb-upg-pip { width: 10px; height: 10px; margin: 0 7px 6px 0; rotate: 45deg; background-color: rgb(26, 36, 48); border-width: 1px; border-color: rgba(214, 178, 100, 0.3); }
+.lb-upg-pip--on { background-color: rgb(238, 200, 104); border-color: rgb(255, 236, 170); }
+.lb-upg-stats { margin-top: 22px; padding: 14px 0; border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(214, 178, 100, 0.25); }
+.lb-upg-stat { flex-direction: row; align-items: center; padding: 5px 0; }
+.lb-upg-stat-name { width: 90px; font-size: 15px; color: rgb(168, 180, 186); }
+.lb-upg-stat-now { width: 70px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; color: rgb(232, 232, 218); }
+.lb-upg-arrow { width: 34px; font-size: 16px; color: rgb(190, 160, 96); -unity-text-align: middle-center; }
+.lb-upg-stat-next { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; color: rgb(246, 220, 140); }
+.lb-upg-role { margin-top: 16px; font-size: 14px; line-height: 20px; color: rgb(178, 190, 192); white-space: normal; min-height: 44px; }
+.lb-upg-meters { margin-top: 10px; }
+.lb-upg-meter { flex-direction: row; align-items: center; padding: 4px 0; }
+.lb-upg-meter-name { width: 70px; font-size: 13px; color: rgb(150, 164, 170); }
+.lb-upg-track { flex-grow: 1; height: 8px; background-color: rgb(6, 10, 15); border-width: 1px; border-color: rgba(214, 178, 100, 0.3); border-radius: 4px; }
+.lb-upg-fill { height: 100%; background-color: rgb(226, 184, 88); border-radius: 3px; }
+.lb-upg-buy { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 20px; }
+.lb-upg-cost { flex-direction: row; align-items: center; }
+.lb-upg-cost-value { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 30px; color: rgb(248, 226, 160); }
+.lb-upg-cost--short .lb-upg-cost-value { color: rgb(236, 112, 118); }
+.lb-upg-button { width: 250px; height: 56px; margin: 0; font-size: 18px; }
+.lb-upg-feedback { margin-top: 10px; font-size: 13px; color: rgb(196, 224, 190); min-height: 18px; }
+
+/* ---------- Title ---------- */
+.lb-title { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; background-color: rgb(8, 12, 21); background-image: url("../Art/UI/MainMenu/Title_LastLight_Storybook_v2.png"); -unity-background-scale-mode: scale-and-crop; }
+.lb-title-brand { position: absolute; left: 6%; top: 19%; width: 36%; height: 25%; max-width: 720px; }
+.lb-title-eyebrow { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 12px; letter-spacing: 9px; color: rgba(168, 190, 222, 0.78); }
+.lb-title-logo { width: 100%; height: 100%; background-image: url("../Art/UI/MainMenu/Lightbringer_Storybook_Logo_v1.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-title-rule { width: 420px; height: 1px; margin-top: 12px; background-color: rgba(250, 226, 160, 0.55); }
+.lb-title-tagline { font-size: 18px; letter-spacing: 4px; color: rgba(214, 220, 232, 0.82); margin-top: 24px; }
+.lb-title-menu { position: absolute; left: 8%; bottom: 14%; width: 320px; }
+.lb-title-start { height: 58px; font-size: 20px; letter-spacing: 8px; margin: 0 0 22px 0; background-color: rgba(250, 226, 160, 0.08); border-width: 1px; border-color: rgba(250, 226, 160, 0.55); border-radius: 2px; color: rgb(252, 244, 220); -unity-text-align: middle-left; padding-left: 20px; }
+.lb-title-start:hover, .lb-title-start:focus { background-color: rgba(250, 226, 160, 0.22); border-color: rgb(255, 236, 184); }
+.lb-title-link { height: 40px; margin: 0 0 4px 0; background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; color: rgba(190, 202, 222, 0.7); font-size: 15px; letter-spacing: 6px; -unity-text-align: middle-left; padding-left: 20px; }
+.lb-title-link:hover, .lb-title-link:focus { color: rgb(255, 240, 200); background-color: rgba(0, 0, 0, 0); }
+.lb-title-footer { position: absolute; left: 8%; bottom: 4%; font-size: 11px; letter-spacing: 2px; color: rgb(120, 134, 142); }
+.lb-upg-footer { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top-width: 1px; border-color: rgba(214, 178, 100, 0.32); }
+.lb-upg-footer-note { font-size: 13px; color: rgb(150, 164, 170); }
+.lb-upg-start { width: 340px; height: 52px; margin: 0; }
