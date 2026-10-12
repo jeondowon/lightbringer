@@ -1,4 +1,4 @@
-PASS | CampaignPlay.v1 | 2026-10-12T17:46:23.3896006Z
+PASS | CampaignPlay.v1 | 2026-10-12T18:11:24.7723757Z
 PASS: Campaign preparation releases menu input
 PASS: Actual Play mode can start a campaign with isolated progress
 PASS: The Tread of War loads and advances as looping 2D battle music
@@ -88,7 +88,7 @@ PASS: Forest tree mesh reaches the terrain at (84.4, 108.3)
 PASS: Forest tree mesh reaches the terrain at (-32.9, -10.3)
 PASS: Forest tree mesh reaches the terrain at (-31.9, 16.4)
 PASS: Forest tree mesh reaches the terrain at (32.2, -10.0)
-PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.23]
+PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.24]
 PASS: Actual runtime summon initializes and activates one allied soldier
 PASS: SFX loads as ready mono PCM: Click
 PASS: SFX contains non-silent, unclipped audio: Click
@@ -179,10 +179,10 @@ PASS: Runtime deployment: 마법사
 PASS: Runtime deployment: 기사
 PASS: Runtime deployment: 드래곤
 PASS: Runtime Dragon stays grounded on its assigned Path
-MEASURE: 100 rendered stress units (+hero/base): frame mean 41.117 ms, p95 66.357 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 100 rendered stress units (+hero/base): frame mean 9.955 ms, p95 12.666 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 100 rendered stress units stay active through sustained real-time combat
 PASS: 100 rendered stress units exchange damage
-MEASURE: 300 rendered stress units (+hero/base): frame mean 34.358 ms, p95 36.637 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 300 rendered stress units (+hero/base): frame mean 11.193 ms, p95 16.182 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 300 rendered stress units stay active through sustained real-time combat
 PASS: 300 rendered stress units exchange damage
 PASS: Stress battle can clean up and return to campaign preparation
