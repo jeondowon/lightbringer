@@ -205,37 +205,40 @@ namespace Lightbringer.EditorTools
 
         private static void BuildWeapons()
         {
-            Material steel = MakeMaterial("SwordSteel", new Color(.68f, .75f, .82f), .8f, .55f);
-            Material gold = MakeMaterial("WeaponGold", new Color(.78f, .53f, .18f), .65f, .4f);
-            Material leather = MakeMaterial("SwordGrip", new Color(.13f, .075f, .045f), 0, .25f);
-            Material blue = MakeMaterial("ShieldBlue", new Color(.045f, .11f, .3f), .25f, .35f);
+            // Same reference-built meshes as the Raider (see WeaponMeshes), in bright allied steel, gold and blue.
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "SwordsmanBrushedSteel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "SwordsmanAgedGold");
+            Material leather = WeaponMeshes.PebbledLeather(RigFolder, "SwordGripLeather", new Color(.5f, .3f, .18f));
+            Material blueWood = WeaponMeshes.WoodGrain(RigFolder, "SwordsmanShieldBlue", new Color(.25f, .4f, .9f));
             Transform hand = bones.First(b => b.name == "RightHand");
             var sword = new GameObject("Sword").transform;
             sword.SetParent(hand, false);
             sword.localRotation = SwordMountRotation;
-            sword.localPosition = hand.InverseTransformPoint(palms["Right"])
-                - SwordMountRotation * new Vector3(0, -.015f, 0);
-            Part(sword, "Grip", PrimitiveType.Cylinder, new Vector3(0, -.015f, 0), new Vector3(.03f, .065f, .03f), leather);
-            Part(sword, "Pommel", PrimitiveType.Sphere, new Vector3(0, -.085f, 0), Vector3.one * .045f, gold);
-            Part(sword, "Guard", PrimitiveType.Cube, new Vector3(0, .055f, 0), new Vector3(.20f, .028f, .04f), gold);
-            var bladeMesh = new Mesh { name = "SwordsmanBlade" };
-            bladeMesh.vertices = new[] { new Vector3(-.035f,.07f,0), new Vector3(0,.07f,.014f), new Vector3(.035f,.07f,0), new Vector3(0,.07f,-.014f),
-                new Vector3(-.025f,.62f,0), new Vector3(0,.62f,.01f), new Vector3(.025f,.62f,0), new Vector3(0,.62f,-.01f), new Vector3(0,.76f,0) };
-            var triangles = new List<int>();
-            for (int i = 0; i < 4; i++) { int j = (i + 1) % 4; triangles.AddRange(new[] { i, i+4, j, j, i+4, j+4, i+4, 8, j+4 }); }
-            triangles.Reverse();
-            bladeMesh.triangles = triangles.ToArray(); bladeMesh.RecalculateNormals(); bladeMesh.RecalculateBounds();
-            bladeMesh = SaveAsset(bladeMesh, RigFolder + "/SwordBlade.asset");
-            var blade = new GameObject("Blade"); blade.transform.SetParent(sword, false);
-            blade.AddComponent<MeshFilter>().sharedMesh = bladeMesh;
-            blade.AddComponent<MeshRenderer>().sharedMaterial = steel;
+            sword.localPosition = hand.InverseTransformPoint(palms["Right"]) + new Vector3(-.022f, 0f, 0f); // sink the grip into the palm side of the open hand
+            WeaponMeshes.Sword("SwordsmanSword", WeaponMeshes.SwordSpecAllied, out Mesh blade, out Mesh hilt, out Mesh grip);
+            var parts = new GameObject("Parts").transform;
+            parts.SetParent(sword, false);
+            AddMesh(parts, "Blade", blade, steel);
+            AddMesh(parts, "Hilt", hilt, gold);
+            AddMesh(parts, "Grip", grip, leather);
             Transform shieldHand = bones.First(b => b.name == "LeftHand");
             var shield = new GameObject("Shield").transform;
             shield.SetParent(shieldHand, false);
             shield.localPosition = shieldHand.InverseTransformPoint(palms["Left"]) + Vector3.forward * .055f;
-            Part(shield, "Rim", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.42f, .022f, .42f), gold).localRotation = Quaternion.Euler(90,0,0);
-            Part(shield, "Face", PrimitiveType.Cylinder, new Vector3(0,0,.022f), new Vector3(.38f,.008f,.38f), blue).localRotation = Quaternion.Euler(90,0,0);
-            Part(shield, "Boss", PrimitiveType.Sphere, new Vector3(0,0,.045f), new Vector3(.12f,.12f,.065f), gold);
+            WeaponMeshes.RoundShield("SwordsmanShield", out Mesh planks, out Mesh iron);
+            AddMesh(shield, "Planks", planks, blueWood).localPosition = new Vector3(0f, .02f, 0f);
+            AddMesh(shield, "Iron", iron, gold).localPosition = new Vector3(0f, .02f, 0f);
+            Part(shield, "Grip", PrimitiveType.Cube, new Vector3(0f, 0f, .02f), new Vector3(.04f, .12f, .03f), leather);
+        }
+
+        private static Transform AddMesh(Transform parent, string name, Mesh mesh, Material material)
+        {
+            mesh = SaveAsset(mesh, RigFolder + "/" + mesh.name + ".asset");
+            var part = new GameObject(name).transform;
+            part.SetParent(parent, false);
+            part.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+            part.gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return part;
         }
 
         private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
@@ -357,7 +360,7 @@ namespace Lightbringer.EditorTools
                     foreach (int index in palmVertices["Left"]) leftPalm += skin.transform.TransformPoint(gripPose[index]);
                     rightPalm /= palmVertices["Right"].Length;
                     leftPalm /= palmVertices["Left"].Length;
-                    float gripError = Vector3.Distance(rightPalm, sword.TransformPoint(new Vector3(0, -.015f, 0)));
+                    float gripError = Vector3.Distance(rightPalm, sword.position) - .022f;
                     Transform shield = bones.First(b => b.name == "LeftHand").Find("Shield");
                     float shieldFront = Vector3.Dot(shield.position - leftPalm, root.transform.forward);
                     if (gripError > .015f || shieldFront < .04f || Vector3.Dot(shield.forward, root.transform.forward) < .98f)

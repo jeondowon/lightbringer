@@ -78,11 +78,11 @@ MonoBehaviour:
     actionClip: {fileID: 7400000, guid: cdaa78b826e6b7f4abbfe4979d08ff40, type: 2}
     moveClipSpeed: 4
     attachments:
-    - prefab: {fileID: -3819515703403138191, guid: b3a934e9c7d375f43afa523302d0aeea, type: 3}
+    - prefab: {fileID: 1412762448294062585, guid: 6ca11088ee14a1e4f9e7d0c88fdd8ad3, type: 3}
       boneName: RightHand
-      localPosition: {x: 7.3546443, y: -12.333654, z: -6.4313717}
+      localPosition: {x: -19.294657, y: 63.510746, z: 21.181026}
       localEuler: {x: 349.6733, y: 204.9089, z: 155.09108}
-      localScale: {x: 170.00003, y: 169.99992, z: 169.99998}
+      localScale: {x: 85.000015, y: 84.99996, z: 84.99999}
       stabilize: 1
       follow: 0.3
       castLean: 35
@@ -106,6 +106,95 @@ MonoBehaviour:
     moveClip: {fileID: 7400000, guid: ba7e4891d4b13114a87ca218561c506b, type: 2}
     actionClip: {fileID: 7400000, guid: a0c8884697fb03547ab34e9ff9310521, type: 2}
     moveClipSpeed: 3
+    attachments: []
+  - id: 11
+    prefab: {fileID: 5088097661024832212, guid: f62955a0adf8f9c41b468d70c6b54517, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 180, z: 0}
+    scale: 2
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []
+  - id: 12
+    prefab: {fileID: 5020236660104333929, guid: 5aa72b925c0a8bd43a30f678df150941, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 2.2
+    idleClip: {fileID: 0}
+    moveClip: {fileID: 0}
+    actionClip: {fileID: 0}
+    moveClipSpeed: 4
+    attachments: []
+  - id: 10
+    prefab: {fileID: 8200918118935619611, guid: 783e43b3180129446b0eb7b4c1645b62, type: 3}
+    localOffset: {x: -0.0012975116, y: -0.0001036936, z: 0.000071330345}
+    localEuler: {x: 0, y: -0, z: 0}
+    scale: 1.0003967
+    idleClip: {fileID: 7400000, guid: 74ae116231495334d89b9bfb0530481b, type: 2}
+    moveClip: {fileID: 7400000, guid: d3397a2a050d74446a1e9b421d6cd647, type: 2}
+    actionClip: {fileID: 7400000, guid: d57774d5a1d4190438a1b6158df9d069, type: 2}
+    moveClipSpeed: 1.5005952
+    attachments:
+    - prefab: {fileID: 7705048249904401589, guid: 1571b94c902a20d47a35c29fe4a627eb, type: 3}
+      boneName: LeftHand
+      localPosition: {x: 0.2120159, y: 5.7821846, z: 5.566005}
+      localEuler: {x: 334.18948, y: 321.3293, z: 194.68828}
+      localScale: {x: 92.19643, y: 92.196434, z: 92.19641}
+      stabilize: 1
+      follow: 0
+      castLean: 0
+      gripFraction: 0.47
+  - id: 9
+    prefab: {fileID: 2023057982739453008, guid: 7562c9ae7b839d54aa1c8854fd807b78, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: de4e53a2ec70e744e9963616972a5c11, type: 2}
+    moveClip: {fileID: 7400000, guid: bd38dba9914483a41a4eef7dc73ade48, type: 2}
+    actionClip: {fileID: 7400000, guid: cbfcee69498085b4bb778ee1db61dba2, type: 2}
+    moveClipSpeed: 1.2838517
+    attachments: []
+  - id: 13
+    prefab: {fileID: 1947799789627990252, guid: 8c3861c237776c447a9755dcdf640e83, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 0.7058824
+    idleClip: {fileID: 7400000, guid: fc61489e458c1d84faa2cb0eb5e77e29, type: 2}
+    moveClip: {fileID: 7400000, guid: ef3db94b62781a04ba0d0ced09578043, type: 2}
+    actionClip: {fileID: 7400000, guid: 5367687733cf8004c85ebee4227bb07f, type: 2}
+    moveClipSpeed: 1.8314011
+    attachments: []
+  - id: 14
+    prefab: {fileID: 3428227580528550712, guid: f97ebe0f943b2a442aaf888c7bc20018, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1.235294
+    idleClip: {fileID: 7400000, guid: c1c8dfe7c37a4f246bcf25d75cbdf708, type: 2}
+    moveClip: {fileID: 7400000, guid: 3bbc4c15b9646d7428e52eec51897440, type: 2}
+    actionClip: {fileID: 7400000, guid: d2a353ede2305bc4da2d0a220e1d10ef, type: 2}
+    moveClipSpeed: 1.0063494
+    attachments: []
+  - id: 15
+    prefab: {fileID: 5624127626006020860, guid: 90fec66cfc91b4c4d8af1b8f5eb8220e, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: eda0d6ed6a77fbd4b824519738d2a4fa, type: 2}
+    moveClip: {fileID: 7400000, guid: 8e2e1854a6ee3ab4a9fec6ce7024eb2a, type: 2}
+    actionClip: {fileID: 7400000, guid: 298a4b49aa013db48b4e44327a8b48fc, type: 2}
+    moveClipSpeed: 1.2838517
+    attachments: []
+  - id: 16
+    prefab: {fileID: 148063699075760495, guid: d65c2e57acc7bab4ab914d453700d124, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1.3529412
+    idleClip: {fileID: 7400000, guid: 471cb35f8149ac141a80344d84bf6cb0, type: 2}
+    moveClip: {fileID: 7400000, guid: 02896b261ced6ca4d9c719899793dd2a, type: 2}
+    actionClip: {fileID: 7400000, guid: ad1fd769148b6764d95202ace21ee678, type: 2}
+    moveClipSpeed: 0.96833503
     attachments: []
   - id: 3
     prefab: {fileID: 8453815972868209000, guid: c6e7a2b391bc3ba4b98ca6757540484f, type: 3}
@@ -167,42 +256,3 @@ MonoBehaviour:
     actionClip: {fileID: 7400000, guid: f6b05bcc35c864f40a1d5c8970c8d847, type: 2}
     moveClipSpeed: 4
     attachments: []
-  - id: 11
-    prefab: {fileID: 5088097661024832212, guid: f62955a0adf8f9c41b468d70c6b54517, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 180, z: 0}
-    scale: 2
-    idleClip: {fileID: 0}
-    moveClip: {fileID: 0}
-    actionClip: {fileID: 0}
-    moveClipSpeed: 4
-    attachments: []
-  - id: 12
-    prefab: {fileID: 5020236660104333929, guid: 5aa72b925c0a8bd43a30f678df150941, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 2.2
-    idleClip: {fileID: 0}
-    moveClip: {fileID: 0}
-    actionClip: {fileID: 0}
-    moveClipSpeed: 4
-    attachments: []
-  - id: 10
-    prefab: {fileID: 8200918118935619611, guid: 783e43b3180129446b0eb7b4c1645b62, type: 3}
-    localOffset: {x: -0.0012975116, y: -0.0001036936, z: 0.000071330345}
-    localEuler: {x: 0, y: -0, z: 0}
-    scale: 1.0003967
-    idleClip: {fileID: 7400000, guid: 74ae116231495334d89b9bfb0530481b, type: 2}
-    moveClip: {fileID: 7400000, guid: d3397a2a050d74446a1e9b421d6cd647, type: 2}
-    actionClip: {fileID: 7400000, guid: d57774d5a1d4190438a1b6158df9d069, type: 2}
-    moveClipSpeed: 1.5005952
-    attachments:
-    - prefab: {fileID: 7705048249904401589, guid: 1571b94c902a20d47a35c29fe4a627eb, type: 3}
-      boneName: LeftHand
-      localPosition: {x: 0.2120159, y: 5.7821846, z: 5.566005}
-      localEuler: {x: 334.18948, y: 321.3293, z: 194.68828}
-      localScale: {x: 92.19643, y: 92.196434, z: 92.19641}
-      stabilize: 1
-      follow: 0
-      castLean: 0
-      gripFraction: 0.47

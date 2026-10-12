@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Lightbringer.EditorTools
 {
@@ -13,10 +14,60 @@ namespace Lightbringer.EditorTools
         {
             T existing = AssetDatabase.LoadAssetAtPath<T>(path);
             if (existing == null) { AssetDatabase.CreateAsset(value, path); return value; }
-            EditorUtility.CopySerialized(value, existing);
+            // Meshes go through the Mesh API: CopySerialized leaves renderers already using the mesh on
+            // its old GPU data (they stop drawing or draw the previous shape), and deleting and recreating the
+            // asset leaves loaded prefabs with a missing mesh until the Editor restarts.
+            if (value is Mesh from && existing is Mesh to) CopyMesh(from, to);
+            else EditorUtility.CopySerialized(value, existing);
             UnityEngine.Object.DestroyImmediate(value);
             EditorUtility.SetDirty(existing);
             return existing;
+        }
+
+        // Vertex streams (skin weights included), index buffer, sub-meshes, mesh LOD ranges, bind poses and
+        // bounds, copied through the Mesh API so every renderer using `to` picks the new data up. No blend shapes.
+        private static void CopyMesh(Mesh from, Mesh to)
+        {
+            to.Clear();
+            using (Mesh.MeshDataArray source = Mesh.AcquireReadOnlyMeshData(from))
+            {
+                Mesh.MeshData s = source[0];
+                Mesh.MeshDataArray target = Mesh.AllocateWritableMeshData(1);
+                Mesh.MeshData d = target[0];
+                d.SetVertexBufferParams(s.vertexCount, from.GetVertexAttributes());
+                for (int stream = 0; stream < s.vertexBufferCount; stream++)
+                    d.GetVertexData<byte>(stream).CopyFrom(s.GetVertexData<byte>(stream));
+                if (s.indexFormat == IndexFormat.UInt16)
+                {
+                    var indices = s.GetIndexData<ushort>();
+                    d.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
+                    d.GetIndexData<ushort>().CopyFrom(indices);
+                }
+                else
+                {
+                    var indices = s.GetIndexData<uint>();
+                    d.SetIndexBufferParams(indices.Length, IndexFormat.UInt32);
+                    d.GetIndexData<uint>().CopyFrom(indices);
+                }
+                d.subMeshCount = s.subMeshCount;
+                const MeshUpdateFlags keep = MeshUpdateFlags.DontValidateIndices;
+                for (int i = 0; i < s.subMeshCount; i++) d.SetSubMesh(i, s.GetSubMesh(i), keep);
+                Mesh.ApplyAndDisposeWritableMeshData(target, to, keep);
+            }
+            to.bindposes = from.bindposes;
+            to.RecalculateBounds(); // Copied sub-mesh bounds can be stale, which culls the mesh while it is on screen.
+            if (from.lodCount > 1)
+            {
+                to.lodCount = from.lodCount;
+                var ranges = new List<MeshLodRange>();
+                for (int i = 0; i < from.subMeshCount; i++)
+                {
+                    ranges.Clear();
+                    from.GetLods(ranges, i);
+                    to.SetLods(ranges, i, MeshUpdateFlags.Default);
+                }
+                to.lodSelectionCurve = from.lodSelectionCurve;
+            }
         }
 
         public static Material MakeMaterial(string folder, string name, Color color, float metallic, float smoothness)
@@ -35,6 +86,17 @@ namespace Lightbringer.EditorTools
             material.SetColor("_EmissionColor", color * intensity);
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             return SaveAsset(material, folder + "/" + name + ".mat");
+        }
+
+        // Mesh asset (saved in `folder`) on a child renderer of `parent`.
+        public static Transform MeshPart(Transform parent, string name, Mesh mesh, Material material, string folder)
+        {
+            mesh = SaveAsset(mesh, folder + "/" + mesh.name + ".asset");
+            var part = new GameObject(name).transform;
+            part.SetParent(parent, false);
+            part.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+            part.gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return part;
         }
 
         // Collider-free primitive prop part.

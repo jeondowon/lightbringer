@@ -208,22 +208,20 @@ namespace Lightbringer.EditorTools
 
         private static Transform BuildLance()
         {
-            Material wood = MakeMaterial("LanceShaft", new Color(.82f, .78f, .7f), 0f, .35f);
-            Material leather = MakeMaterial("LanceGrip", new Color(.12f, .07f, .04f), 0f, .25f);
-            Material steel = MakeMaterial("LanceSteel", new Color(.72f, .77f, .84f), .85f, .6f);
-            Material gold = MakeMaterial("LanceGold", new Color(.8f, .58f, .22f), .75f, .5f);
+            Material wood = WeaponMeshes.WoodGrain(RigFolder, "LanceWood", new Color(1f, .9f, .75f));
+            Material leather = WeaponMeshes.PebbledLeather(RigFolder, "LanceGripLeather", new Color(.5f, .3f, .18f));
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "LanceBrushedSteel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "LanceAgedGold");
             Material blue = MakeMaterial("LancePennant", new Color(.06f, .14f, .42f), .1f, .35f);
             var lance = new GameObject("Lance").transform;
             lance.SetParent(riderRig.Find("RiderRightHand"), false);
             lance.position = CentreOf(palms["Right"]);
             lance.rotation = Quaternion.identity;
-            AddMesh(lance, "Shaft", GeneratedRig.Lathe("LanceShaft", new[] { LanceButt, LanceButt + .05f, -.1f, .14f, 1.98f },
-                new[] { .03f, .04f, .036f, .036f, .018f }), wood);
-            AddMesh(lance, "Vamplate", GeneratedRig.Lathe("LanceVamplate", new[] { .1f, .13f, .32f }, new[] { .12f, .13f, .035f }, 14), steel);
-            AddMesh(lance, "Tip", GeneratedRig.Lathe("LanceTip", new[] { 1.96f, 2.02f, LanceTip }, new[] { .026f, .03f, 0f }), steel);
-            Part(lance, "Grip", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.046f, .08f, .046f), leather);
-            Part(lance, "Butt", PrimitiveType.Sphere, new Vector3(0f, LanceButt, 0f), Vector3.one * .065f, gold);
-            Part(lance, "Ring", PrimitiveType.Cylinder, new Vector3(0f, 1.94f, 0f), new Vector3(.045f, .015f, .045f), gold);
+            WeaponMeshes.Lance("Knight", LanceButt, LanceTip, out Mesh shaft, out Mesh grip, out Mesh head, out Mesh trim);
+            RigBuildUtility.MeshPart(lance, "Shaft", shaft, wood, RigFolder);
+            RigBuildUtility.MeshPart(lance, "Grip", grip, leather, RigFolder);
+            RigBuildUtility.MeshPart(lance, "Steel", head, steel, RigFolder);
+            RigBuildUtility.MeshPart(lance, "Gold", trim, gold, RigFolder);
             // Swallow-tailed pennant flying to the outer side below the tip.
             // Both faces get their own vertices so each side lights correctly.
             var outline = new[] { new Vector3(0f, 1.88f, 0f), new Vector3(0f, 1.62f, 0f), new Vector3(.42f, 1.84f, 0f),
@@ -238,8 +236,9 @@ namespace Lightbringer.EditorTools
 
         private static Transform BuildShield()
         {
-            Material face = MakeMaterial("KiteShieldBlue", new Color(.06f, .13f, .36f), .3f, .4f);
-            Material gold = MakeMaterial("KiteShieldGold", new Color(.8f, .58f, .22f), .75f, .5f);
+            Material face = WeaponMeshes.BlueEnamel(RigFolder, "KiteEnamel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "KiteShieldAgedGold");
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "KiteShieldBrushedSteel");
             var shield = new GameObject("Shield").transform;
             shield.SetParent(riderRig.Find("RiderLeftHand"), false);
             shield.position = CentreOf(palms["Left"]);
@@ -247,16 +246,10 @@ namespace Lightbringer.EditorTools
             var board = new GameObject("Board").transform;
             board.SetParent(shield, false);
             board.localPosition = new Vector3(-.04f, .06f, .07f);
-            // Gold backing shows as the rim around the blue face; the lower point is a turned square.
-            Part(board, "Rim", PrimitiveType.Cube, new Vector3(0f, .1f, -.012f), new Vector3(.52f, .5f, .025f), gold);
-            Part(board, "Face", PrimitiveType.Cube, new Vector3(0f, .1f, 0f), new Vector3(.46f, .46f, .03f), face);
-            Part(board, "RimPoint", PrimitiveType.Cube, new Vector3(0f, -.13f, -.012f), new Vector3(.37f, .37f, .025f), gold)
-                .localRotation = Quaternion.Euler(0f, 0f, 45f);
-            Part(board, "FacePoint", PrimitiveType.Cube, new Vector3(0f, -.13f, 0f), new Vector3(.325f, .325f, .03f), face)
-                .localRotation = Quaternion.Euler(0f, 0f, 45f);
-            Part(board, "Upright", PrimitiveType.Cube, new Vector3(0f, 0f, .02f), new Vector3(.05f, .62f, .015f), gold);
-            Part(board, "Bar", PrimitiveType.Cube, new Vector3(0f, .14f, .02f), new Vector3(.36f, .05f, .015f), gold);
-            Part(board, "Boss", PrimitiveType.Sphere, new Vector3(0f, .14f, .03f), new Vector3(.1f, .1f, .05f), gold);
+            WeaponMeshes.KiteShield("Kite", new Vector2(.04f, -.06f), out Mesh paint, out Mesh trim, out Mesh metal);
+            RigBuildUtility.MeshPart(board, "Face", paint, face, RigFolder);
+            RigBuildUtility.MeshPart(board, "Gold", trim, gold, RigFolder);
+            RigBuildUtility.MeshPart(board, "Steel", metal, steel, RigFolder);
             return shield;
         }
 

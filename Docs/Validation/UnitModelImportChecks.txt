@@ -1,10 +1,10 @@
-PASS | 2026-10-03T06:03:11.7020150Z
-Shieldbearer: 1.28 x 1.70 x 0.65 m (W x H x L, bind pose), feet -0.800, renderers 30, vertices 301345, rigged clips.
-Spearman: 0.95 x 2.46 x 0.39 m (W x H x L, bind pose), feet -0.800, renderers 7, vertices 188579, rigged clips.
-Mage: 1.04 x 1.92 x 0.72 m (W x H x L, bind pose), feet -0.800, renderers 12, vertices 284401, rigged clips.
-Priest: 1.04 x 1.95 x 0.51 m (W x H x L, bind pose), feet -0.800, renderers 22, vertices 310325, rigged clips.
-Knight: 1.63 x 3.83 x 2.75 m (W x H x L, bind pose), feet -0.800, renderers 16, vertices 594936, rigged clips.
-Dragon: 5.47 x 2.46 x 3.69 m (W x H x L, bind pose), feet -0.800, renderers 1, vertices 135126, rigged clips.
+PASS | 2026-10-12T11:00:01.5328938Z
+Shieldbearer: 1.62 x 2.04 x 0.83 m (W x H x L, bind pose), feet -0.800, renderers 7, vertices 310764, rigged clips.
+Spearman: 1.20 x 2.96 x 0.46 m (W x H x L, bind pose), feet -0.810, renderers 5, vertices 190472, rigged clips.
+Mage: 1.26 x 2.32 x 0.87 m (W x H x L, bind pose), feet -0.800, renderers 6, vertices 289225, rigged clips.
+Priest: 1.43 x 2.34 x 0.61 m (W x H x L, bind pose), feet -0.822, renderers 6, vertices 317208, rigged clips.
+Knight: 1.96 x 4.60 x 3.30 m (W x H x L, bind pose), feet -0.800, renderers 10, vertices 603682, rigged clips.
+Dragon: 6.56 x 2.95 x 4.43 m (W x H x L, bind pose), feet -0.800, renderers 1, vertices 135126, rigged clips.
 Shieldbearer: yaw 0, scale 1.7, offset (0.00, 0.00, 0.00); rigged with a tower shield and mace (see ShieldbearerRigChecks.txt)
 Spearman: yaw 0, scale 1.7, offset (0.00, 0.00, 0.00); rigged with a hand-held spear (see SpearmanRigChecks.txt)
 Mage: yaw 0, scale 1.7, offset (0.00, 0.00, 0.00); rigged with a rune-crystal staff (see MageRigChecks.txt)

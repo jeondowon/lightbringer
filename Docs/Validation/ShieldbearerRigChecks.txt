@@ -1,4 +1,4 @@
-PASS | 2026-10-03T06:00:54.6305732Z
+PASS | 2026-10-12T10:58:43.4151927Z
 Unity-native prototype skeleton: 23 bones; 298920 weighted vertices.
 Shieldbearer_Idle: weighted vertex motion 0.423 m; grip error 0.0000 m; shield centre 0.54 m ahead, -0.23 m across, 0.30-1.70 m high.
 Shieldbearer_Walk: weighted vertex motion 0.451 m; grip error 0.0000 m; shield centre 0.54 m ahead, -0.23 m across, 0.28-1.68 m high.

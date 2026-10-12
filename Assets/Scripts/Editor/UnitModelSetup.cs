@@ -521,7 +521,7 @@ namespace Lightbringer.EditorTools
                         bounds.Encapsulate(MeshBounds(renderer));
                         vertices += renderer is SkinnedMeshRenderer skin ? skin.sharedMesh.vertexCount
                             : renderer.GetComponent<MeshFilter>().sharedMesh.vertexCount;
-                        if (renderer.sharedMaterials.Any(m => m == null || m.shader.name != "Universal Render Pipeline/Lit"))
+                        if (renderer.sharedMaterials.Any(m => m == null || (m.shader.name != "Universal Render Pipeline/Lit" && m.shader.name != "Universal Render Pipeline/Unlit"))) // the hood shadow volume is unlit
                             throw new InvalidOperationException(id + " renderer has an unmapped material.");
                     }
                     if (Mathf.Abs(bounds.min.y - FeetOffset) > 0.05f)

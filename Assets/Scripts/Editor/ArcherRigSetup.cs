@@ -260,11 +260,11 @@ namespace Lightbringer.EditorTools
         private static void BuildProps()
         {
             Material wood = MakeMaterial("BowWood", new Color(.32f, .18f, .08f), 0f, .35f);
-            Material leather = MakeMaterial("ArcherLeather", new Color(.13f, .075f, .045f), 0f, .25f);
-            Material gold = MakeMaterial("ArcherGold", new Color(.78f, .53f, .18f), .65f, .4f);
+            Material leather = WeaponMeshes.PebbledLeather(RigFolder, "ArcherPebbledLeather", new Color(.5f, .3f, .18f));
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "ArcherAgedGold");
             Material cord = MakeMaterial("BowString", new Color(.86f, .83f, .74f), 0f, .2f);
             Material shaft = MakeMaterial("ArrowShaft", new Color(.62f, .48f, .3f), 0f, .3f);
-            Material steel = MakeMaterial("ArrowHead", new Color(.68f, .75f, .82f), .8f, .55f);
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "ArrowBrushedSteel");
             Material fletch = MakeMaterial("ArrowFletch", new Color(.12f, .22f, .55f), 0f, .2f);
 
             Vector3 palmOffset = palms["Left"] - bind["LeftHand"];
@@ -277,9 +277,17 @@ namespace Lightbringer.EditorTools
             limbs.SetParent(bow, false);
             limbs.gameObject.AddComponent<MeshFilter>().sharedMesh = SaveAsset(LimbMesh(), RigFolder + "/BowLimbs.asset");
             limbs.gameObject.AddComponent<MeshRenderer>().sharedMaterial = wood;
-            Part(limbs, "TipTop", PrimitiveType.Sphere, new Vector3(0, BowHalf, -Brace), Vector3.one * .028f, gold);
-            Part(limbs, "TipBottom", PrimitiveType.Sphere, new Vector3(0, -BowHalf, -Brace), Vector3.one * .028f, gold);
-            Part(bow, "Grip", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.06f, .07f, .05f), leather);
+            WeaponMeshes.BowFittings("Archer", out Mesh bowGripMesh, out Mesh bowGold, out Mesh nock);
+            Transform nockTop = MeshPart(limbs, "TipTop", nock, gold, RigFolder);
+            nockTop.localPosition = new Vector3(0, BowHalf, -Brace);
+            var nockBottom = new GameObject("TipBottom").transform;
+            nockBottom.SetParent(limbs, false);
+            nockBottom.gameObject.AddComponent<MeshFilter>().sharedMesh = nockTop.GetComponent<MeshFilter>().sharedMesh;
+            nockBottom.gameObject.AddComponent<MeshRenderer>().sharedMaterial = gold;
+            nockBottom.localPosition = new Vector3(0, -BowHalf, -Brace);
+            nockBottom.localRotation = Quaternion.Euler(180f, 0f, 0f);
+            MeshPart(bow, "Grip", bowGripMesh, leather, RigFolder);
+            MeshPart(bow, "Fittings", bowGold, gold, RigFolder);
             upperString = Part(bow, "StringUpper", PrimitiveType.Cylinder, Vector3.zero, Vector3.one, cord);
             lowerString = Part(bow, "StringLower", PrimitiveType.Cylinder, Vector3.zero, Vector3.one, cord);
             arrow = new GameObject("NockedArrow").transform;
@@ -291,8 +299,9 @@ namespace Lightbringer.EditorTools
             quiver.SetParent(byName["Chest"], false);
             quiver.position = new Vector3(.06f, 1.1f, -.12f);
             quiver.rotation = Quaternion.Euler(-10f, 0f, -20f);
-            Part(quiver, "Case", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.09f, .22f, .09f), leather);
-            Part(quiver, "Rim", PrimitiveType.Cylinder, new Vector3(0, .22f, 0), new Vector3(.1f, .012f, .1f), gold);
+            WeaponMeshes.Quiver("Archer", out Mesh quiverLeather, out Mesh quiverGold);
+            MeshPart(quiver, "Case", quiverLeather, leather, RigFolder);
+            MeshPart(quiver, "Rim", quiverGold, gold, RigFolder);
             for (int i = 0; i < 3; i++)
             {
                 var spare = new GameObject("QuiverArrow" + i).transform;
@@ -306,12 +315,11 @@ namespace Lightbringer.EditorTools
         // Arrow along +Z with its pivot at the nock.
         internal static void BuildArrow(Transform parent, Material shaft, Material steel, Material fletch)
         {
-            Part(parent, "Shaft", PrimitiveType.Cylinder, new Vector3(0, 0, ArrowLength * .5f), new Vector3(.008f, ArrowLength * .5f, .008f), shaft)
-                .localRotation = Quaternion.Euler(90f, 0f, 0f);
-            Part(parent, "Head", PrimitiveType.Cube, new Vector3(0, 0, ArrowLength + .015f), new Vector3(.016f, .016f, .045f), steel)
-                .localRotation = Quaternion.Euler(0f, 0f, 45f);
-            Part(parent, "FletchA", PrimitiveType.Cube, new Vector3(0, 0, .05f), new Vector3(.002f, .028f, .07f), fletch);
-            Part(parent, "FletchB", PrimitiveType.Cube, new Vector3(0, 0, .05f), new Vector3(.028f, .002f, .07f), fletch);
+            string folder = System.IO.Path.GetDirectoryName(UnityEditor.AssetDatabase.GetAssetPath(shaft)).Replace('\\', '/');
+            WeaponMeshes.Arrow("Arrow", ArrowLength, out Mesh wood, out Mesh head, out Mesh vanes);
+            MeshPart(parent, "Shaft", wood, shaft, folder);
+            MeshPart(parent, "Head", head, steel, folder);
+            MeshPart(parent, "Fletch", vanes, fletch, folder);
         }
 
         // Recurve-like limbs in the bow's YZ plane: back faces +Z (the target), tips sweep towards the string.

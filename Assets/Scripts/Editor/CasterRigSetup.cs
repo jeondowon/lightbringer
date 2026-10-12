@@ -127,52 +127,31 @@ namespace Lightbringer.EditorTools
 
         private static Transform MageStaff(string folder)
         {
-            Material wood = MakeMaterial(folder, "StaffWood", new Color(.16f, .09f, .06f), 0f, .3f);
-            Material gold = MakeMaterial(folder, "StaffGold", new Color(.8f, .58f, .22f), .75f, .5f);
-            Material leather = MakeMaterial(folder, "StaffGrip", new Color(.1f, .06f, .04f), 0f, .25f);
+            Material wood = WeaponMeshes.WoodGrain(folder, "StaffWoodGrain", new Color(.55f, .38f, .3f));
+            Material gold = WeaponMeshes.AgedGold(folder, "StaffAgedGold");
+            Material leather = WeaponMeshes.PebbledLeather(folder, "StaffGripLeather", new Color(.45f, .28f, .17f));
             Material crystal = MakeGlowMaterial(folder, "RuneCrystal", new Color(.35f, .6f, 1f), 2.2f);
             var staff = new GameObject("Staff").transform;
-            AddMesh(staff, "Shaft", GeneratedRig.Lathe("MageStaffShaft", new[] { Mage.ButtY, Mage.ButtY + .04f, .6f, .7f },
-                new[] { .016f, .022f, .024f, .03f }), wood, folder);
-            Part(staff, "Grip", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.034f, .08f, .034f), leather);
-            Part(staff, "Ferrule", PrimitiveType.Cylinder, new Vector3(0f, Mage.ButtY + .03f, 0f), new Vector3(.03f, .03f, .03f), gold);
-            Part(staff, "Collar", PrimitiveType.Cylinder, new Vector3(0f, .7f, 0f), new Vector3(.05f, .025f, .05f), gold);
-            // Three gold claws curl up around the crystal.
-            for (int i = 0; i < 3; i++)
-            {
-                var claw = new GameObject("Claw" + i).transform;
-                claw.SetParent(staff, false);
-                claw.localPosition = new Vector3(0f, .72f, 0f);
-                claw.localRotation = Quaternion.Euler(0f, i * 120f, 0f);
-                Part(claw, "Lower", PrimitiveType.Cube, new Vector3(.05f, .08f, 0f), new Vector3(.018f, .17f, .025f), gold).localRotation = Quaternion.Euler(0f, 0f, -25f);
-                Part(claw, "Upper", PrimitiveType.Cube, new Vector3(.065f, .22f, 0f), new Vector3(.016f, .14f, .022f), gold).localRotation = Quaternion.Euler(0f, 0f, 20f);
-            }
-            AddMesh(staff, "Crystal", GeneratedRig.Lathe("RuneCrystal", new[] { .78f, .86f, Mage.HeadY }, new[] { 0f, .055f, 0f }, 4), crystal, folder);
+            WeaponMeshes.MageStaff("Mage", Mage.ButtY, Mage.HeadY, out Mesh shaft, out Mesh grip, out Mesh trim, out Mesh gem);
+            AddMesh(staff, "Shaft", shaft, wood, folder);
+            AddMesh(staff, "Grip", grip, leather, folder);
+            AddMesh(staff, "Gold", trim, gold, folder);
+            AddMesh(staff, "Crystal", gem, crystal, folder);
             return staff;
         }
 
         private static Transform PriestStaff(string folder)
         {
             Material ivory = MakeMaterial(folder, "StaffIvory", new Color(.92f, .9f, .84f), .1f, .5f);
-            Material gold = MakeMaterial(folder, "StaffGold", new Color(.85f, .62f, .24f), .8f, .55f);
+            Material gold = WeaponMeshes.AgedGold(folder, "StaffAgedGold");
+            Material leather = WeaponMeshes.PebbledLeather(folder, "PriestStaffGripLeather", new Color(.45f, .28f, .17f));
             Material holy = MakeGlowMaterial(folder, "HolyOrb", new Color(1f, .86f, .55f), 2.5f);
             var staff = new GameObject("Staff").transform;
-            AddMesh(staff, "Shaft", GeneratedRig.Lathe("PriestStaffShaft", new[] { Priest.ButtY, Priest.ButtY + .04f, .66f, .7f },
-                new[] { .016f, .022f, .022f, .026f }), ivory, folder);
-            foreach (float y in new[] { Priest.ButtY + .03f, -.06f, .06f, .4f })
-                Part(staff, "Band", PrimitiveType.Cylinder, new Vector3(0f, y, 0f), new Vector3(.032f, .012f, .032f), gold);
-            Part(staff, "Collar", PrimitiveType.Cylinder, new Vector3(0f, .7f, 0f), new Vector3(.045f, .02f, .045f), gold);
-            // Radiant sun: a gold ring of rays around the holy orb, crowned by a spike.
-            Vector3 centre = new Vector3(0f, .86f, 0f);
-            for (int i = 0; i < 12; i++)
-            {
-                float length = i % 2 == 0 ? .2f : .13f;
-                Part(staff, "Ray" + i, PrimitiveType.Cube, centre, new Vector3(.018f, length * 2f, .014f), gold)
-                    .localRotation = Quaternion.Euler(0f, 0f, i * 15f);
-            }
-            Part(staff, "Halo", PrimitiveType.Cylinder, centre, new Vector3(.17f, .006f, .17f), gold).localRotation = Quaternion.Euler(90f, 0f, 0f);
-            Part(staff, "Orb", PrimitiveType.Sphere, centre, Vector3.one * .1f, holy);
-            Part(staff, "Spike", PrimitiveType.Cube, new Vector3(0f, Priest.HeadY + .02f, 0f), new Vector3(.03f, .1f, .03f), gold);
+            WeaponMeshes.PriestStaff("Priest", Priest.ButtY, Priest.HeadY, out Mesh shaft, out Mesh grip, out Mesh trim, out Mesh orb);
+            AddMesh(staff, "Shaft", shaft, ivory, folder);
+            AddMesh(staff, "Grip", grip, leather, folder);
+            AddMesh(staff, "Gold", trim, gold, folder);
+            AddMesh(staff, "Orb", orb, holy, folder);
             return staff;
         }
 

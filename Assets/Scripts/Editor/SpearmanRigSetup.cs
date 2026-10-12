@@ -210,42 +210,21 @@ namespace Lightbringer.EditorTools
 
         private static Transform BuildSpear(Transform root, Mesh skinned)
         {
-            Material wood = MakeMaterial("SpearShaft", new Color(.22f, .13f, .07f), 0f, .3f);
-            Material leather = MakeMaterial("SpearGrip", new Color(.12f, .07f, .04f), 0f, .25f);
-            Material steel = MakeMaterial("SpearSteel", new Color(.70f, .76f, .82f), .85f, .6f);
-            Material gold = MakeMaterial("SpearGold", new Color(.78f, .55f, .2f), .7f, .45f);
+            Material wood = WeaponMeshes.WoodGrain(RigFolder, "SpearWood", new Color(.9f, .62f, .4f));
+            Material leather = WeaponMeshes.PebbledLeather(RigFolder, "SpearGripLeather", new Color(.5f, .3f, .18f));
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "SpearBrushedSteel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "SpearAgedGold");
             Transform hand = Find("RightHand");
             var spear = new GameObject("Spear").transform;
             spear.SetParent(hand, false);
             spear.position = root.TransformPoint(PalmCentre(skinned.vertices));
             // Upright in the bind pose; the clips counter-rotate the hand to aim it.
             spear.rotation = Quaternion.identity;
-            float shaftTop = 1.30f;
-            Part(spear, "Shaft", PrimitiveType.Cylinder, new Vector3(0, (ButtY + shaftTop) * .5f, 0),
-                new Vector3(.034f, (shaftTop - ButtY) * .5f, .034f), wood);
-            Part(spear, "Grip", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.042f, .09f, .042f), leather);
-            Part(spear, "Butt", PrimitiveType.Sphere, new Vector3(0, ButtY, 0), Vector3.one * .05f, steel);
-            Part(spear, "Collar", PrimitiveType.Cylinder, new Vector3(0, shaftTop + .01f, 0), new Vector3(.05f, .03f, .05f), gold);
-            Part(spear, "Wings", PrimitiveType.Cube, new Vector3(0, shaftTop + .04f, 0), new Vector3(.13f, .022f, .025f), gold);
-
-            // Leaf blade with a diamond cross-section: base, widest belly, tip.
-            var headMesh = new Mesh { name = "SpearHead" };
-            float b = shaftTop + .05f, m = shaftTop + .13f;
-            headMesh.vertices = new[] { new Vector3(-.022f,b,0), new Vector3(0,b,.012f), new Vector3(.022f,b,0), new Vector3(0,b,-.012f),
-                new Vector3(-.048f,m,0), new Vector3(0,m,.016f), new Vector3(.048f,m,0), new Vector3(0,m,-.016f), new Vector3(0,TipY,0),
-                new Vector3(0,b,0) };
-            var triangles = new List<int>();
-            for (int i = 0; i < 4; i++)
-            {
-                int j = (i + 1) % 4;
-                triangles.AddRange(new[] { i, i + 4, j, j, i + 4, j + 4, i + 4, 8, j + 4, i, j, 9 });
-            }
-            triangles.Reverse();
-            headMesh.triangles = triangles.ToArray(); headMesh.RecalculateNormals(); headMesh.RecalculateBounds();
-            headMesh = SaveAsset(headMesh, RigFolder + "/SpearHead.asset");
-            var head = new GameObject("Head"); head.transform.SetParent(spear, false);
-            head.AddComponent<MeshFilter>().sharedMesh = headMesh;
-            head.AddComponent<MeshRenderer>().sharedMaterial = steel;
+            WeaponMeshes.Spear("Spearman", ButtY, 1.30f, TipY, out Mesh shaft, out Mesh grip, out Mesh blade, out Mesh trim);
+            MeshPart(spear, "Shaft", shaft, wood, RigFolder);
+            MeshPart(spear, "Grip", grip, leather, RigFolder);
+            MeshPart(spear, "Head", blade, steel, RigFolder);
+            MeshPart(spear, "Trim", trim, gold, RigFolder);
             return spear;
         }
 

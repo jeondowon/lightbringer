@@ -1,4 +1,4 @@
-PASS | 2026-10-03T06:03:04.6687097Z
+PASS | 2026-10-12T10:59:56.1612973Z
 Horse skeleton: 19 bones, 295603 weighted vertices; rider skeleton: 13 bones (parented to the horse spine), 297851 weighted vertices.
 Knight_Idle: horse motion 0.068 m, rider motion 0.298 m; grip error 0.0000 m; lance butt at (0.51, 0.89, -0.01).
 Knight_Gallop: horse motion 0.633 m, rider motion 0.275 m; grip error 0.0000 m; lance butt at (0.51, 1.13, -0.49).

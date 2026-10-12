@@ -78,9 +78,7 @@ namespace Lightbringer.EditorTools
             Mesh crowd = Simplify(source, materials, budget, out Material[] merged);
             crowd.name = source.name + Suffix;
             string crowdPath = sourcePath.Substring(0, sourcePath.Length - ".asset".Length) + Suffix + ".asset";
-            Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(crowdPath);
-            if (existing != null) { EditorUtility.CopySerialized(crowd, existing); Object.DestroyImmediate(crowd); crowd = existing; }
-            else AssetDatabase.CreateAsset(crowd, crowdPath);
+            crowd = RigBuildUtility.SaveAsset(crowd, crowdPath);
             skin.sharedMesh = crowd;
             skin.sharedMaterials = merged;
             report.AppendLine($"{label}: triangles {Triangles(source):N0} -> {Triangles(crowd):N0}, vertices {source.vertexCount:N0} -> {crowd.vertexCount:N0}, "

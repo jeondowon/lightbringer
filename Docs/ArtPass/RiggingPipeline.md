@@ -168,6 +168,19 @@ Tripo FBX는 위쪽 축이 +Z로 나온다. 먼저 X축 −90° 회전으로 세
      - 시위·화살: 활 프리팹의 `Visuals/BowString` — 오른손바닥이 시위 정지점 근처(0.08 활 단위)에 오면 잡고, 이후 시위·화살이 손을 따라감. `UnitCombat.Attacked`(발사) 또는 손이 당김 영역을 벗어나면 놓음
    - 리포트: `Docs/Validation/EnemyArcherModelChecks.txt` (활 손·시위 손 IK 오차, 시위 잡는 거리, 당김 길이, 활 위치)
 
+## 적 5종 자체 리깅 (Raider · Swarmling · Brute · Shaman · Warlord)
+
+`Lightbringer/Art/Build Enemy Rigs` (`Editor/EnemyRigSetup.cs`, 요청 파일 `Docs/Validation/EnemyRigs.request`, 리포트 `Docs/Validation/EnemyRigChecks.txt`). 크레딧 0.
+
+- 소스: `Assets/Art/Characters/Enemy<Id>/Source/Enemy<Id>_Source.glb` (Tripo, 1 m, 무기 없는 A포즈, 약 3만 삼각형). 원본은 수정하지 않음
+- 배치: 1.7 m로 키우고 발 중심을 원점에. 방향은 발목 기준으로 발끝이 발뒤꿈치보다 훨씬 앞에 있으면 +Z(glTF 기본). 게임 크기는 오버라이드 `scale`로 (Raider 1.7, Swarmling 1.2, Brute 2.1, Shaman 1.7, Warlord 2.3 m, 여기에 부대 배율 1.2)
+- **랜드마크 자동 측정** → `RobedHumanoid.Spec`: A포즈라 팔이 몸통과 떨어져 있으므로 높이별 단면에서 가장 넓은 틈으로 몸통/팔을 나눔 → 겨드랑이·손 끝·팔 중심선(어깨 관절까지 연장). 다리는 가운데선이 비는 가장 높은 단면(가랑이), 발목, 발끝
+- 로브·갑옷 치마(Shaman, Warlord)만 `Spec.Skirt`를 켬. 나머지는 엉덩이 부분이 Hips와 다리만 따라감
+- 무기(코드 생성, 손 뼈 자식): Raider 검+원형 방패, Swarmling 단검, Brute 가시 몽둥이, Shaman 해골 지팡이(붉은 수정), Warlord 대검(붉은 날)
+- 클립: 대기 2.4초 / 이동(Swarmling은 달리기 0.7초) / 공격 1초. 공격 타격 시점 = `EnemyCatalog.StrikePhase`. 이동 클립 속도 = 2 × 2 × 다리 길이 × sin(보폭각) / 주기 × 크기
+- 군중용 메시로 축소 (약 1.5만, Warlord 2.6만 삼각형), 검증은 원본 메시로
+- 검증: 가중치, 클립별 정점 이동, 무기-손바닥 오차, 무기 지면 관통, 공격 시점 무기 끝 위치
+
 ## 새 유닛에 적용할 때
 
 1. 소스를 `Assets/Art/Characters/<Unit>/`에 넣고 `UnitModelSetup`에 배치 단계 추가

@@ -22,6 +22,8 @@ namespace Lightbringer.EditorTools
             public Vector3 TabardTop, TabardBottom, CapeTop, CapeBottom;
             public float SkirtTopDx, SkirtTopY, SkirtBottomDx, SkirtBottomY;
             public float TabardMinZ, TabardHalfWidth, CapeMaxZ;
+            // Off for trousers and short tunics: the hip region then follows Hips and the legs only.
+            public bool Skirt = true;
         }
 
         public readonly GeneratedRig Rig;
@@ -134,7 +136,7 @@ namespace Lightbringer.EditorTools
             float leg = LegShare(p);
             if (name.EndsWith("Thigh") || name.EndsWith("Shin") || name.EndsWith("Foot")) return body * leg;
             if (name == "Tabard") return dz > spec.TabardMinZ && dx < spec.TabardHalfWidth ? body * (1f - leg) : 0f;
-            if (name.EndsWith("Skirt")) return body * (1f - leg);
+            if (name.EndsWith("Skirt")) return spec.Skirt ? body * (1f - leg) : 0f;
             return 0f;
         }
 

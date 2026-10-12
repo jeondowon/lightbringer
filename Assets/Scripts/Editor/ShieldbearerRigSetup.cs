@@ -93,9 +93,9 @@ namespace Lightbringer.EditorTools
 
         private static Transform BuildShield()
         {
-            Material face = MakeMaterial("TowerShieldBlue", new Color(.05f, .1f, .28f), .3f, .4f);
-            Material gold = MakeMaterial("TowerShieldGold", new Color(.8f, .58f, .22f), .75f, .5f);
-            Material steel = MakeMaterial("TowerShieldSteel", new Color(.66f, .7f, .76f), .85f, .55f);
+            Material face = WeaponMeshes.BlueEnamel(RigFolder, "TowerEnamel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "TowerShieldAgedGold");
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "TowerShieldBrushedSteel");
             Transform hand = rig.Find("LeftHand");
             var shield = new GameObject("Shield").transform;
             shield.SetParent(hand, false);
@@ -104,51 +104,27 @@ namespace Lightbringer.EditorTools
             var board = new GameObject("Board").transform;
             board.SetParent(shield, false);
             board.localPosition = ShieldCentre;
-            // Three curved planks: the outer two swept back, like a scutum.
-            float plank = ShieldWidth / 3f;
-            Part(board, "Face", PrimitiveType.Cube, Vector3.zero, new Vector3(plank, ShieldHeight, .04f), face);
-            foreach (int s in new[] { -1, 1 })
-            {
-                Transform wing = new GameObject(s < 0 ? "WingLeft" : "WingRight").transform;
-                wing.SetParent(board, false);
-                wing.localPosition = new Vector3(s * plank * .5f, 0f, 0f);
-                wing.localRotation = Quaternion.Euler(0f, s * 18f, 0f);
-                Part(wing, "Face", PrimitiveType.Cube, new Vector3(s * plank * .5f, 0f, 0f), new Vector3(plank, ShieldHeight, .04f), face);
-                Part(wing, "Rim", PrimitiveType.Cube, new Vector3(s * (plank - .02f), 0f, .012f), new Vector3(.045f, ShieldHeight + .04f, .055f), gold);
-                Part(wing, "RimTop", PrimitiveType.Cube, new Vector3(s * plank * .5f, ShieldHeight * .5f, .012f), new Vector3(plank, .045f, .055f), gold);
-                Part(wing, "RimBottom", PrimitiveType.Cube, new Vector3(s * plank * .5f, -ShieldHeight * .5f, .012f), new Vector3(plank, .045f, .055f), gold);
-            }
-            Part(board, "RimTop", PrimitiveType.Cube, new Vector3(0f, ShieldHeight * .5f, .012f), new Vector3(plank + .02f, .045f, .055f), gold);
-            Part(board, "RimBottom", PrimitiveType.Cube, new Vector3(0f, -ShieldHeight * .5f, .012f), new Vector3(plank + .02f, .045f, .055f), gold);
-            // Heraldic cross with a radiant star boss, readable from the battle camera.
-            Part(board, "CrossUpright", PrimitiveType.Cube, new Vector3(0f, 0f, .03f), new Vector3(.07f, ShieldHeight * .86f, .025f), gold);
-            Part(board, "CrossBar", PrimitiveType.Cube, new Vector3(0f, .18f, .03f), new Vector3(plank * 2.2f, .07f, .025f), gold);
-            Part(board, "Boss", PrimitiveType.Sphere, new Vector3(0f, .18f, .045f), new Vector3(.17f, .17f, .08f), steel);
-            Part(board, "StarA", PrimitiveType.Cube, new Vector3(0f, .18f, .06f), new Vector3(.24f, .045f, .02f), gold).localRotation = Quaternion.Euler(0f, 0f, 45f);
-            Part(board, "StarB", PrimitiveType.Cube, new Vector3(0f, .18f, .06f), new Vector3(.24f, .045f, .02f), gold).localRotation = Quaternion.Euler(0f, 0f, -45f);
-            Part(board, "Grip", PrimitiveType.Cube, new Vector3(-ShieldCentre.x, -ShieldCentre.y, -.05f), new Vector3(.05f, .14f, .03f), steel);
+            WeaponMeshes.TowerShield("Tower", new Vector2(-ShieldCentre.x, -ShieldCentre.y), out Mesh paint, out Mesh trim, out Mesh metal);
+            MeshPart(board, "Face", paint, face, RigFolder);
+            MeshPart(board, "Gold", trim, gold, RigFolder);
+            MeshPart(board, "Steel", metal, steel, RigFolder);
             return shield;
         }
 
         private static Transform BuildMace()
         {
-            Material leather = MakeMaterial("MaceGrip", new Color(.12f, .07f, .04f), 0f, .25f);
-            Material steel = MakeMaterial("MaceSteel", new Color(.68f, .73f, .8f), .85f, .6f);
-            Material gold = MakeMaterial("MaceGold", new Color(.8f, .58f, .22f), .75f, .5f);
+            Material leather = WeaponMeshes.PebbledLeather(RigFolder, "MaceGripLeather", new Color(.5f, .3f, .18f));
+            Material steel = WeaponMeshes.BrushedSteel(RigFolder, "MaceBrushedSteel");
+            Material gold = WeaponMeshes.AgedGold(RigFolder, "MaceAgedGold");
             Transform hand = rig.Find("RightHand");
             var mace = new GameObject("Mace").transform;
             mace.SetParent(hand, false);
             mace.position = CentreOf(body.Palm("Right"));
             mace.rotation = Quaternion.identity;
-            Part(mace, "Grip", PrimitiveType.Cylinder, new Vector3(0f, -.01f, 0f), new Vector3(.034f, .09f, .034f), leather);
-            Part(mace, "Pommel", PrimitiveType.Sphere, new Vector3(0f, -.12f, 0f), Vector3.one * .05f, gold);
-            Part(mace, "Haft", PrimitiveType.Cylinder, new Vector3(0f, .29f, 0f), new Vector3(.026f, .2f, .026f), steel);
-            Part(mace, "Collar", PrimitiveType.Cylinder, new Vector3(0f, .085f, 0f), new Vector3(.05f, .012f, .05f), gold);
-            Part(mace, "Core", PrimitiveType.Sphere, new Vector3(0f, MaceHeadY, 0f), Vector3.one * .085f, steel);
-            for (int i = 0; i < 6; i++)
-                Part(mace, "Flange" + i, PrimitiveType.Cube, new Vector3(0f, MaceHeadY, 0f), new Vector3(.018f, .15f, .12f), steel)
-                    .localRotation = Quaternion.Euler(0f, i * 30f, 0f);
-            Part(mace, "Crown", PrimitiveType.Cylinder, new Vector3(0f, MaceHeadY + .085f, 0f), new Vector3(.04f, .015f, .04f), gold);
+            WeaponMeshes.Mace("Mace", MaceHeadY, out Mesh grip, out Mesh head, out Mesh trim);
+            MeshPart(mace, "Grip", grip, leather, RigFolder);
+            MeshPart(mace, "Head", head, steel, RigFolder);
+            MeshPart(mace, "Trim", trim, gold, RigFolder);
             return mace;
         }
 
