@@ -1,0 +1,25 @@
+Lightbringer music credits
+
+Battle music
+"The Tread of War" Composed by Jonathan Shaw (www.jshaw.co.uk)
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+Source: https://opengameart.org/content/the-tread-of-war-rpg-orchestral-essentials-military-music
+Imported from the user's download: The Tread of War MP3.zip
+Asset: Assets/Audio/Resources/Music/TheTreadOfWar.mp3
+Original audio bytes are unchanged; the game repeats the track and changes playback volume.
+SHA256: 7230283EB7FD48F76981781B2EA47B2C44CDD52D470308AB98D57BFBA7F7B06E
+The original bundled license and readme PDFs are preserved in Docs/Audio/TheTreadOfWar/.
+In-game attribution appears in the pause screen (Esc / P).
+
+Prologue music (connected to the 18-scene illustrated prologue)
+'Legionnaire' by Scott Buckley - released under CC-BY 4.0. www.scottbuckley.com.au
+https://creativecommons.org/licenses/by/4.0/
+Source: https://www.scottbuckley.com.au/library/legionnaire-2022/
+Asset: Assets/Audio/Music/Prologue/Legionnaire2022.mp3
+Imported unchanged from the user's download.
+SHA256: 1E18197D21268FE9467F4F31C8C35EBD3B73A97479EBFF486E07CA0C2757D44F
+In-game attribution appears under '음악 정보' in the prologue; playback loops with volume fades.
+For published videos using either track, also include the relevant music attribution in the description.
+
+Both selected downloads are available under the attribution licenses above; no purchases were made.

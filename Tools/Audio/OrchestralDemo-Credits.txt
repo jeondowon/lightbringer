@@ -1,0 +1,26 @@
+Lightbringer orchestral demo
+
+Original composition and arrangement for this project.
+All audible instruments use acoustic recordings from VSCO 2 Community Edition.
+No paid APIs, subscriptions, synthetic oscillator instruments, or electronic drum sounds.
+
+Sample library: VS Chamber Orchestra: Community Edition
+Recorded by Sam Gossner & Simon Dalzell.
+Sample cutting: Elan Hickler / Soundemote.
+Versilian Studios / Ivy Audio.
+License: CC0-1.0. Full original license and readme are in Samples/VSCO2CE/.
+Homepage: https://versilian-studios.com/vsco-community/
+Source: https://github.com/sgossner/VSCO-2-CE
+Pinned revision: 440300901dfe9275fd84e0b7763af1f8443ae62e
+OrchestralSamples.json records each source path, size, and original Git blob hash.
+
+Recreate with PowerShell:
+  ./Get-OrchestralSamples.ps1  (one-time free sample download)
+  ./New-OrchestralDemo.ps1     (offline render)
+
+Instrumentation:
+  Trumpet, violin section, flute; cello, acoustic bass drum, snare and cymbal.
+  128 BPM, D minor, 32 bars, 60 seconds, circular reverb tails for looping.
+  0-15s trumpet theme; 15-30s violin; 30-45s flute; 45-60s ensemble reprise.
+The source recordings use C3 for MIDI 60; the manifest maps this octave convention.
+Previous synthetic demos are retained as separate files.

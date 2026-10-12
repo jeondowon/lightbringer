@@ -1,0 +1,242 @@
+﻿[
+    {
+        "bank":  "trumpet",
+        "root":  70,
+        "file":  "trumpet_Sum_SHTrumpet_sus_A#3_v3_rr1.wav",
+        "source":  "Brass/Trumpet/sus/Sum_SHTrumpet_sus_A#3_v3_rr1.wav",
+        "size":  1667240,
+        "blob":  "f6b2753da2ae19e4748a91b0ed412decf3973fda"
+    },
+    {
+        "bank":  "trumpet",
+        "root":  81,
+        "file":  "trumpet_Sum_SHTrumpet_sus_A4_v3_rr1.wav",
+        "source":  "Brass/Trumpet/sus/Sum_SHTrumpet_sus_A4_v3_rr1.wav",
+        "size":  1730412,
+        "blob":  "bbdc0773c636c611b953ed1383f8cf1eb6b53b38"
+    },
+    {
+        "bank":  "trumpet",
+        "root":  74,
+        "file":  "trumpet_Sum_SHTrumpet_sus_D4_v3_rr1.wav",
+        "source":  "Brass/Trumpet/sus/Sum_SHTrumpet_sus_D4_v3_rr1.wav",
+        "size":  1422408,
+        "blob":  "815560ece9f2e8d0ad6a33ba24a014345ea59814"
+    },
+    {
+        "bank":  "trumpet",
+        "root":  77,
+        "file":  "trumpet_Sum_SHTrumpet_sus_F4_v3_rr1.wav",
+        "source":  "Brass/Trumpet/sus/Sum_SHTrumpet_sus_F4_v3_rr1.wav",
+        "size":  1269372,
+        "blob":  "cb508c5bf2e3c21dc3441194499fc6d0e7344f4b"
+    },
+    {
+        "bank":  "trumpet",
+        "root":  67,
+        "file":  "trumpet_Sum_SHTrumpet_sus_G3_v3_rr1.wav",
+        "source":  "Brass/Trumpet/sus/Sum_SHTrumpet_sus_G3_v3_rr1.wav",
+        "size":  1638452,
+        "blob":  "a301819024fe8d1fb8cdf86f9b5d0d8121c8c073"
+    },
+    {
+        "bank":  "flute",
+        "root":  69,
+        "file":  "flute_LDFlute_susNV_A3_v3_1.wav",
+        "source":  "Woodwinds/Flute/susNV/LDFlute_susNV_A3_v3_1.wav",
+        "size":  2765718,
+        "blob":  "75a6dbb605779e3eaef2a265b6857142211a5837"
+    },
+    {
+        "bank":  "flute",
+        "root":  81,
+        "file":  "flute_LDFlute_susNV_A4_v3_1.wav",
+        "source":  "Woodwinds/Flute/susNV/LDFlute_susNV_A4_v3_1.wav",
+        "size":  2147490,
+        "blob":  "fa6e9dc8429dc62ae37eb6e61cf63aed8ca38529"
+    },
+    {
+        "bank":  "flute",
+        "root":  72,
+        "file":  "flute_LDFlute_susNV_C4_v3_1.wav",
+        "source":  "Woodwinds/Flute/susNV/LDFlute_susNV_C4_v3_1.wav",
+        "size":  2539512,
+        "blob":  "850db1f598b5ba7a88ec2f929f8b832fb83cdd66"
+    },
+    {
+        "bank":  "flute",
+        "root":  76,
+        "file":  "flute_LDFlute_susNV_E4_v3_1.wav",
+        "source":  "Woodwinds/Flute/susNV/LDFlute_susNV_E4_v3_1.wav",
+        "size":  2449278,
+        "blob":  "67357c844a8c88034431d83438bd8ddea729e805"
+    },
+    {
+        "bank":  "violin",
+        "root":  69,
+        "file":  "violin_VlnEns_susVib_A3_v2.wav",
+        "source":  "Strings/Violin Section/susVib/VlnEns_susVib_A3_v2.wav",
+        "size":  1671704,
+        "blob":  "401653718e521b65712da594a53d22184f4a207a"
+    },
+    {
+        "bank":  "violin",
+        "root":  72,
+        "file":  "violin_VlnEns_susVib_C4_v2.wav",
+        "source":  "Strings/Violin Section/susVib/VlnEns_susVib_C4_v2.wav",
+        "size":  2017512,
+        "blob":  "1c8e05059b270f870342a03e19b93882d6dd1e1b"
+    },
+    {
+        "bank":  "violin",
+        "root":  76,
+        "file":  "violin_VlnEns_susVib_E4_v2.wav",
+        "source":  "Strings/Violin Section/susVib/VlnEns_susVib_E4_v2.wav",
+        "size":  1702620,
+        "blob":  "2c33cc296b9b3654fd08fc9e9887042eabee738d"
+    },
+    {
+        "bank":  "strings",
+        "root":  69,
+        "file":  "strings_VlnEns_Spic_A3_v2_rr1.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_A3_v2_rr1.wav",
+        "size":  213126,
+        "blob":  "fb4ac5e085c3d9e4a0623247a74004cbd8881f9b"
+    },
+    {
+        "bank":  "strings",
+        "root":  69,
+        "file":  "strings_VlnEns_Spic_A3_v2_rr2.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_A3_v2_rr2.wav",
+        "size":  246210,
+        "blob":  "c93c24bab8ebc7573a91f8763a665876f81febe0"
+    },
+    {
+        "bank":  "strings",
+        "root":  72,
+        "file":  "strings_VlnEns_Spic_C4_v2_rr1.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_C4_v2_rr1.wav",
+        "size":  167454,
+        "blob":  "ae3b8629fbbdb12ca1c6627ecdc5c0228ecb9ed0"
+    },
+    {
+        "bank":  "strings",
+        "root":  72,
+        "file":  "strings_VlnEns_Spic_C4_v2_rr2.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_C4_v2_rr2.wav",
+        "size":  124626,
+        "blob":  "8ce6ba371c35d70704829e8923a0aab4621b1aa1"
+    },
+    {
+        "bank":  "strings",
+        "root":  62,
+        "file":  "strings_VlnEns_Spic_D3_v2_rr1.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_D3_v2_rr1.wav",
+        "size":  311850,
+        "blob":  "4894f893f93143180d5234212d0440110dac0b8f"
+    },
+    {
+        "bank":  "strings",
+        "root":  62,
+        "file":  "strings_VlnEns_Spic_D3_v2_rr2.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_D3_v2_rr2.wav",
+        "size":  290746,
+        "blob":  "ec4376833eaffafb05c1895ed2f31b0f22552f57"
+    },
+    {
+        "bank":  "strings",
+        "root":  76,
+        "file":  "strings_VlnEns_Spic_E4_v2_rr1.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_E4_v2_rr1.wav",
+        "size":  106314,
+        "blob":  "f95512f43f61703daa2c436071627ef6b7bb6a9d"
+    },
+    {
+        "bank":  "strings",
+        "root":  76,
+        "file":  "strings_VlnEns_Spic_E4_v2_rr2.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_E4_v2_rr2.wav",
+        "size":  134190,
+        "blob":  "c9b02904df2283cf50b765e9b16c6ccfb4c78042"
+    },
+    {
+        "bank":  "strings",
+        "root":  66,
+        "file":  "strings_VlnEns_Spic_F#3_v2_rr1.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_F#3_v2_rr1.wav",
+        "size":  166870,
+        "blob":  "f08c57a675190d1f562d4055b8fda58064f69cdc"
+    },
+    {
+        "bank":  "strings",
+        "root":  66,
+        "file":  "strings_VlnEns_Spic_F#3_v2_rr2.wav",
+        "source":  "Strings/Violin Section/Spic/VlnEns_Spic_F#3_v2_rr2.wav",
+        "size":  192442,
+        "blob":  "2e51e90cf6031974c73c1045a7c97f1e6587140b"
+    },
+    {
+        "bank":  "cello",
+        "root":  57,
+        "file":  "cello_spic_A2_v2_RR1.wav",
+        "source":  "Strings/Cello Section/spic/spic_A2_v2_RR1.wav",
+        "size":  893588,
+        "blob":  "6023bf05728d62289c152b3deb52f0e194dbf146"
+    },
+    {
+        "bank":  "cello",
+        "root":  36,
+        "file":  "cello_spic_C1_v2_RR1.wav",
+        "source":  "Strings/Cello Section/spic/spic_C1_v2_RR1.wav",
+        "size":  853964,
+        "blob":  "a8bd5d4e51a6c38c7ce1949cd1b50850eecb51e6"
+    },
+    {
+        "bank":  "cello",
+        "root":  50,
+        "file":  "cello_spic_D2_v2_RR1.wav",
+        "source":  "Strings/Cello Section/spic/spic_D2_v2_RR1.wav",
+        "size":  896108,
+        "blob":  "feaa6ecee38e4b5dd478aaf88c2cb1264cc45c4c"
+    },
+    {
+        "bank":  "cello",
+        "root":  43,
+        "file":  "cello_spic_G1_v2_RR1.wav",
+        "source":  "Strings/Cello Section/spic/spic_G1_v2_RR1.wav",
+        "size":  856028,
+        "blob":  "373cf1dd9138334460fe9c108e31a3a257d22497"
+    },
+    {
+        "bank":  "snare",
+        "root":  60,
+        "file":  "snare_Snare2-HitSN_v5_rr1_Sum.wav",
+        "source":  "Percussion/Snare2-HitSN_v5_rr1_Sum.wav",
+        "size":  360722,
+        "blob":  "102f740d546c8f147847ea4243b7c75b6eaa3119"
+    },
+    {
+        "bank":  "snare",
+        "root":  60,
+        "file":  "snare_Snare2-HitSN_v5_rr2_Sum.wav",
+        "source":  "Percussion/Snare2-HitSN_v5_rr2_Sum.wav",
+        "size":  383162,
+        "blob":  "b449ea581cb7bb5722e7e0a07df342e2c1bd0de4"
+    },
+    {
+        "bank":  "bassdrum",
+        "root":  60,
+        "file":  "bassdrum_bdrum_muted_ff_1.wav",
+        "source":  "VSCO 1 Percussion/drums/bass/bdrum_muted_ff_1.wav",
+        "size":  785950,
+        "blob":  "98fd4c3d0b34d93b1a131162717075384f7c955e"
+    },
+    {
+        "bank":  "cymbal",
+        "root":  60,
+        "file":  "cymbal_crash_hit_ff_tight.wav",
+        "source":  "VSCO 1 Percussion/varMetal/Cymbals/clash/crash_hit_ff_tight.wav",
+        "size":  786478,
+        "blob":  "4124599388653f003b82e2d421821f6720744815"
+    }
+]
