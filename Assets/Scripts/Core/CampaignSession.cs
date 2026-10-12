@@ -17,6 +17,8 @@ namespace Lightbringer.Core
         private CampaignSaveStore store;
         private readonly BattleSimulation simulation = new BattleSimulation();
         private bool dirty;
+        private bool userPaused;
+        private float resumeTimeScale = 1f;
         private float saveTimer;
         private GameObject preparationCamera;
         private PlaytestRecorder playtest = new PlaytestRecorder(null);
@@ -27,8 +29,12 @@ namespace Lightbringer.Core
         public string SaveStatus => store == null ? "검증 세션" : store.Error;
         public bool IsChoosing => Progress != null && Progress.pendingLevels > 0;
         public bool IsBattlePaused => simulation.IsPaused;
+        public bool IsUserPaused => userPaused;
+        public bool CanPause => Battle != null && !Battle.Objective.HasEnded && !IsChoosing;
         public PlaytestRecord PlaytestRecord => playtest.Current;
         public string PlaytestStatus { get; private set; } = "";
+        public bool IsPersistentSession => store != null;
+        public bool IsPrologueActive { get; set; }
 
         public void Configure(InputActionAsset actions, Material material, Shader ring)
         { inputActions = actions; prototypeMaterial = material; auraShader = ring; }
@@ -61,7 +67,7 @@ namespace Lightbringer.Core
 
         public bool SelectStage(int stage)
         {
-            if (Progress == null || Battle != null || stage < 1 || stage > Progress.unlockedStage) return false;
+            if (Progress == null || Battle != null || IsPrologueActive || stage < 1 || stage > Progress.unlockedStage) return false;
             SelectedStage = stage;
             return true;
         }
@@ -74,7 +80,7 @@ namespace Lightbringer.Core
 
         public bool StartBattle()
         {
-            if (Progress == null || Battle != null || IsChoosing || inputActions == null || prototypeMaterial == null || auraShader == null)
+            if (Progress == null || Battle != null || IsPrologueActive || IsChoosing || inputActions == null || prototypeMaterial == null || auraShader == null)
                 return false;
             Battle = PrototypeBattleBuilder.Build(SelectedStage, Progress, inputActions, prototypeMaterial, auraShader, transform, artStyle);
             Battle.Objective.Completed += OnCompleted;
@@ -82,6 +88,7 @@ namespace Lightbringer.Core
             RegisterEnemy(Battle.Objective.EnemyBase);
             if (preparationCamera != null) preparationCamera.SetActive(false);
             Battle.Root.SetActive(true);
+            if (Application.isPlaying) Battle.Root.AddComponent<BattleMusic>().Configure(this);
             LastResult = "";
             playtest.Begin(Battle, SelectedStage, Progress);
             return true;
@@ -136,8 +143,26 @@ namespace Lightbringer.Core
             return true;
         }
 
+        // Player pause (Esc / P or the pause screen's button): suspends the battle like a level-up choice and also
+        // stops time, so animation, projectiles and effects freeze too.
+        public bool SetPaused(bool paused)
+        {
+            if (paused == userPaused) return true;
+            if (paused && !CanPause) return false;
+            userPaused = paused;
+            if (paused) { resumeTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f; Time.timeScale = 0f; }
+            else Time.timeScale = resumeTimeScale;
+            UpdatePause();
+            return true;
+        }
+
+        public bool TogglePause() => SetPaused(!userPaused);
+
         private void Update()
         {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null && Battle != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame))
+                TogglePause();
             UpdatePause();
             playtest.Tick(Time.deltaTime, Battle == null || IsChoosing || simulation.IsPaused);
             saveTimer += Time.unscaledDeltaTime;
@@ -147,7 +172,7 @@ namespace Lightbringer.Core
         public void UpdatePause()
         {
             if (Battle == null) return;
-            if (IsChoosing) simulation.Pause(Battle.Root.transform);
+            if (IsChoosing || userPaused) simulation.Pause(Battle.Root.transform);
             else if (simulation.IsPaused) simulation.Resume(Battle.Objective.HasEnded);
         }
 
@@ -157,6 +182,10 @@ namespace Lightbringer.Core
         }
         private void OnApplicationPause(bool paused) { if (paused) Flush(); }
         private void OnApplicationQuit() { playtest.Commit(); Flush(); }
-        private void OnDestroy() { playtest.Commit(); Flush(); }
+        private void OnDestroy()
+        {
+            if (userPaused) Time.timeScale = resumeTimeScale;
+            playtest.Commit(); Flush();
+        }
     }
 }

@@ -112,18 +112,32 @@ namespace Lightbringer.EditorTools
                 profile.CompleteStage(2);
                 session.InitializeForValidation(profile);
                 EditorAssets.ConfigureSession(session, material);
+                CampaignMapView map = new CampaignMapView(new VisualElement(), null);
+                map.Refresh(session, true);
+                Check(!map.Select(4) && session.SelectedStage == 3,
+                    "Campaign map rejects locked beacons without changing the destination");
+                Check(map.Select(1) && session.SelectedStage == 1 && map.Select(3),
+                    "Campaign map allows replaying a lit beacon and selecting the current frontier");
                 PreparationView view = new PreparationView(new VisualElement());
                 view.Refresh(session);
-                Check(view.Visible && view.StartText == "출전 · 스테이지 3" && view.IsStageSelected(3)
-                    && view.IsStageEnabled(3) && !view.IsStageEnabled(4) && view.TroopCount == 3,
-                    "Preparation opens on the newest stage, locks later stages and lists unlocked troops");
+                Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == "봉화 03" && view.TroopCount == 3,
+                    "Briefing shows the selected beacon and all unlocked troops");
                 Check(session.SelectStage(2) && RefreshAndSelected(view, session, 2), "Selecting a stage highlights it and retargets START");
+                view.Refresh(session, false);
+                map.Refresh(session, true);
+                Check(!view.Visible && session.SelectedStage == 2,
+                    "Returning to the map hides preparation and preserves the selected destination");
+                view.Refresh(session);
 
                 Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("Q 장착 중")
                     && !view.IsItemEnabled(4) && view.ItemNote(4) == "미해금" && view.IsItemEnabled(2),
                     "Items worn in another slot or not yet owned cannot be equipped");
-                Check(view.Equip(2) && profile.loadout[0] == 2 && view.SlotText(0) == EquipmentCatalog.Names[2],
-                    "Clicking an item equips it into the active slot");
+                Check(view.SelectItem(2) && view.SelectedItem == 2 && profile.loadout[0] == 0,
+                    "Inspecting an equipment candidate does not change the saved loadout");
+                Check(!view.SelectItem(4) && !view.SelectItem(1) && view.SelectedItem == 2,
+                    "Locked and already-used equipment cannot replace the inspected candidate");
+                Check(view.EquipSelected() && profile.loadout[0] == 2 && view.SlotText(0) == EquipmentCatalog.Names[2],
+                    "Confirming inspected equipment changes only the selected slot");
                 view.SelectSlot(2);
                 Check(view.ActiveSlot == 2 && view.Equip(0) && profile.loadout[2] == 0, "Choosing another slot redirects the next equip");
 
@@ -142,7 +156,7 @@ namespace Lightbringer.EditorTools
         private static bool RefreshAndSelected(PreparationView view, CampaignSession session, int stage)
         {
             view.Refresh(session);
-            return view.IsStageSelected(stage) && view.StartText == "출전 · 스테이지 " + stage;
+            return view.DestinationText == $"봉화 {stage:00}" && view.StartText.Contains($"봉화 {stage:00}");
         }
 
         private static string RefreshAndRead(BattleHudView view, CampaignSession session)

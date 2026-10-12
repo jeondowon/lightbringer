@@ -45,7 +45,7 @@ namespace Lightbringer.UI
             VisualElement header = Hud.Box(Root, "lb-levelup-header");
             VisualElement titleRow = Hud.Box(header, "lb-levelup-title-row");
             Ornament(titleRow, false);
-            Hud.Text(titleRow, "레벨 상승", "lb-display", "lb-levelup-title");
+            Hud.Text(titleRow, "더 강해진 빛", "lb-display", "lb-levelup-title");
             Ornament(titleRow, true);
             subtitle = Hud.Text(header, "", "lb-levelup-subtitle");
             remaining = Hud.Text(header, "", "lb-levelup-remaining");
@@ -85,7 +85,7 @@ namespace Lightbringer.UI
             Hud.Text(prompt, "축복을 선택하세요", "lb-display", "lb-levelup-prompt-title");
             hint = Hud.Text(prompt, SelectHint, "lb-levelup-prompt-hint");
             Hud.IgnorePicking(header); Hud.IgnorePicking(prompt); Hud.IgnorePicking(rune);
-            confirm = new Button(() => Confirm()) { text = "확인" };
+            confirm = new Button(() => Confirm()) { text = "이 축복 선택하기" };
             confirm.AddToClassList("lb-display");
             confirm.AddToClassList("lb-levelup-confirm");
             Root.Add(confirm);
@@ -160,7 +160,7 @@ namespace Lightbringer.UI
             {
                 float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - i * 0.09f) / 0.38f));
                 cards[i].Slot.style.opacity = t;
-                cards[i].Slot.style.translate = new Translate(0f, (1f - t) * 60f);
+                cards[i].Slot.style.translate = new Translate(0f, (1f - t) * 16f);
                 cards[i].Rune.style.rotate = new Rotate(new Angle((i % 2 == 0 ? 1f : -1f) * time * 12f));
             }
         }

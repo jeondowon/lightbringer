@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25f6322d0c281864aa13fe795d2a4686, type: 3}
+  m_Name: Sequence
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Core.PrologueSequence
+  music: {fileID: 8300000, guid: 2a632146ecd166747b1087060c29c88a, type: 3}
+  slides:
+  - id: 00A
+    image: {fileID: 2800000, guid: 33d0a1cbe8ff16a458e8ca5e3e34c1c5, type: 3}
+    captions:
+    - "\uD0DC\uCD08\uC5D0, \uBE5B\uC774 \uC788\uC5C8\uB2E4."
+    - "\uBE5B\uC740 \uC138\uC0C1\uC744 \uBE5A\uACE0, \uADF8 \uC548\uC5D0 \uC0DD\uBA85\uC744
+      \uBD88\uC5B4\uB123\uC5C8\uB2E4."
+  - id: 00B
+    image: {fileID: 2800000, guid: 80854afa5e8937d4c89adbdb8b8018a0, type: 3}
+    captions:
+    - "\uC0DD\uBA85\uC740 \uBE5B\uC758 \uC628\uAE30 \uC544\uB798 \uC790\uB77C\uB0AC\uACE0,\n\uC138\uC0C1\uC740
+      \uC624\uB79C \uD3C9\uD654\uB97C \uB204\uB838\uB2E4."
+  - id: 00C
+    image: {fileID: 2800000, guid: 39641ce5cc6d86f4f8c2186e70293c63, type: 3}
+    captions:
+    - "\uADF8\uB7EC\uB098 \uBE5B\uC744 \uB3C5\uCC28\uC9C0\uD558\uB824\uB294 \uC695\uB9DD\uACFC\n\uC11C\uB85C\uB97C
+      \uD5A5\uD55C \uC99D\uC624\uAC00 \uC790\uB77C\uB0AC\uB2E4."
+    - "\uBE5B\uC744 \uB4F1\uC9C4 \uB9C8\uC74C\uB4E4\uC774 \uBAA8\uC5EC, \uC5B4\uB460\uC774
+      \uB418\uC5C8\uB2E4."
+  - id: 00D
+    image: {fileID: 2800000, guid: 4954382aa4cdef54b8b80bfb0900cfdc, type: 3}
+    captions:
+    - "\uC5B4\uB460\uC740 \uC790\uB77C\uB098 \uC758\uC9C0\uB97C \uC5BB\uC5C8\uACE0,\n\uB9C8\uCE68\uB0B4
+      \uB9C8\uC655\uC774 \uD0DC\uC5B4\uB0AC\uB2E4."
+  - id: 01
+    image: {fileID: 2800000, guid: e0b8daeca0eebf246a7341b184e26607, type: 3}
+    captions:
+    - "\uB9C8\uC655\uC774 \uC774\uB044\uB294 \uC5B4\uB460\uC740 \uC138\uC0C1\uC744
+      \uB36E\uCCE4\uB2E4.\n\uC4F0\uB7EC\uC9C4 \uC774\uB4E4\uB9C8\uC800 \uC8FD\uC74C\uC758
+      \uAD70\uC138\uAC00 \uB418\uC5B4 \uC77C\uC5B4\uB0AC\uB2E4."
+    - "\uB3C4\uC2DC\uB294 \uBD88\uD0C0\uACE0, \uC0B4\uC544\uB0A8\uC740 \uC0AC\uB78C\uB4E4\uC740
+      \uACE0\uD5A5\uC744 \uB5A0\uB0AC\uB2E4."
+  - id: 02
+    image: {fileID: 2800000, guid: afa11ee280de5d043986cd12018c7647, type: 3}
+    captions:
+    - "\uBAA8\uB4E0 \uD76C\uB9DD\uC774 \uC0AC\uB77C\uC838 \uAC00\uB358 \uADF8\uB54C,\n\uBE5B\uC758
+      \uAC80\uC744 \uB4E0 \uD55C \uAE30\uC0AC\uAC00 \uB098\uD0C0\uB0AC\uB2E4."
+  - id: 02B
+    image: {fileID: 2800000, guid: 2fca0d5dc2d7f0947ba54a34e72eb6a9, type: 3}
+    captions:
+    - "\uAE30\uC0AC\uB294 \uC5B4\uB460\uC758 \uAD70\uC138\uB97C \uBB3C\uB9AC\uCE58\uBA70,\n\uBE7C\uC557\uAE34
+      \uB545\uC744 \uD558\uB098\uC529 \uB418\uCC3E\uC558\uB2E4."
+  - id: 03
+    image: {fileID: 2800000, guid: cd169a2f1939e7a4ab054b7207d65dad, type: 3}
+    captions:
+    - "\uB418\uCC3E\uC740 \uB545\uB9C8\uB2E4 \uBD09\uD654\uB97C \uC138\uC6B0\uACE0,\n\uB2E4\uC2DC\uB294
+      \uC5B4\uB460\uC774 \uC2A4\uBA70\uB4E4\uC9C0 \uBABB\uD558\uB3C4\uB85D \uC790\uC2E0\uC758
+      \uBE5B\uC744 \uB098\uB204\uC5C8\uB2E4."
+  - id: 03(V5)
+    image: {fileID: 2800000, guid: 9bc447f23bf6017408e6f3826998af37, type: 3}
+    captions:
+    - "\uADF8 \uBE5B \uC544\uB798\uB85C \uC0AC\uB78C\uB4E4\uC774 \uB3CC\uC544\uC654\uACE0,\n\uD3D0\uD5C8\uAC00
+      \uB41C \uB9C8\uC744\uC5D0\uB3C4 \uB2E4\uC2DC \uC0B6\uC774 \uC774\uC5B4\uC84C\uB2E4."
+    - "\uAE30\uC0AC\uB294 \uBD09\uD654\uB97C \uB4A4\uB85C\uD55C \uCC44, \uAE34 \uC804\uC7C1\uC744
+      \uACC4\uC18D\uD588\uB2E4."
+  - id: 04
+    image: {fileID: 2800000, guid: 3bf4f077715605a4e9ae854e2926e609, type: 3}
+    captions:
+    - "\uC624\uB79C \uC804\uC7C1 \uB05D\uC5D0, \uAE30\uC0AC\uB294 \uB9C8\uC655\uC758
+      \uC131\uC5D0 \uB3C4\uB2EC\uD588\uB2E4."
+    - "\uC131\uC744 \uC9D1\uC5B4\uC0BC\uD0A8 \uAC70\uB300\uD55C \uBE5B\uC774 \uAC77\uD614\uC744
+      \uB54C,\n\uAE30\uC0AC\uC640 \uB9C8\uC655\uC740 \uBAA8\uB450 \uC790\uCDE8\uB97C
+      \uAC10\uCD94\uACE0 \uC5C6\uC5C8\uB2E4."
+  - id: 05
+    image: {fileID: 2800000, guid: 8834dfcea506fb743b8c49b01f14a86d, type: 3}
+    captions:
+    - "\uD3C9\uD654\uAC00 \uB3CC\uC544\uC624\uC790, \uC0AC\uB78C\uB4E4\uC740 \uAE30\uC0AC\uB97C
+      \uAE30\uB9AC\uBA70 \uBD09\uD654\uB97C \uC9C0\uCF30\uB2E4."
+    - "\uADF8\uB7EC\uB098 \uC138\uC6D4\uC774 \uD750\uB97C\uC218\uB85D \uC57D\uC18D\uC740
+      \uD76C\uBBF8\uD574\uC84C\uB2E4.\n\uC0AC\uB78C\uB4E4\uC740 \uC5B4\uB460\uB3C4
+      \uC601\uC6D0\uD788 \uC0AC\uB77C\uC84C\uB2E4\uACE0 \uBBFF\uC5C8\uB2E4."
+  - id: 05A
+    image: {fileID: 2800000, guid: 0f7f2fdc9cb27064a847d7f3c42141c8, type: 3}
+    captions:
+    - "\uD0D0\uC695\uC740 \uC774\uC6C3\uC758 \uAC83\uC744 \uBE7C\uC557\uAC8C \uD588\uACE0,\n\uC0AC\uB78C\uB4E4\uC740
+      \uC11C\uB85C\uC758 \uACE0\uD1B5\uC744 \uC678\uBA74\uD588\uB2E4."
+  - id: 05B
+    image: {fileID: 2800000, guid: e32c1b2487fd9f04c9339c102d7f4683, type: 3}
+    captions:
+    - "\uC99D\uC624\uAC00 \uB9C8\uC74C\uC744 \uCC44\uC6B0\uB294 \uB3D9\uC548,\n\uC0AC\uB77C\uC9C4
+      \uC904 \uC54C\uC558\uB358 \uC5B4\uB460\uC740 \uB2E4\uC2DC \uD798\uC744 \uC5BB\uC5C8\uB2E4."
+  - id: 06
+    image: {fileID: 2800000, guid: 3aea1171da7f3f3489c6c4b5f62f8014, type: 3}
+    captions:
+    - "\uB9C8\uCE68\uB0B4 \uBD09\uD654\uAC00 \uAEBC\uC9C4 \uBC24, \uC8FD\uC740 \uC790\uB4E4\uC774
+      \uB208\uC744 \uB5B4\uB2E4."
+    - "\uBD88\uBE5B\uC774 \uC0AC\uB77C\uC9C4 \uAE38\uC744 \uB530\uB77C \uC5B4\uB460\uC774
+      \uBC88\uC84C\uB2E4.\n\uADF8\uB7EC\uB098 \uC774\uBC88\uC5D0\uB294 \uBE5B\uC758
+      \uAE30\uC0AC\uB3C4 \uB098\uD0C0\uB098\uC9C0 \uC54A\uC558\uB2E4."
+  - id: 07
+    image: {fileID: 2800000, guid: 13ada72340007f44eb2eaad33e7c328b, type: 3}
+    captions:
+    - "\uADF8\uB54C, \uC5B4\uB460\uC5D0 \uC7A0\uAE34 \uB545 \uC704\uB85C \uBE5B\uC774
+      \uC3DF\uC544\uC84C\uB2E4."
+  - id: 08
+    image: {fileID: 2800000, guid: 8a3904b77d834614cbf285a8f7f40be8, type: 3}
+    captions:
+    - "\uC4F0\uB7EC\uC9C4 \uC5B4\uB460 \uB108\uBA38\uB85C, \uD55C \uC0AC\uB78C\uC774
+      \uBC1C\uC744 \uB0B4\uB514\uB3A0\uB2E4."
+  - id: 07(ForgottenBeacon)
+    image: {fileID: 2800000, guid: f17a829a25e23e048878174de1693e4e, type: 3}
+    captions:
+    - "\uBAA8\uB450\uAC00 \uB5A0\uB09C \uC790\uB9AC,\n\uADF8 \uC0AC\uB78C\uC740 \uAEBC\uC9C4
+      \uBD09\uD654 \uC55E\uC5D0 \uBA48\uCDB0 \uC130\uB2E4."
+  - id: 09
+    image: {fileID: 2800000, guid: a97a6ea498cbab14ab604f48849bf3e0, type: 3}
+    captions:
+    - "\uADF8\uB9AC\uACE0 \uADF8 \uB108\uBA38\uC5D0\uB294,\n\uC544\uC9C1 \uBC1D\uD600\uC57C
+      \uD560 \uC218\uB9CE\uC740 \uBD09\uD654\uAC00 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC5C8\uB2E4."

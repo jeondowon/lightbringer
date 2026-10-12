@@ -90,7 +90,7 @@ namespace Lightbringer.UI
             health = Vital(gauges, "HP", "lb-bar--hp");
             mana = Vital(gauges, "MP", "lb-bar--mana");
             VisualElement foodRow = Hud.Box(gauges, "lb-vital-row");
-            Hud.Box(foodRow, "lb-hud-icon", "lb-hud-icon--food", "lb-vital-icon");
+            Hud.Text(foodRow, "식량", "lb-vital-label");
             food = new HudBar(foodRow, "lb-bar--food");
 
             VisualElement command = Hud.Box(Root, "lb-command");
@@ -100,7 +100,7 @@ namespace Lightbringer.UI
 
             VisualElement hints = Hud.Box(Root, "lb-hints", "lb-hud-panel");
             Hint(hints, ("WASD", "이동"), ("마우스", "시점"), ("휠", "확대·축소"));
-            Hint(hints, ("1-8", "소환"), ("F", "재소환"), ("Tab", "진로 변경"), ("Esc", "커서"));
+            Hint(hints, ("1-8", "소환"), ("F", "재소환"), ("Tab", "진로 변경"), ("Esc", "일시정지"));
             Hud.IgnorePicking(Root);
         }
 
@@ -225,7 +225,7 @@ namespace Lightbringer.UI
         public void Refresh(CampaignSession session)
         {
             if (battle == null || session == null) return;
-            Hud.Set(stage, "스테이지 " + session.SelectedStage);
+            Hud.Set(stage, $"봉화 {session.SelectedStage:00}");
             Hud.Set(waves, $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
             if (session.Progress != null) Hud.Set(level, session.Progress.level.ToString());
             RefreshFronts();

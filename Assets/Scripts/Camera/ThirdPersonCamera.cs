@@ -31,6 +31,7 @@ namespace Lightbringer.CameraSystem
         private CursorLockMode previousLockMode;
         private bool previousCursorVisible;
         private bool ownsCursor;
+        private int enabledFrame = -1;
         private bool hasPose;
         private RaycastHit[] obstructionHits = new RaycastHit[16];
         public void Configure(Transform followTarget, InputActionAsset actions)
@@ -93,6 +94,7 @@ namespace Lightbringer.CameraSystem
             previousLockMode = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             ownsCursor = true;
+            enabledFrame = Time.frameCount;
             SetCursorLocked(true);
             UpdatePose();
             if (!active.Contains(this)) active.Add(this);
@@ -117,7 +119,8 @@ namespace Lightbringer.CameraSystem
             if (!Application.isFocused || target == null)
                 return;
 
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            // The Esc that resumed a paused campaign battle re-enabled this camera: keep the cursor captured.
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && Time.frameCount != enabledFrame)
             {
                 SetCursorLocked(false);
                 return;

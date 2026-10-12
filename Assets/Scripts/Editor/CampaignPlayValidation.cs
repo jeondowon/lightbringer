@@ -153,6 +153,11 @@ namespace Lightbringer.EditorTools
                     // Food advances on scaled simulation time; asset loading and shader compilation
                     // can consume wall time without giving Update enough time to produce it.
                     if (Time.time - battleStartTime < 2.2f) return;
+                    AudioSource battleMusic = battle.Root.GetComponent<AudioSource>();
+                    Assert(battle.Root.GetComponent<BattleMusic>() != null && battleMusic != null
+                        && battleMusic.clip == UnityEngine.Resources.Load<AudioClip>(BattleMusic.ResourcePath)
+                        && battleMusic.isPlaying && battleMusic.timeSamples > 0 && battleMusic.loop && battleMusic.spatialBlend == 0f,
+                        "The Tread of War loads and advances as looping 2D battle music");
                     if (session.ArtStyle != null && session.ArtStyle.forestEnvironment != null)
                     {
                         Lightbringer.Visuals.ForestEnvironmentDressing forest = battle.Root.GetComponentInChildren<Lightbringer.Visuals.ForestEnvironmentDressing>();
@@ -223,15 +228,30 @@ namespace Lightbringer.EditorTools
                     Screenshot("CampaignVictory.png");
                     Advance(); break;
                 case 6:
-                    if (elapsed < 0.3f) return;
+                    if (elapsed < 1.5f) return;
+                    Assert(!battle.Root.GetComponent<AudioSource>().isPlaying,
+                        "Victory fades out and stops battle music");
                     Assert(session.ReturnToPreparation() && session.StartBattle(), "Result screen can return and start the next unlocked stage");
                     Advance(); break;
                 case 7:
                     if (elapsed < 0.5f) return;
+                    Assert(battle.Root.GetComponents<AudioSource>().Length == 1 && battle.Root.GetComponent<AudioSource>().isPlaying,
+                        "Starting the next battle creates exactly one playing music source");
+                    Assert(session.SetPaused(true), "Battle music pause probe pauses the battle");
+                    phase = 18; phaseTime = Time.realtimeSinceStartup; break;
+                case 18:
+                    if (elapsed < 1.3f) return;
+                    AudioSource pausedMusic = battle.Root.GetComponent<AudioSource>();
+                    Assert(Time.timeScale == 0f && pausedMusic.isPlaying
+                        && Mathf.Abs(pausedMusic.volume - BattleMusic.Volume * 0.35f) < 0.01f,
+                        "Pause keeps music playing and ducks volume using unscaled time");
+                    Assert(session.SetPaused(false), "Music pause probe resumes the battle");
                     battle.Hero.TakeDamage(10000);
-                    Advance(); break;
+                    phase = 8; phaseTime = Time.realtimeSinceStartup; break;
                 case 8:
-                    if (elapsed < 0.3f) return;
+                    if (elapsed < 1.5f) return;
+                    Assert(!battle.Root.GetComponent<AudioSource>().isPlaying,
+                        "Defeat fades out and stops battle music");
                     Assert(battle.Objective.HasLost && session.Progress.ranks[chosenRank] >= 1 && session.Progress.equipmentLevels[2] == 1,
                         "Runtime hero death keeps permanent growth and grants no victory reward");
                     Assert(session.ReturnToPreparation(), "Defeat can return to preparation without reloading Unity");

@@ -4,6 +4,61 @@
 
 /* ---------- Shared ---------- */
 
+.lb-campaign-content { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.lb-prologue { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(4, 6, 9); overflow: hidden; }
+.lb-prologue-frame { position: absolute; }
+.lb-prologue-picture { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.lb-prologue-top { position: absolute; left: 4%; right: 4%; top: 3%; flex-direction: row; justify-content: space-between; align-items: center; }
+.lb-prologue-top .lb-atlas-brand { margin-bottom: 0; }
+.lb-prologue-caption-panel { position: absolute; left: 10%; right: 10%; bottom: 3%; padding: 18px 28px 12px 28px; background-color: rgba(7, 11, 17, 0.88); border-top-width: 1px; border-top-color: rgba(180, 162, 120, 0.4); }
+.lb-prologue-counter { font-size: 12px; color: rgb(170, 161, 138); -unity-text-align: middle-center; margin-bottom: 12px; letter-spacing: 2px; }
+.lb-prologue-caption { font-size: 25px; color: rgb(239, 232, 212); white-space: normal; -unity-text-align: middle-center; min-height: 70px; margin-bottom: 10px; }
+.lb-prologue-controls { flex-direction: row; justify-content: center; }
+.lb-prologue-button { height: 34px; min-width: 108px; padding: 0 16px; margin: 3px 8px; background-color: rgba(13, 20, 28, 0.9); border-width: 1px; border-color: rgba(197, 180, 140, 0.35); border-radius: 2px; color: rgb(208, 201, 182); font-size: 13px; }
+.lb-prologue-button:hover { background-color: rgb(41, 45, 46); border-color: rgb(202, 185, 140); }
+.lb-prologue-button:disabled { opacity: 0.3; }
+.lb-prologue-hint { color: rgb(150, 153, 153); font-size: 11px; -unity-text-align: middle-center; margin-top: 7px; white-space: normal; }
+.lb-prologue-music { position: absolute; left: 4%; top: 9%; }
+.lb-prologue-credits { background-color: rgba(7, 11, 17, 0.96); padding: 18px; color: rgb(216, 211, 192); font-size: 14px; }
+
+/* Campaign atlas: matte cartography, small ivory typography and restrained brass accents. */
+.lb-atlas { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 14, 18); overflow: hidden; }
+.lb-atlas-canvas { position: absolute; }
+.lb-atlas-paper, .lb-atlas-roads { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.lb-atlas-paper { background-image: url("Art/CampaignAtlas_v1.png"); -unity-background-scale-mode: stretch-to-fill; }
+.lb-atlas-header { position: absolute; top: 42px; left: 64px; right: 64px; flex-direction: row; justify-content: space-between; align-items: flex-start; }
+.lb-atlas-brand { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; letter-spacing: 5px; color: rgb(188, 174, 140); margin-bottom: 15px; }
+.lb-atlas-title { font-size: 32px; color: rgb(235, 234, 222); letter-spacing: 2px; }
+.lb-atlas-subtitle { font-size: 14px; color: rgb(153, 168, 167); margin-top: 9px; }
+.lb-atlas-progress { font-size: 14px; color: rgb(212, 203, 178); padding-top: 8px; letter-spacing: 1px; }
+.lb-atlas-footer { position: absolute; left: 64px; right: 64px; bottom: 40px; flex-direction: row; justify-content: space-between; align-items: center; border-top-width: 1px; border-top-color: rgba(210, 204, 176, 0.28); padding-top: 20px; padding-bottom: 12px; background-color: rgba(8, 14, 18, 0.86); }
+.lb-atlas-detail { flex-shrink: 1; padding-left: 18px; }
+.lb-atlas-eyebrow { font-size: 11px; letter-spacing: 2px; color: rgb(169, 158, 127); }
+.lb-atlas-selected { font-size: 27px; color: rgb(234, 232, 217); margin-top: 6px; margin-bottom: 7px; }
+.lb-atlas-description { font-size: 14px; color: rgb(166, 179, 177); white-space: normal; }
+.lb-atlas-action { width: 310px; margin-left: 24px; margin-right: 18px; }
+.lb-atlas-hint { font-size: 11px; color: rgb(155, 165, 161); margin-bottom: 12px; -unity-text-align: middle-right; }
+.lb-atlas-primary { height: 52px; background-color: rgb(195, 177, 130); color: rgb(21, 29, 30); border-width: 1px; border-color: rgb(211, 195, 154); border-radius: 2px; font-size: 17px; margin: 0; }
+.lb-atlas-primary:hover, .lb-atlas-primary:focus { background-color: rgb(224, 209, 169); border-color: rgb(249, 238, 208); }
+.lb-atlas-primary:active { background-color: rgb(169, 149, 103); }
+.lb-atlas-primary:disabled { opacity: 0.4; }
+.lb-atlas-status { position: absolute; bottom: 8px; left: 64px; color: rgb(212, 184, 145); font-size: 12px; }
+.lb-beacon { position: absolute; width: 120px; height: 112px; margin: -48px 0 0 -60px; padding: 0; background-color: rgba(8, 14, 18, 0.40); border-width: 1px; border-color: rgba(204, 211, 194, 0.12); border-radius: 3px; align-items: center; }
+.lb-beacon:hover, .lb-beacon:focus { background-color: rgba(17, 29, 32, 0.88); border-color: rgba(222, 215, 187, 0.85); }
+.lb-beacon--selected { background-color: rgba(13, 25, 28, 0.9); border-color: rgb(192, 175, 126); }
+.lb-beacon:disabled { opacity: 0.52; }
+.lb-beacon-symbol { width: 48px; height: 57px; margin-top: 3px; }
+.lb-beacon-name { color: rgb(233, 233, 219); font-size: 14px; margin-top: 5px; -unity-text-align: middle-center; }
+.lb-beacon-state { color: rgb(155, 173, 173); font-size: 10px; margin-top: 3px; -unity-text-align: middle-center; }
+.lb-beacon--selected .lb-beacon-state { color: rgb(224, 209, 161); }
+.lb-beacon--lit .lb-beacon-name, .lb-beacon--lit .lb-beacon-state { color: rgb(239, 217, 161); }
+.lb-beacon-halo { display: none; position: absolute; width: 116px; height: 116px; top: -28px; background-image: url("Art/Prep_Glow.png"); -unity-background-image-tint-color: rgba(248, 209, 121, 0.55); }
+.lb-beacon--lit .lb-beacon-halo { display: flex; }
+.lb-atlas-back { position: absolute; right: 0; top: 8px; height: 40px; padding: 0 20px; color: rgb(222, 218, 197); background-color: rgba(10, 19, 27, 0.9); border-width: 1px; border-color: rgba(212, 202, 167, 0.4); border-radius: 2px; font-size: 14px; }
+.lb-atlas-back:hover, .lb-atlas-back:focus { border-color: rgb(219, 204, 157); background-color: rgb(35, 46, 51); }
+.lb-prep--briefing .lb-prep-stage-selector { display: none; }
+.lb-prep--briefing .lb-prep-header { right: 48px; }
+
 /* Bundle the Korean font so player builds do not depend on OS fallback fonts. */
 :root {
     -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf");
@@ -980,6 +1035,11 @@
     padding: 18px 24px;
     align-items: center;
     color: rgb(244, 238, 226);
+}
+
+.lb-pause {
+    width: 420px;
+    padding: 24px 24px 22px 24px;
 }
 
 .lb-title {
@@ -2458,6 +2518,225 @@
     opacity: 1;
     scale: 1 1;
 }
+
+/* Destination briefing. Quiet surfaces and typography carry the hierarchy; gold marks decisions. */
+.lb-brief { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(10, 17, 21); color: rgb(223, 226, 217); }
+.lb-brief-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/CampaignAtlas_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(35, 45, 49); opacity: 0.22; }
+.lb-brief-header { position: absolute; left: 64px; right: 64px; top: 40px; height: 82px; flex-direction: row; justify-content: space-between; align-items: center; }
+.lb-brief-eyebrow { font-size: 12px; letter-spacing: 2px; color: rgb(181, 171, 141); margin: 0; padding: 0; }
+.lb-brief-title { font-size: 32px; letter-spacing: 1px; margin: 12px 0 0 0; padding: 0; color: rgb(235, 235, 220); }
+.lb-brief-back, .lb-brief-text-button { border-radius: 2px; border-width: 1px; border-color: rgba(183, 185, 164, 0.24); background-color: rgba(21, 31, 35, 0.8); color: rgb(196, 201, 186); font-size: 14px; padding: 10px 18px; margin: 0; }
+.lb-brief-back:hover, .lb-brief-back:focus, .lb-brief-text-button:hover, .lb-brief-text-button:focus { border-color: rgb(196, 179, 133); background-color: rgb(37, 45, 46); color: rgb(235, 222, 187); }
+.lb-brief-body { position: absolute; left: 64px; right: 64px; top: 151px; bottom: 265px; flex-direction: row; }
+.lb-brief-mission { width: 31%; padding-right: 38px; border-right-width: 1px; border-right-color: rgba(183, 185, 164, 0.17); }
+.lb-brief-armory { flex-grow: 1; flex-basis: 0; margin-left: 46px; }
+.lb-brief .unity-scroll-view__content-container { flex-shrink: 0; }
+.lb-brief-landscape { height: 172px; flex-shrink: 0; background-image: url("Art/CampaignAtlas_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(91, 106, 110); padding: 23px 26px; margin-bottom: 8px; border-width: 1px; border-color: rgba(198, 191, 160, 0.25); }
+.lb-brief-destination { font-size: 46px; color: rgb(244, 239, 216); margin: 6px 0; padding: 0; }
+.lb-brief-tag { font-size: 13px; color: rgb(200, 198, 175); margin: 0; padding: 0; }
+.lb-brief-section { font-size: 12px; letter-spacing: 1px; color: rgb(166, 169, 152); margin: 20px 0 10px 0; padding: 0; }
+.lb-brief-objective { font-size: 20px; color: rgb(225, 229, 216); white-space: normal; margin: 0; padding: 0; }
+.lb-brief-metrics { flex-direction: row; margin: 22px 0 0 0; padding-bottom: 14px; border-bottom-width: 1px; border-bottom-color: rgba(180, 185, 168, 0.16); }
+.lb-brief-metric { width: 50%; }
+.lb-brief-metric-value { font-size: 25px; color: rgb(205, 203, 178); margin: 5px 0 0 0; padding: 0; }
+.lb-brief-enemies { flex-direction: row; flex-wrap: wrap; }
+.lb-brief-enemy { font-size: 14px; color: rgb(191, 199, 188); border-bottom-width: 1px; border-bottom-color: rgba(171, 156, 130, 0.35); padding: 4px 0 6px 0; margin: 0 18px 5px 0; }
+.lb-brief-reward { flex-direction: row; align-items: center; min-height: 68px; background-color: rgba(44, 47, 39, 0.42); padding: 10px 12px; }
+.lb-brief-reward .lb-icon { margin-right: 16px; }
+.lb-brief-copy { flex-grow: 1; flex-shrink: 1; min-width: 0; justify-content: center; }
+.lb-brief-muted { font-size: 12px; color: rgb(149, 162, 159); white-space: normal; margin: 3px 0; padding: 0; -unity-text-align: middle-left; }
+.lb-brief-identity { flex-direction: row; align-items: center; height: 77px; margin-bottom: 13px; border-bottom-width: 1px; border-bottom-color: rgba(180, 185, 168, 0.17); padding-bottom: 12px; }
+.lb-brief-portrait { width: 62px; height: 64px; margin-right: 18px; background-image: url("Art/Hero_Commander.png"); background-size: 180% auto; background-position-x: center; background-position-y: top; -unity-background-image-tint-color: rgb(192, 199, 194); overflow: hidden; }
+.lb-brief-hero-name { font-size: 17px; color: rgb(223, 225, 210); margin: 0 0 5px 0; padding: 0; }
+.lb-brief-heading-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.lb-brief-heading { font-size: 23px; color: rgb(233, 232, 213); margin: 0; padding: 0; }
+.lb-brief-slots { flex-direction: row; margin-bottom: 17px; }
+.lb-brief-slot { flex-grow: 1; flex-basis: 0; flex-direction: row; align-items: center; height: 85px; margin: 0 10px 0 0; padding: 13px 12px; border-width: 1px; border-radius: 2px; border-color: rgba(181, 189, 170, 0.2); background-color: rgba(25, 36, 39, 0.72); }
+.lb-brief-slot--active { border-color: rgb(196, 179, 133); background-color: rgb(40, 45, 41); }
+.lb-brief-slot:hover, .lb-brief-slot:focus { border-color: rgb(211, 202, 166); }
+.lb-brief-key { font-size: 11px; color: rgb(191, 183, 151); margin: 0 10px 0 0; padding: 0; min-width: 16px; }
+.lb-brief-slot .lb-icon { width: 42px; height: 48px; flex-shrink: 0; margin-right: 10px; }
+.lb-brief-item-name { font-size: 15px; color: rgb(222, 225, 209); white-space: normal; margin: 0 0 4px 0; padding: 0; -unity-text-align: middle-left; }
+.lb-brief-inventory-hint { font-size: 12px; color: rgb(156, 171, 165); margin: 0 0 12px 0; padding: 0; }
+.lb-brief-inventory { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
+.lb-brief-item { width: 32.4%; height: 78px; margin: 0 0.9% 9px 0; padding: 10px 14px; flex-direction: row; align-items: center; border-width: 1px; border-radius: 2px; border-color: rgba(156, 174, 159, 0.16); background-color: rgba(20, 31, 34, 0.7); }
+.lb-brief-item .lb-icon { width: 42px; height: 46px; flex-shrink: 0; margin-right: 15px; }
+.lb-brief-item:hover, .lb-brief-item:focus { border-color: rgb(181, 188, 159); background-color: rgb(34, 46, 46); }
+.lb-brief-item--selected { border-color: rgb(175, 158, 114); background-color: rgb(38, 43, 37); }
+.lb-brief-item:disabled { opacity: 0.58; }
+.lb-brief-inspect { flex-direction: row; align-items: center; min-height: 137px; padding: 17px 20px; border-top-width: 1px; border-top-color: rgba(194, 179, 134, 0.5); background-color: rgba(29, 37, 35, 0.85); }
+.lb-brief-inspect .lb-brief-detail-icon { width: 60px; height: 82px; margin-right: 24px; flex-shrink: 0; }
+.lb-brief-item-title { font-size: 21px; color: rgb(233, 221, 184); margin: 3px 0 8px 0; padding: 0; }
+.lb-brief-effect { font-size: 13px; color: rgb(184, 197, 188); white-space: normal; margin: 0; padding: 0; }
+.lb-brief-item-stats { font-size: 12px; color: rgb(155, 174, 172); margin: 7px 0 0 0; padding: 0; }
+.lb-brief-equip { min-width: 146px; height: 42px; font-size: 13px; color: rgb(226, 214, 173); border-width: 1px; border-color: rgb(156, 143, 109); border-radius: 2px; background-color: rgb(44, 48, 38); margin-left: 18px; }
+.lb-brief-equip:hover, .lb-brief-equip:focus { background-color: rgb(66, 68, 48); border-color: rgb(221, 204, 151); }
+.lb-brief-equip:disabled { opacity: 0.45; }
+.lb-brief-feedback { height: 24px; margin: 7px 0 0 0; padding: 0; font-size: 12px; color: rgb(194, 201, 160); }
+.lb-brief-roster { position: absolute; left: 64px; right: 64px; bottom: 119px; height: 122px; border-top-width: 1px; border-top-color: rgba(188, 189, 167, 0.18); }
+.lb-brief-roster-heading { flex-direction: row; align-items: center; justify-content: space-between; height: 42px; }
+.lb-brief-roster-heading .lb-brief-section { margin: 0; }
+.lb-brief-troops { flex-direction: row; }
+.lb-brief-troop { flex-grow: 1; flex-basis: 0; flex-direction: row; align-items: center; height: 73px; margin-right: 8px; background-color: rgba(26, 36, 37, 0.45); }
+.lb-brief-unit-art { width: 68px; height: 68px; flex-shrink: 0; margin-right: 10px; background-size: cover; background-position-y: top; -unity-background-image-tint-color: rgb(183, 195, 184); }
+.lb-brief-troop-name { font-size: 14px; color: rgb(202, 211, 194); margin: 0 0 3px 0; padding: 0; }
+.lb-brief-troop-role { font-size: 11px; color: rgb(144, 160, 151); margin: 0 0 3px 0; padding: 0; }
+.lb-brief-troop-cost { font-size: 11px; color: rgb(153, 174, 163); margin: 0; padding: 0; }
+.lb-brief-troop--locked { opacity: 0.5; }
+.lb-brief-unit--0 .lb-brief-unit-art { background-image: url("Art/Unit_Swordsman.png"); }
+.lb-brief-unit--1 .lb-brief-unit-art { background-image: url("Art/Unit_Archer.png"); }
+.lb-brief-unit--2 .lb-brief-unit-art { background-image: url("Art/Unit_Shieldbearer.png"); }
+.lb-brief-unit--3 .lb-brief-unit-art { background-image: url("Art/Unit_Spearman.png"); }
+.lb-brief-unit--4 .lb-brief-unit-art { background-image: url("Art/Unit_Priest.png"); }
+.lb-brief-unit--5 .lb-brief-unit-art { background-image: url("Art/Unit_Mage.png"); }
+.lb-brief-unit--6 .lb-brief-unit-art { background-image: url("Art/Unit_Knight.png"); }
+.lb-brief-unit--7 .lb-brief-unit-art { background-image: url("Art/Unit_Dragon.png"); }
+.lb-brief-footer { position: absolute; left: 64px; right: 64px; bottom: 30px; height: 69px; flex-direction: row; align-items: center; justify-content: space-between; border-top-width: 1px; border-top-color: rgba(198, 184, 143, 0.32); padding-top: 14px; }
+.lb-brief-footer .lb-brief-muted { flex-shrink: 1; margin-right: 30px; }
+.lb-brief .lb-brief-start { width: 340px; height: 52px; flex-shrink: 0; }
+.lb-brief-growth-overlay { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(3, 8, 11, 0.86); align-items: center; justify-content: center; }
+.lb-brief-growth-dialog { width: 660px; max-height: 78%; padding: 32px; background-color: rgb(19, 29, 32); border-width: 1px; border-color: rgba(195, 181, 139, 0.6); }
+.lb-brief-growth-list { margin-top: 22px; flex-shrink: 1; }
+.lb-brief-growth-row { font-size: 16px; white-space: normal; color: rgb(214, 219, 202); padding: 15px 0; border-bottom-width: 1px; border-bottom-color: rgba(166, 181, 163, 0.17); }
+
+/* Unified in-game presentation: matte charcoal, ivory type, brass only for selection. */
+.lb-hud .lb-display, .lb-levelup .lb-display { -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf"); }
+.lb-hud-panel, .lb-hud-frame { background-image: none; background-color: rgba(10, 20, 23, 0.88); border-width: 1px; border-color: rgba(182, 190, 171, 0.24); border-radius: 2px; }
+.lb-hud-frame { padding: 12px; }
+.lb-hud .lb-prep-bullet, .lb-hud .lb-portrait-ring, .lb-hud .lb-orb-ring, .lb-hud .lb-orb-glow, .lb-hud .lb-card-halo, .lb-hud .lb-card-frame, .lb-hud .lb-bar-gloss { display: none; }
+.lb-hud .lb-hud-title { color: rgb(199, 208, 190); font-size: 12px; letter-spacing: 1px; }
+.lb-hud .lb-keycap { background-image: none; background-color: rgb(25, 36, 39); border-width: 1px; border-color: rgba(199, 205, 185, 0.42); border-radius: 2px; padding: 0 6px; }
+.lb-hud .lb-bar { background-image: none; background-color: rgb(9, 16, 20); border-width: 1px; border-color: rgba(190, 201, 181, 0.25); border-radius: 1px; height: 18px; }
+.lb-hud .lb-bar-fill, .lb-unit-bar-fill { background-image: none; border-radius: 0; }
+.lb-hud .lb-bar--hp .lb-bar-fill { background-color: rgb(133, 64, 65); }
+.lb-hud .lb-bar--mana .lb-bar-fill { background-color: rgb(65, 103, 134); }
+.lb-hud .lb-bar--food .lb-bar-fill { background-color: rgb(145, 126, 69); }
+.lb-hud .lb-bar--ally .lb-bar-fill { background-color: rgb(70, 111, 132); }
+.lb-hud .lb-bar--enemy .lb-bar-fill, .lb-hud .lb-bar--boss .lb-bar-fill { background-color: rgb(150, 65, 68); }
+.lb-hud .lb-bar--shielded .lb-bar-fill { background-color: rgb(101, 88, 133); }
+.lb-unit-bar--ally .lb-unit-bar-fill { background-color: rgb(98, 165, 187); }
+.lb-unit-bar--enemy .lb-unit-bar-fill { background-color: rgb(196, 91, 88); }
+.lb-hud .lb-minimap { left: 32px; top: 28px; width: 230px; }
+.lb-hud .lb-minimap-map { height: 195px; border-radius: 1px; border-color: rgba(186, 193, 165, 0.3); background-color: rgba(17, 32, 32, 0.8); }
+.lb-hud .lb-path-hint { font-size: 15px; color: rgb(214, 200, 151); }
+.lb-hud .lb-top { left: 280px; right: 245px; top: 28px; }
+.lb-hud .lb-top-row { height: 44px; padding: 0 14px; }
+.lb-hud .lb-stage { font-size: 16px; letter-spacing: 0; color: rgb(218, 216, 189); }
+.lb-hud .lb-front { border-radius: 2px; padding: 3px 8px 3px 3px; margin: 0 3px; }
+.lb-hud .lb-front-number { border-radius: 1px; background-color: rgb(23, 34, 37); width: 23px; height: 23px; margin-right: 5px; }
+.lb-hud .lb-front--selected { border-color: rgb(199, 182, 127); }
+.lb-hud .lb-front--selected .lb-front-number { border-width: 1px; background-color: rgb(70, 67, 44); border-color: rgb(180, 166, 113); }
+.lb-hud .lb-front--danger { background-color: rgb(88, 37, 38); border-color: rgb(204, 107, 97); }
+.lb-hud .lb-waves { font-size: 13px; }
+.lb-hud .lb-divider { margin: 0 10px; background-color: rgba(201, 197, 163, 0.25); }
+.lb-hud .lb-base { width: 258px; padding: 8px 12px; margin: 4px 4px 0 4px; }
+.lb-hud .lb-base-head .lb-hud-icon { display: none; }
+.lb-hud .lb-base-title { font-size: 11px; letter-spacing: 1px; }
+.lb-hud .lb-boss { top: 165px; left: 35%; right: 35%; background-color: rgba(14, 21, 23, 0.86); padding: 10px 16px; }
+.lb-hud .lb-boss-name { font-size: 16px; letter-spacing: 2px; }
+.lb-hud .lb-boss-title .lb-hud-icon { display: none; }
+.lb-hud .lb-boss .lb-bar { height: 18px; }
+.lb-hud .lb-vitals { left: 32px; bottom: 32px; width: 350px; padding: 14px; }
+.lb-hud .lb-portrait { width: 66px; height: 92px; margin-right: 14px; }
+.lb-hud .lb-portrait-face { left: 0; top: 0; width: 66px; height: 70px; border-radius: 2px; background-color: rgb(26, 39, 39); }
+.lb-hud .lb-portrait-art { left: -70px; top: -12px; width: 206px; height: 434px; }
+.lb-hud .lb-level { left: 0; bottom: 0; width: 66px; height: 22px; border-width: 0; border-radius: 0; background-color: rgb(35, 43, 37); }
+.lb-hud .lb-level-value { font-size: 12px; }
+.lb-hud .lb-hero-name { font-size: 12px; letter-spacing: 0; color: rgb(204, 211, 185); }
+.lb-hud .lb-bar--hp { height: 22px; }
+.lb-hud .lb-command { left: 390px; right: 410px; bottom: 32px; }
+.lb-hud .lb-slot { width: 132px; margin: 0 4px; }
+.lb-hud .lb-socket-orb { width: 66px; height: 66px; border-width: 1px; border-color: rgba(199, 188, 146, 0.65); border-radius: 2px; background-color: rgba(12, 23, 26, 0.93); }
+.lb-hud .lb-orb, .lb-hud .lb-orb-dial { left: 7px; top: 7px; width: 50px; height: 50px; }
+.lb-hud .lb-orb { border-radius: 1px; background-color: rgba(0, 0, 0, 0); background-size: contain; }
+.lb-hud .lb-orb--0 { background-image: url("Art/Item_LightStaff.png"); }
+.lb-hud .lb-orb--1 { background-image: url("Art/Item_HealingStaff.png"); }
+.lb-hud .lb-orb--2 { background-image: url("Art/Item_RuneStaff.png"); }
+.lb-hud .lb-orb--3 { background-image: url("Art/Item_FoodRing.png"); }
+.lb-hud .lb-orb--4 { background-image: url("Art/Item_ManaRing.png"); }
+.lb-hud .lb-orb--5 { background-image: url("Art/Item_VitalityRing.png"); }
+.lb-hud .lb-orb-key { bottom: -10px; }
+.lb-hud .lb-slot-caption { flex-direction: column; border-radius: 2px; margin-top: 16px; padding: 5px 8px; background-color: rgba(10, 20, 23, 0.9); }
+.lb-hud .lb-cost { margin: 3px 0 0 0; font-size: 11px; }
+.lb-hud .lb-troops { right: 32px; top: 180px; bottom: 165px; }
+.lb-hud .lb-card { width: 192px; height: 67px; padding: 5px 10px; margin: 3px 0; background-image: none; background-color: rgba(12, 23, 26, 0.9); border-width: 1px; border-color: rgba(166, 181, 164, 0.18); border-radius: 2px; }
+.lb-hud .lb-card-portrait { width: 51px; height: 53px; margin-right: 12px; }
+.lb-hud .lb-card-body { left: 0; right: 0; top: 0; bottom: 0; border-radius: 1px; background-color: rgb(25, 38, 37); }
+.lb-hud .lb-card-art { height: 148px; }
+.lb-hud .lb-card--7 .lb-card-art { height: 90px; }
+.lb-hud .lb-card-name { font-size: 14px; }
+.lb-hud .lb-card-cost { font-size: 13px; }
+.lb-hud .lb-card--ready { border-color: rgba(183, 191, 151, 0.5); }
+.lb-hud .lb-card--selected { translate: -6px 0; border-left-width: 3px; border-left-color: rgb(211, 194, 140); }
+.lb-hud .lb-card-key { left: -7px; top: -3px; }
+.lb-hud .lb-card-food { width: 15px; height: 15px; }
+.lb-hud .lb-hints { right: 32px; bottom: 32px; padding: 8px 10px; }
+.lb-hud .lb-hint-text { font-size: 10px; margin-left: 4px; }
+.lb-hud .lb-hint-row .lb-keycap { margin-left: 7px; height: 20px; padding: 0 4px; }
+.lb-hud .lb-keycap-text { font-size: 10px; }
+.lb-hud .lb-toast { background-image: none; background-color: rgba(13, 23, 26, 0.94); border-bottom-width: 1px; border-bottom-color: rgb(185, 171, 124); height: 42px; bottom: 183px; font-size: 15px; }
+
+/* Level-up comparison: a single row, restrained entrances and no rotating ornament. */
+.lb-levelup { background-color: rgb(10, 18, 22); }
+.lb-levelup-veil { background-color: rgba(10, 18, 22, 0.96); }
+.lb-levelup-rune, .lb-levelup-glow, .lb-levelup-ornament, .lb-lvcard .lb-halo, .lb-lvcard-shine, .lb-lvcard-well-glow, .lb-lvcard-well-rune, .lb-lvcard-divider { display: none; }
+.lb-levelup-header { margin-bottom: 30px; }
+.lb-levelup .lb-levelup-title { font-size: 42px; letter-spacing: 2px; color: rgb(234, 233, 215); text-shadow: none; margin: 0 0 14px 0; }
+.lb-levelup-subtitle { font-size: 15px; letter-spacing: 0; color: rgb(158, 177, 170); -unity-font-style: normal; }
+.lb-levelup-remaining { background-color: rgb(30, 43, 43); color: rgb(192, 195, 164); border-color: rgba(183, 190, 162, 0.3); border-radius: 1px; letter-spacing: 0; }
+.lb-lvcards { width: 86%; max-width: 1240px; }
+.lb-lvslot { flex-grow: 1; flex-basis: 0; margin: 0 10px; }
+.lb-levelup .lb-lvcard { width: 100%; height: 465px; padding: 30px 28px; border-width: 1px; border-color: rgba(173, 191, 174, 0.3); border-radius: 2px; background-image: none; background-color: rgb(21, 32, 35); align-items: flex-start; }
+.lb-levelup .lb-lvcard:hover, .lb-levelup .lb-lvcard:focus { scale: 1 1; translate: 0 -3px; background-color: rgb(29, 42, 43); border-color: rgb(184, 193, 160); }
+.lb-levelup .lb-lvcard--selected, .lb-levelup .lb-lvcard--selected:hover { scale: 1 1; translate: 0 -3px; border-color: rgb(214, 195, 137); background-color: rgb(37, 43, 37); }
+.lb-levelup .lb-lvcard--dimmed { opacity: 0.75; }
+.lb-levelup .lb-lvcard-medal { left: auto; right: 24px; top: 22px; margin-left: 0; width: 30px; height: 30px; border-radius: 2px; border-width: 1px; border-color: rgba(185, 193, 164, 0.35); background-color: rgb(23, 35, 36); }
+.lb-levelup .lb-lvcard-number { font-size: 13px; }
+.lb-levelup .lb-lvcard-category { font-size: 12px; letter-spacing: 1px; color: rgb(184, 190, 163); }
+.lb-levelup .lb-lvcard-well { width: 92px; height: 100px; margin: 20px 0 10px 0; }
+.lb-levelup .lb-growth-icon { width: 88px; height: 88px; }
+.lb-levelup .lb-lvcard-title { font-size: 25px; color: rgb(230, 232, 214); -unity-text-align: middle-left; margin: 4px 0 16px 0; letter-spacing: 0; }
+.lb-levelup .lb-lvcard-description { font-size: 15px; -unity-text-align: upper-left; min-height: 54px; color: rgb(157, 177, 171); }
+.lb-levelup .lb-lvcard-effect { font-size: 22px; color: rgb(217, 203, 157); -unity-text-align: middle-left; margin-top: 16px; }
+.lb-levelup .lb-lvcard-footer { left: 28px; right: 28px; bottom: 22px; height: 50px; padding: 12px 0 0 0; flex-direction: column; align-items: flex-start; border-color: rgba(189, 191, 157, 0.24); }
+.lb-levelup .lb-lvcard-total { font-size: 13px; color: rgb(201, 207, 178); white-space: normal; }
+.lb-levelup .lb-lvcard-rank { font-size: 11px; letter-spacing: 0; }
+.lb-levelup-prompt { margin-top: 24px; }
+.lb-levelup-prompt-title { display: none; }
+.lb-levelup-prompt-hint { font-size: 13px; letter-spacing: 0; color: rgb(154, 174, 165); }
+.lb-levelup .lb-levelup-confirm { width: 300px; height: 52px; font-size: 17px; letter-spacing: 0; border-width: 1px; border-radius: 2px; background-color: rgb(195, 177, 130); border-color: rgb(211, 195, 154); color: rgb(21, 29, 30); text-shadow: none; }
+.lb-levelup .lb-levelup-confirm:hover, .lb-levelup .lb-levelup-confirm:focus { scale: 1 1; background-color: rgb(221, 206, 164); }
+.lb-levelup .lb-levelup-confirm:disabled { background-color: rgb(31, 43, 43); color: rgb(115, 131, 125); border-color: rgb(55, 70, 65); }
+
+/* Pause and result share a quiet, readable modal language. */
+.lb-flow { background-color: rgba(6, 14, 18, 0.96); color: rgb(220, 226, 211); }
+.lb-flow-dialog { width: 850px; max-width: 90%; max-height: 92%; padding: 38px 48px; background-color: rgb(17, 28, 32); border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(193, 180, 137, 0.5); align-items: stretch; }
+.lb-flow-eyebrow { font-size: 12px; letter-spacing: 2px; color: rgb(172, 182, 159); -unity-text-align: middle-center; margin-bottom: 15px; }
+.lb-flow-title { font-size: 58px; color: rgb(228, 220, 181); -unity-text-align: middle-center; margin: 0 0 16px 0; -unity-font-style: normal; }
+.lb-result--defeat .lb-flow-title { color: rgb(203, 147, 132); }
+.lb-flow-description { font-size: 16px; color: rgb(164, 183, 174); white-space: normal; -unity-text-align: middle-center; margin: 0 0 28px 0; }
+.lb-flow-muted { font-size: 13px; color: rgb(153, 173, 162); white-space: normal; }
+.lb-result-summary { flex-direction: row; padding: 22px 0; border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(187, 193, 163, 0.2); }
+.lb-result-metric { flex-grow: 1; flex-basis: 0; align-items: center; }
+.lb-result-value { font-size: 30px; color: rgb(225, 229, 208); margin-top: 12px; }
+.lb-result-details { margin: 20px 0 10px 0; color: rgb(162, 181, 171); font-size: 13px; }
+.lb-result-scroll { max-height: 300px; }
+.lb-result .lb-stat { font-size: 12px; color: rgb(163, 183, 172); margin-bottom: 8px; }
+.lb-result .lb-caption { color: rgb(194, 201, 173); font-size: 12px; margin-top: 10px; letter-spacing: 0; }
+.lb-result .lb-rating { background-color: rgb(27, 41, 43); border-width: 1px; border-color: rgb(78, 96, 84); border-radius: 2px; }
+.lb-result .lb-rating--on { background-color: rgb(190, 174, 126); color: rgb(17, 28, 29); }
+.lb-result .lb-note .unity-text-field__input { background-color: rgb(11, 22, 27); color: rgb(218, 227, 210); border-width: 1px; border-color: rgb(65, 85, 76); padding: 10px; }
+.lb-flow .lb-flow-primary { width: 310px; flex-shrink: 0; align-self: center; margin-top: 20px; }
+.lb-pause-dialog { width: 670px; }
+.lb-pause-dialog .lb-flow-title { font-size: 44px; }
+.lb-pause-volume-header { flex-direction: row; justify-content: space-between; padding-top: 12px; border-top-width: 1px; border-top-color: rgba(183, 190, 158, 0.23); }
+.lb-pause-volume { margin: 16px 0 22px 0; height: 24px; }
+.lb-pause-volume .unity-base-field__label { display: none; }
+.lb-pause-volume .unity-base-slider__tracker { height: 3px; background-color: rgb(61, 80, 72); }
+.lb-pause-volume .unity-base-slider__dragger { width: 14px; height: 20px; border-radius: 2px; background-color: rgb(203, 188, 143); border-width: 0; }
+.lb-pause-controls { font-size: 13px; color: rgb(162, 180, 167); white-space: normal; padding: 18px 0; border-top-width: 1px; border-top-color: rgba(183, 190, 158, 0.23); }
+.lb-pause-credits { color: rgb(136, 157, 146); font-size: 12px; margin: 0 0 10px 0; }
+.lb-flow-footnote { font-size: 12px; color: rgb(135, 158, 145); -unity-text-align: middle-center; margin-top: 14px; }
 
 .lb-hidden {
     display: none;

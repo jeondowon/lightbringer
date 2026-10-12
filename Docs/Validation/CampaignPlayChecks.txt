@@ -1,6 +1,7 @@
-PASS | CampaignPlay.v1 | 2026-10-11T16:57:19.5117147Z
+PASS | CampaignPlay.v1 | 2026-10-11T21:51:56.7314343Z
 PASS: Campaign preparation releases menu input
 PASS: Actual Play mode can start a campaign with isolated progress
+PASS: The Tread of War loads and advances as looping 2D battle music
 PASS: Stage 1 renders the imported forest profile
 PASS: Imported forest decoration adds no gameplay colliders
 PASS: Imported forest renderers have supported materials
@@ -60,15 +61,22 @@ PASS: Forest tree mesh reaches the terrain at (56.1, 48.2)
 PASS: Forest tree mesh reaches the terrain at (56.7, 65.0)
 PASS: Forest tree mesh reaches the terrain at (58.1, 72.7)
 PASS: Forest tree mesh reaches the terrain at (56.9, 88.6)
-PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.26]
+PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.21]
 PASS: Actual runtime summon initializes and activates one allied soldier
 PASS: Summoned soldier advances automatically across real rendered frames
-PASS: Hero staff deals damage during actual Play mode
+PASS: Hero staff defers damage until light impact
+PASS: Hero staff deals damage after advancing to light impact in Play mode
 PASS: Actual level-up suspends battle input and simulation
 PASS: Food and movement remain frozen while growth choices are displayed
 PASS: Choosing permanent growth resumes enabled runtime components
 PASS: Runtime base destruction grants victory and persistent-profile rewards
+PASS: Victory fades out and stops battle music
 PASS: Result screen can return and start the next unlocked stage
+PASS: Starting the next battle creates exactly one playing music source
+PASS: Battle music pause probe pauses the battle
+PASS: Pause keeps music playing and ducks volume using unscaled time
+PASS: Music pause probe resumes the battle
+PASS: Defeat fades out and stops battle music
 PASS: Runtime hero death keeps permanent growth and grants no victory reward
 PASS: Defeat can return to preparation without reloading Unity
 PASS: Late campaign runtime builds three independent fronts
@@ -81,10 +89,10 @@ PASS: Runtime deployment: 마법사
 PASS: Runtime deployment: 기사
 PASS: Runtime deployment: 드래곤
 PASS: Runtime Dragon stays grounded on its assigned Path
-MEASURE: 100 rendered stress units (+hero/base): frame mean 9.672 ms, p95 11.338 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 100 rendered stress units (+hero/base): frame mean 66.646 ms, p95 67.157 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 100 rendered stress units stay active through sustained real-time combat
 PASS: 100 rendered stress units exchange damage
-MEASURE: 300 rendered stress units (+hero/base): frame mean 9.916 ms, p95 13.377 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 300 rendered stress units (+hero/base): frame mean 33.425 ms, p95 34.787 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 300 rendered stress units stay active through sustained real-time combat
 PASS: 300 rendered stress units exchange damage
 PASS: Stress battle can clean up and return to campaign preparation

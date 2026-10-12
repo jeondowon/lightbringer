@@ -7,370 +7,293 @@ using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
-    // Campaign preparation between battles: hero illustration, campaign route and briefing, three-slot loadout,
-    // troops and permanent growth. Equipping is slot-first: pick LMB / Q / E, then click an item to place it there.
-    // Art comes from Assets/UI/Art through style classes (Lightbringer/UI/Build Preparation Art).
+    // Destination briefing and three-slot loadout. Inspecting an item never mutates the saved loadout.
     public sealed class PreparationView
     {
         private static readonly string[] SlotKeys = { "LMB", "Q", "E" };
-        private const int MoteCount = 22;
-
+        private static readonly string[] Roles = { "근접 전투", "원거리 지원", "전선 유지", "중장갑 대응", "아군 회복", "광역 마법", "돌격", "최상위 병력" };
+        private static readonly string[] Effects = {
+            "조준한 적에게 빛을 내려 단일 대상을 공격합니다.", "영웅 주변 6m 안의 아군을 회복합니다.",
+            "조준한 적을 중심으로 3m 안의 적을 공격합니다.", "장착 중 식량 생성 속도가 증가합니다.",
+            "장착 중 최대 마나와 마나 회복 속도가 증가합니다.", "장착 중 영웅의 최대 체력이 증가합니다."
+        };
         public readonly VisualElement Root;
-        private readonly VisualElement hero, runeOuter, runeInner, runeBriefing, startGlow, routeFill;
-        private readonly VisualElement enemies, rewards, growth;
-        private readonly VisualElement[] mapPaths = new VisualElement[3];
-        private readonly Label level, stageTitle, stageTag, briefingNote, status, mapCaption, mapStronghold;
-        private readonly HudBar experience;
-        private readonly Tile[] stages = new Tile[CampaignProgress.StageCount];
+        public event System.Action BackRequested;
+        private readonly Label stageTitle, stageTag, objective, paths, waves, rewards, rewardNote, heroLevel, experience;
+        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, feedback, status, troopSummary;
+        private readonly VisualElement enemies, rewardIcon, detailIcon, growth, growthPanel;
         private readonly Tile[] slots = new Tile[EquipmentCatalog.Slots];
         private readonly Tile[] items = new Tile[EquipmentCatalog.Count];
-        private readonly VisualElement[] slotIcons = new VisualElement[EquipmentCatalog.Slots];
         private readonly Tile[] troops = new Tile[UnitCatalog.Count];
-        private readonly Mote[] motes = new Mote[MoteCount];
-        private readonly Button start;
+        private readonly Button start, equip, growthToggle;
         private CampaignSession session;
-        private string shownGrowth = "", shownBriefing = "";
-
-        private struct Tile { public VisualElement Root; public Label Main, Note; }
-        private struct Mote { public VisualElement Element; public float X, Speed, Phase, Drift, Brightness; }
+        private string revision;
+        private bool growthOpen;
+        private int selectedItem = -1;
+        private struct Tile { public VisualElement Root, Icon; public Label Main, Note; }
 
         public PreparationView(VisualElement parent)
         {
-            Root = Hud.Box(parent, "lb-prep");
+            Root = Hud.Box(parent, "lb-brief");
+            Hud.IgnorePicking(Hud.Box(Root, "lb-brief-background"));
+            VisualElement header = Hud.Box(Root, "lb-brief-header");
+            VisualElement heading = Hud.Box(header);
+            Hud.Text(heading, "LIGHTBRINGER  /  출전 준비", "lb-brief-eyebrow");
+            Hud.Text(heading, "전장으로 향하기 전에", "lb-brief-title");
+            Button back = MakeButton(header, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
+            back.tooltip = "선택한 봉화를 유지한 채 지도로 돌아갑니다.";
 
-            // Backdrop: painted sky, slowly turning aura runes, the hero and drifting light.
-            Hud.Box(Root, "lb-prep-bg");
-            runeOuter = Hud.Box(Root, "lb-prep-rune");
-            runeInner = Hud.Box(Root, "lb-prep-rune", "lb-prep-rune--inner");
-            Hud.Box(Root, "lb-prep-hero-glow");
-            hero = Hud.Box(Root, "lb-prep-hero");
-            VisualElement moteLayer = Hud.Box(Root, "lb-prep-motes");
-            System.Random random = new System.Random(11);
-            for (int i = 0; i < MoteCount; i++)
-            {
-                VisualElement element = Hud.Box(moteLayer, "lb-prep-mote");
-                float size = 5f + (float)random.NextDouble() * 9f;
-                element.style.width = element.style.height = size;
-                // Most light rises around the hero; a few motes drift across the whole screen.
-                float x = i < 15 ? 0.02f + (float)random.NextDouble() * 0.34f : (float)random.NextDouble();
-                motes[i] = new Mote
-                {
-                    Element = element, X = x, Speed = 0.025f + (float)random.NextDouble() * 0.04f, Phase = (float)random.NextDouble(),
-                    Drift = 10f + (float)random.NextDouble() * 26f, Brightness = 0.35f + (float)random.NextDouble() * 0.6f,
-                };
-            }
+            VisualElement body = Hud.Box(Root, "lb-brief-body");
+            ScrollView mission = Scroll(body, "lb-brief-mission");
+            VisualElement landscape = Hud.Box(mission.contentContainer, "lb-brief-landscape");
+            Hud.Text(landscape, "선택한 목적지", "lb-brief-eyebrow");
+            stageTitle = Hud.Text(landscape, "", "lb-brief-destination");
+            stageTag = Hud.Text(landscape, "", "lb-brief-tag");
+            Hud.Text(mission.contentContainer, "전투 목표", "lb-brief-section");
+            objective = Hud.Text(mission.contentContainer, "", "lb-brief-objective");
+            VisualElement metrics = Hud.Box(mission.contentContainer, "lb-brief-metrics");
+            paths = Metric(metrics, "진격로"); waves = Metric(metrics, "적 공세");
+            Hud.Text(mission.contentContainer, "등장하는 적", "lb-brief-section");
+            enemies = Hud.Box(mission.contentContainer, "lb-brief-enemies");
+            Hud.Text(mission.contentContainer, "최초 승리 보상", "lb-brief-section");
+            VisualElement reward = Hud.Box(mission.contentContainer, "lb-brief-reward");
+            rewardIcon = Hud.Box(reward, "lb-icon");
+            VisualElement rewardText = Hud.Box(reward, "lb-brief-copy");
+            rewards = Hud.Text(rewardText, "", "lb-brief-item-name");
+            rewardNote = Hud.Text(rewardText, "", "lb-brief-muted");
 
-            VisualElement header = Hud.Box(Root, "lb-prep-header");
-            Hud.Box(header, "lb-prep-emblem");
-            VisualElement titles = Hud.Box(header, "lb-prep-titles");
-            Hud.Text(titles, "LIGHTBRINGER", "lb-display", "lb-prep-title");
-            Hud.Text(titles, "출전 준비", "lb-prep-subtitle");
-
-            VisualElement plate = Hud.Box(Root, "lb-prep-frame", "lb-prep-plate");
-            VisualElement medal = Hud.Box(plate, "lb-prep-medal");
-            Hud.Text(medal, "LV", "lb-prep-medal-label");
-            level = Hud.Text(medal, "", "lb-display", "lb-prep-medal-value");
-            VisualElement identity = Hud.Box(plate, "lb-prep-identity");
-            Hud.Text(identity, "마법 지휘관", "lb-display", "lb-prep-hero-name");
-            Hud.Text(identity, "라이트브링어의 영웅", "lb-prep-hero-role");
-            experience = new HudBar(identity, "lb-bar--exp");
-
-            VisualElement content = Hud.Box(Root, "lb-prep-content");
-            VisualElement campaign = Hud.Box(content, "lb-prep-column", "lb-prep-column--campaign");
-            VisualElement army = Hud.Box(content, "lb-prep-column", "lb-prep-column--army");
-
-            VisualElement route = Hud.Box(Panel(campaign, "캠페인", "전장을 선택하세요"), "lb-route");
-            VisualElement track = Hud.Box(route, "lb-route-track");
-            routeFill = Hud.Box(track, "lb-route-fill");
-            for (int i = 0; i < stages.Length; i++)
-            {
-                int stage = i + 1;
-                Button button = Clickable(route, () => session?.SelectStage(stage), "lb-stage");
-                Hud.Box(button, "lb-stage-glow");
-                VisualElement circle = Hud.Box(button, "lb-stage-circle");
-                stages[i] = new Tile { Root = button, Main = Hud.Text(circle, stage.ToString(), "lb-display", "lb-stage-number"), Note = Hud.Text(button, "", "lb-stage-state") };
-                Decorate(button);
-            }
-
-            VisualElement briefing = Panel(campaign, "작전 개요", "", "lb-prep-panel--briefing");
-            runeBriefing = Hud.Box(briefing, "lb-briefing-rune");
-            VisualElement titleRow = Hud.Box(briefing, "lb-briefing-title-row");
-            stageTitle = Hud.Text(titleRow, "", "lb-display", "lb-briefing-title");
-            stageTag = Hud.Text(titleRow, "", "lb-briefing-tag");
-            Hud.Text(briefing, "등장 적군", "lb-prep-caption");
-            enemies = Hud.Box(briefing, "lb-chips");
-            Hud.Text(briefing, "최초 승리 보상", "lb-prep-caption");
-            rewards = Hud.Box(briefing, "lb-rewards");
-            mapCaption = Hud.Text(briefing, "", "lb-prep-caption");
-            VisualElement map = Hud.Box(briefing, "lb-map");
-            for (int i = 0; i < mapPaths.Length; i++)
-            {
-                mapPaths[i] = Hud.Box(map, "lb-map-path");
-                Hud.Box(mapPaths[i], "lb-map-path-line");
-                Hud.Text(mapPaths[i], "진로 " + (i + 1), "lb-map-path-label");
-            }
-            mapStronghold = Hud.Text(map, "", "lb-map-base", "lb-map-base--enemy");
-            Hud.Text(map, "아군 본진", "lb-map-base", "lb-map-base--ally");
-            Hud.IgnorePicking(map);
-            briefingNote = Hud.Text(briefing, "", "lb-briefing-note");
-
-            VisualElement launch = Hud.Box(campaign, "lb-launch");
-            startGlow = Hud.Box(launch, "lb-launch-glow");
-            start = Clickable(launch, () => Start(), "lb-display", "lb-launch-button");
-            Hud.Text(campaign, "최초 승리 시 지팡이 또는 반지를 획득합니다. 상위 강화 장비는 기존 장비를 대체합니다.", "lb-prep-footnote");
-
-            VisualElement loadout = Panel(army, "장비", "슬롯을 선택한 뒤 장비를 선택하세요");
-            VisualElement socketRow = Hud.Box(loadout, "lb-sockets");
+            ScrollView armory = Scroll(body, "lb-brief-armory");
+            VisualElement identity = Hud.Box(armory.contentContainer, "lb-brief-identity");
+            Hud.Box(identity, "lb-brief-portrait");
+            VisualElement heroText = Hud.Box(identity, "lb-brief-copy");
+            heroLevel = Hud.Text(heroText, "", "lb-brief-hero-name");
+            experience = Hud.Text(heroText, "", "lb-brief-muted");
+            growthToggle = MakeButton(identity, "영구 성장 보기", ToggleGrowth, "lb-brief-text-button");
+            VisualElement headingRow = Hud.Box(armory.contentContainer, "lb-brief-heading-row");
+            Hud.Text(headingRow, "장비 정비", "lb-brief-heading");
+            Hud.Text(headingRow, "01  슬롯 선택    02  장비 확인    03  장착", "lb-brief-muted");
+            VisualElement socketRow = Hud.Box(armory.contentContainer, "lb-brief-slots");
             for (int i = 0; i < slots.Length; i++)
             {
                 int slot = i;
-                Button button = Clickable(socketRow, () => SelectSlot(slot), "lb-socket");
-                Hud.Box(button, "lb-halo");
-                slotIcons[i] = Hud.Box(Hud.Box(button, "lb-socket-ring"), "lb-icon");
-                VisualElement text = Hud.Box(button, "lb-socket-text");
-                Hud.Text(text, SlotKeys[i], "lb-socket-key");
-                slots[i] = new Tile { Root = button, Main = Hud.Text(text, "", "lb-socket-name"), Note = Hud.Text(text, "", "lb-socket-note") };
+                Button button = MakeButton(socketRow, "", () => SelectSlot(slot), "lb-brief-slot");
+                Hud.Text(button, SlotKeys[i], "lb-brief-key");
+                VisualElement icon = Hud.Box(button, "lb-icon");
+                VisualElement text = Hud.Box(button, "lb-brief-copy");
+                slots[i] = new Tile { Root = button, Icon = icon,
+                    Main = Hud.Text(text, "", "lb-brief-item-name"), Note = Hud.Text(text, "", "lb-brief-muted") };
                 Decorate(button);
             }
-            VisualElement armory = Hud.Box(loadout, "lb-armory");
+            inventoryHint = Hud.Text(armory.contentContainer, "", "lb-brief-inventory-hint");
+            VisualElement inventory = Hud.Box(armory.contentContainer, "lb-brief-inventory");
             for (int i = 0; i < items.Length; i++)
             {
                 int id = i;
-                Button button = Clickable(armory, () => Equip(id), "lb-item");
-                Hud.Box(button, "lb-halo");
-                Hud.Box(button, "lb-icon", "lb-icon--" + i);
-                items[i] = new Tile { Root = button, Main = Hud.Text(button, EquipmentCatalog.Names[i], "lb-item-name"), Note = Hud.Text(button, "", "lb-item-note") };
-                Decorate(button);
+                Button button = MakeButton(inventory, "", () => SelectItem(id), "lb-brief-item");
+                VisualElement icon = Hud.Box(button, "lb-icon", "lb-icon--" + i);
+                VisualElement text = Hud.Box(button, "lb-brief-copy");
+                items[i] = new Tile { Root = button, Icon = icon,
+                    Main = Hud.Text(text, EquipmentCatalog.Names[i], "lb-brief-item-name"),
+                    Note = Hud.Text(text, "", "lb-brief-muted") };
+                button.tooltip = Effects[i]; Decorate(button);
             }
+            VisualElement detail = Hud.Box(armory.contentContainer, "lb-brief-inspect");
+            detailIcon = Hud.Box(detail, "lb-icon", "lb-brief-detail-icon");
+            VisualElement detailText = Hud.Box(detail, "lb-brief-copy");
+            currentItem = Hud.Text(detailText, "", "lb-brief-muted");
+            itemTitle = Hud.Text(detailText, "", "lb-brief-item-title");
+            itemEffect = Hud.Text(detailText, "", "lb-brief-effect");
+            itemStats = Hud.Text(detailText, "", "lb-brief-item-stats");
+            equip = MakeButton(detail, "", () => EquipSelected(), "lb-brief-equip");
+            feedback = Hud.Text(armory.contentContainer, "", "lb-brief-feedback");
 
-            VisualElement roster = Hud.Box(Panel(army, "아군 병력", "해금한 모든 병종을 전투에서 소환할 수 있습니다"), "lb-troops-grid");
+            VisualElement roster = Hud.Box(Root, "lb-brief-roster");
+            VisualElement rosterHeading = Hud.Box(roster, "lb-brief-roster-heading");
+            Hud.Text(rosterHeading, "함께할 병력", "lb-brief-section");
+            troopSummary = Hud.Text(rosterHeading, "", "lb-brief-muted");
+            VisualElement troopRow = Hud.Box(roster, "lb-brief-troops");
             for (int i = 0; i < troops.Length; i++)
             {
-                VisualElement card = Hud.Box(roster, "lb-troop", "lb-troop--" + i);
-                Hud.Box(card, "lb-troop-glow");
-                Hud.Box(card, "lb-troop-art");
-                Hud.Box(card, "lb-troop-fade");
-                troops[i] = new Tile { Root = card, Main = Hud.Text(card, UnitCatalog.Names[i], "lb-troop-name"), Note = Hud.Text(card, "", "lb-troop-cost") };
-                Hud.IgnorePicking(card);
+                VisualElement tile = Hud.Box(troopRow, "lb-brief-troop", "lb-brief-unit--" + i);
+                Hud.Box(tile, "lb-brief-unit-art");
+                VisualElement text = Hud.Box(tile, "lb-brief-copy");
+                Label name = Hud.Text(text, UnitCatalog.Names[i], "lb-brief-troop-name");
+                Hud.Text(text, Roles[i], "lb-brief-troop-role");
+                troops[i] = new Tile { Root = tile, Main = name,
+                    Note = Hud.Text(text, "", "lb-brief-troop-cost") };
+                tile.tooltip = Roles[i];
             }
+            VisualElement footer = Hud.Box(Root, "lb-brief-footer");
+            status = Hud.Text(footer, "", "lb-brief-muted");
+            start = MakeButton(footer, "", () => Start(), "lb-atlas-primary", "lb-brief-start");
 
-            growth = Hud.Box(Panel(army, "영구 성장", "", "lb-prep-panel--growth"), "lb-chips");
-            status = Hud.Text(Root, "", "lb-prep-status");
-
-            Hud.IgnorePicking(runeOuter); Hud.IgnorePicking(runeInner); Hud.IgnorePicking(hero);
-            Hud.IgnorePicking(moteLayer); Hud.IgnorePicking(runeBriefing); Hud.IgnorePicking(startGlow);
-            Hud.Show(Root, false);
+            growthPanel = Hud.Box(Root, "lb-brief-growth-overlay");
+            VisualElement growthDialog = Hud.Box(growthPanel, "lb-brief-growth-dialog");
+            VisualElement growthHeader = Hud.Box(growthDialog, "lb-brief-heading-row");
+            Hud.Text(growthHeader, "영구 성장", "lb-brief-heading");
+            MakeButton(growthHeader, "닫기", ToggleGrowth, "lb-brief-text-button");
+            Hud.Text(growthDialog, "전투 중 선택한 성장 효과는 다음 전투에서도 유지됩니다.", "lb-brief-muted");
+            growth = Scroll(growthDialog, "lb-brief-growth-list").contentContainer;
+            Root.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode != KeyCode.Escape) return;
+                if (growthOpen) ToggleGrowth(); else BackRequested?.Invoke();
+                evt.StopPropagation();
+            });
+            Root.RegisterCallback<FocusInEvent>(evt =>
+            {
+                if (growthOpen && evt.target is VisualElement target && !growthPanel.Contains(target))
+                    growthPanel.Q<Button>().Focus();
+            });
+            Hud.Show(growthPanel, false); Hud.Show(Root, false);
         }
 
         public int ActiveSlot { get; private set; }
+        public int SelectedItem => selectedItem;
         public bool Visible => !Root.ClassListContains("lb-hidden");
         public string StartText => start.text;
-        public int TroopCount { get { int count = 0; foreach (Tile troop in troops) if (!troop.Root.ClassListContains("lb-troop--locked")) count++; return count; } }
+        public int TroopCount => session?.Progress?.UnlockedUnits ?? 0;
         public string SlotText(int slot) => slots[slot].Main.text;
-        public bool IsStageEnabled(int stage) => stages[stage - 1].Root.enabledSelf;
-        public bool IsStageSelected(int stage) => stages[stage - 1].Root.ClassListContains("lb-stage--selected");
         public bool IsItemEnabled(int id) => items[id].Root.enabledSelf;
         public string ItemNote(int id) => items[id].Note.text;
+        public string DestinationText => stageTitle.text;
 
-        private static VisualElement Panel(VisualElement parent, string title, string hint, params string[] classes)
+        private static Button MakeButton(VisualElement parent, string text, System.Action click, params string[] classes)
         {
-            VisualElement panel = Hud.Box(parent, "lb-prep-frame", "lb-prep-panel");
-            foreach (string name in classes) panel.AddToClassList(name);
-            VisualElement head = Hud.Box(panel, "lb-prep-panel-head");
-            Hud.Box(head, "lb-prep-bullet");
-            Hud.Text(head, title, "lb-display", "lb-prep-panel-title");
-            if (!string.IsNullOrEmpty(hint)) Hud.Text(head, hint, "lb-prep-hint");
-            return panel;
-        }
-
-        private static Button Clickable(VisualElement parent, System.Action click, params string[] classes)
-        {
-            Button button = new Button(click);
+            Button button = new Button(click) { text = text };
             foreach (string name in classes) button.AddToClassList(name);
-            parent.Add(button);
-            return button;
+            parent.Add(button); return button;
         }
-
-        // Clicks on a button's decorations must reach the button.
-        private static void Decorate(VisualElement button)
+        private static ScrollView Scroll(VisualElement parent, string className)
         {
-            foreach (VisualElement child in button.Children()) Hud.IgnorePicking(child);
+            ScrollView scroll = new ScrollView(ScrollViewMode.Vertical);
+            scroll.AddToClassList(className);
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+            parent.Add(scroll); return scroll;
         }
+        private static Label Metric(VisualElement parent, string title)
+        {
+            VisualElement box = Hud.Box(parent, "lb-brief-metric");
+            Hud.Text(box, title, "lb-brief-muted");
+            return Hud.Text(box, "", "lb-brief-metric-value");
+        }
+        private static void Decorate(VisualElement button)
+        { foreach (VisualElement child in button.Children()) Hud.IgnorePicking(child); }
+        private static void Icon(VisualElement icon, int id)
+        { for (int k = 0; k < EquipmentCatalog.Count; k++) icon.EnableInClassList("lb-icon--" + k, k == id); }
 
-        public void Refresh(CampaignSession value)
+        public void Refresh(CampaignSession value, bool showPreparation = true)
         {
             session = value;
             CampaignProgress profile = session != null ? session.Progress : null;
-            bool visible = profile != null && session.Battle == null;
+            bool visible = showPreparation && profile != null && session.Battle == null;
+            bool opening = visible && !Visible;
             Hud.Show(Root, visible);
-            if (!visible) return;
-
-            Hud.Set(level, profile.level.ToString());
-            experience.Set(profile.experience, profile.ExperienceToNext, $"경험치 {profile.experience} / {profile.ExperienceToNext}");
-
-            Hud.Fraction(routeFill, (profile.unlockedStage - 1) / (float)(stages.Length - 1));
-            for (int i = 0; i < stages.Length; i++)
+            if (!visible) { growthOpen = false; Hud.Show(growthPanel, false); return; }
+            if (opening) { Hud.Set(feedback, ""); slots[ActiveSlot].Root.Focus(); }
+            if (selectedItem < 0 || selectedItem >= EquipmentCatalog.Count) selectedItem = profile.loadout[ActiveSlot];
+            start.SetEnabled(!session.IsChoosing);
+            Hud.Set(start, $"봉화 {session.SelectedStage:00} · 출전하기  →");
+            string message = session.SaveStatus;
+            Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "장착한 장비와 영구 성장 효과가 전투에 적용됩니다.");
+            string key = session.SelectedStage + "|" + profile.unlockedStage + "|" + profile.level + "|" + profile.experience
+                + "|" + ActiveSlot + "|" + selectedItem + "|" + string.Join(",", profile.cleared)
+                + "|" + string.Join(",", profile.equipmentLevels) + "|" + string.Join(",", profile.loadout) + "|" + string.Join(",", profile.ranks);
+            if (key == revision) return;
+            revision = key;
+            int stage = session.SelectedStage;
+            bool cleared = profile.cleared[stage - 1], boss = EnemyCatalog.HasBoss(stage);
+            Hud.Set(stageTitle, $"봉화 {stage:00}");
+            Hud.Set(stageTag, cleared ? "해방한 전장 · 재도전" : boss ? "미해방 지역 · 보스 전투" : "미해방 지역 · 탈환 작전");
+            Hud.Set(objective, boss ? "군주를 처치해 보호막을 해제하고\n적군 본진을 파괴하세요." : "적군 본진을 파괴하고\n봉화에 다시 빛을 밝혀주세요.");
+            Hud.Set(paths, PrototypeBattleBuilder.PathCount(stage) + "개");
+            Hud.Set(waves, EnemyWaveSpawner.WaveCount(stage) + "회");
+            enemies.Clear();
+            for (int i = 0; i < EnemyCatalog.Count; i++)
             {
-                int stage = i + 1;
-                bool unlocked = stage <= profile.unlockedStage;
-                Tile tile = stages[i];
-                Hud.Set(tile.Note, !unlocked ? "미해금" : profile.cleared[i] ? "완료" : stage == EnemyCatalog.BossStage ? "보스" : "신규");
-                tile.Root.SetEnabled(unlocked);
-                tile.Root.EnableInClassList("lb-stage--selected", stage == session.SelectedStage);
-                tile.Root.EnableInClassList("lb-stage--cleared", unlocked && profile.cleared[i]);
-                tile.Root.EnableInClassList("lb-stage--new", unlocked && !profile.cleared[i]);
-                tile.Root.EnableInClassList("lb-stage--boss", stage == EnemyCatalog.BossStage);
+                if (!EnemyCatalog.AppearsIn((EnemyKind)i, stage)) continue;
+                Hud.Text(enemies, EnemyCatalog.Names[i], "lb-brief-enemy");
             }
-            RefreshBriefing(profile, session.SelectedStage);
-
+            int reward = CampaignProgress.ClearRewardItem(stage), rank = CampaignProgress.ClearRewardLevel(stage);
+            Icon(rewardIcon, reward);
+            Hud.Set(rewards, EquipmentCatalog.Names[reward] + " +" + rank);
+            Hud.Set(rewardNote, cleared ? "획득 완료 · 재도전 시 전투 경험치 획득"
+                : stage < CampaignProgress.StageCount ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금" : "캠페인의 마지막 전장");
+            Hud.Set(heroLevel, "마법 지휘관   ·   LV " + profile.level);
+            Hud.Set(experience, $"경험치 {profile.experience} / {profile.ExperienceToNext}");
+            Hud.Set(inventoryHint, $"보유 장비  /  {SlotKeys[ActiveSlot]} 슬롯에 사용할 장비를 확인하세요");
             for (int i = 0; i < slots.Length; i++)
             {
-                int id = profile.loadout[i];
+                int id = profile.loadout[i]; Icon(slots[i].Icon, id);
                 Hud.Set(slots[i].Main, EquipmentCatalog.Names[id]);
-                Hud.Set(slots[i].Note, $"+{profile.equipmentLevels[id]}  ·  {Describe(id)}");
-                slots[i].Root.EnableInClassList("lb-socket--active", i == ActiveSlot);
-                for (int k = 0; k < EquipmentCatalog.Count; k++) slotIcons[i].EnableInClassList("lb-icon--" + k, k == id);
+                Hud.Set(slots[i].Note, $"+{profile.equipmentLevels[id]} · " + (EquipmentCatalog.IsActive(id) ? $"{EquipmentCatalog.Cost(id):0} MP" : "지속 효과"));
+                slots[i].Root.EnableInClassList("lb-brief-slot--active", i == ActiveSlot);
             }
-
             for (int id = 0; id < items.Length; id++)
             {
                 int owner = System.Array.IndexOf(profile.loadout, id);
                 bool owned = profile.equipmentLevels[id] > 0;
-                Tile tile = items[id];
-                Hud.Set(tile.Note, !owned ? "미해금"
-                    : owner >= 0 && owner != ActiveSlot ? $"+{profile.equipmentLevels[id]}  ·  {SlotKeys[owner]} 장착 중"
-                    : $"+{profile.equipmentLevels[id]}  ·  {Describe(id)}");
-                // An item already worn in another slot cannot be duplicated.
-                tile.Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
-                tile.Root.EnableInClassList("lb-item--equipped", owner == ActiveSlot);
-                tile.Root.EnableInClassList("lb-item--used", owned && owner >= 0 && owner != ActiveSlot);
-                tile.Root.EnableInClassList("lb-item--locked", !owned);
+                Hud.Set(items[id].Note, !owned ? "미해금" : owner >= 0 ? $"+{profile.equipmentLevels[id]} · {SlotKeys[owner]} 장착 중" : $"+{profile.equipmentLevels[id]} · 장착 가능");
+                items[id].Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
+                items[id].Root.EnableInClassList("lb-brief-item--selected", id == selectedItem);
             }
-
+            RefreshItem(profile);
+            float costMultiplier = Mathf.Clamp(1f - profile.ranks[(int)GrowthKind.Leadership] * .025f, .5f, 1f);
+            Hud.Set(troopSummary, $"해금 {profile.UnlockedUnits} / {UnitCatalog.Count} · 해금한 병종은 모두 소환할 수 있습니다");
             for (int i = 0; i < troops.Length; i++)
             {
                 bool unlocked = i < profile.UnlockedUnits;
-                troops[i].Root.EnableInClassList("lb-troop--locked", !unlocked);
-                Hud.Set(troops[i].Note, unlocked ? UnitCatalog.Cost((UnitKind)i).ToString("0.#") + " 식량" : "해금 스테이지: " + (i + 1));
+                troops[i].Root.EnableInClassList("lb-brief-troop--locked", !unlocked);
+                Hud.Set(troops[i].Note, unlocked ? $"식량 {UnitCatalog.Cost((UnitKind)i) * costMultiplier:0.#}" : "미해금");
+                troops[i].Root.tooltip = unlocked ? Roles[i] : $"봉화 {i:00} 최초 승리 후 해금";
             }
-            RefreshGrowth(profile);
-
-            Hud.Set(start, "출전 · 스테이지 " + session.SelectedStage);
-            start.SetEnabled(!session.IsChoosing);
-            string message = string.IsNullOrEmpty(session.PlaytestStatus) ? session.SaveStatus
-                : session.PlaytestStatus + " " + session.SaveStatus;
-            Hud.Set(status, message ?? "");
-            Hud.Show(status, !string.IsNullOrEmpty(message));
-
-            Animate(Time.unscaledTime);
-        }
-
-        // The briefing only changes with the selected stage or its clear state.
-        private void RefreshBriefing(CampaignProgress profile, int stage)
-        {
-            bool cleared = profile.cleared[stage - 1];
-            string key = stage + "|" + cleared + "|" + profile.IsComplete + "|" + string.Join(",", profile.equipmentLevels);
-            if (key == shownBriefing) return;
-            shownBriefing = key;
-
-            bool boss = EnemyCatalog.HasBoss(stage);
-            Hud.Set(stageTitle, "스테이지 " + stage);
-            Hud.Set(stageTag, boss ? "보스 전투" : cleared ? "완료" : "새로운 전투");
-            stageTag.EnableInClassList("lb-briefing-tag--boss", boss);
-            stageTag.EnableInClassList("lb-briefing-tag--cleared", cleared && !boss);
-
-            enemies.Clear();
-            for (int k = 0; k < EnemyCatalog.Count; k++)
-            {
-                EnemyKind kind = (EnemyKind)k;
-                if (!EnemyCatalog.AppearsIn(kind, stage)) continue;
-                VisualElement chip = Hud.Box(enemies, "lb-chip", "lb-chip--enemy");
-                if (EnemyCatalog.IsHeavy(kind)) chip.AddToClassList("lb-chip--heavy");
-                Hud.Box(chip, "lb-chip-dot");
-                Hud.Text(chip, EnemyCatalog.Names[k], "lb-chip-name");
-                if (!EnemyCatalog.AppearsIn(kind, stage - 1)) Hud.Text(chip, "신규", "lb-chip-badge");
-            }
-
-            rewards.Clear();
-            if (cleared)
-                Hud.Text(rewards, "보상 획득 완료. 재도전 시 전투 경험치만 획득합니다.", "lb-prep-hint");
-            else
-            {
-                int item = CampaignProgress.ClearRewardItem(stage), rank = CampaignProgress.ClearRewardLevel(stage);
-                VisualElement gear = Hud.Box(rewards, "lb-reward");
-                Hud.Box(gear, "lb-reward-icon", "lb-icon", "lb-icon--" + item);
-                Hud.Text(gear, EquipmentCatalog.Names[item] + " +" + rank, "lb-reward-value");
-                if (profile.equipmentLevels[item] >= rank) Hud.Text(gear, "보유 중", "lb-prep-hint");
-            }
-
-            int paths = PrototypeBattleBuilder.PathCount(stage);
-            Hud.Set(mapCaption, $"전장 · 진로 {paths}개 · 적 공세 {EnemyWaveSpawner.WaveCount(stage)}회");
-            for (int i = 0; i < mapPaths.Length; i++)
-            {
-                Hud.Show(mapPaths[i], i < paths);
-                mapPaths[i].style.left = Length.Percent(50f + (i - (paths - 1) * 0.5f) * 30f);
-            }
-            Hud.Set(mapStronghold, boss ? "군주의 본진" : "적군 본진");
-            mapStronghold.EnableInClassList("lb-map-base--boss", boss);
-
-            Hud.Set(briefingNote, profile.IsComplete ? "캠페인을 완료했습니다. 모든 스테이지에 다시 도전할 수 있습니다."
-                : boss ? "군주를 처치해야 적군 본진의 보호막이 해제됩니다." : "");
-            Hud.Show(briefingNote, !string.IsNullOrEmpty(briefingNote.text));
-        }
-
-        // Growth only changes between battles; rebuild it when its contents change.
-        private void RefreshGrowth(CampaignProgress profile)
-        {
-            string key = string.Join(",", profile.ranks);
-            if (key == shownGrowth) return;
-            shownGrowth = key;
             growth.Clear();
             for (int i = 0; i < profile.ranks.Length; i++)
-            {
-                if (profile.ranks[i] <= 0) continue;
-                VisualElement chip = Hud.Box(growth, "lb-chip");
-                Hud.Text(chip, CampaignProgress.GrowthNames[i], "lb-chip-name");
-                Hud.Text(chip, "x" + profile.ranks[i], "lb-chip-detail");
-            }
-            if (growth.childCount == 0) Hud.Text(growth, "아직 없습니다. 전투 중 레벨을 올려 성장 효과를 선택하세요.", "lb-prep-hint");
+                if (profile.ranks[i] > 0) Hud.Text(growth, CampaignProgress.GrowthNames[i] + "  × " + profile.ranks[i], "lb-brief-growth-row");
+            if (growth.childCount == 0) Hud.Text(growth, "아직 선택한 성장 효과가 없습니다.\n전투 중 레벨을 올려 첫 효과를 선택하세요.", "lb-brief-growth-row");
         }
 
-        // Transform and opacity only: these animate without re-running layout.
-        private void Animate(float time)
+        private void RefreshItem(CampaignProgress profile)
         {
-            runeOuter.style.rotate = new Rotate(new Angle(time * 3f));
-            runeInner.style.rotate = new Rotate(new Angle(-time * 5f));
-            runeBriefing.style.rotate = new Rotate(new Angle(time * 6f));
-            hero.style.translate = new Translate(0f, Mathf.Sin(time * 1.1f) * 6f);
-            startGlow.style.opacity = 0.55f + 0.45f * Mathf.Sin(time * 2.4f);
-
-            float width = Root.layout.width, height = Root.layout.height;
-            if (!(width > 0f) || !(height > 0f)) { width = 1920f; height = 1080f; }
-            foreach (Mote mote in motes)
-            {
-                float life = Mathf.Repeat(time * mote.Speed + mote.Phase, 1f);
-                float x = mote.X * width + Mathf.Sin(time * 0.7f + mote.Phase * 6.283f) * mote.Drift;
-                mote.Element.style.translate = new Translate(x, height * (1.04f - life * 1.1f));
-                mote.Element.style.opacity = Mathf.Sin(life * Mathf.PI) * mote.Brightness;
-            }
+            int id = selectedItem, worn = profile.loadout[ActiveSlot], rank = profile.equipmentLevels[id];
+            Icon(detailIcon, id);
+            Hud.Set(currentItem, $"현재 {SlotKeys[ActiveSlot]} 장비 · {EquipmentCatalog.Names[worn]} +{profile.equipmentLevels[worn]}");
+            Hud.Set(itemTitle, EquipmentCatalog.Names[id] + " +" + rank);
+            Hud.Set(itemEffect, Effects[id]);
+            Hud.Set(itemStats, EquipmentCatalog.IsActive(id)
+                ? $"소모 {EquipmentCatalog.Cost(id):0} MP   ·   재사용 {EquipmentCatalog.Cooldown(id):0.#}초"
+                : id == (int)EquipmentKind.FoodRing ? $"초당 식량 +{rank}"
+                : id == (int)EquipmentKind.ManaRing ? $"최대 MP +{rank * 15}   ·   초당 MP +{rank * 2}" : $"최대 HP +{rank * 30}");
+            int owner = System.Array.IndexOf(profile.loadout, id);
+            Hud.Set(equip, owner == ActiveSlot ? "현재 장착 중" : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
+            equip.SetEnabled(rank > 0 && owner < 0);
         }
-
-        private static string Describe(int id) => EquipmentCatalog.IsActive(id) ? EquipmentCatalog.Cost(id).ToString("0") + " 마나" : "지속 효과";
-
+        private void ToggleGrowth()
+        {
+            growthOpen = !growthOpen; Hud.Show(growthPanel, growthOpen);
+            if (growthOpen) growthPanel.Q<Button>().Focus(); else growthToggle.Focus();
+        }
         public void SelectSlot(int slot)
         {
-            if (slot >= 0 && slot < slots.Length) ActiveSlot = slot;
-            if (session != null) Refresh(session);
+            if (slot < 0 || slot >= slots.Length) return;
+            ActiveSlot = slot;
+            selectedItem = session?.Progress != null ? session.Progress.loadout[slot] : -1;
+            Hud.Set(feedback, ""); if (session != null) Refresh(session);
         }
-
-        // Also used by validation, which has no panel to click in.
+        public bool SelectItem(int id)
+        {
+            if (session?.Progress == null || id < 0 || id >= items.Length || !IsItemEnabled(id)) return false;
+            selectedItem = id; Hud.Set(feedback, ""); Refresh(session); return true;
+        }
+        public bool EquipSelected() => Equip(selectedItem);
         public bool Equip(int id)
         {
             bool equipped = session != null && session.TryEquip(ActiveSlot, id);
+            if (equipped) { selectedItem = id; Hud.Set(feedback, EquipmentCatalog.Names[id] + " 장착 완료"); }
             if (session != null) Refresh(session);
             return equipped;
         }
-
         public bool Start() => session != null && session.StartBattle();
     }
 }

@@ -34,9 +34,16 @@ namespace Lightbringer.EditorTools
         static PreparationPreview()
         {
             EditorRequests.Register(Request, Capture);
+            EditorRequests.Register("Docs/Validation/BriefingCompactPreview.request", CaptureCompactBriefing);
+            EditorRequests.Register("Docs/Validation/CampaignMapPreview.request", CaptureCampaignMap);
             EditorRequests.Register(LevelUpRequest, CaptureLevelUp);
             EditorRequests.Register(BattleHudRequest, CaptureBattleHud);
             EditorRequests.Register("Docs/Validation/ResultPreview.request", CaptureResult);
+            EditorRequests.Register("Docs/Validation/DefeatPreview.request", CaptureDefeat);
+            EditorRequests.Register("Docs/Validation/PausePreview.request", CapturePause);
+            EditorRequests.Register("Docs/Validation/ProloguePreview.request", CapturePrologue);
+            EditorRequests.Register("Docs/Validation/PrologueCompactPreview.request", () => CapturePrologueAt(1280, 1024, "PrologueCompactPreview"));
+            EditorRequests.Register("Docs/Validation/PrologueWidePreview.request", () => CapturePrologueAt(2560, 1080, "PrologueWidePreview"));
             // A capture cut short by a domain reload or Play mode would leave its hidden battlefield behind: it then runs
             // in Play mode and its units block spawn slots in Greybox validation, which builds at the same coordinates.
             EditorApplication.delayCall += Purge;
@@ -45,14 +52,43 @@ namespace Lightbringer.EditorTools
         }
 
         [MenuItem("Lightbringer/UI/Capture Result Preview")]
-        public static void CaptureResult() => Render("Docs/Validation/ResultPreview.png", profile => { }, (root, session) =>
+        public static void CaptureResult() => CaptureOutcome(true);
+
+        [MenuItem("Lightbringer/Prologue/Capture Preview")]
+        public static void CapturePrologue() => CapturePrologueAt(1920, 1080, "ProloguePreview");
+
+        private static void CapturePrologueAt(int width, int height, string name) => Render("Docs/Validation/" + name + ".png",
+            profile => { }, (root, session) =>
+            {
+                PrologueView view = new PrologueView(root, null);
+                if (!view.Open(AssetDatabase.LoadAssetAtPath<PrologueSequence>(PrologueSetup.AssetPath)))
+                    throw new InvalidOperationException("Build prologue assets before capturing.");
+                view.Tick(1f, false);
+                return () => { };
+            }, width, height);
+
+        [MenuItem("Lightbringer/UI/Capture Defeat Preview")]
+        public static void CaptureDefeat() => CaptureOutcome(false);
+
+        [MenuItem("Lightbringer/UI/Capture Pause Preview")]
+        public static void CapturePause() => Render("Docs/Validation/PausePreview.png", profile => { }, (root, session) =>
+        {
+            if (!session.StartBattle()) throw new InvalidOperationException("Pause preview could not start a battle.");
+            AddBackdrop(root, BattleHudBackdrop);
+            session.SetPaused(true);
+            PauseView view = new PauseView(root);
+            return () => view.Refresh(session);
+        });
+
+        private static void CaptureOutcome(bool victory) => Render(victory ? "Docs/Validation/ResultPreview.png" : "Docs/Validation/DefeatPreview.png", profile => { }, (root, session) =>
         {
             if (!session.StartBattle()) throw new InvalidOperationException("Result preview could not start a battle.");
             PrototypeBattle battle = session.Battle;
             // Edit-mode captures do not receive the normal OnEnable callback after activating the battle.
             battle.Objective.Configure(battle.Objective.EnemyBase, battle.Hero, battle.Root.transform,
                 battle.Root.GetComponentInChildren<Lightbringer.CameraSystem.ThirdPersonCamera>(), battle.AlliedBase);
-            battle.Objective.EnemyBase.TakeDamage(1000000f, battle.Hero);
+            if (victory) battle.Objective.EnemyBase.TakeDamage(1000000f, battle.Hero);
+            else battle.Hero.TakeDamage(1000000f, battle.Objective.EnemyBase);
             while (session.IsChoosing) session.ChooseGrowth(0);
             ResultView view = new ResultView(root);
             return () =>
@@ -85,6 +121,26 @@ namespace Lightbringer.EditorTools
             PreparationView view = new PreparationView(root);
             return () => view.Refresh(session);
         });
+
+        [MenuItem("Lightbringer/UI/Capture Campaign Map Preview")]
+        public static void CaptureCampaignMap() => Render("Docs/Validation/CampaignMapPreview.png", profile => { }, (root, session) =>
+        {
+            CampaignMapView view = new CampaignMapView(root, null);
+            return () => view.Refresh(session, true);
+        });
+
+        [MenuItem("Lightbringer/UI/Capture Compact Briefing Preview")]
+        public static void CaptureCompactBriefing() => Render("Docs/Validation/BriefingCompactPreview.png", profile =>
+        {
+            for (int stage = 4; stage < CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
+        }, (root, session) =>
+        {
+            PreparationView view = new PreparationView(root);
+            view.Refresh(session);
+            view.SelectSlot(2);
+            view.SelectItem((int)Lightbringer.Player.EquipmentKind.ManaRing);
+            return () => view.Refresh(session);
+        }, 1280, 1024);
 
         [MenuItem("Lightbringer/UI/Capture Level-Up Preview")]
         public static void CaptureLevelUp() => Render(LevelUpOutput, profile =>
@@ -185,7 +241,8 @@ namespace Lightbringer.EditorTools
             return Vector3.Lerp(path.GetPosition(index), path.GetPosition(index + 1), scaled - index);
         }
 
-        private static void Render(string output, Action<CampaignProgress> customize, Func<VisualElement, CampaignSession, Action> build)
+        private static void Render(string output, Action<CampaignProgress> customize, Func<VisualElement, CampaignSession, Action> build,
+            int width = Width, int height = Height)
         {
             // The script watcher ignores style sheet edits; import them before rendering.
             AssetDatabase.Refresh();
@@ -196,7 +253,7 @@ namespace Lightbringer.EditorTools
             Purge();
 
             // HideAndDontSave keeps asset unloading (e.g. after an art reimport) from destroying these mid-capture.
-            RenderTexture target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            RenderTexture target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
                 { name = Prefix + " target", hideFlags = HideFlags.HideAndDontSave };
             PanelSettings panel = Object.Instantiate(source);
             panel.name = Prefix + " panel settings";
@@ -249,8 +306,8 @@ namespace Lightbringer.EditorTools
                     if (target == null) { Debug.LogError("Campaign preview render target was destroyed; nothing saved."); return; }
                     RenderTexture previous = RenderTexture.active;
                     RenderTexture.active = target;
-                    Texture2D image = new Texture2D(Width, Height, TextureFormat.RGB24, false);
-                    image.ReadPixels(new Rect(0, 0, Width, Height), 0, 0);
+                    Texture2D image = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    image.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                     image.Apply();
                     RenderTexture.active = previous;
                     string path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", output));
