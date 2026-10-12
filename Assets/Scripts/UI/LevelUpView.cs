@@ -19,7 +19,6 @@ namespace Lightbringer.UI
         private static readonly string[] Categories = { "aura", "supply", "magic", "command", "hero" };
 
         public readonly VisualElement Root;
-        private readonly VisualElement rune;
         private readonly Label subtitle, remaining, hint;
         private readonly Button confirm;
         private readonly Card[] cards = new Card[CardCount];
@@ -30,7 +29,7 @@ namespace Lightbringer.UI
 
         private struct Card
         {
-            public VisualElement Slot, Icon, Rune;
+            public VisualElement Slot, Icon;
             public Button Button;
             public Label Category, Title, Description, Effect, Rank, Total;
         }
@@ -39,14 +38,10 @@ namespace Lightbringer.UI
         {
             Root = Hud.Box(parent, "lb-levelup");
             Hud.Box(Root, "lb-levelup-veil");
-            rune = Hud.Box(Root, "lb-levelup-rune");
-            Hud.Box(Root, "lb-levelup-glow");
 
             VisualElement header = Hud.Box(Root, "lb-levelup-header");
             VisualElement titleRow = Hud.Box(header, "lb-levelup-title-row");
-            Ornament(titleRow, false);
             Hud.Text(titleRow, "더 강해진 빛", "lb-display", "lb-levelup-title");
-            Ornament(titleRow, true);
             subtitle = Hud.Text(header, "", "lb-levelup-subtitle");
             remaining = Hud.Text(header, "", "lb-levelup-remaining");
 
@@ -55,23 +50,13 @@ namespace Lightbringer.UI
             {
                 int index = i;
                 Card card = new Card { Slot = Hud.Box(row, "lb-lvslot") };
-                card.Button = new Button(() => Select(index));
-                card.Button.AddToClassList("lb-lvcard");
-                card.Slot.Add(card.Button);
-                Hud.Box(card.Button, "lb-halo");
-                Hud.Box(card.Button, "lb-lvcard-shine");
+                card.Button = Hud.Button(card.Slot, "", () => Select(index), "lb-lvcard");
                 VisualElement medal = Hud.Box(card.Button, "lb-lvcard-medal");
                 Hud.Text(medal, (i + 1).ToString(), "lb-display", "lb-lvcard-number");
                 card.Category = Hud.Text(card.Button, "", "lb-lvcard-category");
                 VisualElement well = Hud.Box(card.Button, "lb-lvcard-well");
-                Hud.Box(well, "lb-lvcard-well-glow");
-                card.Rune = Hud.Box(well, "lb-lvcard-well-rune");
                 card.Icon = Hud.Box(well, "lb-growth-icon");
                 card.Title = Hud.Text(card.Button, "", "lb-display", "lb-lvcard-title");
-                VisualElement divider = Hud.Box(card.Button, "lb-lvcard-divider");
-                Hud.Box(divider, "lb-lvcard-divider-line");
-                Hud.Box(divider, "lb-prep-bullet");
-                Hud.Box(divider, "lb-lvcard-divider-line");
                 card.Description = Hud.Text(card.Button, "", "lb-lvcard-description");
                 card.Effect = Hud.Text(card.Button, "", "lb-display", "lb-lvcard-effect");
                 VisualElement footer = Hud.Box(card.Button, "lb-lvcard-footer");
@@ -82,13 +67,9 @@ namespace Lightbringer.UI
             }
 
             VisualElement prompt = Hud.Box(Root, "lb-levelup-prompt");
-            Hud.Text(prompt, "축복을 선택하세요", "lb-display", "lb-levelup-prompt-title");
             hint = Hud.Text(prompt, SelectHint, "lb-levelup-prompt-hint");
-            Hud.IgnorePicking(header); Hud.IgnorePicking(prompt); Hud.IgnorePicking(rune);
-            confirm = new Button(() => Confirm()) { text = "이 축복 선택하기" };
-            confirm.AddToClassList("lb-display");
-            confirm.AddToClassList("lb-levelup-confirm");
-            Root.Add(confirm);
+            Hud.IgnorePicking(header); Hud.IgnorePicking(prompt);
+            confirm = Hud.Button(Root, "이 축복 선택하기", () => Confirm(), "lb-display", "lb-levelup-confirm");
             SetSelected(-1);
             Hud.Show(Root, false);
         }
@@ -137,7 +118,7 @@ namespace Lightbringer.UI
             GrowthKind kind = (GrowthKind)growth;
             for (int k = 0; k < CampaignProgress.GrowthCount; k++)
                 card.Icon.EnableInClassList("lb-growth-icon--" + (GrowthKind)k, k == growth);
-            // The category tints the card's shine, icon well and effect line.
+            // The category tints the visible label and effect line.
             string category = GrowthCatalog.Categories[growth].ToLowerInvariant();
             foreach (string name in Categories) card.Button.EnableInClassList("lb-lvcard--" + name, name == category);
             bool maxed = GrowthCatalog.IsMaxed(kind, rank);
@@ -151,26 +132,16 @@ namespace Lightbringer.UI
                 : rank == 0 ? GrowthCatalog.Total(kind, 1) : $"{GrowthCatalog.Total(kind, rank)}  ›  {GrowthCatalog.Total(kind, rank + 1)}");
         }
 
-        // Transform and opacity only: cards deal in from below one after another, the runes turn slowly.
+        // Transform and opacity only: cards deal in from below one after another.
         private void Animate(float time)
         {
             float age = time - shownAt;
-            rune.style.rotate = new Rotate(new Angle(time * 4f));
             for (int i = 0; i < CardCount; i++)
             {
                 float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - i * 0.09f) / 0.38f));
                 cards[i].Slot.style.opacity = t;
                 cards[i].Slot.style.translate = new Translate(0f, (1f - t) * 16f);
-                cards[i].Rune.style.rotate = new Rotate(new Angle((i % 2 == 0 ? 1f : -1f) * time * 12f));
             }
-        }
-
-        private static void Ornament(VisualElement parent, bool flipped)
-        {
-            VisualElement ornament = Hud.Box(parent, "lb-levelup-ornament");
-            if (flipped) ornament.AddToClassList("lb-levelup-ornament--right");
-            Hud.Box(ornament, "lb-levelup-ornament-line");
-            Hud.Box(ornament, "lb-prep-bullet");
         }
 
         // Shows the cards fully dealt, for previews captured outside the Play-mode clock.

@@ -63,8 +63,6 @@ namespace Lightbringer.UI
         {
             Root = Hud.Box(parent, "lb-bar", modifier);
             fill = Hud.Box(Root, "lb-bar-fill");
-            // Sheen over the fill; only the battle HUD styles it.
-            Hud.Box(Root, "lb-bar-gloss");
             text = Hud.Text(Root, "", "lb-bar-text");
         }
 

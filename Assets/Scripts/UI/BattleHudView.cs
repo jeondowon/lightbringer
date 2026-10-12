@@ -68,9 +68,7 @@ namespace Lightbringer.UI
 
             boss = Hud.Box(Root, "lb-boss");
             VisualElement bossTitle = Hud.Box(boss, "lb-boss-title");
-            Hud.Box(bossTitle, "lb-hud-icon", "lb-hud-icon--enemy");
             Hud.Text(bossTitle, "군주", "lb-display", "lb-boss-name");
-            Hud.Box(bossTitle, "lb-hud-icon", "lb-hud-icon--enemy");
             bossBar = new HudBar(boss, "lb-bar--boss");
 
             VisualElement crosshair = Hud.Box(Root, "lb-crosshair");
@@ -82,7 +80,6 @@ namespace Lightbringer.UI
             VisualElement portrait = Hud.Box(vitals, "lb-portrait");
             VisualElement face = Hud.Box(portrait, "lb-portrait-face");
             Hud.Box(face, "lb-portrait-art");
-            Hud.Box(portrait, "lb-portrait-ring");
             VisualElement badge = Hud.Box(portrait, "lb-level");
             level = Hud.Text(badge, "", "lb-display", "lb-level-value");
             VisualElement gauges = Hud.Box(vitals, "lb-gauges");
@@ -107,7 +104,6 @@ namespace Lightbringer.UI
         private static void Heading(VisualElement parent, string title)
         {
             VisualElement head = Hud.Box(parent, "lb-hud-heading");
-            Hud.Box(head, "lb-prep-bullet");
             Hud.Text(head, title, "lb-display", "lb-hud-title");
         }
 
@@ -132,7 +128,6 @@ namespace Lightbringer.UI
         {
             VisualElement panel = Hud.Box(parent, "lb-base", modifier, "lb-hud-panel");
             VisualElement head = Hud.Box(panel, "lb-base-head");
-            Hud.Box(head, "lb-hud-icon", "lb-hud-icon--castle");
             Hud.Text(head, title, "lb-base-title");
             return new HudBar(panel, barModifier);
         }
@@ -189,10 +184,8 @@ namespace Lightbringer.UI
             {
                 VisualElement slot = Hud.Box(abilities, "lb-slot");
                 VisualElement socket = Hud.Box(slot, "lb-socket-orb");
-                Hud.Box(socket, "lb-orb-glow");
                 VisualElement orb = Hud.Box(socket, "lb-orb");
                 HudDial dial = new HudDial(socket, "lb-orb-dial", CooldownShade);
-                Hud.Box(socket, "lb-orb-ring");
                 Label timer = Hud.Text(socket, "", "lb-orb-timer");
                 Key(socket, SlotKeys[i]).AddToClassList("lb-orb-key");
                 VisualElement caption = Hud.Box(slot, "lb-slot-caption");
@@ -205,12 +198,10 @@ namespace Lightbringer.UI
             for (int i = 0; i < battle.Summoner.UnlockedUnitCount; i++)
             {
                 VisualElement card = Hud.Box(troops, "lb-card", "lb-card--" + i);
-                Hud.Box(card, "lb-card-halo");
                 VisualElement portrait = Hud.Box(card, "lb-card-portrait");
                 VisualElement body = Hud.Box(portrait, "lb-card-body");
                 Hud.Box(body, "lb-card-art");
                 VisualElement shade = Hud.Box(body, "lb-card-shade");
-                Hud.Box(portrait, "lb-card-frame");
                 Key(portrait, (i + 1).ToString()).AddToClassList("lb-card-key");
                 VisualElement info = Hud.Box(card, "lb-card-info");
                 Hud.Text(info, UnitCatalog.Names[i], "lb-card-name");

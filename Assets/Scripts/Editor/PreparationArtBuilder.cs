@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Lightbringer.EditorTools
 {
-    // Builds the preparation screen art in Assets/UI/Art: character illustrations keyed out of the white-background
-    // concept sources, plus procedural frames, rune circle, glows and item icons. Re-run after source art changes.
+    // Builds portraits, equipment and growth icons, and shared HUD textures in Assets/UI/Art.
+    // Character illustrations are keyed out of white-background sources. Re-run after source art changes.
     [InitializeOnLoad]
     public static partial class PreparationArtBuilder
     {
@@ -63,18 +63,14 @@ namespace Lightbringer.EditorTools
             Illustration("Dragon/Source/Dragon_1_ThreeQuarter.png", "Unit_Dragon", 640, false, true);
             SaveUpdatedUnitPortraits();
 
-            Save("Prep_Rune", Rune(1024), false);
             Save("Prep_Glow", Glow(128), false);
-            Save("Prep_Halo", Halo(96), false);
             Save("Prep_Fade", Fade(4, 128), false);
-            Save("Prep_Star", Star(128), false);
             Save("Item_LightStaff", Staff(new Color(1f, 0.9f, 0.6f), false), false);
             Save("Item_HealingStaff", Staff(new Color(0.5f, 0.95f, 0.6f), false), false);
             Save("Item_RuneStaff", Staff(new Color(0.62f, 0.62f, 1f), true), false);
             Save("Item_FoodRing", Ring(new Color(1f, 0.68f, 0.22f)), false);
             Save("Item_ManaRing", Ring(new Color(0.35f, 0.6f, 1f)), false);
             Save("Item_VitalityRing", Ring(new Color(0.95f, 0.3f, 0.35f)), false);
-            Save("LevelUp_Card", CardFrame(192), false);
             // Preserve authored blessing illustrations when rebuilding procedural UI art.
             // Original shapes are only a fallback for missing assets.
             SaveGrowthFallback("Growth_AuraSize", AuraSizeIcon);
@@ -280,50 +276,6 @@ namespace Lightbringer.EditorTools
 
         // ---------- Procedural textures ----------
 
-        private static Canvas Rune(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f, s = size / 1024f;
-            Color white = Color.white;
-            const float glow = 6f, glowAlpha = 0.3f;
-            canvas.Ring(c, c, 500 * s, 2.2f * s, white, glow, glowAlpha);
-            canvas.Ring(c, c, 486 * s, 1f * s, white, 0f, 0f);
-            canvas.Ring(c, c, 420 * s, 1.6f * s, white, glow, glowAlpha);
-            canvas.Ring(c, c, 404 * s, 1f * s, white, 0f, 0f);
-            for (int i = 0; i < 72; i++)
-            {
-                float a = i * Mathf.PI * 2f / 72f;
-                bool major = i % 6 == 0;
-                canvas.Line(c, c, a, (major ? 466 : 488) * s, 498 * s, (major ? 1.7f : 1f) * s, white, major ? glow : 0f, glowAlpha);
-            }
-            System.Random random = new System.Random(7);
-            for (int i = 0; i < 24; i++)
-            {
-                float a = (i + 0.5f) * Mathf.PI * 2f / 24f;
-                Vector2 n = new Vector2(Mathf.Cos(a), Mathf.Sin(a)), t = new Vector2(-n.y, n.x);
-                Vector2 centre = new Vector2(c, c) + n * 445f * s;
-                Vector2 Point() => centre + t * ((float)random.NextDouble() - 0.5f) * 26f * s + n * ((float)random.NextDouble() - 0.5f) * 30f * s;
-                for (int k = 0; k < 3; k++) canvas.Segment(Point(), Point(), 1.4f * s, white, 3f, 0.25f);
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                float a0 = i * Mathf.PI / 2f + (i >= 4 ? Mathf.PI / 4f : 0f), a1 = a0 + Mathf.PI / 2f;
-                Vector2 p0 = new Vector2(c + Mathf.Cos(a0) * 400f * s, c + Mathf.Sin(a0) * 400f * s);
-                Vector2 p1 = new Vector2(c + Mathf.Cos(a1) * 400f * s, c + Mathf.Sin(a1) * 400f * s);
-                canvas.Segment(p0, p1, 1.4f * s, white, glow, glowAlpha);
-            }
-            canvas.Ring(c, c, 283 * s, 1.2f * s, white, 0f, 0f);
-            canvas.Ring(c, c, 200 * s, 2f * s, white, glow, glowAlpha);
-            for (int i = 0; i < 12; i++)
-            {
-                float a = i * Mathf.PI / 6f;
-                canvas.Ring(c + Mathf.Cos(a) * 240f * s, c + Mathf.Sin(a) * 240f * s, 10f * s, 1f * s, white, 3f, 0.25f);
-            }
-            canvas.Shape(c - 80 * s, c - 80 * s, c + 80 * s, c + 80 * s, (x, y) => StarSdf(x, y, c, c, 70 * s, 12 * s, 4, 0f),
-                (x, y) => white, 10f * s, 0.6f);
-            return canvas;
-        }
-
         private static Canvas Glow(int size)
         {
             Canvas canvas = new Canvas(size, size);
@@ -337,21 +289,6 @@ namespace Lightbringer.EditorTools
             return canvas;
         }
 
-        // 9-slice halo: transparent inside the inner rectangle so it only glows around the element.
-        private static Canvas Halo(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f, inner = c - 36f;
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float d = BoxSdf(x + 0.5f, y + 0.5f, c, c, inner, inner, 2f);
-                    float a = d <= 0f ? 0f : 0.9f * Mathf.Exp(-d / 9f) * Mathf.Clamp01(1f - d / 34f);
-                    canvas.Set(x, y, new Color(1f, 1f, 1f, a));
-                }
-            return canvas;
-        }
-
         private static Canvas Fade(int w, int h)
         {
             Canvas canvas = new Canvas(w, h);
@@ -361,16 +298,6 @@ namespace Lightbringer.EditorTools
                     float t = (y + 0.5f) / h;
                     canvas.Set(x, y, new Color(0.03f, 0.05f, 0.1f, Mathf.SmoothStep(0f, 0.96f, t)));
                 }
-            return canvas;
-        }
-
-        private static Canvas Star(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f;
-            canvas.Shape(0, 0, size, size, (x, y) => StarSdf(x, y, c, c, size * 0.47f, size * 0.07f, 4, 0f), (x, y) => Color.white, 7f, 0.5f);
-            canvas.Shape(0, 0, size, size, (x, y) => StarSdf(x, y, c, c, size * 0.27f, size * 0.05f, 4, Mathf.PI / 4f),
-                (x, y) => new Color(1f, 1f, 1f, 0.75f), 0f, 0f);
             return canvas;
         }
 
@@ -425,42 +352,7 @@ namespace Lightbringer.EditorTools
             return canvas;
         }
 
-        // ---------- Level-up cards ----------
-
-        // 9-slice card frame (slice 48): navy fill, triple gold line, long corner brackets with filigree arcs and gems.
-        private static Canvas CardFrame(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f, half = c - 4f;
-            Color edge = new Color(0.025f, 0.04f, 0.085f), centre = new Color(0.06f, 0.09f, 0.18f);
-            canvas.Shape(0, 0, size, size, (x, y) => BoxSdf(x, y, c, c, half, half, 10f), (x, y) =>
-            {
-                Color fill = Color.Lerp(edge, centre, Mathf.Clamp01(-BoxSdf(x, y, c, c, half, half, 10f) / 30f));
-                fill.a = 0.96f;
-                return fill;
-            });
-            canvas.Shape(0, 0, size, size, (x, y) => Mathf.Abs(BoxSdf(x, y, c, c, half, half, 10f)) - 1.3f, (x, y) => Gold);
-            canvas.Shape(0, 0, size, size, (x, y) => Mathf.Abs(BoxSdf(x, y, c, c, half - 8f, half - 8f, 6f)) - 0.7f,
-                (x, y) => new Color(Gold.r, Gold.g, Gold.b, 0.55f));
-            canvas.Shape(0, 0, size, size, (x, y) => Mathf.Abs(BoxSdf(x, y, c, c, half - 14f, half - 14f, 3f)) - 0.5f,
-                (x, y) => new Color(Gold.r, Gold.g, Gold.b, 0.18f));
-            for (int sx = -1; sx <= 1; sx += 2)
-                for (int sy = -1; sy <= 1; sy += 2)
-                {
-                    Vector2 corner = new Vector2(c + sx * (half - 8f), c + sy * (half - 8f));
-                    canvas.Segment(corner, corner + new Vector2(-sx * 34f, 0f), 1.5f, BrightGold, 2f, 0.3f);
-                    canvas.Segment(corner, corner + new Vector2(0f, -sy * 34f), 1.5f, BrightGold, 2f, 0.3f);
-                    // Quarter-circle filigree opening toward the card centre.
-                    float fx = corner.x - sx * 18f, fy = corner.y - sy * 18f;
-                    canvas.Shape(fx - 14, fy - 14, fx + 14, fy + 14, (x, y) => Mathf.Abs(Len(x - fx, y - fy) - 10f) - 0.8f,
-                        (x, y) => (x - fx) * sx > 0f || (y - fy) * sy > 0f ? new Color(BrightGold.r, BrightGold.g, BrightGold.b, 0.85f) : Color.clear);
-                    canvas.Shape(fx - 5, fy - 5, fx + 5, fy + 5, (x, y) => DiamondSdf(x, y, fx, fy, 2.5f, 2.5f), (x, y) => BrightGold);
-                    Vector2 gem = new Vector2(c + sx * half, c + sy * half);
-                    canvas.Shape(gem.x - 10, gem.y - 10, gem.x + 10, gem.y + 10, (x, y) => DiamondSdf(x, y, gem.x, gem.y, 6f, 6f),
-                        (x, y) => BrightGold, 4f, 0.55f);
-                }
-            return canvas;
-        }
+        // ---------- Growth icon fallbacks ----------
 
         private const int IconSize = 192;
         private static readonly Color DarkGold = new Color(0.5f, 0.34f, 0.12f);
