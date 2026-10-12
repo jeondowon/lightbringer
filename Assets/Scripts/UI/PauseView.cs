@@ -34,10 +34,7 @@ namespace Lightbringer.UI
             credits.AddToClassList("lb-pause-credits");
             Hud.Text(credits, BattleMusic.Credit, "lb-flow-muted");
             dialog.Add(credits);
-            Button resume = new Button(() => Resume()) { text = "전투 재개" };
-            resume.AddToClassList("lb-atlas-primary");
-            resume.AddToClassList("lb-flow-primary");
-            dialog.Add(resume);
+            Hud.Button(dialog, "전투 재개", () => Resume(), "lb-atlas-primary", "lb-flow-primary");
             Hud.Text(dialog, "Esc 또는 P 키로도 돌아갈 수 있습니다", "lb-flow-footnote");
             Hud.Show(Root, false);
         }

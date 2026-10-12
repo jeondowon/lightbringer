@@ -58,16 +58,14 @@ namespace Lightbringer.EditorTools
             Illustration("FemaleHero/Source/FemaleHero_View_v2_front.png", "Hero_Commander", 1400, false, false);
             string[] units = { "Swordsman", "Shieldbearer", "Knight" };
             foreach (string unit in units)
-                if (unit != null) Illustration(unit + "/Source/" + unit + "_1_Front.png", "Unit_" + unit, 640, false, false);
+                Illustration(unit + "/Source/" + unit + "_1_Front.png", "Unit_" + unit, 640, false, false);
             // The wings enclose pockets of background the border flood fill cannot reach.
             Illustration("Dragon/Source/Dragon_1_ThreeQuarter.png", "Unit_Dragon", 640, false, true);
             SaveUpdatedUnitPortraits();
 
-            Save("Prep_Background", Background(960, 540), false);
             Save("Prep_Rune", Rune(1024), false);
             Save("Prep_Glow", Glow(128), false);
             Save("Prep_Halo", Halo(96), false);
-            Save("Prep_Frame", Frame(128), false);
             Save("Prep_Fade", Fade(4, 128), false);
             Save("Prep_Star", Star(128), false);
             Save("Item_LightStaff", Staff(new Color(1f, 0.9f, 0.6f), false), false);
@@ -282,30 +280,6 @@ namespace Lightbringer.EditorTools
 
         // ---------- Procedural textures ----------
 
-        private static Canvas Background(int w, int h)
-        {
-            Canvas canvas = new Canvas(w, h);
-            float aspect = w / (float)h;
-            for (int y = 0; y < h; y++)
-                for (int x = 0; x < w; x++)
-                {
-                    float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
-                    Color c = Color.Lerp(new Color(0.07f, 0.1f, 0.19f), new Color(0.02f, 0.03f, 0.07f), Mathf.Pow(v, 0.8f));
-                    c += new Color(0.55f, 0.4f, 0.18f) * 0.32f * Falloff((u - 0.2f) * aspect, v - 0.55f, 0.55f);
-                    c += new Color(0.16f, 0.27f, 0.55f) * 0.3f * Falloff((u - 0.62f) * aspect, v + 0.05f, 0.7f);
-                    float angle = Mathf.Atan2(v + 0.25f, u - 0.05f);
-                    float ray = Mathf.Pow(0.5f + 0.5f * Mathf.Sin(angle * 23f + Mathf.Sin(angle * 7f) * 2f), 6f);
-                    c += new Color(0.9f, 0.8f, 0.55f) * 0.045f * ray * Mathf.Clamp01(1f - v * 1.2f) * Mathf.Clamp01(1.2f - u);
-                    float edge = Len((u - 0.5f) * 1.2f, v - 0.5f) / 0.78f;
-                    c *= 1f - 0.6f * Mathf.Pow(Mathf.Clamp01(edge), 2.2f);
-                    float noise = (Hash(x, y) - 0.5f) / 255f * 2f;
-                    canvas.Set(x, y, new Color(c.r + noise, c.g + noise, c.b + noise, 1f));
-                }
-            return canvas;
-        }
-
-        private static float Falloff(float dx, float dy, float radius) => Mathf.Exp(-(dx * dx + dy * dy) / (radius * radius));
-
         private static Canvas Rune(int size)
         {
             Canvas canvas = new Canvas(size, size);
@@ -374,35 +348,6 @@ namespace Lightbringer.EditorTools
                     float d = BoxSdf(x + 0.5f, y + 0.5f, c, c, inner, inner, 2f);
                     float a = d <= 0f ? 0f : 0.9f * Mathf.Exp(-d / 9f) * Mathf.Clamp01(1f - d / 34f);
                     canvas.Set(x, y, new Color(1f, 1f, 1f, a));
-                }
-            return canvas;
-        }
-
-        // 9-slice panel frame (slice 26): navy fill, double gold line, corner brackets and diamonds.
-        private static Canvas Frame(int size)
-        {
-            Canvas canvas = new Canvas(size, size);
-            float c = size * 0.5f, half = c - 4f;
-            Color edge = new Color(0.03f, 0.05f, 0.1f), centre = new Color(0.06f, 0.09f, 0.17f);
-            canvas.Shape(0, 0, size, size, (x, y) => BoxSdf(x, y, c, c, half, half, 6f), (x, y) =>
-            {
-                Color fill = Color.Lerp(edge, centre, Mathf.Clamp01(-BoxSdf(x, y, c, c, half, half, 6f) / 14f));
-                fill.a = 0.93f;
-                return fill;
-            });
-            canvas.Shape(0, 0, size, size, (x, y) => Mathf.Abs(BoxSdf(x, y, c, c, half, half, 6f)) - 0.9f, (x, y) => Gold);
-            canvas.Shape(0, 0, size, size, (x, y) => Mathf.Abs(BoxSdf(x, y, c, c, half - 5f, half - 5f, 3f)) - 0.55f,
-                (x, y) => new Color(Gold.r, Gold.g, Gold.b, 0.35f));
-            canvas.Segment(new Vector2(14f, 6.5f), new Vector2(size - 14f, 6.5f), 0.5f, new Color(1f, 1f, 1f, 0.12f), 0f, 0f);
-            for (int sx = -1; sx <= 1; sx += 2)
-                for (int sy = -1; sy <= 1; sy += 2)
-                {
-                    Vector2 corner = new Vector2(c + sx * half, c + sy * half);
-                    canvas.Segment(corner + new Vector2(-sx * 2f, 0f), corner + new Vector2(-sx * 20f, 0f), 1.6f, BrightGold, 0f, 0f);
-                    canvas.Segment(corner + new Vector2(0f, -sy * 2f), corner + new Vector2(0f, -sy * 20f), 1.6f, BrightGold, 0f, 0f);
-                    Vector2 gem = new Vector2(c + sx * (half - 5f), c + sy * (half - 5f));
-                    canvas.Shape(gem.x - 8, gem.y - 8, gem.x + 8, gem.y + 8, (x, y) => DiamondSdf(x, y, gem.x, gem.y, 4.5f, 4.5f),
-                        (x, y) => BrightGold, 3f, 0.5f);
                 }
             return canvas;
         }

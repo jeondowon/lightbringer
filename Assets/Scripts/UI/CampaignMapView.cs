@@ -69,14 +69,10 @@ namespace Lightbringer.UI
             description = Hud.Text(detail, "", "lb-atlas-description");
             VisualElement action = Hud.Box(footer, "lb-atlas-action");
             Hud.Text(action, "봉화 선택  ·  출전 정보에서 장비 정비", "lb-atlas-hint");
-            prepare = new Button(OpenPreparation) { text = "출전 정보 보기  →" };
-            prepare.AddToClassList("lb-atlas-primary");
-            action.Add(prepare);
+            prepare = Hud.Button(action, "출전 정보 보기  →", OpenPreparation, "lb-atlas-primary");
             if (replayPrologue != null)
             {
-                Button replay = new Button(replayPrologue) { text = "프롤로그 다시 보기" };
-                replay.AddToClassList("lb-prologue-button");
-                action.Add(replay);
+                Hud.Button(action, "프롤로그 다시 보기", replayPrologue, "lb-prologue-button");
             }
             status = Hud.Text(Root, "", "lb-atlas-status");
             Hud.Show(Root, false);

@@ -40,7 +40,7 @@ namespace Lightbringer.UI
             VisualElement heading = Hud.Box(header);
             Hud.Text(heading, "LIGHTBRINGER  /  출전 준비", "lb-brief-eyebrow");
             Hud.Text(heading, "전장으로 향하기 전에", "lb-brief-title");
-            Button back = MakeButton(header, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
+            Button back = Hud.Button(header, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
             back.tooltip = "선택한 봉화를 유지한 채 지도로 돌아갑니다.";
 
             VisualElement body = Hud.Box(Root, "lb-brief-body");
@@ -68,7 +68,7 @@ namespace Lightbringer.UI
             VisualElement heroText = Hud.Box(identity, "lb-brief-copy");
             heroLevel = Hud.Text(heroText, "", "lb-brief-hero-name");
             experience = Hud.Text(heroText, "", "lb-brief-muted");
-            growthToggle = MakeButton(identity, "영구 성장 보기", ToggleGrowth, "lb-brief-text-button");
+            growthToggle = Hud.Button(identity, "영구 성장 보기", ToggleGrowth, "lb-brief-text-button");
             VisualElement headingRow = Hud.Box(armory.contentContainer, "lb-brief-heading-row");
             Hud.Text(headingRow, "장비 정비", "lb-brief-heading");
             Hud.Text(headingRow, "01  슬롯 선택    02  장비 확인    03  장착", "lb-brief-muted");
@@ -76,7 +76,7 @@ namespace Lightbringer.UI
             for (int i = 0; i < slots.Length; i++)
             {
                 int slot = i;
-                Button button = MakeButton(socketRow, "", () => SelectSlot(slot), "lb-brief-slot");
+                Button button = Hud.Button(socketRow, "", () => SelectSlot(slot), "lb-brief-slot");
                 Hud.Text(button, SlotKeys[i], "lb-brief-key");
                 VisualElement icon = Hud.Box(button, "lb-icon");
                 VisualElement text = Hud.Box(button, "lb-brief-copy");
@@ -89,7 +89,7 @@ namespace Lightbringer.UI
             for (int i = 0; i < items.Length; i++)
             {
                 int id = i;
-                Button button = MakeButton(inventory, "", () => SelectItem(id), "lb-brief-item");
+                Button button = Hud.Button(inventory, "", () => SelectItem(id), "lb-brief-item");
                 VisualElement icon = Hud.Box(button, "lb-icon", "lb-icon--" + i);
                 VisualElement text = Hud.Box(button, "lb-brief-copy");
                 items[i] = new Tile { Root = button, Icon = icon,
@@ -104,7 +104,7 @@ namespace Lightbringer.UI
             itemTitle = Hud.Text(detailText, "", "lb-brief-item-title");
             itemEffect = Hud.Text(detailText, "", "lb-brief-effect");
             itemStats = Hud.Text(detailText, "", "lb-brief-item-stats");
-            equip = MakeButton(detail, "", () => EquipSelected(), "lb-brief-equip");
+            equip = Hud.Button(detail, "", () => EquipSelected(), "lb-brief-equip");
             feedback = Hud.Text(armory.contentContainer, "", "lb-brief-feedback");
 
             VisualElement roster = Hud.Box(Root, "lb-brief-roster");
@@ -125,13 +125,13 @@ namespace Lightbringer.UI
             }
             VisualElement footer = Hud.Box(Root, "lb-brief-footer");
             status = Hud.Text(footer, "", "lb-brief-muted");
-            start = MakeButton(footer, "", () => Start(), "lb-atlas-primary", "lb-brief-start");
+            start = Hud.Button(footer, "", () => Start(), "lb-atlas-primary", "lb-brief-start");
 
             growthPanel = Hud.Box(Root, "lb-brief-growth-overlay");
             VisualElement growthDialog = Hud.Box(growthPanel, "lb-brief-growth-dialog");
             VisualElement growthHeader = Hud.Box(growthDialog, "lb-brief-heading-row");
             Hud.Text(growthHeader, "영구 성장", "lb-brief-heading");
-            MakeButton(growthHeader, "닫기", ToggleGrowth, "lb-brief-text-button");
+            Hud.Button(growthHeader, "닫기", ToggleGrowth, "lb-brief-text-button");
             Hud.Text(growthDialog, "전투 중 선택한 성장 효과는 다음 전투에서도 유지됩니다.", "lb-brief-muted");
             growth = Scroll(growthDialog, "lb-brief-growth-list").contentContainer;
             Root.RegisterCallback<KeyDownEvent>(evt =>
@@ -158,12 +158,6 @@ namespace Lightbringer.UI
         public string ItemNote(int id) => items[id].Note.text;
         public string DestinationText => stageTitle.text;
 
-        private static Button MakeButton(VisualElement parent, string text, System.Action click, params string[] classes)
-        {
-            Button button = new Button(click) { text = text };
-            foreach (string name in classes) button.AddToClassList(name);
-            parent.Add(button); return button;
-        }
         private static ScrollView Scroll(VisualElement parent, string className)
         {
             ScrollView scroll = new ScrollView(ScrollViewMode.Vertical);

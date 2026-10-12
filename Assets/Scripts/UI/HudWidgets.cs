@@ -22,6 +22,14 @@ namespace Lightbringer.UI
             return label;
         }
 
+        public static Button Button(VisualElement parent, string text, System.Action click, params string[] classes)
+        {
+            Button button = new Button(click) { text = text };
+            foreach (string name in classes) button.AddToClassList(name);
+            parent?.Add(button);
+            return button;
+        }
+
         // Assigning identical text or style each frame is cheap but still dirties layout; skip unchanged values.
         public static void Set(TextElement label, string text)
         {

@@ -57,10 +57,7 @@ namespace Lightbringer.UI
             note = new TextField { multiline = true, maxLength = 400 };
             note.AddToClassList("lb-note");
             stats.Add(note);
-            Button back = new Button(() => Return()) { text = "지도로 돌아가기" };
-            back.AddToClassList("lb-atlas-primary");
-            back.AddToClassList("lb-flow-primary");
-            dialog.Add(back);
+            Hud.Button(dialog, "지도로 돌아가기", () => Return(), "lb-atlas-primary", "lb-flow-primary");
             Hud.Show(Root, false);
         }
 

@@ -64,9 +64,8 @@ namespace Lightbringer.UI
 
         private static Button AddButton(VisualElement parent, string text, Action action)
         {
-            Button button = new Button(action) { text = text, focusable = false };
-            button.AddToClassList("lb-prologue-button");
-            parent.Add(button);
+            Button button = Hud.Button(parent, text, action, "lb-prologue-button");
+            button.focusable = false;
             return button;
         }
 
