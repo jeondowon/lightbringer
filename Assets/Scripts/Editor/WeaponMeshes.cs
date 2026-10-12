@@ -54,15 +54,6 @@ namespace Lightbringer.EditorTools
             GuardY = .062f, GripY0 = -.055f, GripY1 = .045f, GripRadius = .0135f, GripPitch = .022f,
         };
 
-        // Broad corrupted greatsword with a bronze star cross-guard (Warlord_03_Weapon_Greatsword_v1.png), 1.6 m.
-        public static readonly SwordSpec GreatswordSpec = new SwordSpec
-        {
-            Scale = 1.35f, GuardSpread = 1.5f, BaseY = .14f, TaperY = 1.19f, TipY = 1.37f, Half = .055f, RidgeBase = .011f, RidgeTip = .007f,
-            ChipDepth = .006f,
-            ChipRight = new[] { .3f, .5f, .7f, .9f, 1.05f }, ChipLeft = new[] { .25f, .45f, .62f, .85f, 1f },
-            GuardY = .136f, GripY0 = -.14f, GripY1 = .1f, GripRadius = .021f, GripPitch = .04f,
-        };
-
         // Blade, hilt (guard, collars, pommel) and wrapped grip. Returns the blade tip height.
         public static float Sword(string prefix, SwordSpec p, out Mesh blade, out Mesh hilt, out Mesh grip)
         {

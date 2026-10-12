@@ -103,7 +103,7 @@ namespace Lightbringer.EditorTools
             GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath)
                 ?? throw new InvalidOperationException(sourcePath + " is missing or glTFast could not import it.");
             if (!AssetDatabase.IsValidFolder(e.RigFolder)) AssetDatabase.CreateFolder(e.Folder, "Rigged");
-            mats = new Materials(e.RigFolder, library);
+            mats = new Materials(e.RigFolder);
             var lines = new StringBuilder($"== {e.Id} ({e.Kind}, {e.Height:0.0} m, {(e.Robe ? "robe" : "no skirt")}) ==\n");
             Scene scene = EditorSceneManager.NewPreviewScene();
             var root = new GameObject(e.Id + "_Rigged");
@@ -562,26 +562,15 @@ namespace Lightbringer.EditorTools
 
         private sealed class Materials
         {
-            public readonly Material Iron, DarkIron, Leather, Wood, Bone, Glow;
             private readonly string folder;
-            private Material hammeredIron, darkHammered, woodPlank, wrapLeather, purpleLeather, bronze;
+            private Material hammeredIron, darkHammered, woodPlank, wrapLeather, leather;
             // Materials of the reference-built weapons, made only for the enemies that carry one.
             public Material HammeredIron => hammeredIron ?? (hammeredIron = WeaponMeshes.HammeredIron(folder, "EnemyHammeredIron", new Color(.92f, .92f, .95f), .7f, .42f));
             public Material DarkHammered => darkHammered ?? (darkHammered = WeaponMeshes.HammeredIron(folder, "EnemyDarkHammered", new Color(.62f, .52f, .5f), .6f, .35f));
             public Material WoodPlank => woodPlank ?? (woodPlank = WeaponMeshes.WoodGrain(folder, "EnemyWoodPlank", new Color(1f, .95f, 1f)));
             public Material WrapLeather => wrapLeather ?? (wrapLeather = MakeMaterial(folder, "EnemyWrapLeather", new Color(.3f, .16f, .1f), 0f, .3f));
-            public Material PurpleLeather => purpleLeather ?? (purpleLeather = MakeMaterial(folder, "EnemyPurpleLeather", new Color(.22f, .1f, .3f), 0f, .3f));
-            public Material Bronze => bronze ?? (bronze = MakeMaterial(folder, "EnemyBronze", new Color(.55f, .4f, .22f), .75f, .45f));
-            public Materials(string folder, ArtStyleLibrary library)
-            {
-                this.folder = folder;
-                Iron = MakeMaterial(folder, "EnemyIron", new Color(.36f, .36f, .4f), .8f, .5f);
-                DarkIron = MakeMaterial(folder, "EnemyDarkIron", library.corruptArmor, .6f, .4f);
-                Leather = MakeMaterial(folder, "EnemyLeather", new Color(.13f, .08f, .07f), 0f, .25f);
-                Wood = MakeMaterial(folder, "EnemyWood", new Color(.2f, .13f, .09f), 0f, .3f);
-                Bone = MakeMaterial(folder, "EnemyBone", library.bone, 0f, .35f);
-                Glow = MakeGlowMaterial(folder, "EnemyCorruptGlow", library.corruptGlow, 2.2f);
-            }
+            public Material Leather => leather ?? (leather = MakeMaterial(folder, "EnemyLeather", new Color(.13f, .08f, .07f), 0f, .25f));
+            public Materials(string folder) => this.folder = folder;
         }
 
         private static Weapon Sword()

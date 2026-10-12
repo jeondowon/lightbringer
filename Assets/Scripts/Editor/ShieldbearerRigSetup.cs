@@ -136,8 +136,6 @@ namespace Lightbringer.EditorTools
             return sum / indices.Length;
         }
 
-        private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
-            => RigBuildUtility.MakeMaterial(RigFolder, name, color, metallic, smoothness);
 
         // ---------- Clips ----------
 

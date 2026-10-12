@@ -17,12 +17,12 @@
 
 - 코드 생성 무기는 `Docs/ArtReference/Enemies/*/*_03_Weapon_*.png` 레퍼런스를 보고 만들었다.
 - 가져온 Tripo 무기는 다운로드 폴더의 `warlord+sword+3d+model.glb`, `shaman+staff+3d+model.glb`를 복사한 것이다. 원본은 그대로 둔다.
-- `WeaponMeshes.GreatswordSpec`(코드 대검)은 지금 쓰지 않는다. 아군 무기에 재활용할 수 있어 남겨 두었다.
-- 아군 무기는 모두 코드 생성 메시로 교체했다 (2026-10-12). 검사: Raider 검/방패 재사용(`SwordSpecAllied`), 나머지는 `WeaponMeshes.Allied.cs`의 Spear, TowerShield, KiteShield, Mace, Lance, Arrow, Quiver, BowFittings, MageStaff, PriestStaff. 확인용: `Docs/Diagnostics/alliedweapons.request` → `AlliedWeaponSnapshot.png`. 아군 재질은 매끈한 강철·금(텍스처 없음)이다.
+- 보스 대검은 Tripo 모델을 사용한다. 사용하지 않는 이전 코드 대검 설정은 정리했다.
+- 아군 무기는 모두 코드 생성 메시로 교체했다 (2026-10-12). 검사: Raider 검/방패 재사용(`SwordSpecAllied`), 나머지는 `WeaponMeshes.Allied.cs`의 Spear, TowerShield, KiteShield, Mace, Lance, Arrow, Quiver, BowFittings, MageStaff, PriestStaff. 확인용: `Docs/Diagnostics/alliedweapons.request` → `AlliedWeaponSnapshot.png`. 아군 재질은 강철·금·법랑·가죽·목재 텍스처를 사용하며, 참조가 끊긴 이전 단색/광택 재질은 정리했다.
 
 ### 기타
 
-- 일시정지/재개: Esc 또는 P. `CampaignSession.SetPaused`, `UI/PauseView.cs`. 코드는 작성했고 Editor에서 Play로 확인하지 않았다.
+- 일시정지/재개: Esc 또는 P. `CampaignSession.SetPaused`, `UI/PauseView.cs`. 2026-10-12 실제 Play 자동 검사에서 정지/재개 및 BGM 음량 전환을 확인했다. 키 입력 자체의 수동 검증과는 구분한다.
 - 실제 전투에서 휘두를 때 무기 방향과 위치는 Play로 확인하지 않았다. 지금까지는 에디터 안 정지 화면 렌더링으로만 확인했다.
 
 ## 2. 코드 생성 무기 (`Assets/Scripts/Editor/WeaponMeshes.cs`)
