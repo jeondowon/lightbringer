@@ -10,6 +10,8 @@ namespace Lightbringer.UI
         private CampaignSession session;
         private readonly Slider musicVolume;
         private readonly Label volumeValue;
+        private readonly Slider effectsVolume;
+        private readonly Label effectsValue;
 
         public PauseView(VisualElement parent)
         {
@@ -29,6 +31,18 @@ namespace Lightbringer.UI
                 Hud.Set(volumeValue, UnityEngine.Mathf.RoundToInt(change.newValue * 100) + "%");
             });
             dialog.Add(musicVolume);
+            VisualElement effectsHeader = Hud.Box(dialog, "lb-pause-volume-header");
+            Hud.Text(effectsHeader, "효과음", "lb-flow-muted");
+            effectsValue = Hud.Text(effectsHeader, "", "lb-flow-muted");
+            effectsVolume = new Slider("효과음 음량", 0f, 1f) { value = Audio.SoundEffects.Volume };
+            effectsVolume.AddToClassList("lb-pause-volume");
+            effectsVolume.RegisterValueChangedCallback(change =>
+            {
+                Audio.SoundEffects.Volume = change.newValue;
+                Hud.Set(effectsValue, UnityEngine.Mathf.RoundToInt(change.newValue * 100) + "%");
+                Audio.SoundEffects.UI(Audio.SoundCue.Click);
+            });
+            dialog.Add(effectsVolume);
             Hud.Text(dialog, "WASD  이동     마우스  시점     Tab  소환 진로\n1–8  병력 소환     F  재소환     LMB · Q · E  장비 사용", "lb-pause-controls");
             Foldout credits = new Foldout { text = "음악 크레딧", value = false };
             credits.AddToClassList("lb-pause-credits");
@@ -49,6 +63,8 @@ namespace Lightbringer.UI
             {
                 musicVolume.SetValueWithoutNotify(BattleMusic.Volume);
                 Hud.Set(volumeValue, UnityEngine.Mathf.RoundToInt(BattleMusic.Volume * 100) + "%");
+                effectsVolume.SetValueWithoutNotify(Audio.SoundEffects.Volume);
+                Hud.Set(effectsValue, UnityEngine.Mathf.RoundToInt(Audio.SoundEffects.Volume * 100) + "%");
             }
             Hud.Show(Root, visible);
         }

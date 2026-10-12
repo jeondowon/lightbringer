@@ -1,0 +1,2 @@
+PASS | 2026-10-12T17:27:55.4253700Z
+Click: Button Press 382713 -> 0.515s, mono 44100Hz, max 100ms RMS -20 dBFS, peak <= -1 dBFS, pitch 1.0

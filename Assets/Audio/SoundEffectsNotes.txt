@@ -1,0 +1,274 @@
+Lightbringer sound effects — recorded foley pass (2026-10-12)
+
+The initial oscillator-generated sounds were rejected and replaced.
+This bank uses existing recorded/designed audio, edited into short layered game cues.
+No synthesized sine notes, pitch sweeps or arcade arpeggios are added.
+24 mono WAV clips: 22 cues plus 2 variations.
+
+User-selected additions (2026-10-12):
+  yodguard-fire-magic-3-378640.mp3 -> Sources/Foley/FireMagicUser.mp3 -> MageFire.wav (0.9s)
+  yodguard-healing-magic-4-378668.mp3 -> Sources/Foley/HealingMagicUser.mp3 -> PriestHeal.wav (1.2s)
+  Supplied by the user from Downloads. Original source-page links were not supplied;
+  these two files are separate from the CC0 packs listed below.
+  Edits: leading silence trim, tail trim/fade, mono conversion and peak headroom.
+  Playback preserves pitch and speed. Mage fires use only the selected clip (no old impact overlay).
+  Priest heal pulses use the selected healing clip. Generic hero and enemy caster cues were removed at user request.
+  Rebuild: Lightbringer > Audio > Import Selected Mage and Priest Sounds.
+  Validation: Docs/Validation/SelectedMagicChecks.txt.
+
+Sources are retained in Assets/Audio/Sources/Foley (outside Resources).
+The five original source packs below offer CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
+Source pages and authors, verified 2026-10-12:
+
+1. StarNinjas — 20 Sword Sound Effects (Attacks and Clashes)
+   https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes
+   https://opengameart.org/users/starninjas
+   Download: sword_clash_-_starninjas_0.zip
+   Steel1.ogg = sword_clash.1.ogg
+   Steel2.ogg = sword_clash.4.ogg
+   Steel3.ogg = sword_clash.7.ogg
+   Author describes recordings of knives edited in Audacity.
+
+2. artisticdude — Battle Sound Effects (submitted by Ogrebane), CC0 option
+   https://opengameart.org/content/battle-sound-effects
+   Download: battle_sound_effects_0.zip
+   Bow.wav = battle_sound_effects/Bow.wav
+   Swish1/2/3.wav = battle_sound_effects/swish_2/3/4.wav
+
+3. artisticdude — RPG Sound Pack
+   https://opengameart.org/content/rpg-sound-pack
+   Download: rpg_sound_pack.zip
+   Armor.wav = RPG Sound Pack/inventory/armor-light.wav
+   Chainmail.wav = RPG Sound Pack/inventory/chainmail1.wav
+   MetalRing.wav = RPG Sound Pack/inventory/metal-ringing.wav
+
+4. Kenney — RPG Audio (2014)
+   https://kenney.nl/assets/rpg-audio
+   Download: kenney_rpg-audio.zip
+   Click.ogg = Audio/metalClick.ogg; Latch.ogg = Audio/metalLatch.ogg
+   LeatherDrop.ogg = Audio/dropLeather.ogg; Cloth.ogg = Audio/cloth1.ogg
+   Chop.ogg = Audio/chop.ogg; Slice.ogg = Audio/knifeSlice.ogg
+
+5. rubberduck — 80 CC0 RPG SFX
+   https://opengameart.org/content/80-cc0-rpg-sfx
+   Download: 80-CC0-RPG-SFX_0.zip
+   Stone1/2/3.ogg = stones_01/02/03.ogg
+   Fire1.ogg = spell_fire_01.ogg; Fire2.ogg = spell_fire_04.ogg
+   Roar.ogg = creature_roar_01.ogg
+
+Edits: trim leading silence, mono conversion, fixed-speed resampling on selected layers,
+low-pass filtering, layering, occasional reverse texture, fades, conservative peak normalization.
+The exact per-cue recipe and source mapping are in Assets/Scripts/Editor/FoleySoundBake.cs.
+Rebuild in Unity: Lightbringer > Audio > Rebuild Foley Sound Effects.
+No external audio tool, Windows API or network is needed to rebuild from the bundled sources.
+
+Runtime: Esc / P > 효과음 controls a separate saved SFX volume (default 70%).
+20 world voices and 4 UI voices; distance attenuation, repetition limits, priorities.
+Pause/level-up suspend battlefield voices while interface feedback remains available.
+Common attacks choose multiple takes with subtle +/-2% pitch variation.
+
+Verify: Lightbringer > Validate Campaign in Play Mode.
+Results: Docs/Validation/CampaignPlayChecks.txt and Docs/Validation/FoleyBakeChecks.txt.
+Automated validation covers audio data and playback behavior, not subjective sound quality.
+
+Implementation files added:
+  Assets/Scripts/Audio/SoundEffects.cs
+  Assets/Scripts/Audio/BattleAudio.cs
+  Assets/Scripts/Audio/UnitAudio.cs
+  Assets/Scripts/Editor/SoundEffectsImport.cs
+  Assets/Scripts/Editor/FoleySoundBake.cs
+  Assets/Scripts/Editor/SoundEffectsValidation.cs
+  Assets/Audio/Resources/SoundEffects/*.wav (11 clips, with Unity metadata)
+  Assets/Audio/Sources/Foley/* (24 source clips, with Unity metadata)
+  Assets/Audio/SoundEffectsNotes.txt
+Implementation files modified:
+  Assets/Scripts/Core/CampaignSession.cs
+  Assets/Scripts/Combat/BossCombat.cs
+  Assets/Scripts/Player/HeroAbilities.cs
+  Assets/Scripts/Units/UnitSummoner.cs
+  Assets/Scripts/Units/UnitSummoner.Selection.cs
+  Assets/Scripts/UI/HudWidgets.cs
+  Assets/Scripts/UI/PauseView.cs
+  Assets/Scripts/UI/CampaignMapView.cs
+  Assets/Scripts/Editor/CampaignPlayValidation.cs
+  Docs/DevelopmentStatus.md
+Validation output:
+  Docs/Validation/FoleyBakeChecks.txt
+  Docs/Validation/CampaignPlayChecks.txt (plus existing campaign validation screenshots)
+
+Removed at user request (2026-10-12):
+  ArrowRelease / ArrowHit / MagicCast / MagicImpact (both takes), Heal,
+  HeroHurt, Death, Victory, Defeat, LevelUp: 14 WAVs and playback/bake/preview entries.
+  These events remain silent pending new selections. MageFire and PriestHeal are preserved.
+
+Files changed for the removal:
+  Assets/Scripts/Audio/{SoundEffects,BattleAudio,UnitAudio}.cs
+  Assets/Scripts/Combat/BossCombat.cs
+  Assets/Scripts/Editor/{FoleySoundBake,SoundEffectsValidation}.cs
+  Docs/Audio/SoundEffectsPreview.html
+  Assets/Audio/SoundEffectsNotes.txt; Docs/DevelopmentStatus.md
+  Deleted 14 output WAVs and their .meta files; refreshed standard validation reports/screenshots.
+  Unity compilation, 359 system checks and 136 Play checks passed (2026-10-12 14:28 UTC).
+
+User-selected hero and victory sounds (2026-10-12):
+  freesound_community-fx-light-90387.mp3 -> Sources/Foley/FxLightUser.mp3 -> Victory.wav
+  freesound_gamestudio-rpg-sword-attack-combo-6-388919.mp3 -> Sources/Foley/HeroLightStaffUser.mp3 -> HeroLightStaff.wav
+  Originals retained unchanged from Downloads, separate from the CC0 source packs above.
+  Edits: leading silence removal, mono PCM conversion, short edge fades, peak headroom at 0.72.
+  Full sound duration and original pitch/speed retained.
+  Victory plays once on successful objective completion; Defeat now uses the selected Medieval Horn.
+  HeroLightStaff plays on a successful Light Staff cast only (including an alternate equipment slot).
+  Failed casts and other equipment do not trigger this attack clip.
+  Existing MageFire and PriestHeal assets/routing are unchanged.
+  Rebuild: Lightbringer > Audio > Import Selected Hero and Result Sounds.
+  Changed: SoundEffects.cs, BattleAudio.cs, FoleySoundBake.cs, CampaignPlayValidation.cs,
+    SoundEffectsPreview.html, this file and DevelopmentStatus.md.
+  Added: two source MP3s, Victory.wav and HeroLightStaff.wav, Unity metadata,
+    Docs/Validation/SelectedHeroAudioChecks.txt.
+Selected combat sounds and restoration (2026-10-13):
+  yodguard-a-clean-and-precise-game-style-arrow-impact-1-450238.mp3
+    -> Sources/Foley/ArrowImpactUser.mp3 -> ArrowHit.wav (0.335s).
+  Only the second hit is used: 0.775-1.110s after Read() removes leading silence.
+  The measured envelope is in Docs/Validation/ArrowSourceEnvelope.csv.
+  Fires when an allied/enemy arrow successfully lands, at the impact position.
+  Missed arrows and magic bolts do not play this sound; original pitch/speed retained.
+  HeroHurt.wav restored from the exact previous 0.25s Chop.ogg + Armor.wav recipe.
+  Hero damage playback restored with the previous UI priority, gain and 0.2s repetition limit.
+  lordsonny-heavy-cineamtic-hit-166888.mp3
+    -> Sources/Foley/BossImpactUser.mp3 -> BossImpact.wav.
+  Boss specials play it once at resolution (lightning at its target, other skills at the boss).
+  It replaces the prior special-attack HeavyImpact playback; windup warning remains separate.
+  Selected original MP3s are retained unchanged; separate from the CC0 Foley packs above.
+  Rebuild: Lightbringer > Audio > Import Selected Combat Sounds.
+  Existing mage, priest, hero staff and victory clips remain unchanged.
+  Added: two source MP3s, ArrowHit.wav, HeroHurt.wav, BossImpact.wav and Unity metadata;
+    Assets/Scripts/Editor/SelectedCombatSoundBake.cs; audio inspection/validation reports.
+  Modified: Audio/{SoundEffects,UnitAudio,BattleAudio}.cs, Combat/BossCombat.cs,
+    Editor/{FoleySoundBake,CampaignPlayValidation}.cs, Docs/Audio/SoundEffectsPreview.html,
+    Assets/Audio/SoundEffectsNotes.txt, Docs/DevelopmentStatus.md.
+User-selected arrow release (2026-10-13):
+  djartmusic-arrow-swish_03-306040.mp3 -> Sources/Foley/ArrowReleaseUser.mp3 -> ArrowRelease.wav.
+  Plays at the projectile launch position for allied and enemy arrows.
+  Retains original pitch/speed; leading silence trimmed, mono PCM and peak headroom applied.
+  Original MP3 retained unchanged; separate from the CC0 source packs above.
+  Rebuild: Lightbringer > Audio > Import Selected Combat Sounds.
+  Added: source MP3 and ArrowRelease.wav with Unity metadata.
+  Modified: Audio/{SoundEffects,UnitAudio}.cs, Editor/{SelectedCombatSoundBake,FoleySoundBake}.cs,
+    Docs/Audio/SoundEffectsPreview.html, this file and Docs/DevelopmentStatus.md.
+User-selected defeat (2026-10-13):
+  freesound_community-medieval-horn-by-kris-klavenes-wav-77565.mp3
+    -> Sources/Foley/MedievalHornUser.mp3 -> Defeat.wav.
+  Plays once when the stage ends in defeat (hero death or allied-base destruction).
+  Uses the reserved interface pool and result priority; original pitch and speed retained.
+  Full sound retained after leading silence trim, with short edge fades and peak headroom.
+  Original MP3 retained unchanged; separate from the CC0 source packs above.
+  Rebuild: Lightbringer > Audio > Import Selected Hero and Result Sounds.
+  Added: MedievalHornUser.mp3, Defeat.wav and Unity metadata.
+  Modified: Audio/{SoundEffects,BattleAudio}.cs, Editor/FoleySoundBake.cs,
+    Docs/Audio/SoundEffectsPreview.html, this file and Docs/DevelopmentStatus.md.
+  Validation: Unity compiled and imported Defeat.wav (8.333s, mono 44100Hz, peak 0.72).
+  Full Play validation was blocked by the preflight boss victory assertion in GreyboxChecks.txt;
+  the previous CampaignPlay PASS report predates this change.
+
+Allied troop grunt voices (2026-10-13):
+  freesound_community-grunt-85990.mp3 -> Sources/Foley/TroopGruntFemaleUser.mp3 -> TroopHurtFemale.wav
+    Reitanna (Freesound); Female tag verified: https://pixabay.com/sound-effects/people-grunt-85990/
+    Archer, Priest, Mage (current female character models).
+  freesound_community-grunt-1-85280.mp3 -> Sources/Foley/TroopGruntMaleUser.mp3 -> TroopHurtMale.wav
+    vmgraw (Freesound); Male tag verified: https://pixabay.com/sound-effects/people-grunt-1-85280/
+    Swordsman, Shieldbearer, Spearman, Knight.
+  Voice choice assigned from the summoner's UnitKind, never object names or combat stats.
+  Plays on actual allied troop damage, including lethal hits. Human grunts exclude the Dragon,
+    hero, strongholds and enemies. The hero retains its existing separate hurt effect.
+  Original pitch/speed retained; mono PCM, leading silence trim, short fades and peak headroom.
+  Per-unit 0.75s repetition limit plus per-voice 0.35s pool limit; spatial attenuation and low gain.
+  Source MP3s retained unchanged; Pixabay Content License, separate from the CC0 packs above.
+  Added: two source MP3s, TroopHurtFemale.wav, TroopHurtMale.wav and Unity metadata.
+  Modified: Audio/{UnitAudio,BattleAudio,SoundEffects}.cs,
+    Editor/{SelectedCombatSoundBake,FoleySoundBake,CampaignPlayValidation}.cs,
+    Docs/Audio/SoundEffectsPreview.html, this file and Docs/DevelopmentStatus.md.
+  Validation: Unity compilation and PCM checks passed (female 0.384s, male 0.871s, peak 0.72).
+  Full Play validation was blocked by the existing damaged-save backup preservation assertion
+  in ProgressionValidation.cs; this change has not completed the full Play suite.
+
+User-selected button press (2026-10-13):
+  dragon-studio-button-press-382713.mp3 -> Sources/Foley/ButtonPressUser.mp3 -> Click.wav.
+  Replaces the old generated/edit-recipe button click; existing menu click routing stays in place.
+  Original MP3 retained unchanged; leading silence trim, mono conversion, short fades and peak headroom.
+  Playback retains pitch/speed. WAV conversion does not recover detail lost in the source MP3.
+  Rebuild: Lightbringer > Audio > Import Selected Button Sound.
+  Hero hurt / Warp Magic summon remain preview candidates, not game replacements.
+  Added: source MP3 and metadata; Docs/Validation/SelectedButtonAudioChecks.txt.
+  Modified: Click.wav, Editor/{FoleySoundBake,CampaignPlayValidation}.cs,
+    Docs/Audio/SoundEffectsPreview.html, this file and Docs/DevelopmentStatus.md.
+User-selected summon (2026-10-13):
+  universfield-spell-casting-229208.mp3 -> Sources/Foley/SpellCastingUser.mp3 -> Summon.wav.
+  Replaces the previous summon Foley layers. Plays after successful troop creation/payment;
+    insufficient food or blocked spawn retains the existing denied sound.
+  Original pitch/speed retained; leading silence trim, mono PCM, short fades and peak headroom.
+  Source MP3 retained unchanged, separate from the CC0 Foley packs.
+  Rebuild: Lightbringer > Audio > Import Selected Summon Sound.
+  Warp Magic is no longer presented as the summon candidate; hero hurt is still awaiting selection.
+  Added: SpellCastingUser.mp3 and metadata; Docs/Validation/SelectedSummonAudioChecks.txt.
+  Modified: Summon.wav, Editor/{FoleySoundBake,CampaignPlayValidation}.cs,
+    Docs/Audio/SoundEffectsPreview.html, this file and Docs/DevelopmentStatus.md.
+Troop death-only voices and hero punch (2026-10-13):
+  Supersedes the earlier allied troop hurt routing.
+  TroopHurtFemale/Male renamed to TroopDeathFemale/Male with their Unity GUIDs preserved.
+  UnitAudio now subscribes only to Combatant.Died for these voices; no grunt on nonlethal hits.
+  Female Archer/Priest/Mage and male Swordsman/Shieldbearer/Spearman/Knight assignments unchanged.
+  The death callback works after the soldier becomes inactive; the shared pool owns playback.
+  The 0.35s per-voice limit remains for mass deaths, with no per-soldier hurt timer.
+  universfield-classic-punch-impact-352711.mp3 -> Sources/Foley/HeroPunchImpactUser.mp3 -> HeroHurt.wav.
+  Replaces the former Chop + Armor hero hurt recipe, retaining original pitch/speed and applying peak headroom.
+  Added: source MP3 and metadata. Renamed: the two troop WAVs and metadata.
+  Modified: HeroHurt.wav, Audio/{UnitAudio,BattleAudio,SoundEffects}.cs,
+    Editor/{SelectedCombatSoundBake,CampaignPlayValidation}.cs, Docs/Audio/SoundEffectsPreview.html,
+    this file and Docs/DevelopmentStatus.md.
+
+Shared SFX level and full slider range (2026-10-13):
+  All 20 baked WAVs now share a maximum sliding 100ms RMS of -20 dBFS (+/- 0.1 dB).
+  This is unweighted short-window RMS, not integrated LUFS or whole-file average.
+  Whole-file RMS remains different because silence and decay lengths differ.
+  The offline bake measures after edge fades and limits sample peaks to -1 dBFS.
+  Only transients exceeding the ceiling use a 1ms look-ahead / 10ms release gain envelope.
+  Source files, selections (including the second arrow hit), durations and pitch remain unchanged.
+  The old per-cue runtime gain of 0.16-0.42 is removed; AudioSource volume follows the user's
+    existing SFX slider directly. Saved preferences and default 70% are retained.
+  At default 70%, each clip's maximum 100ms RMS is about -23.10 dBFS before spatial attenuation.
+  World distance falloff and voice/rate limits remain; the per-file ceiling is not a final mix limiter.
+  All individual imports and the full rebuild automatically apply the same normalization.
+  Rebuild and checks: Lightbringer > Audio > Rebuild and Validate Normalized Sound Effects.
+  Before/after measurements: Docs/Audio/SoundLevelsBeforeNormalization.csv and SoundLevels.csv.
+  Preview and reproducible analysis: Docs/Audio/SoundLevels.html and MeasureSoundLevels.ps1.
+  Modified: all Resources/SoundEffects/*.wav; Scripts/Audio/SoundEffects.cs;
+    Scripts/Editor/{FoleySoundBake,CampaignPlayValidation,SoundEffectsValidation}.cs;
+    Docs/Audio/{MeasureSoundLevels.ps1,SoundLevels.csv,SoundLevels.html,SoundEffectsPreview.html}; this file.
+  Added: Scripts/Editor/SoundLevelBake.cs and metadata; Docs/Audio/SoundLevelsBeforeNormalization.csv;
+    Docs/Validation/SoundLevelChecks.txt. Rebuild refreshes the selected-audio validation reports.
+
+Selected enemy sounds and hero healing (2026-10-13):
+  yodguard-water-magic-6-378621.mp3 -> Sources/Foley/ShamanWaterUser.mp3 -> ShamanWater.wav.
+    Enemy Shaman only: bolt launch and a healing pulse that actually restores health.
+    Trimmed to the first 1.4s after leading silence removal; fade the tail for repeated casts.
+    Shared 0.25s repetition limit avoids doubling a simultaneous attack/heal cast.
+  666herohero-monster-death-grunt-131480.mp3 -> Sources/Foley/EnemyDeathUser.mp3 -> EnemyDeath.wav.
+    Plays on Combatant.Died for ordinary enemy troops: Raider, Archer, Swarm, Brute, Shaman.
+    Includes troops summoned by the Warlord. Not on nonlethal hits, despawn or scene cleanup.
+    Boss roster kind and strongholds are excluded; the Warlord's story is a retreat, not a death.
+    Shared 0.35s repetition limit and world distance/voice limits apply to mass deaths.
+  freesound_community-bones-and-flesh-movement-98677.mp3 -> Sources/Foley/BossSummonUser.mp3 -> BossSummon.wav.
+    Once at the Warlord's position when SummonBossGuard actually creates at least one troop.
+    Replaces Cinematic Hit for this one special; other boss specials retain their existing sound.
+  coghezzi-holy-healing-spell-533279.mp3 -> Sources/Foley/HeroHealingUser.mp3 -> HeroHeal.wav.
+    Plays after a successful Healing Staff cast by the hero; allied PriestHeal remains unchanged.
+  Sources supplied by the user from Downloads, preserved unchanged outside Resources.
+    These user-supplied MP3s are separate from the CC0 source packs above.
+  Original speed/pitch, leading silence trim, edge fades, mono PCM and shared -20 dBFS max100ms RMS.
+  No new magic impact sound or Rune Staff sound was added.
+  Added: four source MP3s, four WAVs and their Unity metadata;
+    Scripts/Editor/SelectedEnemySoundBake.cs and metadata; Docs/Validation/SelectedAdditionalAudioChecks.txt.
+  Modified: Scripts/Audio/{SoundEffects,UnitAudio,BattleAudio}.cs; Scripts/Combat/BossCombat.cs;
+    Scripts/Editor/{FoleySoundBake,SoundLevelBake,SoundEffectsValidation,CampaignPlayValidation}.cs;
+    Docs/Audio/{MeasureSoundLevels.ps1,SoundLevels.csv,SoundLevels.html,SoundEffectsPreview.html}; this file.
+  Rebuild/import/Play checks are recorded under Docs/Validation.

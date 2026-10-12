@@ -1,0 +1,3 @@
+PASS | 2026-10-12T17:27:55.8337132Z
+MageFire: 8.040s source -> 0.900s, mono 44100Hz, peak 0.304, pitch 1.0
+PriestHeal: 8.040s source -> 1.200s, mono 44100Hz, peak 0.272, pitch 1.0

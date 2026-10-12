@@ -24,7 +24,11 @@ namespace Lightbringer.UI
 
         public static Button Button(VisualElement parent, string text, System.Action click, params string[] classes)
         {
-            Button button = new Button(click) { text = text };
+            Button button = new Button(() =>
+            {
+                Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Click);
+                click?.Invoke();
+            }) { text = text };
             foreach (string name in classes) button.AddToClassList(name);
             parent?.Add(button);
             return button;
