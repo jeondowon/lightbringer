@@ -11,7 +11,7 @@ namespace Lightbringer.Progression
     {
         public const int StageCount = 8;
         public const int GrowthCount = 8;
-        public static readonly string[] GrowthNames = { "오라 반경 +0.6m", "초당 식량 생산 +1", "초당 마나 회복 +2",
+        public static readonly string[] GrowthNames = { $"오라 반경 +{GrowthCatalog.AuraRadiusPerRank:0.0}m", "초당 식량 생산 +1", $"초당 마나 회복 +{GrowthCatalog.ManaRecoveryPerRank:0.#}",
             "최대 식량·마나 +10", "소환 비용 -2.5% (최대 50%)", "오라 공격력 보너스 +5%", "영웅 피해량 +10%", "영웅 체력 +20" };
         public int version = 1;
         public int unlockedStage = 1;
@@ -23,6 +23,8 @@ namespace Lightbringer.Progression
         public int[] ranks = new int[GrowthCount];
         public int[] equipmentLevels = { 1, 1, 0, 1, 0, 0 };
         public int[] loadout = { 0, 1, 3 };
+        public int gold;
+        public int[] unitRanks = new int[Units.UnitCatalog.Count];
         public int ExperienceToNext => 40 + level * 20;
         public int UnlockedUnits => Mathf.Min(Units.UnitCatalog.Count, unlockedStage);
         public bool IsComplete => cleared[StageCount - 1];
@@ -34,9 +36,11 @@ namespace Lightbringer.Progression
                 || cleared == null || cleared.Length != StageCount || ranks == null || ranks.Length != GrowthCount
                 || equipmentLevels == null || equipmentLevels.Length != EquipmentCatalog.Count
                 || loadout == null || loadout.Length != EquipmentCatalog.Slots || choices == null
+                || gold < 0 || unitRanks == null || unitRanks.Length != Units.UnitCatalog.Count
                 || (pendingLevels == 0 ? choices.Length != 0 : choices.Length != 3)) return false;
             for (int i = 0; i < ranks.Length; i++) if (ranks[i] < 0 || ranks[i] > 99) return false;
             for (int i = 0; i < equipmentLevels.Length; i++) if (equipmentLevels[i] < 0 || equipmentLevels[i] > 99) return false;
+            for (int i = 0; i < unitRanks.Length; i++) if (unitRanks[i] < 0 || unitRanks[i] > Units.UnitCatalog.MaxRank || (i >= UnlockedUnits && unitRanks[i] > 0)) return false;
             for (int i = 0; i < loadout.Length; i++)
             {
                 int id = loadout[i];
@@ -89,6 +93,22 @@ namespace Lightbringer.Progression
             pendingLevels--;
             choices = new int[0];
             EnsureChoices();
+            return true;
+        }
+
+        public void GainGold(int amount)
+        {
+            if (amount > 0) gold = (int)System.Math.Min((long)gold + amount, 99999999L);
+        }
+
+        public bool CanUpgradeUnit(int unit) => unit >= 0 && unit < UnlockedUnits && unitRanks[unit] < Units.UnitCatalog.MaxRank
+            && gold >= Units.UnitCatalog.UpgradeCost((Units.UnitKind)unit, unitRanks[unit]);
+
+        public bool TryUpgradeUnit(int unit)
+        {
+            if (!CanUpgradeUnit(unit)) return false;
+            gold -= Units.UnitCatalog.UpgradeCost((Units.UnitKind)unit, unitRanks[unit]);
+            unitRanks[unit]++;
             return true;
         }
 

@@ -15,6 +15,9 @@ namespace Lightbringer.Units
         public float SelectedCost => CostOf(selectedUnit);
         public float CostOf(UnitKind kind) => (kind == UnitKind.Swordsman ? foodCost : UnitCatalog.Cost(kind)) * costMultiplier;
         public void SetCostMultiplier(float multiplier) => costMultiplier = Mathf.Clamp(multiplier, 0.5f, 1f);
+        private int[] unitRanks;
+        public void SetUnitRanks(int[] ranks) => unitRanks = ranks;
+        private int RankOf(UnitKind kind) => unitRanks != null && (int)kind < unitRanks.Length ? unitRanks[(int)kind] : 0;
         public event System.Action<Lightbringer.Combat.Combatant> Summoned;
         public void Configure(Lightbringer.Resources.FoodResource resource, CharacterController template,
             Transform parent, WaypointPath[] paths, int unlocked)
@@ -28,6 +31,8 @@ namespace Lightbringer.Units
             if (!isActiveAndEnabled || index < 0 || index >= availablePaths.Length
                 || availablePaths[index] == null || !availablePaths[index].IsValid)
                 return false;
+            if (selectedPath != availablePaths[index])
+                Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Click);
             selectedPath = availablePaths[index];
             return true;
         }
@@ -39,6 +44,7 @@ namespace Lightbringer.Units
             if (index >= unlockedUnitCount)
             {
                 LastFeedback = UnitCatalog.Names[index] + " 병종은 아직 해금되지 않았습니다.";
+                Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Denied);
                 return false;
             }
             return TrySelectUnit(index) && TrySummon();

@@ -74,11 +74,13 @@ namespace Lightbringer.Units
             if (!food.CanAfford(cost))
             {
                 LastFeedback = $"식량이 부족합니다: {food.CurrentFood:F1} / {cost:F1}";
+                Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Denied);
                 return false;
             }
             if (!TryFindSpawnPosition(out Vector3 position))
             {
                 LastFeedback = "소환할 공간이 없습니다. 넓은 곳으로 이동하세요.";
+                Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Denied);
                 return false;
             }
 
@@ -93,8 +95,8 @@ namespace Lightbringer.Units
             soldier.GetComponent<UnitPathFollower>().ConfigureSpeed(UnitCatalog.Speed(selectedUnit));
             if (selectedUnit != UnitKind.Swordsman)
             {
-                soldier.GetComponent<Combatant>()?.Configure(Faction.Allied, UnitCatalog.MaxHealth(selectedUnit));
-                soldier.GetComponent<UnitCombat>()?.Configure(UnitCatalog.AttackDamage(selectedUnit), UnitCatalog.Range(selectedUnit), 1f);
+                soldier.GetComponent<Combatant>()?.Configure(Faction.Allied, UnitCatalog.MaxHealthAt(selectedUnit, RankOf(selectedUnit)));
+                soldier.GetComponent<UnitCombat>()?.Configure(UnitCatalog.AttackDamageAt(selectedUnit, RankOf(selectedUnit)), UnitCatalog.Range(selectedUnit), 1f);
                 Transform visual = soldier.transform.Find("Visual");
                 if (visual != null) visual.localScale = UnitCatalog.VisualScale(selectedUnit);
                 if (selectedUnit == UnitKind.Shieldbearer) soldier.GetComponent<Combatant>().DamageReduction = 0.35f;
@@ -110,6 +112,12 @@ namespace Lightbringer.Units
                 // The Dragon walks on the ground and breathes fire (splash); flight was dropped for the rigged model.
                 if (selectedUnit == UnitKind.Mage || selectedUnit == UnitKind.Dragon)
                     soldier.GetComponent<UnitCombat>().ConfigureSplash(selectedUnit == UnitKind.Dragon ? 4f : 2.5f);
+            }
+            if (selectedUnit == UnitKind.Swordsman && RankOf(selectedUnit) > 0)
+            {
+                UnitCombat swordCombat = soldier.GetComponent<UnitCombat>();
+                soldier.GetComponent<Combatant>()?.Configure(Faction.Allied, UnitCatalog.MaxHealthAt(selectedUnit, RankOf(selectedUnit)));
+                swordCombat?.Configure(UnitCatalog.AttackDamageAt(selectedUnit, RankOf(selectedUnit)), swordCombat.AttackRange, swordCombat.AttackInterval);
             }
             soldier.GetComponent<UnitCombat>()?.ConfigureStrike(UnitCatalog.StrikePhase(selectedUnit), UnitCatalog.Projectile(selectedUnit),
                 UnitCatalog.ProjectileSpeed(selectedUnit), UnitCatalog.ProjectileArc(selectedUnit));
