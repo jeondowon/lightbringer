@@ -24,7 +24,8 @@
 - [x] `EnemyCatalog` 데이터 분리 (`Assets/Scripts/Units/EnemyCatalog.cs`)
 - [x] `EnemyWaveSpawner`를 스테이지별 웨이브 구성 데이터 기반으로 변경 (막힌 스폰은 버리지 않고 대기열)
 - [x] 역할별 실루엣 구분 (`SilhouetteFactory`: Swarmling / Brute / Shaman / Warlord)
-- [x] 보스 스테이지 — Stage 8: Warlord가 마지막 웨이브와 함께 중앙 전선으로 진격, 처치 전까지 적 본진 방어막
+- [x] 보스 스테이지 — Stage 8: 정규 공세 격퇴 → 본진 파괴 → 오로라 충격파와 병력 전멸 → 군주 등장/대화 → 군주 격퇴로 승리. 결과 문구로 퇴각을 전달하며, 근접 공격에 여섯 특수 패턴 추가. 세부 흐름은 `Docs/GameDesign/BossEncounter.md`.
+- [ ] 군주 퇴각 연출 → 후속 군주 재대결 → 최종 군주·마왕 동시전. `Docs/GameDesign/CampaignStoryProgression.md`의 24스테이지 구성은 제안이며 아직 미구현.
 - [x] 창병 Heavy 보너스 (Heavy 대상 2배 피해)
 - [x] 기사 돌격 (5 m 이상 이동 후 첫 타격 2.5배 + 주변 1.8 m 타격 + 비Heavy 적 1.5 m 밀쳐냄), 기사 체력 120→170 / 공격력 24→32
   - [ ] **보류: 돌격 밸런스.** Stage 7 적 체력(Raider 60, Archer 46, Shaman 48, Swarmling 22)이 돌격 피해 80보다 낮아 대부분 즉사 → 밀쳐내기가 안 보임. Brute(216)는 Heavy라 밀리지 않음. 배율 조정 또는 피해 대신 기절/넉백 위주로 재설계 검토. 넉백 연출은 Step 3에서.
@@ -41,7 +42,7 @@
 | Swarmling | 저체력·고속 물량 | 3~ | 마법사 광역 |
 | Brute (Heavy) | 고체력·저속 탱커 | 4~ | 창병 |
 | Shaman | 주변 적 회복 | 5~ | 궁수·마법사로 후열 처리 |
-| Warlord (Heavy, 보스) | 최종 목표 | 8 | 영웅 + 전 병력 |
+| Warlord (Heavy, 보스) | 반복 등장하는 보스 | 8: 첫 격퇴 | 영웅 + 전 병력 |
 
 ## Step 2. 데스크톱 HUD 교체
 

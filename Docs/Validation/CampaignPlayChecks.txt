@@ -1,4 +1,4 @@
-PASS | CampaignPlay.v1 | 2026-10-12T12:06:52.0512983Z
+PASS | CampaignPlay.v1 | 2026-10-12T17:46:23.3896006Z
 PASS: Campaign preparation releases menu input
 PASS: Actual Play mode can start a campaign with isolated progress
 PASS: The Tread of War loads and advances as looping 2D battle music
@@ -6,63 +6,150 @@ PASS: Stage 1 renders the imported forest profile
 PASS: Imported forest decoration adds no gameplay colliders
 PASS: Imported forest renderers have supported materials
 PASS: Imported forest replaces the procedural grass carpet
-PASS: Forest tree mesh reaches the terrain at (-23.6, -31.8)
-PASS: Forest tree mesh reaches the terrain at (-25.3, -23.2)
-PASS: Forest tree mesh reaches the terrain at (-24.6, 12.9)
-PASS: Forest tree mesh reaches the terrain at (-24.4, 62.0)
-PASS: Forest tree mesh reaches the terrain at (-25.8, 71.1)
-PASS: Forest tree mesh reaches the terrain at (-21.7, 83.4)
-PASS: Forest tree mesh reaches the terrain at (-38.2, -32.3)
-PASS: Forest tree mesh reaches the terrain at (-38.2, -24.7)
-PASS: Forest tree mesh reaches the terrain at (-40.0, -9.4)
-PASS: Forest tree mesh reaches the terrain at (-40.0, 0.2)
-PASS: Forest tree mesh reaches the terrain at (-39.3, 15.0)
-PASS: Forest tree mesh reaches the terrain at (-39.5, 28.0)
-PASS: Forest tree mesh reaches the terrain at (-40.6, 39.9)
-PASS: Forest tree mesh reaches the terrain at (-43.1, 53.9)
-PASS: Forest tree mesh reaches the terrain at (-39.9, 58.1)
-PASS: Forest tree mesh reaches the terrain at (-39.1, 77.6)
-PASS: Forest tree mesh reaches the terrain at (-38.1, 85.7)
-PASS: Forest tree mesh reaches the terrain at (-61.3, -37.5)
-PASS: Forest tree mesh reaches the terrain at (-56.4, -20.8)
-PASS: Forest tree mesh reaches the terrain at (-59.6, -13.4)
-PASS: Forest tree mesh reaches the terrain at (-60.1, 2.0)
-PASS: Forest tree mesh reaches the terrain at (-60.7, 16.1)
-PASS: Forest tree mesh reaches the terrain at (-60.8, 26.2)
-PASS: Forest tree mesh reaches the terrain at (-61.7, 41.6)
-PASS: Forest tree mesh reaches the terrain at (-58.1, 49.3)
-PASS: Forest tree mesh reaches the terrain at (-57.4, 65.0)
-PASS: Forest tree mesh reaches the terrain at (-61.5, 75.5)
-PASS: Forest tree mesh reaches the terrain at (-60.0, 83.0)
-PASS: Forest tree mesh reaches the terrain at (22.9, -37.5)
-PASS: Forest tree mesh reaches the terrain at (23.5, -0.6)
-PASS: Forest tree mesh reaches the terrain at (20.4, 63.8)
-PASS: Forest tree mesh reaches the terrain at (23.0, 75.6)
-PASS: Forest tree mesh reaches the terrain at (20.1, 87.4)
-PASS: Forest tree mesh reaches the terrain at (38.2, -31.1)
-PASS: Forest tree mesh reaches the terrain at (41.1, -18.0)
-PASS: Forest tree mesh reaches the terrain at (38.1, -8.0)
-PASS: Forest tree mesh reaches the terrain at (41.1, 3.1)
-PASS: Forest tree mesh reaches the terrain at (43.6, 15.0)
-PASS: Forest tree mesh reaches the terrain at (43.0, 24.3)
-PASS: Forest tree mesh reaches the terrain at (38.1, 39.0)
-PASS: Forest tree mesh reaches the terrain at (41.5, 48.4)
-PASS: Forest tree mesh reaches the terrain at (40.9, 63.5)
-PASS: Forest tree mesh reaches the terrain at (42.0, 76.9)
-PASS: Forest tree mesh reaches the terrain at (42.0, 89.3)
-PASS: Forest tree mesh reaches the terrain at (59.1, -30.1)
-PASS: Forest tree mesh reaches the terrain at (57.7, -18.2)
-PASS: Forest tree mesh reaches the terrain at (58.6, -13.5)
-PASS: Forest tree mesh reaches the terrain at (60.1, -1.5)
-PASS: Forest tree mesh reaches the terrain at (60.8, 11.6)
-PASS: Forest tree mesh reaches the terrain at (59.1, 24.3)
-PASS: Forest tree mesh reaches the terrain at (57.9, 36.6)
-PASS: Forest tree mesh reaches the terrain at (56.1, 48.2)
-PASS: Forest tree mesh reaches the terrain at (56.7, 65.0)
-PASS: Forest tree mesh reaches the terrain at (58.1, 72.7)
-PASS: Forest tree mesh reaches the terrain at (56.9, 88.6)
-PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.24]
+PASS: Forest tree mesh reaches the terrain at (-24.8, -27.5)
+PASS: Forest tree mesh reaches the terrain at (-25.5, -27.3)
+PASS: Forest tree mesh reaches the terrain at (-18.8, 16.8)
+PASS: Forest tree mesh reaches the terrain at (-19.5, 61.6)
+PASS: Forest tree mesh reaches the terrain at (-25.4, 71.2)
+PASS: Forest tree mesh reaches the terrain at (-20.5, 82.4)
+PASS: Forest tree mesh reaches the terrain at (-38.8, -28.6)
+PASS: Forest tree mesh reaches the terrain at (-40.3, -22.2)
+PASS: Forest tree mesh reaches the terrain at (-43.1, -8.6)
+PASS: Forest tree mesh reaches the terrain at (-37.9, -1.7)
+PASS: Forest tree mesh reaches the terrain at (-47.3, 17.1)
+PASS: Forest tree mesh reaches the terrain at (-41.5, 20.4)
+PASS: Forest tree mesh reaches the terrain at (-40.3, 49.0)
+PASS: Forest tree mesh reaches the terrain at (-41.8, 63.3)
+PASS: Forest tree mesh reaches the terrain at (-40.8, 80.1)
+PASS: Forest tree mesh reaches the terrain at (-41.1, 84.6)
+PASS: Forest tree mesh reaches the terrain at (-59.0, -40.4)
+PASS: Forest tree mesh reaches the terrain at (-62.4, -20.6)
+PASS: Forest tree mesh reaches the terrain at (-53.6, -11.1)
+PASS: Forest tree mesh reaches the terrain at (-63.8, -4.7)
+PASS: Forest tree mesh reaches the terrain at (-56.3, 18.4)
+PASS: Forest tree mesh reaches the terrain at (-54.3, 29.1)
+PASS: Forest tree mesh reaches the terrain at (-60.9, 46.0)
+PASS: Forest tree mesh reaches the terrain at (-59.1, 47.7)
+PASS: Forest tree mesh reaches the terrain at (-54.1, 62.5)
+PASS: Forest tree mesh reaches the terrain at (-64.1, 75.0)
+PASS: Forest tree mesh reaches the terrain at (-56.3, 81.5)
+PASS: Forest tree mesh reaches the terrain at (21.2, -36.6)
+PASS: Forest tree mesh reaches the terrain at (21.5, 62.9)
+PASS: Forest tree mesh reaches the terrain at (24.7, 76.4)
+PASS: Forest tree mesh reaches the terrain at (19.9, 80.6)
+PASS: Forest tree mesh reaches the terrain at (38.8, -32.0)
+PASS: Forest tree mesh reaches the terrain at (35.5, -18.9)
+PASS: Forest tree mesh reaches the terrain at (41.6, -12.9)
+PASS: Forest tree mesh reaches the terrain at (38.6, 1.4)
+PASS: Forest tree mesh reaches the terrain at (39.9, 20.4)
+PASS: Forest tree mesh reaches the terrain at (39.2, 22.5)
+PASS: Forest tree mesh reaches the terrain at (47.6, 37.3)
+PASS: Forest tree mesh reaches the terrain at (34.6, 48.3)
+PASS: Forest tree mesh reaches the terrain at (39.8, 61.9)
+PASS: Forest tree mesh reaches the terrain at (39.8, 69.0)
+PASS: Forest tree mesh reaches the terrain at (46.5, 83.6)
+PASS: Forest tree mesh reaches the terrain at (61.1, -34.5)
+PASS: Forest tree mesh reaches the terrain at (54.2, -23.5)
+PASS: Forest tree mesh reaches the terrain at (52.6, -4.4)
+PASS: Forest tree mesh reaches the terrain at (59.0, 1.6)
+PASS: Forest tree mesh reaches the terrain at (60.6, 9.3)
+PASS: Forest tree mesh reaches the terrain at (54.2, 28.4)
+PASS: Forest tree mesh reaches the terrain at (61.0, 32.6)
+PASS: Forest tree mesh reaches the terrain at (57.1, 46.9)
+PASS: Forest tree mesh reaches the terrain at (64.6, 70.4)
+PASS: Forest tree mesh reaches the terrain at (52.7, 75.9)
+PASS: Forest tree mesh reaches the terrain at (54.5, 87.4)
+PASS: Forest tree mesh reaches the terrain at (-82.1, -65.5)
+PASS: Forest tree mesh reaches the terrain at (-74.0, -64.1)
+PASS: Forest tree mesh reaches the terrain at (-60.2, -63.8)
+PASS: Forest tree mesh reaches the terrain at (-44.6, -61.4)
+PASS: Forest tree mesh reaches the terrain at (-31.7, -63.0)
+PASS: Forest tree mesh reaches the terrain at (-12.6, -66.1)
+PASS: Forest tree mesh reaches the terrain at (-0.7, -69.7)
+PASS: Forest tree mesh reaches the terrain at (15.2, -73.7)
+PASS: Forest tree mesh reaches the terrain at (26.8, -60.9)
+PASS: Forest tree mesh reaches the terrain at (39.8, -67.5)
+PASS: Forest tree mesh reaches the terrain at (55.6, -72.2)
+PASS: Forest tree mesh reaches the terrain at (67.3, -64.4)
+PASS: Forest tree mesh reaches the terrain at (84.8, -68.6)
+PASS: Forest tree mesh reaches the terrain at (-87.5, 105.1)
+PASS: Forest tree mesh reaches the terrain at (-74.4, 111.7)
+PASS: Forest tree mesh reaches the terrain at (-57.6, 110.5)
+PASS: Forest tree mesh reaches the terrain at (-41.2, 104.2)
+PASS: Forest tree mesh reaches the terrain at (-29.6, 107.1)
+PASS: Forest tree mesh reaches the terrain at (-19.6, 104.0)
+PASS: Forest tree mesh reaches the terrain at (-4.0, 102.8)
+PASS: Forest tree mesh reaches the terrain at (10.4, 104.0)
+PASS: Forest tree mesh reaches the terrain at (29.3, 109.3)
+PASS: Forest tree mesh reaches the terrain at (41.9, 113.9)
+PASS: Forest tree mesh reaches the terrain at (56.6, 112.0)
+PASS: Forest tree mesh reaches the terrain at (65.5, 102.5)
+PASS: Forest tree mesh reaches the terrain at (84.4, 108.3)
+PASS: Forest tree mesh reaches the terrain at (-32.9, -10.3)
+PASS: Forest tree mesh reaches the terrain at (-31.9, 16.4)
+PASS: Forest tree mesh reaches the terrain at (32.2, -10.0)
+PASS: Awake/Start initialize hero stats and live Food generation [health=120, food=13.23]
 PASS: Actual runtime summon initializes and activates one allied soldier
+PASS: SFX loads as ready mono PCM: Click
+PASS: SFX contains non-silent, unclipped audio: Click
+PASS: SFX loads as ready mono PCM: Denied
+PASS: SFX contains non-silent, unclipped audio: Denied
+PASS: SFX loads as ready mono PCM: Summon
+PASS: SFX contains non-silent, unclipped audio: Summon
+PASS: SFX loads as ready mono PCM: MeleeHit
+PASS: SFX contains non-silent, unclipped audio: MeleeHit
+PASS: SFX loads as ready mono PCM: HeavyImpact
+PASS: SFX contains non-silent, unclipped audio: HeavyImpact
+PASS: SFX loads as ready mono PCM: FireBreath
+PASS: SFX contains non-silent, unclipped audio: FireBreath
+PASS: SFX loads as ready mono PCM: BossWarning
+PASS: SFX contains non-silent, unclipped audio: BossWarning
+PASS: SFX loads as ready mono PCM: MageFire
+PASS: SFX contains non-silent, unclipped audio: MageFire
+PASS: SFX loads as ready mono PCM: PriestHeal
+PASS: SFX contains non-silent, unclipped audio: PriestHeal
+PASS: SFX loads as ready mono PCM: Victory
+PASS: SFX contains non-silent, unclipped audio: Victory
+PASS: SFX loads as ready mono PCM: HeroLightStaff
+PASS: SFX contains non-silent, unclipped audio: HeroLightStaff
+PASS: SFX loads as ready mono PCM: ArrowHit
+PASS: SFX contains non-silent, unclipped audio: ArrowHit
+PASS: SFX loads as ready mono PCM: HeroHurt
+PASS: SFX contains non-silent, unclipped audio: HeroHurt
+PASS: SFX loads as ready mono PCM: BossImpact
+PASS: SFX contains non-silent, unclipped audio: BossImpact
+PASS: SFX loads as ready mono PCM: ArrowRelease
+PASS: SFX contains non-silent, unclipped audio: ArrowRelease
+PASS: SFX loads as ready mono PCM: Defeat
+PASS: SFX contains non-silent, unclipped audio: Defeat
+PASS: SFX loads as ready mono PCM: TroopDeathFemale
+PASS: SFX contains non-silent, unclipped audio: TroopDeathFemale
+PASS: SFX loads as ready mono PCM: TroopDeathMale
+PASS: SFX contains non-silent, unclipped audio: TroopDeathMale
+PASS: SFX loads as ready mono PCM: ShamanWater
+PASS: SFX contains non-silent, unclipped audio: ShamanWater
+PASS: SFX loads as ready mono PCM: EnemyDeath
+PASS: SFX contains non-silent, unclipped audio: EnemyDeath
+PASS: SFX loads as ready mono PCM: BossSummon
+PASS: SFX contains non-silent, unclipped audio: BossSummon
+PASS: SFX loads as ready mono PCM: HeroHeal
+PASS: SFX contains non-silent, unclipped audio: HeroHeal
+PASS: Campaign and newly summoned troop receive audio automatically without scene setup
+PASS: Campaign owns exactly 20 world voices and 4 reserved interface voices
+PASS: Inaudible distant sounds are culled before occupying a voice
+PASS: A thousand simultaneous impacts yield one rate-limited sound without adding sources
+PASS: Battle sounds spatialize at impact positions without Doppler pitch shifts
+PASS: Normalized SFX follow the user's slider without hidden per-cue attenuation
+PASS: SFX slider maximum exposes the full normalized level on every voice
+PASS: SFX mute affects existing and new voices without changing music
+PASS: Interface feedback uses the reserved interface pool
+PASS: Interface feedback remains audible independently of camera distance
+PASS: Button feedback uses the same normalized volume as battlefield sounds
+PASS: Stronghold destruction and Warlord retreat do not play the troop death grunt
+PASS: Nonlethal enemy hits do not play Monster Death Grunt
+PASS: An enemy death plays Monster Death Grunt after the unit is disabled
+PASS: Simultaneous enemy deaths share the death voice repetition limit
+PASS: Battle cleanup stops every world voice
 PASS: Summoned soldier advances automatically across real rendered frames
 PASS: Hero staff defers damage until light impact
 PASS: Hero staff deals damage after advancing to light impact in Play mode
@@ -74,6 +161,9 @@ PASS: Victory fades out and stops battle music
 PASS: Result screen can return and start the next unlocked stage
 PASS: Starting the next battle creates exactly one playing music source
 PASS: Battle music pause probe pauses the battle
+PASS: Pause rejects new battlefield sounds
+PASS: Menu sounds still play while timeScale is zero
+PASS: Korean pause screen provides independent music and SFX sliders
 PASS: Pause keeps music playing and ducks volume using unscaled time
 PASS: Music pause probe resumes the battle
 PASS: Defeat fades out and stops battle music
@@ -89,10 +179,34 @@ PASS: Runtime deployment: 마법사
 PASS: Runtime deployment: 기사
 PASS: Runtime deployment: 드래곤
 PASS: Runtime Dragon stays grounded on its assigned Path
-MEASURE: 100 rendered stress units (+hero/base): frame mean 7.959 ms, p95 10.143 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 100 rendered stress units (+hero/base): frame mean 41.117 ms, p95 66.357 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 100 rendered stress units stay active through sustained real-time combat
 PASS: 100 rendered stress units exchange damage
-MEASURE: 300 rendered stress units (+hero/base): frame mean 9.347 ms, p95 13.328 ms. Unity Editor, not a shipping-build benchmark.
+MEASURE: 300 rendered stress units (+hero/base): frame mean 34.358 ms, p95 36.637 ms. Unity Editor, not a shipping-build benchmark.
 PASS: 300 rendered stress units stay active through sustained real-time combat
 PASS: 300 rendered stress units exchange damage
 PASS: Stress battle can clean up and return to campaign preparation
+PASS: A fresh final-stage encounter starts after the stress run
+PASS: Runtime final assault ends without spawning the boss and exposes the stronghold
+PASS: An ally is present for the cinematic shockwave
+PASS: Runtime base death enters the cinematic and blocks summons without victory
+PASS: Runtime rupture creates the procedural aurora and collapse effects
+PASS: Runtime aurora eliminates allies while the hero and base survive
+PASS: Runtime boss reveal protects both speakers and defers growth
+PASS: Runtime boss dialogue displays the bundled storybook illustration
+PASS: Runtime opening shot has the matching illustration and dialogue
+PASS: Runtime opening shot has the matching illustration and dialogue
+PASS: Runtime opening shot has the matching illustration and dialogue
+PASS: Runtime opening shot has the matching illustration and dialogue
+PASS: Finishing the dialogue restores the fight and normal vulnerability
+PASS: Runtime boss animation releases a moving dark crescent
+PASS: Runtime boss defeat begins the retreat story and withholds victory and growth
+PASS: The retreat remains visible after the runtime boss object is destroyed
+PASS: Runtime retreat shot has the matching illustration and dialogue
+PASS: Reading the retreat cannot immediately expose victory
+PASS: Runtime retreat shot has the matching illustration and dialogue
+PASS: Reading the retreat cannot immediately expose victory
+PASS: Runtime retreat shot has the matching illustration and dialogue
+PASS: Reading the retreat cannot immediately expose victory
+PASS: Runtime victory is awarded only after the retreat story and its closing fade
+PASS: Final boss victory cleans up and returns to preparation
