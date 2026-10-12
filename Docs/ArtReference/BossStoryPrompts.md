@@ -1,0 +1,18 @@
+# 군주 대화 일러스트
+
+현재는 등장 3장·퇴각 3장으로 확장했다. 추가 4장의 파일·배치·프롬프트는 [BossStorySequencePrompts.md](BossStorySequencePrompts.md)를 참고한다. 아래는 유지한 최초 2장의 제작 기록이다.
+
+2026-10-13. `imagegen` 스킬의 기본 내장 도구로 생성. 프롤로그의 정지 일러스트 연출을 요청받아 제작했다. 생성 결과를 프로젝트로 복사했고 원본은 유지했다.
+
+- 대면: `Assets/UI/Resources/BossStory/Confrontation_v1.png`
+- 퇴각: `Assets/UI/Resources/BossStory/Retreat_v1.png`
+- 참조: `Assets/UI/Prologue/Prologue_08_FirstStep_Storybook_v1.png` (화풍), `Docs/ArtReference/Enemies/Warlord/Warlord_01_Design_v1.png` (군주), `Docs/ArtReference/Characters/CharacterSheet_FemaleHero_v1.png` (영웅).
+- 그림에는 글자를 넣지 않으며 한국어 대사와 이름은 UI가 표시한다.
+
+## 대면 프롬프트
+
+Use case: illustration-story. Asset: full-screen 16:9 narrative illustration for Lightbringer, 1536x864 or 2048x1152 landscape. References ONLY: image1 painterly illustrated storybook texture/ink contours and muted palette; image2 EXACT Warlord armor identity: closed crowned black steel helmet, narrow violet visor, antique bronze star trim, purple tabard, massive greatsword; image3 EXACT adult female mage commander: dark brown hair in bun, white/blue/gold armored coat, thigh-high black armored boots, blue orb staff. Draw entirely as finely inked hand-painted dark fantasy storybook, textured brushwork, NOT a 3D screenshot. No letters, captions, UI, watermarks, panels or borders. Keep main faces and action within upper 72%, bottom 24% quiet dark mist/ground for dialogue overlay. The warlord is a living armored commander, NEVER sealed, chained or resurrected. Scene: first confrontation immediately after an enemy fortress is destroyed. Hero at left foreground seen in readable three-quarter profile, grief turning to resolve, gripping her glowing staff. Warlord on right middle ground standing commanding on broken stone steps with greatsword angled down. Broken dark fortress behind him, violet and teal aurora remnants in smoky dusk sky; scattered empty blue/gold shields and helmets imply lost army, no gore. Strong diagonal eye contact between hero and Warlord, threatening stillness, not midattack. Preserve readable silhouettes, golden staff rim light against dark purple enemy. Wide composition.
+
+## 퇴각 프롬프트
+
+Use case: illustration-story. Asset: full-screen 16:9 narrative illustration for Lightbringer, 1536x864 or 2048x1152 landscape. References ONLY: image1 painterly illustrated storybook texture/ink contours and muted palette; image2 EXACT Warlord armor identity: closed crowned black steel helmet, narrow violet visor, antique bronze star trim, purple tabard, massive greatsword; image3 EXACT adult female mage commander: dark brown hair in bun, white/blue/gold armored coat, thigh-high black armored boots, blue orb staff. Draw entirely as finely inked hand-painted dark fantasy storybook, textured brushwork, NOT a 3D screenshot. No letters, captions, UI, watermarks, panels or borders. Keep main faces and action within upper 72%, bottom 24% quiet dark mist/ground for dialogue overlay. The warlord is a living armored commander, NEVER sealed, chained or resurrected. Scene: same destroyed fortress AFTER the hero has defeated Warlord in combat. Warlord on right is clearly alive and deliberately retreating, stepping backward through a tall narrow vertical tear of violet-black smoke, half body still visible, damaged armor, one hand braced against side and greatsword held lowered in other, looks back toward hero with defiant violet visor. Hero stands left foreground with blue orb staff, exhausted but victorious, not attacking. In distant left background a restored beacon gives soft warm gold light. Warlord silhouette readable against portal, no corpse, no kneeling execution, no new demon, no seals, no chains. Hand-painted narrative still conveys retreat and promised return.

@@ -26,7 +26,7 @@ namespace Lightbringer.EditorTools
                     for (int lane = 0; lane < 3; lane++)
                     {
                         EnemyKind[] squad = EnemyCatalog.Squad(stage, wave, lane);
-                        // A squad (plus the boss on the final wave) must fit the nine spawn slots of one route.
+                        // Each assault squad fits the nine spawn slots of one route.
                         squadsValid &= squad.Length > 0 && squad.Length <= 8;
                         foreach (EnemyKind kind in squad)
                         {
@@ -160,32 +160,85 @@ namespace Lightbringer.EditorTools
             GameObject host = null;
             try
             {
-                PrototypeBattle battle = StartValidationStage(EnemyCatalog.BossStage, material, out host).Battle;
+                CampaignSession session = StartValidationStage(EnemyCatalog.BossStage, material, out host);
+                PrototypeBattle battle = session.Battle;
                 EnemyWaveSpawner waves = battle.Waves;
                 Combatant stronghold = battle.Objective.EnemyBase;
-                Check(waves.HasBoss && stronghold.Invulnerable && waves.Boss == null, "Final stage shields the enemy base until the boss falls");
+                Check(waves.HasBoss && stronghold.Invulnerable && waves.Boss == null, "Final stage protects the stronghold until the regular assault is cleared");
                 Check(!stronghold.TakeDamage(100000f, battle.Hero) && !battle.Objective.HasEnded,
                     "The shielded base cannot be destroyed early");
-                for (int wave = 0; wave < waves.TotalWaves && waves.Boss == null; wave++)
-                {
-                    // Clear the route starts so every wave spawns at once.
-                    foreach (Combatant enemy in LiveEnemies(battle)) enemy.gameObject.SetActive(false);
-                    Physics.SyncTransforms();
-                    waves.Tick(10f);
-                }
+                ClearFinalAssault(battle);
+                Check(waves.AssaultCleared && !stronghold.Invulnerable && waves.Boss == null,
+                    "Clearing every assault unlocks the stronghold without spawning the boss");
+                Invoke(battle.Hero.GetComponent<Lightbringer.Resources.FoodResource>(), "GenerateFood", 100f);
+                Check(battle.Summoner.TrySummon(), "An allied soldier can be deployed before the rupture");
+                Combatant ally = battle.Root.GetComponentsInChildren<Combatant>().First(x => x.Faction == Faction.Allied
+                    && x != battle.Hero && x != battle.AlliedBase);
+                // Edit-mode clones do not run Awake; initialize the soldier's nonserialized current health.
+                ally.Configure(Faction.Allied, ally.MaximumHealth);
+                float heroHp = battle.Hero.CurrentHealth, baseHp = battle.AlliedBase.CurrentHealth;
+                stronghold.TakeDamage(100000f, battle.Hero);
+                Check(!battle.Objective.HasEnded && battle.Encounter.IsCinematic && !battle.Summoner.enabled
+                    && !battle.Abilities.enabled && !session.IsChoosing && session.Progress.pendingLevels > 0,
+                    "Stronghold collapse starts the cinematic, blocks input and defers its level-up reward");
+                Check(!battle.Summoner.TrySummon() && !battle.Hero.TakeDamage(1000), "Cinematic blocks deployment and protects the hero");
+                battle.Encounter.Tick(BossEncounter.WaveSeconds);
+                Check(!ally.IsAlive && battle.Encounter.FallenAllies == 1 && battle.Hero.CurrentHealth == heroHp
+                    && battle.AlliedBase.CurrentHealth == baseHp, $"Rupture wipes summoned allies while preserving the hero and allied base [alive={ally.IsAlive}, fallen={battle.Encounter.FallenAllies}, hero={battle.Hero.CurrentHealth}/{heroHp}, base={battle.AlliedBase.CurrentHealth}/{baseHp}, phase={battle.Encounter.Phase}]");
                 Combatant boss = waves.Boss;
                 Check(boss != null && waves.WavesSpawned == waves.TotalWaves && boss.name == EnemyCatalog.Names[(int)EnemyKind.Boss]
                     && boss.IsHeavy && boss.MaximumHealth == EnemyCatalog.MaxHealth(EnemyKind.Boss, EnemyCatalog.BossStage)
                     && boss.GetComponent<CharacterController>().radius == EnemyCatalog.Radius(EnemyKind.Boss),
-                    "The Warlord boss leads the final wave as a large Heavy enemy");
-                // Three fronts start at x = -11, 0 and +11; the central one is x = 0.
+                    "The Warlord appears after the destroyed stronghold with its configured Heavy stats");
                 Check(Mathf.Abs(boss.transform.position.x) < 2f, "The boss enters on the central front");
-                Check(waves.ExperienceFor(boss) == 60, "Defeating the boss awards objective-level EXP");
+                Check(waves.ExperienceFor(boss) == 60 && boss.Invulnerable && !boss.GetComponent<BossCombat>().enabled,
+                    "The arriving boss is protected and cannot attack during the dialogue");
+                battle.Encounter.Tick(BossEncounter.ArrivalSeconds);
+                Check(battle.Encounter.Phase == BossEncounterPhase.Dialogue && !battle.Objective.HasEnded,
+                    "Arrival leads into hero/boss dialogue without awarding victory");
+                FinishBossDialogue(battle);
+                Check(session.IsChoosing && session.IsBattlePaused, "Deferred growth pauses the fight immediately after dialogue");
+                while (session.IsChoosing) session.ChooseGrowth(0);
+                Check(!boss.Invulnerable && !battle.Hero.Invulnerable && battle.Summoner.enabled && boss.GetComponent<BossCombat>().enabled,
+                    "Dialogue restores hero input, summoning and the vulnerable boss");
+                ValidateBossAttacks(session);
+                Check(!battle.Objective.CompleteBossVictory(), "The story cannot award victory before the boss is defeated");
+                int victories = 0, defeats = 0;
+                battle.Objective.Completed += won => { if (won) victories++; };
+                boss.Died += _ => defeats++;
+                session.Progress.experience = session.Progress.ExperienceToNext - 1;
                 boss.TakeDamage(100000f, battle.Hero);
-                Check(waves.BossDefeated && !stronghold.Invulnerable && !battle.Objective.HasEnded,
-                    "Defeating the boss lowers the base shield without ending the stage");
-                stronghold.TakeDamage(100000f, battle.Hero);
-                Check(battle.Objective.HasWon, "After the boss, destroying the base wins the final stage");
+                int goldBeforeClear = session.Progress.gold;
+                Check(waves.BossDefeated && !battle.Objective.HasEnded && !session.Progress.IsComplete
+                    && battle.Encounter.Phase == BossEncounterPhase.RetreatDialogue && victories == 0,
+                    "Defeating the boss opens the retreat story without granting the stage victory");
+                Check(session.Progress.pendingLevels > 0 && !session.IsChoosing && !session.CanPause
+                    && !battle.Summoner.enabled && !session.ReturnToPreparation(),
+                    "The retreat defers growth, blocks battle input and prevents leaving before completion");
+                Check(!boss.TakeDamage(100000f, battle.Hero) && defeats == 1,
+                    "Further hits cannot duplicate the boss defeat reward");
+                float retreatHeroHp = battle.Hero.CurrentHealth, retreatBaseHp = battle.AlliedBase.CurrentHealth;
+                battle.Hero.TakeDamage(100000); battle.AlliedBase.TakeDamage(100000);
+                Check(battle.Hero.CurrentHealth == retreatHeroHp && battle.AlliedBase.CurrentHealth == retreatBaseHp,
+                    "Hero and stronghold remain protected throughout the retreat story");
+                Check(!battle.Encounter.AdvanceDialogue(), "A lethal-hit input cannot skip the first retreat line");
+                for (int i = 0; i < BossEncounter.RetreatLines.Length; i++)
+                {
+                    battle.Encounter.Tick(.8f);
+                    Check(battle.Encounter.AdvanceDialogue(), "Retreat dialogue advances with deliberate input");
+                    Check(!battle.Objective.HasEnded, "Retreat dialogue does not expose the result screen");
+                }
+                battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds * .5f);
+                Check(!battle.Objective.HasEnded && session.Progress.gold == goldBeforeClear,
+                    "The closing illustration fades before clear rewards or victory are granted");
+                battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds);
+                Check(battle.Objective.HasWon && session.Progress.IsComplete && victories == 1
+                    && session.Progress.gold == goldBeforeClear + 500,
+                    "Completing the retreat grants the stage victory and clear reward exactly once");
+                battle.Encounter.Tick(10);
+                Check(!battle.Objective.CompleteBossVictory() && victories == 1
+                    && session.Progress.gold == goldBeforeClear + 500,
+                    "Repeated completion cannot duplicate the clear reward");
             }
             finally
             {
@@ -193,6 +246,80 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(material);
                 Physics.SyncTransforms();
             }
+        }
+
+        private static void ClearFinalAssault(PrototypeBattle battle)
+        {
+            for (int attempt = 0; attempt < 100 && !battle.Waves.AssaultCleared; attempt++)
+            {
+                battle.Waves.Tick(10f);
+                foreach (Combatant enemy in LiveEnemies(battle)) enemy.TakeDamage(enemy.MaximumHealth * 10);
+                Physics.SyncTransforms();
+            }
+            Check(battle.Waves.AssaultCleared, "Every queued assault soldier can spawn and be defeated");
+        }
+
+        private static void FinishBossDialogue(PrototypeBattle battle)
+        {
+            for (int i = 0; i < BossEncounter.Lines.Length; i++)
+            { battle.Encounter.Tick(0.3f); Check(battle.Encounter.AdvanceDialogue(), "Boss dialogue line advances once"); }
+        }
+
+        private static void ValidateBossAttacks(CampaignSession session)
+        {
+            PrototypeBattle battle = session.Battle;
+            Combatant boss = battle.Waves.Boss;
+            BossCombat combat = boss.GetComponent<BossCombat>();
+            battle.Hero.SetMaximumHealth(2000); battle.Hero.Heal(2000);
+            Vector3 start = new Vector3(0, 0.9f, 10);
+            boss.transform.position = start;
+            battle.Hero.transform.position = start + Vector3.forward * 5;
+            Physics.SyncTransforms();
+            float hp = battle.Hero.CurrentHealth;
+            combat.Tick(3);
+            Check(combat.CurrentAttack == BossAttack.Crescent && combat.IsAttacking && battle.Hero.CurrentHealth == hp,
+                "Crescent begins with a harmless readable wind-up");
+            Check(session.SetPaused(true), "Boss wind-up supports the campaign pause");
+            combat.Tick(10);
+            Check(combat.SpecialsResolved == 0, "Paused boss cannot finish a telegraph or apply damage");
+            session.SetPaused(false);
+            combat.Tick(2);
+            DarkCrescent crescent = battle.Root.GetComponentInChildren<DarkCrescent>();
+            Check(crescent != null, "The sword swing launches an independent crescent projectile");
+            crescent.Tick(0.4f);
+            Check(battle.Hero.CurrentHealth == hp - DarkCrescent.Damage, "Swept crescent collision hits an allied hero");
+            crescent.Tick(0.01f);
+            Check(battle.Hero.CurrentHealth == hp - DarkCrescent.Damage, "A crescent cannot hit the same target twice");
+            crescent.Tick(3);
+
+            combat.Tick(5); // cleave
+            hp = battle.Hero.CurrentHealth;
+            battle.Hero.transform.position = start - Vector3.forward * 4;
+            combat.Tick(2);
+            Check(combat.CurrentAttack == BossAttack.Cleave && battle.Hero.CurrentHealth == hp,
+                "Moving behind the boss dodges its locked forward cleave");
+            battle.Hero.transform.position = start + Vector3.forward * 5;
+            combat.Tick(5); // lightning locks old position
+            battle.Hero.transform.position += Vector3.right * 8;
+            combat.Tick(2);
+            Check(combat.CurrentAttack == BossAttack.Lightning && battle.Hero.CurrentHealth == hp,
+                "Lightning strikes its marked location instead of tracking a dodging hero");
+            battle.Hero.transform.position = start + Vector3.forward * 5;
+            combat.Tick(5); combat.Tick(2); combat.Tick(0.7f);
+            Check(combat.CurrentAttack == BossAttack.Charge && battle.Hero.CurrentHealth < hp,
+                "Charge moves along its telegraphed lane and damages crossed allies");
+            hp = battle.Hero.CurrentHealth;
+            battle.Hero.transform.position = boss.transform.position + Vector3.forward * 4;
+            combat.Tick(5);
+            battle.Hero.transform.position += Vector3.right * 12;
+            combat.Tick(2);
+            Check(combat.CurrentAttack == BossAttack.Shockwave && battle.Hero.CurrentHealth == hp,
+                "Leaving the warned radius avoids the boss shockwave");
+            combat.Tick(5); combat.Tick(2);
+            Check(combat.CurrentAttack == BossAttack.Summon && LiveEnemies(battle).Length > 1,
+                "The summoning special creates reinforcements through the wave registry");
+            boss.TakeDamage(boss.MaximumHealth * .55f);
+            Check(combat.IsEnraged && combat.SpecialsResolved == 6, "All six specials resolve and low health activates faster recovery");
         }
     }
 }

@@ -26,11 +26,18 @@ namespace Lightbringer.Core
         public PrototypeBattle Battle { get; private set; }
         public int SelectedStage { get; private set; } = 1;
         public string LastResult { get; private set; } = "";
+        public int BattleGold { get; private set; }
+        public bool TryUpgradeUnit(int unit)
+        {
+            if (Battle != null || Progress == null || !Progress.TryUpgradeUnit(unit)) return false;
+            dirty = true; Flush(); return true;
+        }
         public string SaveStatus => store == null ? "검증 세션" : store.Error;
-        public bool IsChoosing => Progress != null && Progress.pendingLevels > 0;
+        public bool IsBossCinematic => Battle != null && Battle.Encounter != null && Battle.Encounter.IsCinematic;
+        public bool IsChoosing => !IsBossCinematic && Progress != null && Progress.pendingLevels > 0;
         public bool IsBattlePaused => simulation.IsPaused;
         public bool IsUserPaused => userPaused;
-        public bool CanPause => Battle != null && !Battle.Objective.HasEnded && !IsChoosing;
+        public bool CanPause => Battle != null && !Battle.Objective.HasEnded && !IsChoosing && !IsBossCinematic;
         public PlaytestRecord PlaytestRecord => playtest.Current;
         public string PlaytestStatus { get; private set; } = "";
         public bool IsPersistentSession => store != null;
@@ -61,6 +68,8 @@ namespace Lightbringer.Core
             camera.backgroundColor = new Color(0.07f, 0.09f, 0.12f);
             camera.cullingMask = 0;
             preparationCamera.AddComponent<AudioListener>();
+            if (Application.isPlaying && GetComponent<Lightbringer.Audio.SoundEffects>() == null)
+                gameObject.AddComponent<Lightbringer.Audio.SoundEffects>();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
@@ -88,8 +97,13 @@ namespace Lightbringer.Core
             RegisterEnemy(Battle.Objective.EnemyBase);
             if (preparationCamera != null) preparationCamera.SetActive(false);
             Battle.Root.SetActive(true);
-            if (Application.isPlaying) Battle.Root.AddComponent<BattleMusic>().Configure(this);
+            if (Application.isPlaying)
+            {
+                Battle.Root.AddComponent<BattleMusic>().Configure(this);
+                Battle.Root.AddComponent<Lightbringer.Audio.BattleAudio>().Configure(this);
+            }
             LastResult = "";
+            BattleGold = 0;
             playtest.Begin(Battle, SelectedStage, Progress);
             return true;
         }
@@ -100,7 +114,10 @@ namespace Lightbringer.Core
         {
             if (Battle == null || enemy.LastAttacker == null || enemy.LastAttacker.Faction != Faction.Allied) return;
             int before = Progress.pendingLevels;
-            Progress.GainExperience(enemy == Battle.Objective.EnemyBase ? 60 : Battle.Waves.ExperienceFor(enemy));
+            int reward = enemy == Battle.Objective.EnemyBase ? 60 : Battle.Waves.ExperienceFor(enemy);
+            Progress.GainExperience(reward);
+            Progress.GainGold(reward);
+            BattleGold += reward;
             dirty = true;
             if (before != Progress.pendingLevels) Flush();
         }
@@ -109,9 +126,14 @@ namespace Lightbringer.Core
         {
             playtest.Finish(victory ? "victory" : "defeat");
             bool rewarded = victory && Progress.CompleteStage(SelectedStage);
+            if (victory) { int bonus = 100 + 50 * SelectedStage; Progress.GainGold(bonus); BattleGold += bonus; }
             LastResult = victory
                 ? rewarded ? "최초 승리! 장비 보상을 획득하고 다음 콘텐츠를 해금했습니다." : "승리! 최초 승리 보상은 이미 획득했습니다."
                 : "패배했습니다. 영구 성장과 장비는 유지됩니다.";
+            if (victory && SelectedStage == 8)
+                LastResult = "어둠의 군주가 물러났습니다. 봉화에 다시 빛이 돌아옵니다.\n"
+                    + "군주: ‘이것으로 끝이라 생각하지 마라. 우리는 다시 만날 것이다.’\n"
+                    + (rewarded ? "최초 승리 장비 보상을 획득했습니다." : "최초 승리 보상은 이미 획득했습니다.");
             dirty = true;
             Flush();
         }
@@ -164,7 +186,7 @@ namespace Lightbringer.Core
             if (keyboard != null && Battle != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame))
                 TogglePause();
             UpdatePause();
-            playtest.Tick(Time.deltaTime, Battle == null || IsChoosing || simulation.IsPaused);
+            playtest.Tick(Time.deltaTime, Battle == null || IsChoosing || IsBossCinematic || simulation.IsPaused);
             saveTimer += Time.unscaledDeltaTime;
             if (saveTimer >= 2f) { saveTimer = 0; Flush(); }
         }

@@ -24,6 +24,7 @@ namespace Lightbringer.Core
         public WaypointPath[] Paths;
         public Combatant AlliedBase;
         public Transform DeployPoint;
+        public BossEncounter Encounter;
     }
 
     public static class PrototypeBattleBuilder
@@ -88,6 +89,7 @@ namespace Lightbringer.Core
             Transform enemies = Child("Enemy Units", root).transform;
             battle.Summoner = hero.AddComponent<UnitSummoner>();
             battle.Summoner.Configure(food, template, soldiers, battle.Paths, progress.UnlockedUnits);
+            battle.Summoner.SetUnitRanks(progress.unitRanks);
             BuildAlliedBase(battle, stage, root, material, art);
             // After the summoner exists, so Leadership also lowers summon costs.
             battle.Abilities.ApplyProgression(progress.ranks);
@@ -102,11 +104,13 @@ namespace Lightbringer.Core
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
-            // Boss stage: the stronghold is shielded until its warlord falls.
+            // The last assault must be defeated before destroying the gate and revealing the boss.
             if (battle.Waves.HasBoss)
             {
+                battle.Objective.RequireBossVictory();
                 baseHealth.Invulnerable = true;
-                battle.Waves.BossFell += () => baseHealth.Invulnerable = false;
+                battle.Encounter = battle.Root.AddComponent<BossEncounter>();
+                battle.Encounter.Configure(battle, art);
             }
             battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader, art != null && art.HasMaterials);
             if (art != null && art.HasMaterials)
@@ -117,7 +121,8 @@ namespace Lightbringer.Core
                     battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate }, light);
                 if (environment != null) ground.SetActive(false);
             }
-            BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root);
+            BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root,
+                art != null ? art.FindBackdrop(stage) : null);
             return battle;
         }
 

@@ -17,12 +17,29 @@ namespace Lightbringer.Core
         public bool HasLost { get; private set; }
         public bool HasEnded => HasWon || HasLost;
         public event System.Action<bool> Completed;
+        public event System.Action<Combatant> BaseDestroyed;
+        public bool RequiresBossVictory { get; private set; }
+        public bool IsBaseDestroyed { get; private set; }
+        private Combatant finalBoss;
+        private bool deferBossVictory, bossDefeated;
+        public event System.Action FinalBossDefeated;
         private Combatant subscribedBase;
         private Combatant subscribedHero;
         [Tooltip("Optional allied stronghold; its destruction is a defeat (as is the hero's death).")]
         [SerializeField] private Combatant alliedBase;
         private Combatant subscribedAlliedBase;
         public Combatant AlliedBase => alliedBase;
+
+        public void RequireBossVictory() => RequiresBossVictory = true;
+
+        public void TrackFinalBoss(Combatant boss, bool waitForOutro = false)
+        {
+            if (finalBoss != null) finalBoss.Died -= OnBossDefeated;
+            finalBoss = boss;
+            deferBossVictory = waitForOutro;
+            bossDefeated = false;
+            if (finalBoss != null) finalBoss.Died += OnBossDefeated;
+        }
 
         public void Configure(Combatant objective, Combatant player, Transform root, ThirdPersonCamera camera, Combatant allied = null)
         {
@@ -33,6 +50,7 @@ namespace Lightbringer.Core
 
         private void OnEnable()
         {
+            OnDisable();
             subscribedBase = enemyBase;
             if (subscribedBase != null)
                 subscribedBase.Died += OnBaseDestroyed;
@@ -40,6 +58,7 @@ namespace Lightbringer.Core
             if (subscribedHero != null) subscribedHero.Died += OnHeroDefeated;
             subscribedAlliedBase = alliedBase;
             if (subscribedAlliedBase != null) subscribedAlliedBase.Died += OnAlliedBaseLost;
+            if (finalBoss != null) finalBoss.Died += OnBossDefeated;
         }
 
         private void OnDisable()
@@ -51,6 +70,7 @@ namespace Lightbringer.Core
             subscribedHero = null;
             if (subscribedAlliedBase != null) subscribedAlliedBase.Died -= OnAlliedBaseLost;
             subscribedAlliedBase = null;
+            if (finalBoss != null) finalBoss.Died -= OnBossDefeated;
         }
 
         private void Start()
@@ -69,10 +89,35 @@ namespace Lightbringer.Core
                 || battlefieldRoot == null)
                 return;
 
+            IsBaseDestroyed = true;
+            BaseDestroyed?.Invoke(defeated);
+            if (!RequiresBossVictory) Win();
+        }
+
+        private void OnBossDefeated(Combatant defeated)
+        {
+            if (HasEnded || !isActiveAndEnabled || bossDefeated || !RequiresBossVictory || !IsBaseDestroyed
+                || defeated != finalBoss || defeated.IsAlive) return;
+            bossDefeated = true;
+            FinalBossDefeated?.Invoke();
+            if (!deferBossVictory) Win();
+        }
+
+        // A defeated boss may have been destroyed already; the latched event validates the outcome.
+        public bool CompleteBossVictory()
+        {
+            if (HasEnded || !isActiveAndEnabled || !RequiresBossVictory || !IsBaseDestroyed || !bossDefeated) return false;
+            Win();
+            return HasWon;
+        }
+
+        private void Win()
+        {
+            if (HasEnded || !isActiveAndEnabled) return;
             HasWon = true;
             StopBattle();
             Completed?.Invoke(true);
-            Debug.Log("Victory! The enemy base has been destroyed.", this);
+            Debug.Log("Victory! The stage objective has been completed.", this);
         }
 
         private void OnAlliedBaseLost(Combatant defeated)

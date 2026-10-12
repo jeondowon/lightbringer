@@ -32,9 +32,12 @@ namespace Lightbringer.Core
         public bool HasBoss => EnemyCatalog.HasBoss(stage);
         public Combatant Boss { get; private set; }
         public bool BossDefeated { get; private set; }
+        public bool AssaultCleared { get; private set; }
+        private int livingTroops;
         public int PendingCount { get { int count = 0; foreach (List<EnemyKind> lane in pending) count += lane.Count; return count; } }
         public event Action<Combatant> Spawned;
         public event Action BossFell;
+        public event Action AssaultEnded;
 
         public void Configure(CharacterController unitTemplate, Transform unitsParent, WaypointPath[] paths, int stageNumber)
         {
@@ -67,15 +70,42 @@ namespace Lightbringer.Core
             if (retry > 0f) return;
             retry = RetryInterval;
             for (int lane = 0; lane < routes.Length; lane++) SpawnPending(lane);
+            CheckAssaultCleared();
         }
 
         private void QueueWave()
         {
             for (int lane = 0; lane < routes.Length; lane++)
                 pending[lane].AddRange(EnemyCatalog.Squad(stage, waves, lane));
-            // The boss leads the final wave down the central route.
-            if (HasBoss && waves == TotalWaves - 1)
-                pending[routes.Length / 2].Insert(0, EnemyKind.Boss);
+        }
+
+        private void CheckAssaultCleared()
+        {
+            if (AssaultCleared || waves < TotalWaves || PendingCount > 0 || livingTroops > 0) return;
+            AssaultCleared = true;
+            AssaultEnded?.Invoke();
+        }
+
+        // Only the encounter director calls this, after the stronghold collapses.
+        public Combatant SpawnFinalBoss(Vector3 position)
+        {
+            if (!HasBoss || !AssaultCleared || Boss != null || BossDefeated || routes == null || routes.Length == 0) return null;
+            return Spawn(EnemyKind.Boss, routes.Length / 2, position);
+        }
+
+        public int SummonBossGuard()
+        {
+            if (Boss == null || !Boss.IsAlive || !isActiveAndEnabled || livingTroops >= 9) return 0;
+            int count = 0;
+            foreach (EnemyKind kind in new[] { EnemyKind.Raider, EnemyKind.Archer, EnemyKind.Swarm })
+            {
+                if (livingTroops >= 9) break;
+                if (!TryFindSlot(Boss.transform.position + Vector3.forward * 3f - Vector3.up * 0.85f,
+                    EnemyCatalog.Radius(kind), out Vector3 position)) continue;
+                Spawn(kind, routes.Length / 2, position);
+                count++;
+            }
+            return count;
         }
 
         private void SpawnPending(int lane)
@@ -110,7 +140,7 @@ namespace Lightbringer.Core
             return false;
         }
 
-        private void Spawn(EnemyKind kind, int lane, Vector3 position)
+        private Combatant Spawn(EnemyKind kind, int lane, Vector3 position)
         {
             CharacterController unit = Instantiate(template, position, Quaternion.Euler(0, 180, 0), parent);
             unit.name = EnemyCatalog.Names[(int)kind];
@@ -137,9 +167,22 @@ namespace Lightbringer.Core
                 Boss = health;
                 health.Died += OnBossDied;
             }
+            else
+            {
+                livingTroops++;
+                health.Died += OnTroopDied;
+            }
             Spawned?.Invoke(health);
             unit.gameObject.SetActive(true);
             Physics.SyncTransforms();
+            return health;
+        }
+
+        private void OnTroopDied(Combatant troop)
+        {
+            troop.Died -= OnTroopDied;
+            livingTroops = Mathf.Max(0, livingTroops - 1);
+            CheckAssaultCleared();
         }
 
         // Greybox capsules read size by role; the capsule is lifted so it still stands on the ground.

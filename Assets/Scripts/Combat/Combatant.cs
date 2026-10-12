@@ -24,7 +24,7 @@ namespace Lightbringer.Combat
         public float DamageReduction { get; set; }
         // Heavy targets (Brute, Boss) take bonus damage from anti-heavy troops.
         public bool IsHeavy { get; set; }
-        // A shielded objective ignores damage and is skipped as a target (enemy base while the boss lives).
+        // Scripted protection ignores damage and targeting (the final stronghold during the assault, or a reveal).
         public bool Invulnerable { get; set; }
         // Greybox faction tint. Styled visuals carry their own palette and turn this off.
         public bool UseTeamTint { get; set; } = true;

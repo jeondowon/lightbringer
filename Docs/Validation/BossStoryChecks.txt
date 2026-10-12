@@ -1,0 +1,48 @@
+PASS | Boss storybook dialogue and deferred retreat victory | 2026-10-13 KST
+
+Three-shot expansion verified 2026-10-12T16:16:44Z (2026-10-13 KST):
+- Unity compilation, 387 system checks and 194 Play checks PASS.
+- Opening: establishing shot, Warlord close-up, hero resolve (three distinct illustrations).
+- Retreat: wounded Warlord, portal escape, empty battlefield (three distinct illustrations).
+- All seven dialogue lines resolve to imported art and matching Korean captions.
+- Images cross-fade for 0.35 seconds; the final closing fade still precedes victory.
+- Runtime captures: BossDialogue_01.png / _03.png / _04.png; BossRetreat_01.png / _02.png / _03.png.
+- Added art: WarlordClose_v1.png, HeroResolve_v1.png, WarlordDefeated_v1.png, Aftermath_v1.png
+  in Assets/UI/Resources/BossStory/ (plus Unity metadata).
+- Changed: BossEncounter.cs, BossDialogueView.cs, HudValidation.cs, CampaignPlayValidation.cs and story documentation.
+- Generation method, shot mapping and full prompts: Docs/ArtReference/BossStorySequencePrompts.md.
+
+Original two-image implementation validation:
+Unity 6000.3.20f1 compiled the gameplay/UI/Editor changes.
+GreyboxChecks.txt: PASS 380 checks, 2026-10-12T15:50:55Z.
+CampaignPlayChecks.txt: PASS 182 checks, 2026-10-12T15:51:45Z.
+
+Verified:
+- Full-screen bundled confrontation illustration replaces dialogue camera cuts.
+- Dialogue leaves the battlefield camera stationary.
+- Boss HP 0 opens the retreat illustration instead of completing the stage.
+- Retreat illustration remains visible after Unity destroys the boss object.
+- Battle input, summoning and pending growth are suspended during the retreat.
+- Hero and allied stronghold are protected; early return to preparation is blocked.
+- Further damage cannot award a second boss defeat reward.
+- Retreat lines require deliberate input; clear reward waits for the closing fade.
+- Victory and its clear reward occur once after the retreat, then preparation can resume.
+- Existing base destruction, arrival, combat specials and ordinary victory/defeat checks pass.
+
+Visually inspected runtime captures:
+Docs/Validation/BossDialogue.png
+Docs/Validation/BossRetreat.png
+
+Changed implementation:
+Assets/Scripts/Core/BossEncounter.cs
+Assets/Scripts/Core/StageObjective.cs
+Assets/Scripts/UI/BossDialogueView.cs
+Assets/UI/LightbringerHUD.uss
+Assets/Scripts/Editor/EnemyRosterValidation.cs
+Assets/Scripts/Editor/HudValidation.cs
+Assets/Scripts/Editor/CampaignPlayValidation.cs
+Assets/UI/Resources/BossStory/Confrontation_v1.png (+ Unity metadata)
+Assets/UI/Resources/BossStory/Retreat_v1.png (+ Unity metadata)
+
+Art generation prompts and references: Docs/ArtReference/BossStoryPrompts.md.
+This is illustrated storytelling, not a real-time 3D retreat animation.

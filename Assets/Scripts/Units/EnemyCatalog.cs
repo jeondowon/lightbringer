@@ -15,12 +15,12 @@ namespace Lightbringer.Units
         // First stage in which each kind can appear.
         private static readonly int[] FirstStage = { 1, 2, 3, 4, 5, BossStage };
         // Value at stage 0 plus growth per stage.
-        private static readonly float[] BaseHealth = { 25, 18, 8, 90, 20, 400 };
-        private static readonly float[] HealthGrowth = { 5, 4, 2, 18, 4, 60 };
-        private static readonly float[] BaseDamage = { 3, 3, 1.5f, 8, 2, 20 };
-        private static readonly float[] DamageGrowth = { 1, 1, 0.5f, 2, 0.5f, 1 };
+        private static readonly float[] BaseHealth = { 25, 18, 8, 90, 20, 800 };
+        private static readonly float[] HealthGrowth = { 5, 4, 2, 18, 4, 100 };
+        private static readonly float[] BaseDamage = { 3, 3, 1.5f, 8, 2, 24 };
+        private static readonly float[] DamageGrowth = { 1, 1, 0.5f, 2, 0.5f, 2 };
         private static readonly float[] Ranges = { 1.25f, 6, 1.1f, 1.5f, 5, 2.2f };
-        private static readonly float[] Intervals = { 1.2f, 1.4f, 0.8f, 1.8f, 1.6f, 2f };
+        private static readonly float[] Intervals = { 1.2f, 1.4f, 0.8f, 1.8f, 1.6f, 1.8f };
         private static readonly float[] Speeds = { 1.5f, 1.5f, 2.1f, 1f, 1.3f, 0.9f };
         private static readonly float[] Radii = { 0.35f, 0.35f, 0.3f, 0.5f, 0.35f, 0.75f };
         // Bonus EXP steps for tougher roles (x2 per step).
