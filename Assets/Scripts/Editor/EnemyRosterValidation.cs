@@ -177,6 +177,8 @@ namespace Lightbringer.EditorTools
                 // Edit-mode clones do not run Awake; initialize the soldier's nonserialized current health.
                 ally.Configure(Faction.Allied, ally.MaximumHealth);
                 float heroHp = battle.Hero.CurrentHealth, baseHp = battle.AlliedBase.CurrentHealth;
+                // One EXP short, so the stronghold's reward is what levels the hero up.
+                session.Progress.experience = session.Progress.ExperienceToNext - 1;
                 stronghold.TakeDamage(100000f, battle.Hero);
                 Check(!battle.Objective.HasEnded && battle.Encounter.IsCinematic && !battle.Summoner.enabled
                     && !battle.Abilities.enabled && !session.IsChoosing && session.Progress.pendingLevels > 0,

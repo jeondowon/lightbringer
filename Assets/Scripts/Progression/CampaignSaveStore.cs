@@ -35,9 +35,12 @@ namespace Lightbringer.Progression
                 string json = File.ReadAllText(file, Encoding.UTF8);
                 // JsonUtility supplies field defaults for missing fields; reject incomplete records first.
                 string[] required = { "version", "unlockedStage", "cleared", "level", "experience",
-                    "pendingLevels", "choices", "ranks", "equipmentLevels", "loadout" };
+                    "pendingLevels", "choices", "ranks", "loadout" };
                 foreach (string field in required) if (!json.Contains("\"" + field + "\"")) return false;
+                // Version 3 keeps skills in skillLevels; older saves keep gear in equipmentLevels.
+                if (!json.Contains("\"skillLevels\"") && !json.Contains("\"equipmentLevels\"")) return false;
                 progress = JsonUtility.FromJson<CampaignProgress>(json);
+                progress?.UpgradeSavedData();
                 return progress != null && progress.IsValid();
             }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is ArgumentException)

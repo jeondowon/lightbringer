@@ -1,4 +1,5 @@
-PASS | 2026-10-12T16:34:29.8002725Z
-Thrust: 0.90s, contact 0.30s; hand 1.13 arm lengths forward and -0.04 up of the shoulder, staff aim 0.99 forward; keyed 8 bones.
-Slam: 1.00s, contact 0.38s; hand 0.75 arm lengths forward and -0.45 up of the shoulder, staff aim 0.97 forward; keyed 8 bones.
-Raise: 1.20s, contact 0.40s; hand 0.12 arm lengths forward and 0.92 up of the shoulder, staff aim 0.07 forward; keyed 12 bones.
+PASS | 2026-10-12T20:15:08.7781044Z
+Thrust: 0.90s, contact 0.30s; hand 1.13 arm lengths forward and -0.04 up of the shoulder, staff aim 0.98 forward; keyed 8 bones.
+Slam: 1.10s, contact 0.46s; hand 0.29 arm lengths forward and -0.95 up of the shoulder, staff aim 0.82 forward; keyed 12 bones.
+Raise: 1.00s, contact 0.35s; hand 0.08 arm lengths forward and 0.95 up of the shoulder, staff aim 0.00 forward; keyed 8 bones.
+Skill motions: Light Beam and Ice = Thrust, Heal = Raise, Shockwave = Slam, Meteor = Cast.

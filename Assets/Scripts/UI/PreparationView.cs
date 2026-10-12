@@ -7,23 +7,19 @@ using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
-    // Destination briefing and three-slot loadout. Inspecting an item never mutates the saved loadout.
+    // Destination briefing and the three-slot skill loadout. Inspecting a skill never mutates the saved loadout.
     public sealed class PreparationView
     {
-        private static readonly string[] SlotKeys = { "LMB", "Q", "E" };
-        private static readonly string[] Effects = {
-            "조준한 적에게 빛을 내려 단일 대상을 공격합니다.", "영웅 주변 6m 안의 아군을 회복합니다.",
-            "조준한 적을 중심으로 3m 안의 적을 공격합니다.", "장착 중 식량 생성 속도가 증가합니다.",
-            "장착 중 최대 마나와 마나 회복 속도가 증가합니다.", "장착 중 영웅의 최대 체력이 증가합니다."
-        };
+        private static readonly string[] SlotKeys = SkillCatalog.SlotKeys;
+        private static readonly string[] Effects = SkillCatalog.Descriptions;
         public readonly VisualElement Root;
         public event System.Action BackRequested;
         private readonly Label stageTitle, stageTag, objective, paths, waves, rewards, rewardNote, heroLevel, experience;
-        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, feedback, status;
+        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, shardsLabel, feedback, status;
         private readonly VisualElement enemies, rewardIcon, detailIcon, growth, growthPanel;
-        private readonly Tile[] slots = new Tile[EquipmentCatalog.Slots];
-        private readonly Tile[] items = new Tile[EquipmentCatalog.Count];
-        private readonly Button start, equip, growthToggle;
+        private readonly Tile[] slots = new Tile[SkillCatalog.Slots];
+        private readonly Tile[] items = new Tile[SkillCatalog.Count];
+        private readonly Button start, equip, upgradeSkill, growthToggle;
         private readonly UnitUpgradeView upgradeView;
         private CampaignSession session;
         private string revision;
@@ -70,8 +66,8 @@ namespace Lightbringer.UI
             experience = Hud.Text(heroText, "", "lb-brief-muted");
             growthToggle = Hud.Button(identity, "영구 성장 보기", ToggleGrowth, "lb-brief-text-button");
             VisualElement headingRow = Hud.Box(armory.contentContainer, "lb-brief-heading-row");
-            Hud.Text(headingRow, "장비 정비", "lb-brief-heading");
-            Hud.Text(headingRow, "01  슬롯 선택    02  장비 확인    03  장착", "lb-brief-muted");
+            Hud.Text(headingRow, "기술 정비", "lb-brief-heading");
+            Hud.Text(headingRow, "01  슬롯 선택    02  기술 확인    03  장착 · 강화", "lb-brief-muted");
             VisualElement socketRow = Hud.Box(armory.contentContainer, "lb-brief-slots");
             for (int i = 0; i < slots.Length; i++)
             {
@@ -93,7 +89,7 @@ namespace Lightbringer.UI
                 VisualElement icon = Hud.Box(button, "lb-icon", "lb-icon--" + i);
                 VisualElement text = Hud.Box(button, "lb-brief-copy");
                 items[i] = new Tile { Root = button, Icon = icon,
-                    Main = Hud.Text(text, EquipmentCatalog.Names[i], "lb-brief-item-name"),
+                    Main = Hud.Text(text, SkillCatalog.Names[i], "lb-brief-item-name"),
                     Note = Hud.Text(text, "", "lb-brief-muted") };
                 button.tooltip = Effects[i]; Decorate(button);
             }
@@ -104,7 +100,14 @@ namespace Lightbringer.UI
             itemTitle = Hud.Text(detailText, "", "lb-brief-item-title");
             itemEffect = Hud.Text(detailText, "", "lb-brief-effect");
             itemStats = Hud.Text(detailText, "", "lb-brief-item-stats");
-            equip = Hud.Button(detail, "", () => EquipSelected(), "lb-brief-equip");
+            shardsLabel = Hud.Text(detailText, "", "lb-brief-muted");
+            // Equip above upgrade, stacked at the right edge of the inspector.
+            VisualElement buttons = Hud.Box(detail);
+            buttons.style.flexDirection = FlexDirection.Column;
+            buttons.style.flexShrink = 0;
+            equip = Hud.Button(buttons, "", () => EquipSelected(), "lb-brief-equip");
+            upgradeSkill = Hud.Button(buttons, "", () => UpgradeSelected(), "lb-brief-equip");
+            upgradeSkill.style.marginTop = 8;
             feedback = Hud.Text(armory.contentContainer, "", "lb-brief-feedback");
 
             VisualElement footer = Hud.Box(Root, "lb-brief-footer");
@@ -163,7 +166,7 @@ namespace Lightbringer.UI
         private static void Decorate(VisualElement button)
         { foreach (VisualElement child in button.Children()) Hud.IgnorePicking(child); }
         private static void Icon(VisualElement icon, int id)
-        { for (int k = 0; k < EquipmentCatalog.Count; k++) icon.EnableInClassList("lb-icon--" + k, k == id); }
+        { for (int k = 0; k < SkillCatalog.Count; k++) icon.EnableInClassList("lb-icon--" + k, k == id); }
 
         public void Refresh(CampaignSession value, bool showPreparation = true)
         {
@@ -174,14 +177,14 @@ namespace Lightbringer.UI
             Hud.Show(Root, visible);
             if (!visible) { growthOpen = false; Hud.Show(growthPanel, false); Hud.Show(upgradeView.Root, false); return; }
             if (opening) { Hud.Set(feedback, ""); slots[ActiveSlot].Root.Focus(); }
-            if (selectedItem < 0 || selectedItem >= EquipmentCatalog.Count) selectedItem = profile.loadout[ActiveSlot];
+            if (!SkillCatalog.IsSkill(selectedItem)) selectedItem = DefaultSelection(profile, ActiveSlot);
             start.SetEnabled(!session.IsChoosing);
             Hud.Set(start, $"봉화 {session.SelectedStage:00} · 병력 준비  →");
             string message = session.SaveStatus;
-            Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "영웅 장비를 정비한 뒤 병력 준비로 넘어갑니다.");
+            Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "영웅 기술을 정비한 뒤 병력 준비로 넘어갑니다.");
             string key = session.SelectedStage + "|" + profile.unlockedStage + "|" + profile.level + "|" + profile.experience
                 + "|" + ActiveSlot + "|" + selectedItem + "|" + string.Join(",", profile.cleared)
-                + "|" + string.Join(",", profile.equipmentLevels) + "|" + string.Join(",", profile.loadout) + "|" + string.Join(",", profile.ranks)
+                + "|" + string.Join(",", profile.skillLevels) + "|" + string.Join(",", profile.loadout) + "|" + string.Join(",", profile.ranks)
                 + "|" + profile.gold + "|" + string.Join(",", profile.unitRanks);
             if (key == revision) return;
             revision = key;
@@ -198,50 +201,65 @@ namespace Lightbringer.UI
                 if (!EnemyCatalog.AppearsIn((EnemyKind)i, stage)) continue;
                 Hud.Text(enemies, EnemyCatalog.Names[i], "lb-brief-enemy");
             }
-            int reward = CampaignProgress.ClearRewardItem(stage), rank = CampaignProgress.ClearRewardLevel(stage);
+            int reward = SkillCatalog.RewardFor(stage);
+            bool teaches = SkillCatalog.IsSkill(reward);
             Icon(rewardIcon, reward);
-            Hud.Set(rewards, EquipmentCatalog.Names[reward] + " +" + rank);
-            Hud.Set(rewardNote, cleared ? "획득 완료 · 재도전 시 전투 경험치 획득"
+            Hud.Set(rewards, teaches ? "새 기술 · " + SkillCatalog.Names[reward] : $"빛의 조각 +{100 + 50 * stage}");
+            Hud.Set(rewardNote, cleared ? "획득 완료 · 재도전 시 전투 경험치와 빛의 조각 획득"
                 : stage < CampaignProgress.StageCount ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금" : "첫 군주전 · 이후 여정은 준비 중");
             Hud.Set(heroLevel, "마법 지휘관   ·   LV " + profile.level);
-            Hud.Set(experience, $"경험치 {profile.experience} / {profile.ExperienceToNext}");
-            Hud.Set(inventoryHint, $"보유 장비  /  {SlotKeys[ActiveSlot]} 슬롯에 사용할 장비를 확인하세요");
+            Hud.Set(experience, profile.IsMaxLevel ? "최대 레벨" : $"경험치 {profile.experience} / {profile.ExperienceToNext}");
+            Hud.Set(inventoryHint, $"배운 기술  /  {SlotKeys[ActiveSlot]} 슬롯에 사용할 기술을 확인하세요");
             for (int i = 0; i < slots.Length; i++)
             {
                 int id = profile.loadout[i]; Icon(slots[i].Icon, id);
-                Hud.Set(slots[i].Main, EquipmentCatalog.Names[id]);
-                Hud.Set(slots[i].Note, $"+{profile.equipmentLevels[id]} · " + (EquipmentCatalog.IsActive(id) ? $"{EquipmentCatalog.Cost(id):0} MP" : "지속 효과"));
+                Hud.Set(slots[i].Main, SkillCatalog.IsSkill(id) ? SkillCatalog.Names[id] : "비어 있음");
+                Hud.Set(slots[i].Note, SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP" : "배운 기술을 넣으세요");
                 slots[i].Root.EnableInClassList("lb-brief-slot--active", i == ActiveSlot);
             }
             for (int id = 0; id < items.Length; id++)
             {
                 int owner = System.Array.IndexOf(profile.loadout, id);
-                bool owned = profile.equipmentLevels[id] > 0;
-                Hud.Set(items[id].Note, !owned ? "미해금" : owner >= 0 ? $"+{profile.equipmentLevels[id]} · {SlotKeys[owner]} 장착 중" : $"+{profile.equipmentLevels[id]} · 장착 가능");
+                bool owned = profile.skillLevels[id] > 0;
+                Hud.Set(items[id].Note, !owned ? "미습득" : owner >= 0 ? $"Lv {profile.skillLevels[id]} · {SlotKeys[owner]} 장착 중" : $"Lv {profile.skillLevels[id]} · 장착 가능");
                 items[id].Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
                 items[id].Root.EnableInClassList("lb-brief-item--selected", id == selectedItem);
             }
             RefreshItem(profile);
             growth.Clear();
+            Hud.Text(growth, $"오라 반경 {GrowthCatalog.AuraRadiusAt(profile.level):0.0}m  (레벨에 따라 증가)", "lb-brief-growth-row");
             for (int i = 0; i < profile.ranks.Length; i++)
-                if (profile.ranks[i] > 0) Hud.Text(growth, CampaignProgress.GrowthNames[i] + "  × " + profile.ranks[i], "lb-brief-growth-row");
-            if (growth.childCount == 0) Hud.Text(growth, "아직 선택한 성장 효과가 없습니다.\n전투 중 레벨을 올려 첫 효과를 선택하세요.", "lb-brief-growth-row");
+                if (profile.ranks[i] > 0)
+                    Hud.Text(growth, $"{GrowthCatalog.Effects[i]}  × {profile.ranks[i]} / {GrowthCatalog.MaxRank}", "lb-brief-growth-row");
+            if (growth.childCount == 1) Hud.Text(growth, "아직 선택한 성장 효과가 없습니다.\n전투 중 레벨을 올려 첫 효과를 선택하세요.", "lb-brief-growth-row");
         }
 
         private void RefreshItem(CampaignProgress profile)
         {
-            int id = selectedItem, worn = profile.loadout[ActiveSlot], rank = profile.equipmentLevels[id];
+            int id = selectedItem, worn = profile.loadout[ActiveSlot], level = profile.skillLevels[id];
             Icon(detailIcon, id);
-            Hud.Set(currentItem, $"현재 {SlotKeys[ActiveSlot]} 장비 · {EquipmentCatalog.Names[worn]} +{profile.equipmentLevels[worn]}");
-            Hud.Set(itemTitle, EquipmentCatalog.Names[id] + " +" + rank);
+            Hud.Set(currentItem, SkillCatalog.IsSkill(worn)
+                ? $"현재 {SlotKeys[ActiveSlot]} 기술 · {SkillCatalog.Names[worn]} Lv {profile.skillLevels[worn]}"
+                : $"현재 {SlotKeys[ActiveSlot]} 슬롯은 비어 있습니다");
+            Hud.Set(itemTitle, SkillCatalog.Names[id] + " Lv " + level);
             Hud.Set(itemEffect, Effects[id]);
-            Hud.Set(itemStats, EquipmentCatalog.IsActive(id)
-                ? $"소모 {EquipmentCatalog.Cost(id):0} MP   ·   재사용 {EquipmentCatalog.Cooldown(id):0.#}초"
-                : id == (int)EquipmentKind.FoodRing ? $"초당 식량 +{rank}"
-                : id == (int)EquipmentKind.ManaRing ? $"최대 MP +{rank * 15}   ·   초당 MP +{rank * EquipmentCatalog.ManaRecoveryPerRingLevel:0.#}" : $"최대 HP +{rank * 30}");
+            Hud.Set(itemStats, $"소모 {SkillCatalog.Cost(id):0} MP   ·   재사용 {SkillCatalog.Cooldown(id):0.#}초   ·   위력 ×{SkillCatalog.Power(level):0.0#}");
+            Hud.Set(shardsLabel, $"보유 빛의 조각  {profile.gold:N0}");
             int owner = System.Array.IndexOf(profile.loadout, id);
-            Hud.Set(equip, owner == ActiveSlot ? "현재 장착 중" : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
-            equip.SetEnabled(rank > 0 && owner < 0);
+            Hud.Set(equip, owner == ActiveSlot ? "슬롯 비우기" : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
+            equip.SetEnabled(level > 0 && (owner < 0 || owner == ActiveSlot));
+            bool maxed = level >= SkillCatalog.MaxLevel;
+            Hud.Set(upgradeSkill, level <= 0 ? "미습득" : maxed ? "최대 레벨"
+                : profile.CanUpgradeSkill(id) ? $"강화  {SkillCatalog.UpgradeCost(id, level):N0}" : $"빛의 조각 부족  {SkillCatalog.UpgradeCost(id, level):N0}");
+            upgradeSkill.SetEnabled(profile.CanUpgradeSkill(id));
+        }
+
+        // The skill in the slot, else the first learned one, so the inspector always has something to show.
+        private static int DefaultSelection(CampaignProgress profile, int slot)
+        {
+            if (SkillCatalog.IsSkill(profile.loadout[slot])) return profile.loadout[slot];
+            for (int i = 0; i < profile.skillLevels.Length; i++) if (profile.skillLevels[i] > 0) return i;
+            return (int)SkillKind.LightBeam;
         }
         private void ToggleGrowth()
         {
@@ -252,7 +270,7 @@ namespace Lightbringer.UI
         {
             if (slot < 0 || slot >= slots.Length) return;
             ActiveSlot = slot;
-            selectedItem = session?.Progress != null ? session.Progress.loadout[slot] : -1;
+            selectedItem = session?.Progress != null ? DefaultSelection(session.Progress, slot) : -1;
             Hud.Set(feedback, ""); if (session != null) Refresh(session);
         }
         public bool SelectItem(int id)
@@ -260,13 +278,29 @@ namespace Lightbringer.UI
             if (session?.Progress == null || id < 0 || id >= items.Length || !IsItemEnabled(id)) return false;
             selectedItem = id; Hud.Set(feedback, ""); Refresh(session); return true;
         }
-        public bool EquipSelected() => Equip(selectedItem);
+        // Equips the inspected skill, or empties the slot when that skill already sits in it.
+        public bool EquipSelected() =>
+            session?.Progress != null && session.Progress.loadout[ActiveSlot] == selectedItem ? Unequip() : Equip(selectedItem);
         public bool Equip(int id)
         {
             bool equipped = session != null && session.TryEquip(ActiveSlot, id);
-            if (equipped) { selectedItem = id; Hud.Set(feedback, EquipmentCatalog.Names[id] + " 장착 완료"); }
+            if (equipped) { selectedItem = id; Hud.Set(feedback, SkillCatalog.Names[id] + " 장착 완료"); }
             if (session != null) Refresh(session);
             return equipped;
+        }
+        public bool Unequip()
+        {
+            bool cleared = session != null && session.TryEquip(ActiveSlot, SkillCatalog.Empty);
+            if (cleared) Hud.Set(feedback, SlotKeys[ActiveSlot] + " 슬롯을 비웠습니다");
+            if (session != null) Refresh(session);
+            return cleared;
+        }
+        public bool UpgradeSelected()
+        {
+            bool upgraded = session != null && session.TryUpgradeSkill(selectedItem);
+            if (upgraded) Hud.Set(feedback, $"{SkillCatalog.Names[selectedItem]} Lv {session.Progress.skillLevels[selectedItem]} 강화 완료");
+            if (session != null) Refresh(session);
+            return upgraded;
         }
         public bool Start() => session != null && session.StartBattle();
         public UnitUpgradeView Upgrade => upgradeView;

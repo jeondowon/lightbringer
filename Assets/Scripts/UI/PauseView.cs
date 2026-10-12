@@ -43,7 +43,7 @@ namespace Lightbringer.UI
                 Audio.SoundEffects.UI(Audio.SoundCue.Click);
             });
             dialog.Add(effectsVolume);
-            Hud.Text(dialog, "WASD  이동     마우스  시점     Tab  소환 진로\n1–8  병력 소환     F  재소환     LMB · Q · E  장비 사용", "lb-pause-controls");
+            Hud.Text(dialog, "WASD  이동     마우스  시점     Tab  소환 진로\n1–8  병력 소환     F  재소환     LMB · RMB · Q  기술 사용", "lb-pause-controls");
             Foldout credits = new Foldout { text = "음악 크레딧", value = false };
             credits.AddToClassList("lb-pause-credits");
             Hud.Text(credits, BattleMusic.Credit, "lb-flow-muted");

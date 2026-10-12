@@ -45,6 +45,14 @@ namespace Lightbringer.Combat
         private float strikeDamage;
         private bool strikeCharging;
         public bool IsStrikePending => strikePending;
+        // Held (stunned or frozen) units neither search, move to a target nor swing; a swing in progress is lost.
+        public bool IsHeld { get; private set; }
+
+        public void SetHeld(bool held)
+        {
+            IsHeld = held;
+            if (held) CancelStrike();
+        }
 
         public void ConfigureStrike(float phase, ProjectileKind projectile = ProjectileKind.None, float speed = 20f, float arcRatio = 0f)
         {
@@ -167,7 +175,7 @@ namespace Lightbringer.Combat
                 return;
             if (self == null || movement == null)
                 Awake();
-            if (!self.IsAlive)
+            if (!self.IsAlive || IsHeld)
                 return;
             if (CanCharge)
             {

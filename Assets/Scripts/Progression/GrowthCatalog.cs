@@ -2,12 +2,29 @@ using UnityEngine;
 
 namespace Lightbringer.Progression
 {
-    // Display data for permanent growth choices. Per-rank values mirror HeroAbilities.ApplyProgression.
+    // Display data and per-rank values for permanent growth choices; HeroAbilities.ApplyProgression reads the values.
+    // Aura radius is not a card: it grows with the hero level (AuraRadiusAt). AuraSize keeps its slot in the saved
+    // ranks array so older saves line up, but it is never offered and its rank stays 0.
     public static class GrowthCatalog
     {
-        public const int LeadershipMaxRank = 20;
+        // Every card can be taken MaxRank times. Seven cards x 6 = 42 ranks for 29 level-up points, so at any pick at
+        // least 14 ranks remain and they span three or more cards: a level-up always offers three distinct cards.
+        public const int MaxRank = 6;
+        public const float FoodProductionPerRank = 1f;
         public const float ManaRecoveryPerRank = 0.5f;
-        public const float AuraRadiusPerRank = 0.3f;
+        public const int CapacityPerRank = 10;
+        public const float LeadershipPerRank = 0.04f;
+        public const float AuraBuffPerRank = 0.05f;
+        public const float HeroPowerPerRank = 0.1f;
+        public const int VitalityPerRank = 20;
+
+        // Starts barely around the hero; at max level it covers one Path's whole fighting group (front-line melee to
+        // the healers behind) without reaching the next Path, which is 22 m away.
+        public const float AuraRadiusAtLevelOne = 1.5f;
+        public const float AuraRadiusAtMaxLevel = 8f;
+
+        public static float AuraRadiusAt(int level) => Mathf.Lerp(AuraRadiusAtLevelOne, AuraRadiusAtMaxLevel,
+            (Mathf.Clamp(level, 1, CampaignProgress.MaxLevel) - 1f) / (CampaignProgress.MaxLevel - 1f));
 
         public static readonly string[] Titles = { "찬란한 빛", "풍요로운 수확", "마력의 샘", "넉넉한 비축",
             "지휘관의 부름", "축복의 오라", "빛의 권능", "굳건한 심장" };
@@ -25,24 +42,27 @@ namespace Lightbringer.Progression
             "영웅의 지팡이 공격과 마법 피해가 증가합니다.",
             "영웅의 최대 체력이 증가합니다.",
         };
-        public static readonly string[] Effects = { $"오라 반경 +{AuraRadiusPerRank:0.0}m", "초당 식량 생산 +1", $"초당 마나 회복 +{ManaRecoveryPerRank:0.#}",
-            "최대 식량·마나 +10", "소환 비용 -2.5%", "오라 공격력 보너스 +5%", "영웅 피해량 +10%", "최대 체력 +20" };
+        public static readonly string[] Effects = { "레벨에 따라 자동 증가", $"초당 식량 생산 +{FoodProductionPerRank:0}",
+            $"초당 마나 회복 +{ManaRecoveryPerRank:0.#}", $"최대 식량·마나 +{CapacityPerRank}", $"소환 비용 -{LeadershipPerRank * 100:0.#}%",
+            $"오라 공격력 보너스 +{AuraBuffPerRank * 100:0}%", $"영웅 피해량 +{HeroPowerPerRank * 100:0}%", $"최대 체력 +{VitalityPerRank}" };
 
-        public static bool IsMaxed(GrowthKind kind, int rank) => kind == GrowthKind.Leadership && rank >= LeadershipMaxRank;
+        public static bool IsCard(GrowthKind kind) => kind != GrowthKind.AuraSize;
+        public static int MaxRankOf(GrowthKind kind) => IsCard(kind) ? MaxRank : 0;
+        public static bool IsMaxed(GrowthKind kind, int rank) => rank >= MaxRankOf(kind);
 
-        // Total bonus granted at a rank, e.g. "+1.2 m".
+        // Total bonus granted at a rank, e.g. "+12/s".
         public static string Total(GrowthKind kind, int rank)
         {
             switch (kind)
             {
-                case GrowthKind.AuraSize: return $"+{rank * AuraRadiusPerRank:0.0} m";
-                case GrowthKind.FoodProduction: return $"+{rank}/s";
+                case GrowthKind.AuraSize: return "";
+                case GrowthKind.FoodProduction: return $"+{rank * FoodProductionPerRank:0}/s";
                 case GrowthKind.ManaRecovery: return $"+{rank * ManaRecoveryPerRank:0.#}/s";
-                case GrowthKind.Capacity: return $"+{rank * 10}";
-                case GrowthKind.Leadership: return $"-{Mathf.Min(rank, LeadershipMaxRank) * 2.5f:0.#}%";
-                case GrowthKind.AuraBuff: return $"+{rank * 5}%";
-                case GrowthKind.HeroPower: return $"+{rank * 10}%";
-                default: return $"+{rank * 20}";
+                case GrowthKind.Capacity: return $"+{rank * CapacityPerRank}";
+                case GrowthKind.Leadership: return $"-{rank * LeadershipPerRank * 100:0.#}%";
+                case GrowthKind.AuraBuff: return $"+{rank * AuraBuffPerRank * 100:0}%";
+                case GrowthKind.HeroPower: return $"+{rank * HeroPowerPerRank * 100:0}%";
+                default: return $"+{rank * VitalityPerRank}";
             }
         }
     }

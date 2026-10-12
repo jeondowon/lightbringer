@@ -43,9 +43,9 @@ namespace Lightbringer.Audio
         private void HeroHit(Combatant unit, float amount, Combatant attacker) => SoundEffects.UI(SoundCue.HeroHurt);
         private void Cast(int slot)
         {
-            if (battle.Abilities.Equipped(slot) == (int)EquipmentKind.LightStaff)
+            if (battle.Abilities.Equipped(slot) == (int)SkillKind.LightBeam)
                 SoundEffects.UI(SoundCue.HeroLightStaff);
-            else if (battle.Abilities.Equipped(slot) == (int)EquipmentKind.HealingStaff)
+            else if (battle.Abilities.Equipped(slot) == (int)SkillKind.Heal)
                 SoundEffects.UI(SoundCue.HeroHeal);
         }
         private void Completed(bool victory)

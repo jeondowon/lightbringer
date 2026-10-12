@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
-    // Gold upgrade screen for the troops. Opens over the preparation screen; nothing here changes a battle in progress.
+    // Light shard upgrade screen for the troops. Opens over the preparation screen; nothing here changes a battle in progress.
     public sealed class UnitUpgradeView
     {
         private static readonly string[] Descriptions = {
@@ -104,7 +104,7 @@ namespace Lightbringer.UI
             feedback = Hud.Text(panel, "", "lb-upg-feedback");
 
             VisualElement footer = Hud.Box(dialog, "lb-upg-footer");
-            Hud.Text(footer, "골드로 병력을 강화한 뒤 출전하세요.", "lb-upg-footer-note");
+            Hud.Text(footer, "빛의 조각으로 병력을 강화한 뒤 출전하세요.", "lb-upg-footer-note");
             begin = Hud.Button(footer, "", () => StartRequested?.Invoke(), "lb-atlas-primary", "lb-upg-start");
             Root.RegisterCallback<KeyDownEvent>(evt =>
             {
@@ -157,7 +157,7 @@ namespace Lightbringer.UI
             if (profile == null || !IsOpen) return;
             Hud.Set(gold, profile.gold.ToString("N0"));
             Hud.Set(begin, $"봉화 {session.SelectedStage:00} · 출전하기  →");
-            float costMultiplier = Mathf.Clamp(1f - profile.ranks[(int)GrowthKind.Leadership] * .025f, .5f, 1f);
+            float costMultiplier = Lightbringer.Player.HeroAbilities.SummonCostMultiplier(profile.ranks[(int)GrowthKind.Leadership]);
             for (int i = 0; i < tiles.Length; i++)
             {
                 bool unlocked = i < profile.UnlockedUnits;
@@ -192,7 +192,7 @@ namespace Lightbringer.UI
             Hud.Show(costRow, !maxed);
             Hud.Set(cost, maxed ? "" : UnitCatalog.UpgradeCost(kind, current).ToString("N0"));
             costRow.EnableInClassList("lb-upg-cost--short", !maxed && profile.gold < UnitCatalog.UpgradeCost(kind, current));
-            Hud.Set(upgrade, maxed ? "최대 강화" : profile.CanUpgradeUnit(selected) ? "강화" : "골드 부족");
+            Hud.Set(upgrade, maxed ? "최대 강화" : profile.CanUpgradeUnit(selected) ? "강화" : "빛의 조각 부족");
             upgrade.SetEnabled(profile.CanUpgradeUnit(selected));
         }
 

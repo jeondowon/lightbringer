@@ -29,6 +29,8 @@ namespace Lightbringer.Units
         private UnitPathFollower movement;
         private readonly PhysicsQueryBuffer threats = new PhysicsQueryBuffer();
         public bool IsHolding { get; private set; }
+        // Set while the unit is stunned or frozen: it neither repositions nor pulses.
+        public bool IsHeld { get; set; }
 
         public void Configure(float healAmount, float pulseInterval, float pulseRadius)
         {
@@ -55,7 +57,7 @@ namespace Lightbringer.Units
         {
             if (!isActiveAndEnabled || delta <= 0) return;
             if (self == null) self = GetComponent<Combatant>();
-            if (self == null || !self.IsAlive) return;
+            if (self == null || !self.IsAlive || IsHeld) return;
             if (followGap > 0f || keepAway > 0f) UpdatePosition(delta);
             cooldown -= delta;
             if (cooldown > 0) return;

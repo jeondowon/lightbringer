@@ -21,8 +21,10 @@ namespace Lightbringer.EditorTools
             FoodResource food = heroObject.AddComponent<FoodResource>();
             HeroAbilities abilities = heroObject.AddComponent<HeroAbilities>();
             abilities.ApplyProgression(new int[8]);
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, (int)SkillKind.Heal, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
+                "Learned skills can be loadout with an empty slot");
             Invoke(food, "GenerateFood", 1f);
-            Check(food.CurrentFood == 6f, "Equipped Food Ring applies its passive production bonus");
+            Check(food.CurrentFood == 5f, "Food production is the base rate now that rings are gone");
             Combatant enemy = CreateCombatUnit(origin + Vector3.forward * 5, Faction.Enemy);
             enemy.Configure(Faction.Enemy, 100);
             Physics.SyncTransforms();
@@ -55,46 +57,85 @@ namespace Lightbringer.EditorTools
                 "Healing Staff spends Mana and heals nearby allied health");
             Check(!hero.Heal(float.NaN) && !hero.Heal(-1) && hero.Heal(100) && hero.CurrentHealth == 120,
                 "Healing rejects invalid input and clamps to maximum health");
-            Check(!abilities.ConfigureLoadout(new[] { 0, 0, 3 }, new[] { 1, 1, 1, 1, 1, 1 })
-                && !abilities.ConfigureLoadout(new[] { 0, 1, 2 }, new[] { 1, 1, 0, 1, 0, 0 }),
-                "Equipment enforces three distinct owned items");
-            Check(abilities.ConfigureLoadout(new[] { 0, 2, 5 }, new[] { 2, 1, 1, 1, 1, 2 }),
-                "Owned staff upgrades and passive equipment can be equipped");
+            Check(!abilities.ConfigureLoadout(new[] { 0, 0, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1, 2 }, new[] { 1, 1, 0, 0, 0 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1 }, new[] { 1, 1, 0, 0, 0 }),
+                "Loadout enforces three slots of distinct learned skills");
+            Check(abilities.ConfigureLoadout(new[] { 0, SkillCatalog.Empty, 2 }, new[] { 2, 1, 1, 0, 0 })
+                && !abilities.TryCast(1, enemy),
+                "Upgraded skills and empty slots can be loadout, and an empty slot casts nothing");
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout can return to Light Beam and Healing");
             abilities.ApplyProgression(new int[8]);
-            Check(hero.MaximumHealth == 180, "Vitality Ring level increases maximum hero health");
+            Check(hero.MaximumHealth == 120, "Maximum hero health is the base value without growth");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
-            Check(hero.MaximumHealth == 200 && food.MaximumFood == 110 && food.ProductionPerSecond == 6
+            Check(hero.MaximumHealth == 140 && food.MaximumFood == 110 && food.ProductionPerSecond == 6
                 && mana.Maximum == 110 && mana.RecoveryPerSecond == 2.5f,
-                "Permanent resource and hero ranks apply alongside equipment bonuses");
+                "Permanent resource and hero ranks apply to the base stats");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
-            Check(hero.MaximumHealth == 200 && food.MaximumFood == 110 && food.ProductionPerSecond == 6,
+            Check(hero.MaximumHealth == 140 && food.MaximumFood == 110 && food.ProductionPerSecond == 6,
                 "Reapplying saved growth does not stack or overwrite base-stat tuning");
             abilities.ApplyProgression(new int[8]);
             abilities.Tick(10);
-            Combatant second = CreateCombatUnit(origin + new Vector3(1, 0, 5), Faction.Enemy);
-            second.Configure(Faction.Enemy, 100);
-            Physics.SyncTransforms();
-            Check(abilities.TryCast(1, enemy) && enemy.CurrentHealth == 52 && second.CurrentHealth == 70,
-                "Rune Staff damages multiple nearby enemies once each");
             mana.TrySpend(mana.Current);
             abilities.Tick(10);
-            Check(!abilities.TryCast(0, enemy) && enemy.CurrentHealth == 52,
+            Check(!abilities.TryCast(0, enemy) && enemy.CurrentHealth == 82,
                 "Insufficient Mana prevents hero damage");
             mana.Tick(100);
             Check(mana.Current == mana.Maximum && !mana.TrySpend(float.NaN) && !mana.TrySpend(-1),
                 "Mana regeneration is capped and invalid costs are rejected");
 
+            // Shockwave: no target needed, lands at the slam's contact, stuns and pushes; the Boss (StatusImmune) only takes damage.
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Shockwave, (int)SkillKind.Ice, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 0 }),
+                "Shockwave and Ice can be loadout");
+            abilities.Tick(20);
+            Combatant near = CreateCombatUnit(origin + new Vector3(2, 0, 0), Faction.Enemy);
+            near.Configure(Faction.Enemy, 100);
+            Combatant bossLike = CreateCombatUnit(origin + new Vector3(-2, 0, 0), Faction.Enemy);
+            bossLike.Configure(Faction.Enemy, 100);
+            bossLike.StatusImmune = true;
+            Combatant distant = CreateCombatUnit(origin + new Vector3(4, 0, 8), Faction.Enemy);
+            distant.Configure(Faction.Enemy, 100);
+            Physics.SyncTransforms();
+            Check(abilities.TryCast(0, null) && near.CurrentHealth == 100,
+                "Shockwave needs no target and waits for the slam's contact before it lands");
+            abilities.Tick(HeroAbilities.ShockwaveImpactDelay + 0.01f);
+            Check(near.CurrentHealth == 80 && bossLike.CurrentHealth == 80 && distant.CurrentHealth == 100,
+                "Shockwave damages enemies around the hero and spares distant ones");
+            StatusEffects nearStatus = near.GetComponent<StatusEffects>();
+            StatusEffects bossStatus = bossLike.GetComponent<StatusEffects>();
+            Check(nearStatus != null && nearStatus.IsStunned && (bossStatus == null || !bossStatus.IsStunned),
+                "Shockwave stuns ordinary enemies and skips status-immune ones");
+            nearStatus.Tick(HeroAbilities.ShockwaveStun + 0.1f);
+            Check(!nearStatus.IsStunned, "A stun wears off");
+            Check(abilities.TryCast(1, distant) && distant.CurrentHealth == 100,
+                "Ice needs an aimed enemy and waits for the thrust's contact before it lands");
+            abilities.Tick(HeroAbilities.IceImpactDelay + 0.01f);
+            StatusEffects frozen = distant.GetComponent<StatusEffects>();
+            Check(distant.CurrentHealth == 90 && frozen != null && frozen.IsFrozen && frozen.IsStunned,
+                "Ice damages the target and freezes it in place");
+            frozen.Tick(HeroAbilities.IceFreeze + 0.1f);
+            Check(!frozen.IsFrozen && !frozen.IsStunned, "A freeze wears off");
+            abilities.Tick(20);
+            Check(abilities.TryCast(1, bossLike), "Ice can be cast at the Boss");
+            abilities.Tick(HeroAbilities.IceImpactDelay + 0.01f);
+            StatusEffects bossAfterIce = bossLike.GetComponent<StatusEffects>();
+            Check(bossLike.CurrentHealth == 70 && (bossAfterIce == null || !bossAfterIce.IsFrozen),
+                "The Boss takes Ice damage but is never frozen");
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
+            abilities.Tick(20);
+            mana.Tick(100);
+
             Check(abilities.TryCast(0, enemy), "Light Staff can queue another impact after cooldown");
             Invoke(abilities, "OnDisable");
             abilities.Tick(1);
-            Check(enemy.CurrentHealth == 52, "Disabling abilities cancels pending Light Staff damage");
+            Check(enemy.CurrentHealth == 82, "Disabling abilities cancels pending Light Staff damage");
             Combatant doomed = CreateCombatUnit(origin + new Vector3(-2, 0, 5), Faction.Enemy);
             doomed.Configure(Faction.Enemy, 100);
             Physics.SyncTransforms();
             Check(abilities.TryCast(0, doomed), "Light Staff accepts a living target before impact");
             doomed.TakeDamage(1000);
             abilities.Tick(1);
-            Check(doomed.CurrentHealth == 0 && enemy.CurrentHealth == 52,
+            Check(doomed.CurrentHealth == 0 && enemy.CurrentHealth == 82,
                 "A target killed before impact receives no second hit or redirected damage");
 
             GameObject battle = new GameObject("Defeat battle");

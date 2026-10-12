@@ -26,6 +26,8 @@ namespace Lightbringer.Combat
         public bool IsHeavy { get; set; }
         // Scripted protection ignores damage and targeting (the final stronghold during the assault, or a reveal).
         public bool Invulnerable { get; set; }
+        // Stun, freeze and knockback skip this unit (the Boss).
+        public bool StatusImmune { get; set; }
         // Greybox faction tint. Styled visuals carry their own palette and turn this off.
         public bool UseTeamTint { get; set; } = true;
         public void SetAttackSurface(BoxCollider surface) => attackSurface = surface;

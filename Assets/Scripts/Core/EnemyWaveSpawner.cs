@@ -148,6 +148,7 @@ namespace Lightbringer.Core
             Combatant health = unit.GetComponent<Combatant>();
             health.Configure(Faction.Enemy, EnemyCatalog.MaxHealth(kind, stage));
             health.IsHeavy = EnemyCatalog.IsHeavy(kind);
+            health.StatusImmune = kind == EnemyKind.Boss;
             UnitCombat combat = unit.GetComponent<UnitCombat>();
             combat.Configure(EnemyCatalog.AttackDamage(kind, stage), EnemyCatalog.Range(kind), EnemyCatalog.AttackInterval(kind));
             combat.ConfigureSplash(EnemyCatalog.SplashRadius(kind));

@@ -1,4 +1,5 @@
 using System;
+using Lightbringer.Player;
 using Lightbringer.Units;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -33,6 +34,16 @@ namespace Lightbringer.Visuals
         [Range(0f, 1f)] public float gripFraction = 0.38f;
     }
 
+    // The clip the hero plays for one skill. Authored clips aim the staff with the hand (PropStabilizer.SetAuthored).
+    [Serializable]
+    public sealed class SkillMotion
+    {
+        public SkillKind skill;
+        public AnimationClip clip;
+        public bool authored;
+        [Min(0.1f)] public float speed = 1f;
+    }
+
     // A finished model replaces the procedural silhouette for one VisualId.
     // The prefab pivot is expected at the feet (ground contact), facing +Z.
     [Serializable]
@@ -47,6 +58,8 @@ namespace Lightbringer.Visuals
         public AnimationClip idleClip;
         public AnimationClip moveClip;
         public AnimationClip actionClip;
+        [Tooltip("Per-skill action clips for the hero (Thrust, Slam, Raise, Cast); a skill without one plays the action clip.")]
+        public SkillMotion[] skillMotions = new SkillMotion[0];
         [Tooltip("Ground speed (m/s) at which the move clip plays at normal speed.")]
         [Min(0.1f)] public float moveClipSpeed = 4f;
 

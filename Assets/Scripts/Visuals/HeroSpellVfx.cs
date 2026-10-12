@@ -13,6 +13,7 @@ namespace Lightbringer.Visuals
     {
         private const float StrikeDelay = 0.15f;
         private const float AreaStrength = 1.6f;
+        private static readonly Color IceBlue = new Color(0.55f, 0.88f, 1f);
 
         [SerializeField] private ArtStyleLibrary style;
         private HeroAbilities abilities;
@@ -35,13 +36,27 @@ namespace Lightbringer.Visuals
 
         private void OnSpellLanded(int equipment, Vector3 impact, float radius)
         {
-            if (equipment == (int)EquipmentKind.LightStaff)
+            if (equipment == (int)SkillKind.LightBeam)
             {
                 // Start the clock at cast time, not in a later Update after a queued delay.
                 CelestialStrikeVfx.Spawn(style, GroundBelow(impact), transform.parent, HeroAbilities.LightStaffWindup);
                 return;
             }
-            float strength = equipment == (int)EquipmentKind.RuneStaff ? AreaStrength : 1f;
+            if (equipment == (int)SkillKind.Shockwave)
+            {
+                // The staff has just struck the ground: a golden shock ring, flare and a skirt of dust.
+                Vector3 ground = GroundBelow(impact);
+                CombatEffects.Burst(style, ground + Vector3.up * 0.3f, CombatEffects.HolyGold, radius * 0.5f);
+                CombatEffects.Ring(ground, CombatEffects.HolyGold, radius);
+                CombatEffects.DustRing(ground, radius * 0.7f, 24);
+                return;
+            }
+            if (equipment == (int)SkillKind.Ice)
+            {
+                CombatEffects.SpellImpact(style, impact, IceBlue, radius, true);
+                return;
+            }
+            float strength = radius > 1.5f ? AreaStrength : 1f;
             pending.Add((Time.time + StrikeDelay, GroundBelow(impact), radius, strength));
         }
 

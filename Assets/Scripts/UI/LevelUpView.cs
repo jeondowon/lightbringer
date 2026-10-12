@@ -127,7 +127,7 @@ namespace Lightbringer.UI
             Hud.Set(card.Description, GrowthCatalog.Descriptions[growth]);
             Hud.Set(card.Effect, maxed ? "최대 단계 달성" : GrowthCatalog.Effects[growth]);
             // A first rank has no current bonus to compare against.
-            Hud.Set(card.Rank, rank == 0 ? "신규" : $"단계 {rank}  ›  {rank + 1}");
+            Hud.Set(card.Rank, rank == 0 ? $"신규 · 최대 {GrowthCatalog.MaxRank}단계" : $"단계 {rank}  ›  {rank + 1} / {GrowthCatalog.MaxRank}");
             Hud.Set(card.Total, maxed ? GrowthCatalog.Total(kind, rank)
                 : rank == 0 ? GrowthCatalog.Total(kind, 1) : $"{GrowthCatalog.Total(kind, rank)}  ›  {GrowthCatalog.Total(kind, rank + 1)}");
         }

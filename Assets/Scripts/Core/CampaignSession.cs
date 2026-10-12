@@ -1,5 +1,6 @@
 using System.IO;
 using Lightbringer.Combat;
+using Lightbringer.Player;
 using Lightbringer.Progression;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -81,9 +82,15 @@ namespace Lightbringer.Core
             return true;
         }
 
-        public bool TryEquip(int slot, int equipment)
+        public bool TryEquip(int slot, int skill)
         {
-            if (Battle != null || Progress == null || !Progress.TryEquip(slot, equipment)) return false;
+            if (Battle != null || Progress == null || !Progress.TryEquip(slot, skill)) return false;
+            dirty = true; Flush(); return true;
+        }
+
+        public bool TryUpgradeSkill(int skill)
+        {
+            if (Battle != null || Progress == null || !Progress.TryUpgradeSkill(skill)) return false;
             dirty = true; Flush(); return true;
         }
 
@@ -125,15 +132,17 @@ namespace Lightbringer.Core
         private void OnCompleted(bool victory)
         {
             playtest.Finish(victory ? "victory" : "defeat");
-            bool rewarded = victory && Progress.CompleteStage(SelectedStage);
+            int learned = SkillCatalog.Empty;
+            bool rewarded = victory && Progress.CompleteStage(SelectedStage, out learned);
             if (victory) { int bonus = 100 + 50 * SelectedStage; Progress.GainGold(bonus); BattleGold += bonus; }
+            string skillLine = SkillCatalog.IsSkill(learned) ? $"새 기술 '{SkillCatalog.Names[learned]}'을(를) 배웠습니다." : "";
             LastResult = victory
-                ? rewarded ? "최초 승리! 장비 보상을 획득하고 다음 콘텐츠를 해금했습니다." : "승리! 최초 승리 보상은 이미 획득했습니다."
-                : "패배했습니다. 영구 성장과 장비는 유지됩니다.";
+                ? rewarded ? "최초 승리! " + (skillLine != "" ? skillLine + " " : "") + "다음 콘텐츠를 해금했습니다." : "승리! 최초 승리 보상은 이미 획득했습니다."
+                : "패배했습니다. 영구 성장과 기술은 유지됩니다.";
             if (victory && SelectedStage == 8)
                 LastResult = "어둠의 군주가 물러났습니다. 봉화에 다시 빛이 돌아옵니다.\n"
                     + "군주: ‘이것으로 끝이라 생각하지 마라. 우리는 다시 만날 것이다.’\n"
-                    + (rewarded ? "최초 승리 장비 보상을 획득했습니다." : "최초 승리 보상은 이미 획득했습니다.");
+                    + (rewarded ? (skillLine != "" ? skillLine : "최초 승리 보상을 획득했습니다.") : "최초 승리 보상은 이미 획득했습니다.");
             dirty = true;
             Flush();
         }
@@ -144,7 +153,7 @@ namespace Lightbringer.Core
         {
             if (Progress == null || !Progress.ChooseGrowth(index)) return false;
             if (Battle != null && Battle.Hero != null && Battle.Hero.IsAlive)
-                Battle.Abilities.ApplyProgression(Progress.ranks);
+                Battle.Abilities.ApplyProgression(Progress.ranks, Progress.level);
             dirty = true; Flush();
             UpdatePause();
             return true;

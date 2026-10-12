@@ -222,7 +222,7 @@ namespace Lightbringer.EditorTools
                     battle.Abilities.Tick(HeroAbilities.LightStaffImpactDelay + 0.001f);
                     Assert(victim.CurrentHealth < hp, "Hero staff deals damage after advancing to light impact in Play mode");
                     victim.TakeDamage(10000, battle.Hero);
-                    session.Progress.GainExperience(60);
+                    session.Progress.GainExperience(session.Progress.ExperienceToNext - session.Progress.experience);
                     Advance(); break;
                 case 3:
                     if (elapsed < 0.3f) return;
@@ -243,7 +243,7 @@ namespace Lightbringer.EditorTools
                 case 5:
                     if (elapsed < 0.2f) return;
                     while (session.IsChoosing) session.ChooseGrowth(0);
-                    Assert(battle.Objective.HasWon && session.Progress.unlockedStage == 2 && session.Progress.equipmentLevels[2] == 1,
+                    Assert(battle.Objective.HasWon && session.Progress.unlockedStage == 2 && session.Progress.cleared[0],
                         "Runtime base destruction grants victory and persistent-profile rewards");
                     Screenshot("CampaignVictory.png");
                     Advance(); break;
@@ -273,7 +273,7 @@ namespace Lightbringer.EditorTools
                     if (elapsed < 1.5f) return;
                     Assert(!battle.Root.GetComponent<AudioSource>().isPlaying,
                         "Defeat fades out and stops battle music");
-                    Assert(battle.Objective.HasLost && session.Progress.ranks[chosenRank] >= 1 && session.Progress.equipmentLevels[2] == 1,
+                    Assert(battle.Objective.HasLost && session.Progress.ranks[chosenRank] >= 1 && session.Progress.cleared[0],
                         "Runtime hero death keeps permanent growth and grants no victory reward");
                     Assert(session.ReturnToPreparation(), "Defeat can return to preparation without reloading Unity");
                     for (int stage = 2; stage < 8; stage++) session.Progress.CompleteStage(stage);

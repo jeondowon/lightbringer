@@ -17,6 +17,8 @@ namespace Lightbringer.Units
 
         public WaypointPath AssignedPath { get; private set; }
         public bool HasReachedEnd { get; private set; }
+        // Set while the unit is stunned or frozen: it stands still (gravity still applies).
+        public bool IsHeld { get; set; }
         private CharacterController controller;
         private int waypointIndex;
         private float verticalSpeed;
@@ -84,6 +86,15 @@ namespace Lightbringer.Units
                 if (movementAccumulator < 1f / 30f) return;
                 deltaTime = movementAccumulator;
                 movementAccumulator = 0;
+            }
+            if (IsHeld)
+            {
+                if (flightHeight <= 0f)
+                {
+                    verticalSpeed = controller.isGrounded ? -2f : verticalSpeed + gravity * deltaTime;
+                    controller.Move(Vector3.up * verticalSpeed * deltaTime);
+                }
+                return;
             }
 
             Vector3 horizontal = Vector3.zero;

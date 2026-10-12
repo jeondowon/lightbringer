@@ -78,7 +78,7 @@ namespace Lightbringer.UI
             Hud.Set(destination, $"봉화 {session.SelectedStage:00}  /  전투 종료");
             Hud.Set(title, won ? "승리" : "패배");
             title.EnableInClassList("lb-title--defeat", !won);
-            Hud.Set(result, session.BattleGold > 0 ? session.LastResult + $"\n획득 골드  +{session.BattleGold:N0}" : session.LastResult);
+            Hud.Set(result, session.BattleGold > 0 ? session.LastResult + $"\n획득한 빛의 조각  +{session.BattleGold:N0}" : session.LastResult);
             PlaytestRecord record = session.PlaytestRecord;
             Hud.Show(stats, record != null);
             Hud.Show(summaryRow, record != null);

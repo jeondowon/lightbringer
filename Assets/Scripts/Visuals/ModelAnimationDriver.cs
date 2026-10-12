@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Lightbringer.Player;
 using Lightbringer.Combat;
 using Lightbringer.Units;
@@ -6,12 +7,15 @@ using UnityEngine;
 namespace Lightbringer.Visuals
 {
     // Drives an imported model's legacy Animation from gameplay: idle/move by the owner's speed and a
-    // one-shot action clip when the hero casts, a unit attacks or a healer pulses. Visual only; the gameplay
+    // one-shot action clip when the hero casts, a unit attacks or a healer pulses. The hero plays the clip of the
+    // skill it cast (VisualOverride.skillMotions) and falls back to the action clip. Visual only; the gameplay
     // transform is never moved.
     [DisallowMultipleComponent]
-    public sealed class ModelAnimationDriver : MonoBehaviour
+    public sealed class ModelAnimationDriver : MonoBehaviour, IFreezeListener
     {
-        private const string IdleState = "LB Idle", MoveState = "LB Move", ActionState = "LB Action";
+        private const string IdleState = "LB Idle", MoveState = "LB Move", ActionState = "LB Action", SkillState = "LB Skill ";
+        private struct SkillEntry { public string Name; public AnimationState State; public bool Authored; }
+
         private Animation player;
         private Transform owner;
         private HeroAbilities abilities;
@@ -25,6 +29,10 @@ namespace Lightbringer.Visuals
         private AnimationState idle, move, action;
         private AnimationState baseState;
         private PropStabilizer[] props = new PropStabilizer[0];
+        private readonly Dictionary<int, SkillEntry> skills = new Dictionary<int, SkillEntry>();
+        // The action state that last started and whether its clip aims the staff itself.
+        private AnimationState current;
+        private bool currentAuthored;
 
         public void Configure(VisualOverride source)
         {
@@ -46,8 +54,21 @@ namespace Lightbringer.Visuals
                 // Long casts are compressed so the hero reads responsive at short cooldowns.
                 action.speed = Mathf.Max(1f, source.actionClip.length / 1.2f);
             }
+            skills.Clear();
+            if (source.skillMotions != null)
+                foreach (SkillMotion motion in source.skillMotions)
+                {
+                    if (motion == null || motion.clip == null) continue;
+                    string name = SkillState + (int)motion.skill;
+                    if (!AddClip(motion.clip, name, WrapMode.Once)) continue;
+                    AnimationState state = player[name];
+                    state.layer = 1;
+                    state.speed = Mathf.Max(0.1f, motion.speed);
+                    skills[(int)motion.skill] = new SkillEntry { Name = name, State = state, Authored = motion.authored };
+                }
             player.Stop();
             baseState = null;
+            current = null;
             if (hasIdle) { player.Play(IdleState); baseState = idle; }
         }
 
@@ -62,6 +83,12 @@ namespace Lightbringer.Visuals
             player.AddClip(clip, state);
             player[state].wrapMode = wrap;
             return true;
+        }
+
+        // A frozen unit holds its pose: an Animation that is not enabled does not sample.
+        public void SetFrozen(bool frozen)
+        {
+            if (player != null) player.enabled = !frozen;
         }
 
         private void OnEnable()
@@ -88,9 +115,28 @@ namespace Lightbringer.Visuals
 
         private void OnCasted(int slot)
         {
+            if (player == null) return;
+            int skill = abilities != null ? abilities.Equipped(slot) : SkillCatalog.Empty;
+            if (skills.TryGetValue(skill, out SkillEntry entry))
+            {
+                StopActions();
+                player.CrossFade(entry.Name, 0.08f);
+                current = entry.State;
+                currentAuthored = entry.Authored;
+                return;
+            }
             if (!hasAction) return;
-            player.Stop(ActionState);
+            StopActions();
             player.CrossFade(ActionState, 0.08f);
+            current = action;
+            currentAuthored = false;
+        }
+
+        // Only one action clip plays at a time; layer 1 states would otherwise blend with each other.
+        private void StopActions()
+        {
+            if (hasAction) player.Stop(ActionState);
+            foreach (SkillEntry entry in skills.Values) player.Stop(entry.Name);
         }
 
         private void OnAttacked()
@@ -104,6 +150,8 @@ namespace Lightbringer.Visuals
             action.speed = action.length / Mathf.Max(0.1f, duration);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
+            current = action;
+            currentAuthored = false;
         }
 
         // Healers play their action clip on each pulse that mended someone.
@@ -113,6 +161,8 @@ namespace Lightbringer.Visuals
             action.speed = action.length / Mathf.Max(0.1f, support.Interval * 0.9f);
             player.Stop(ActionState);
             player.CrossFade(ActionState, 0.05f);
+            current = action;
+            currentAuthored = false;
         }
 
         private void LateUpdate()
@@ -126,8 +176,13 @@ namespace Lightbringer.Visuals
             bool moving = smoothedSpeed > 0.3f;
             if (props.Length > 0)
             {
-                bool casting = hasAction && action != null && action.enabled;
-                foreach (PropStabilizer prop in props) if (prop != null) prop.SetCasting(casting);
+                bool casting = current != null && current.enabled;
+                foreach (PropStabilizer prop in props)
+                {
+                    if (prop == null) continue;
+                    prop.SetCasting(casting && !currentAuthored);
+                    prop.SetAuthored(casting && currentAuthored);
+                }
             }
             AnimationState target = moving && hasMove ? move : hasIdle ? idle : null;
             if (target == move && move != null)

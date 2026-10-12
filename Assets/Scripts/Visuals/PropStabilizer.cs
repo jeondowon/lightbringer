@@ -45,6 +45,7 @@ namespace Lightbringer.Visuals
         // exactly instead of being kept upright, which also avoids the pitch/roll flips of a near-horizontal staff.
         public void SetAuthored(bool authored) => authoredTarget = authored ? 1f : 0f;
 
+
         private Vector3 MeasureGrip()
         {
             Bounds local = default;

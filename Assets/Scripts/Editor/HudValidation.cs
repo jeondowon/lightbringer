@@ -64,7 +64,7 @@ namespace Lightbringer.EditorTools
                 enemy.transform.position = battle.Hero.transform.position + Vector3.forward * 4f;
                 Physics.SyncTransforms();
                 view.Refresh(session);
-                Check(view.SlotName(0) == EquipmentCatalog.Names[battle.Abilities.Equipped(0)] && !view.IsSlotCooling(0),
+                Check(view.SlotName(0) == SkillCatalog.Names[battle.Abilities.Equipped(0)] && !view.IsSlotCooling(0),
                     "Ability slots show the equipped item and are ready before casting");
                 Check(battle.Abilities.TryCast(0, enemy) && RefreshAndCooling(view, session, 0), "A cast ability shows its cooldown");
 
@@ -173,17 +173,19 @@ namespace Lightbringer.EditorTools
                     "Returning to the map hides preparation and preserves the selected destination");
                 view.Refresh(session);
 
-                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("Q 장착 중")
-                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "미해금" && view.IsItemEnabled(2),
-                    "Items worn in another slot or not yet owned cannot be equipped");
-                Check(view.SelectItem(2) && view.SelectedItem == 2 && profile.loadout[0] == 0,
-                    "Inspecting an equipment candidate does not change the saved loadout");
-                Check(!view.SelectItem(4) && !view.SelectItem(1) && view.SelectedItem == 2,
-                    "Locked and already-used equipment cannot replace the inspected candidate");
-                Check(view.EquipSelected() && profile.loadout[0] == 2 && view.SlotText(0) == EquipmentCatalog.Names[2],
-                    "Confirming inspected equipment changes only the selected slot");
+                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("RMB 장착 중")
+                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "미습득" && view.IsItemEnabled(0),
+                    "Skills worn in another slot or not yet learned cannot be equipped");
+                Check(view.SelectItem(0) && view.SelectedItem == 0 && profile.loadout[0] == 0,
+                    "Inspecting a skill does not change the saved loadout");
+                Check(!view.SelectItem(4) && !view.SelectItem(1) && view.SelectedItem == 0,
+                    "Unlearned and already-used skills cannot replace the inspected skill");
+                view.SelectSlot(1);
+                Check(view.ActiveSlot == 1 && view.EquipSelected() && profile.loadout[1] == SkillCatalog.Empty && view.SlotText(1) == "비어 있음",
+                    "The equip button empties a slot that already holds the inspected skill");
                 view.SelectSlot(2);
-                Check(view.ActiveSlot == 2 && view.Equip(0) && profile.loadout[2] == 0, "Choosing another slot redirects the next equip");
+                Check(view.ActiveSlot == 2 && view.Equip(1) && profile.loadout[2] == 1 && view.SlotText(2) == SkillCatalog.Names[1],
+                    "Choosing another slot redirects the next equip");
 
                 Check(view.Start() && session.Battle != null && session.SelectedStage == 2, "START launches the selected stage");
                 view.Refresh(session);

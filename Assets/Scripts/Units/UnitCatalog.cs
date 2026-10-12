@@ -16,8 +16,8 @@ namespace Lightbringer.Units
         private static readonly float[] Ranges = { 1.25f, 7, 1.3f, 2.5f, 6, 6, 1.6f, 8 };
         public static float Cost(UnitKind kind) => Costs[(int)kind];
         // Gold upgrades: every rank raises health and damage by a share of the base value.
-        public const int MaxRank = 20;
-        public const float HealthPerRank = 0.08f, DamagePerRank = 0.06f;
+        public const int MaxRank = 10;
+        public const float HealthPerRank = 0.12f, DamagePerRank = 0.08f;
         public static float MaxHealthAt(UnitKind kind, int rank) => Health[(int)kind] * (1f + HealthPerRank * Mathf.Clamp(rank, 0, MaxRank));
         public static float AttackDamageAt(UnitKind kind, int rank) => Damage[(int)kind] * (1f + DamagePerRank * Mathf.Clamp(rank, 0, MaxRank));
         public static int UpgradeCost(UnitKind kind, int rank) => Mathf.RoundToInt((40 + 20 * (int)kind) * (1f + 0.5f * rank));

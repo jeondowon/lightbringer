@@ -21,6 +21,7 @@ namespace Lightbringer.EditorTools
         {
             EditorRequests.Register(Request, Build);
             EditorRequests.Register("Docs/Validation/BuildUpdatedUnitPortraits.request", BuildUpdatedUnitPortraits);
+            EditorRequests.Register(SkillRequest, BuildSkillIcons);
         }
 
         [MenuItem("Lightbringer/UI/Build Updated Unit Portraits")]

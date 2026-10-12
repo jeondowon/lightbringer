@@ -16,21 +16,33 @@ namespace Lightbringer.Player
         public const float LightStaffWindup = 0.15f;
         public const float LightStaffDescent = 0.075f;
         public const float LightStaffImpactDelay = LightStaffWindup + LightStaffDescent;
+        // Shockwave and Ice land when the staff reaches its contact pose in the Slam and Thrust clips.
+        public const float ShockwaveImpactDelay = 0.46f;
+        public const float ShockwaveRadius = 4.5f;
+        public const float ShockwaveDamage = 20f;
+        public const float ShockwaveStun = 1.5f;
+        public const float ShockwavePush = 3f;
+        public const float IceImpactDelay = 0.3f;
+        public const float IceDamage = 10f;
+        public const float IceFreeze = 3f;
+        private struct Delayed { public SkillKind Skill; public Combatant Target; public float Power, Remaining; }
+        private readonly List<Delayed> delayed = new List<Delayed>();
         private readonly List<(Combatant target, float damage, float remaining)> pendingLightHits =
             new List<(Combatant, float, float)>();
         [SerializeField] private UnityEngine.Camera aimCamera;
-        [SerializeField] private int[] equipment = { 0, 1, 3 };
-        [SerializeField] private int[] levels = { 1, 1, 0, 1, 0, 0 };
-        private readonly float[] cooldowns = new float[EquipmentCatalog.Slots];
+        [SerializeField] private int[] equipment = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty };
+        [SerializeField] private int[] levels = { 1, 0, 0, 0, 0 };
+        private readonly float[] cooldowns = new float[SkillCatalog.Slots];
         private readonly HashSet<Combatant> hits = new HashSet<Combatant>();
         private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
         private Combatant self;
         private ManaResource mana;
         private float damageMultiplier = 1f;
         private int[] growthRanks = new int[CampaignProgress.GrowthCount];
+        private int heroLevel = 1;
         private bool capturedBaseStats;
         private int inputEnabledFrame = -1;
-        private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraRadius, baseAuraBonus;
+        private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraBonus;
         public string Feedback { get; private set; } = "";
         // Raised after a successful cast with the equipment slot; visuals play the cast animation.
         public event System.Action<int> Casted;
@@ -46,10 +58,11 @@ namespace Lightbringer.Player
             mana = GetComponent<ManaResource>();
         }
 
-        private void Start() => ApplyProgression(growthRanks);
+        private void Start() => ApplyProgression(growthRanks, heroLevel);
         private void OnEnable() => inputEnabledFrame = Time.frameCount;
 
-        public void ApplyProgression(int[] ranks)
+        // Growth card ranks plus the hero level, which alone sets the aura radius.
+        public void ApplyProgression(int[] ranks, int level = 1)
         {
             if (self == null || mana == null) Awake();
             FoodResource food = GetComponent<FoodResource>();
@@ -62,41 +75,37 @@ namespace Lightbringer.Player
                 baseFoodCapacity = food != null ? food.MaximumFood : 100;
                 baseFoodProduction = food != null ? food.ProductionPerSecond : 5;
                 baseManaCapacity = mana.Maximum; baseManaRecovery = mana.RecoveryPerSecond;
-                baseAuraRadius = aura != null ? aura.Radius : 3;
                 baseAuraBonus = aura != null ? aura.AttackBonus : 0.25f;
             }
             growthRanks = ranks != null && ranks.Length == CampaignProgress.GrowthCount
                 ? (int[])ranks.Clone() : new int[CampaignProgress.GrowthCount];
-            int foodRing = RingLevel(EquipmentKind.FoodRing);
-            int manaRing = RingLevel(EquipmentKind.ManaRing);
-            int lifeRing = RingLevel(EquipmentKind.VitalityRing);
-            int capacity = Rank(GrowthKind.Capacity) * 10;
-            if (food != null) food.Configure(baseFoodCapacity + capacity, baseFoodProduction + Rank(GrowthKind.FoodProduction) + foodRing);
-            mana.Configure(baseManaCapacity + capacity + manaRing * 15,
-                baseManaRecovery + Rank(GrowthKind.ManaRecovery) * GrowthCatalog.ManaRecoveryPerRank
-                + manaRing * EquipmentCatalog.ManaRecoveryPerRingLevel);
-            self.SetMaximumHealth(baseHealth + Rank(GrowthKind.HeroVitality) * 20 + lifeRing * 30);
-            if (aura != null) aura.Configure(baseAuraRadius + Rank(GrowthKind.AuraSize) * GrowthCatalog.AuraRadiusPerRank, baseAuraBonus + Rank(GrowthKind.AuraBuff) * 0.05f);
-            if (summoner != null) summoner.SetCostMultiplier(1f - Rank(GrowthKind.Leadership) * 0.025f);
-            damageMultiplier = 1 + Rank(GrowthKind.HeroPower) * 0.1f;
+            heroLevel = Mathf.Clamp(level, 1, CampaignProgress.MaxLevel);
+            int capacity = Rank(GrowthKind.Capacity) * GrowthCatalog.CapacityPerRank;
+            if (food != null) food.Configure(baseFoodCapacity + capacity,
+                baseFoodProduction + Rank(GrowthKind.FoodProduction) * GrowthCatalog.FoodProductionPerRank);
+            mana.Configure(baseManaCapacity + capacity,
+                baseManaRecovery + Rank(GrowthKind.ManaRecovery) * GrowthCatalog.ManaRecoveryPerRank);
+            self.SetMaximumHealth(baseHealth + Rank(GrowthKind.HeroVitality) * GrowthCatalog.VitalityPerRank);
+            if (aura != null) aura.Configure(GrowthCatalog.AuraRadiusAt(heroLevel),
+                baseAuraBonus + Rank(GrowthKind.AuraBuff) * GrowthCatalog.AuraBuffPerRank);
+            if (summoner != null) summoner.SetCostMultiplier(SummonCostMultiplier(Rank(GrowthKind.Leadership)));
+            damageMultiplier = 1 + Rank(GrowthKind.HeroPower) * GrowthCatalog.HeroPowerPerRank;
         }
 
-        private int Rank(GrowthKind kind) => growthRanks[(int)kind];
+        public static float SummonCostMultiplier(int leadershipRank) =>
+            1f - Mathf.Clamp(leadershipRank, 0, GrowthCatalog.MaxRank) * GrowthCatalog.LeadershipPerRank;
 
-        private int RingLevel(EquipmentKind kind)
-        {
-            foreach (int id in equipment) if (id == (int)kind) return levels[id];
-            return 0;
-        }
+        private int Rank(GrowthKind kind) => Mathf.Clamp(growthRanks[(int)kind], 0, GrowthCatalog.MaxRankOf(kind));
 
+        // Slots may be empty (SkillCatalog.Empty); every other entry must be a learned skill used once.
         public bool ConfigureLoadout(int[] selected, int[] ownedLevels)
         {
-            if (selected == null || selected.Length != EquipmentCatalog.Slots
-                || ownedLevels == null || ownedLevels.Length != EquipmentCatalog.Count)
+            if (selected == null || selected.Length != SkillCatalog.Slots
+                || ownedLevels == null || ownedLevels.Length != SkillCatalog.Count)
                 return false;
             HashSet<int> unique = new HashSet<int>();
             foreach (int id in selected)
-                if (id < 0 || id >= EquipmentCatalog.Count || ownedLevels[id] <= 0 || !unique.Add(id))
+                if (id != SkillCatalog.Empty && (!SkillCatalog.IsSkill(id) || ownedLevels[id] <= 0 || !unique.Add(id)))
                     return false;
             equipment = (int[])selected.Clone();
             levels = (int[])ownedLevels.Clone();
@@ -109,8 +118,8 @@ namespace Lightbringer.Player
             if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || Time.timeScale <= 0 || Time.frameCount == inputEnabledFrame)
                 return;
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) TryCast(0, FindAimedTarget());
-            if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(1, FindAimedTarget());
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) TryCast(2, FindAimedTarget());
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) TryCast(1, FindAimedTarget());
+            if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(2, FindAimedTarget());
         }
 
         public void Tick(float delta)
@@ -133,9 +142,54 @@ namespace Lightbringer.Player
                     hit.target.TakeDamage(hit.damage, self);
                 if (!isActiveAndEnabled) break;
             }
+            for (int i = delayed.Count - 1; i >= 0 && isActiveAndEnabled; i--)
+            {
+                if (i >= delayed.Count) continue;
+                Delayed pending = delayed[i];
+                pending.Remaining -= delta;
+                if (pending.Remaining > 0f) { delayed[i] = pending; continue; }
+                // Remove before resolving: a lethal hit can end the battle and disable this component.
+                delayed.RemoveAt(i);
+                if (self != null && self.IsAlive) Resolve(pending);
+            }
         }
 
-        private void OnDisable() => pendingLightHits.Clear();
+        // The moment a delayed skill lands.
+        private void Resolve(Delayed pending)
+        {
+            int id = (int)pending.Skill;
+            if (pending.Skill == SkillKind.Shockwave)
+            {
+                Vector3 centre = transform.position;
+                SpellLanded?.Invoke(id, centre, ShockwaveRadius);
+                // Collect reuses one buffer, so copy the enemies before damaging any of them.
+                var struck = new List<Combatant>();
+                foreach (Combatant unit in Collect(centre, ShockwaveRadius))
+                    if (unit != null && unit.IsAlive && !unit.Invulnerable && unit.Faction != self.Faction) struck.Add(unit);
+                foreach (Combatant unit in struck)
+                {
+                    if (unit == null || !unit.IsAlive) continue;
+                    StatusEffects.Stun(unit, ShockwaveStun);
+                    StatusEffects.Push(unit, centre, ShockwavePush);
+                    unit.TakeDamage(ShockwaveDamage * pending.Power, self);
+                    if (!isActiveAndEnabled) return;
+                }
+            }
+            else if (pending.Skill == SkillKind.Ice)
+            {
+                Combatant target = pending.Target;
+                if (target == null || !target.IsAlive || target.Faction == self.Faction || target.gameObject.scene != gameObject.scene) return;
+                SpellLanded?.Invoke(id, target.GetAimPoint(transform.position), 1.2f);
+                StatusEffects.Stun(target, IceFreeze, freeze: true);
+                target.TakeDamage(IceDamage * pending.Power, self);
+            }
+        }
+
+        private void OnDisable()
+        {
+            pendingLightHits.Clear();
+            delayed.Clear();
+        }
 
         public bool TryCast(int slot, Combatant target)
         {
@@ -143,30 +197,27 @@ namespace Lightbringer.Player
             if (!isActiveAndEnabled || !self.IsAlive || slot < 0 || slot >= equipment.Length || cooldowns[slot] > 0)
                 return false;
             int id = equipment[slot];
-            if (!EquipmentCatalog.IsActive(id)) { Feedback = "이 슬롯의 반지는 지속 효과를 제공합니다."; return RejectCast(); }
-            if (id != (int)EquipmentKind.HealingStaff && !CanAttack(target))
+            if (!SkillCatalog.IsSkill(id)) return false;
+            if (SkillCatalog.NeedsTarget(id) && !CanAttack(target))
             { Feedback = "15m 이내에 보이는 적을 조준하세요."; return RejectCast(); }
-            if (!mana.TrySpend(EquipmentCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return RejectCast(); }
-            cooldowns[slot] = EquipmentCatalog.Cooldown(id);
-            float power = (1f + 0.2f * (levels[id] - 1)) * damageMultiplier;
-            if (id == (int)EquipmentKind.LightStaff)
+            if (!mana.TrySpend(SkillCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return RejectCast(); }
+            cooldowns[slot] = SkillCatalog.Cooldown(id);
+            float power = SkillCatalog.Power(levels[id]) * damageMultiplier;
+            if (id == (int)SkillKind.LightBeam)
             {
                 pendingLightHits.Add((target, 18f * power, LightStaffImpactDelay));
                 SpellLanded?.Invoke(id, target.GetAimPoint(transform.position), 0.6f);
             }
-            else if (id == (int)EquipmentKind.HealingStaff)
+            else if (id == (int)SkillKind.Heal)
             {
                 foreach (Combatant unit in Collect(transform.position, 6f))
                     if (unit.IsAlive && unit.Faction == self.Faction) unit.Heal(25f * power);
             }
-            else
-            {
-                Vector3 centre = target.transform.position;
-                SpellLanded?.Invoke(id, centre, 3f);
-                foreach (Combatant unit in Collect(centre, 3f))
-                    if (CanAttack(unit)) unit.TakeDamage(30f * power, self);
-            }
-            Feedback = EquipmentCatalog.Names[id];
+            else if (id == (int)SkillKind.Shockwave)
+                delayed.Add(new Delayed { Skill = SkillKind.Shockwave, Power = power, Remaining = ShockwaveImpactDelay });
+            else if (id == (int)SkillKind.Ice)
+                delayed.Add(new Delayed { Skill = SkillKind.Ice, Target = target, Power = power, Remaining = IceImpactDelay });
+            Feedback = SkillCatalog.Names[id];
             Casted?.Invoke(slot);
             return true;
         }

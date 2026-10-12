@@ -78,6 +78,27 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 60ec7cae944ea45409d918b8d3d87fd2, type: 2}
     moveClip: {fileID: 7400000, guid: 1eac7892efd866a41a629d3a64f7c4e4, type: 2}
     actionClip: {fileID: 7400000, guid: cdaa78b826e6b7f4abbfe4979d08ff40, type: 2}
+    skillMotions:
+    - skill: 0
+      clip: {fileID: 7400000, guid: 26330e3740c1f4a4f96b082aba806a23, type: 2}
+      authored: 1
+      speed: 1.5
+    - skill: 1
+      clip: {fileID: 7400000, guid: c2dca5826c570fe4e864b0d92d550d0a, type: 2}
+      authored: 1
+      speed: 1
+    - skill: 2
+      clip: {fileID: 7400000, guid: 26330e3740c1f4a4f96b082aba806a23, type: 2}
+      authored: 1
+      speed: 1
+    - skill: 3
+      clip: {fileID: 7400000, guid: 289259d106b17d24fb4b00e939eef9e2, type: 2}
+      authored: 1
+      speed: 1
+    - skill: 4
+      clip: {fileID: 7400000, guid: cdaa78b826e6b7f4abbfe4979d08ff40, type: 2}
+      authored: 0
+      speed: 2.25
     moveClipSpeed: 4
     attachments:
     - prefab: {fileID: 1412762448294062585, guid: 6ca11088ee14a1e4f9e7d0c88fdd8ad3, type: 3}
@@ -97,6 +118,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 88fb20b2589e77741ac85a38512b7d7e, type: 2}
     moveClip: {fileID: 7400000, guid: 53fdc8eb34d5f0040acdeef57ec60138, type: 2}
     actionClip: {fileID: 7400000, guid: 546d8da4335c8df408e70818945fd1cc, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 2
@@ -107,6 +129,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 3737ec42b6ade6445850f41078851ed9, type: 2}
     moveClip: {fileID: 7400000, guid: ba7e4891d4b13114a87ca218561c506b, type: 2}
     actionClip: {fileID: 7400000, guid: a0c8884697fb03547ab34e9ff9310521, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 11
@@ -117,6 +140,7 @@ MonoBehaviour:
     idleClip: {fileID: 0}
     moveClip: {fileID: 0}
     actionClip: {fileID: 0}
+    skillMotions: []
     moveClipSpeed: 4
     attachments: []
   - id: 12
@@ -127,6 +151,7 @@ MonoBehaviour:
     idleClip: {fileID: 0}
     moveClip: {fileID: 0}
     actionClip: {fileID: 0}
+    skillMotions: []
     moveClipSpeed: 4
     attachments: []
   - id: 10
@@ -137,6 +162,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 74ae116231495334d89b9bfb0530481b, type: 2}
     moveClip: {fileID: 7400000, guid: d3397a2a050d74446a1e9b421d6cd647, type: 2}
     actionClip: {fileID: 7400000, guid: d57774d5a1d4190438a1b6158df9d069, type: 2}
+    skillMotions: []
     moveClipSpeed: 1.5005952
     attachments:
     - prefab: {fileID: 7705048249904401589, guid: 1571b94c902a20d47a35c29fe4a627eb, type: 3}
@@ -156,6 +182,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: de4e53a2ec70e744e9963616972a5c11, type: 2}
     moveClip: {fileID: 7400000, guid: bd38dba9914483a41a4eef7dc73ade48, type: 2}
     actionClip: {fileID: 7400000, guid: cbfcee69498085b4bb778ee1db61dba2, type: 2}
+    skillMotions: []
     moveClipSpeed: 1.2838517
     attachments: []
   - id: 13
@@ -166,6 +193,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: fc61489e458c1d84faa2cb0eb5e77e29, type: 2}
     moveClip: {fileID: 7400000, guid: ef3db94b62781a04ba0d0ced09578043, type: 2}
     actionClip: {fileID: 7400000, guid: 5367687733cf8004c85ebee4227bb07f, type: 2}
+    skillMotions: []
     moveClipSpeed: 1.8314011
     attachments: []
   - id: 14
@@ -176,6 +204,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: c1c8dfe7c37a4f246bcf25d75cbdf708, type: 2}
     moveClip: {fileID: 7400000, guid: 3bbc4c15b9646d7428e52eec51897440, type: 2}
     actionClip: {fileID: 7400000, guid: d2a353ede2305bc4da2d0a220e1d10ef, type: 2}
+    skillMotions: []
     moveClipSpeed: 1.0063494
     attachments: []
   - id: 15
@@ -186,6 +215,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: eda0d6ed6a77fbd4b824519738d2a4fa, type: 2}
     moveClip: {fileID: 7400000, guid: 8e2e1854a6ee3ab4a9fec6ce7024eb2a, type: 2}
     actionClip: {fileID: 7400000, guid: 298a4b49aa013db48b4e44327a8b48fc, type: 2}
+    skillMotions: []
     moveClipSpeed: 1.2838517
     attachments: []
   - id: 16
@@ -196,6 +226,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 471cb35f8149ac141a80344d84bf6cb0, type: 2}
     moveClip: {fileID: 7400000, guid: 02896b261ced6ca4d9c719899793dd2a, type: 2}
     actionClip: {fileID: 7400000, guid: ad1fd769148b6764d95202ace21ee678, type: 2}
+    skillMotions: []
     moveClipSpeed: 0.96833503
     attachments: []
   - id: 3
@@ -206,6 +237,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 1df66e963e307a84386ab26a3b298f19, type: 2}
     moveClip: {fileID: 7400000, guid: 7a8cb9d4971d74b41a0bed790e1914b0, type: 2}
     actionClip: {fileID: 7400000, guid: 6f29189cd1e713948ae48ff49cc8545d, type: 2}
+    skillMotions: []
     moveClipSpeed: 2.2
     attachments: []
   - id: 4
@@ -216,6 +248,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 08573233e9faf424bae30976e5f21ec3, type: 2}
     moveClip: {fileID: 7400000, guid: a2d66797ce682934293edaf343cff8e1, type: 2}
     actionClip: {fileID: 7400000, guid: d74bc515ca7428a4ba10f1a559f4fc24, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 6
@@ -226,6 +259,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 28987168ff9f4ed4aa6a3933daab5b16, type: 2}
     moveClip: {fileID: 7400000, guid: eadad725674c93542ba35e67b0da7f91, type: 2}
     actionClip: {fileID: 7400000, guid: abe2922b1f884fe4783451258d23511f, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 5
@@ -236,6 +270,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: a67b6ec365678ec468498fba6c462d1d, type: 2}
     moveClip: {fileID: 7400000, guid: 37aa4ddc43bbb67499d4a30417862f4e, type: 2}
     actionClip: {fileID: 7400000, guid: 9be3b68a7279a714ba32e46633cb3ad0, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 8
@@ -246,6 +281,7 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: 7657b67f0d1b7154aa0c2fc90c86d7ed, type: 2}
     moveClip: {fileID: 7400000, guid: 5847f6a3454604740b193ae907f15a7b, type: 2}
     actionClip: {fileID: 7400000, guid: cc0a1e8bf151a354e9b0da855c3dfa19, type: 2}
+    skillMotions: []
     moveClipSpeed: 3
     attachments: []
   - id: 7
@@ -256,5 +292,6 @@ MonoBehaviour:
     idleClip: {fileID: 7400000, guid: bae2e565e54081e4f9401b1a4e000091, type: 2}
     moveClip: {fileID: 7400000, guid: ba14b32d56a535e4d89b4fbbe9df39f1, type: 2}
     actionClip: {fileID: 7400000, guid: f6b05bcc35c864f40a1d5c8970c8d847, type: 2}
+    skillMotions: []
     moveClipSpeed: 4
     attachments: []

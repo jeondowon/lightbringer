@@ -931,12 +931,11 @@
     background-size: contain;
 }
 
-.lb-icon--0 { background-image: url("Art/Item_LightStaff.png"); }
-.lb-icon--1 { background-image: url("Art/Item_HealingStaff.png"); }
-.lb-icon--2 { background-image: url("Art/Item_RuneStaff.png"); }
-.lb-icon--3 { background-image: url("Art/Item_FoodRing.png"); }
-.lb-icon--4 { background-image: url("Art/Item_ManaRing.png"); }
-.lb-icon--5 { background-image: url("Art/Item_VitalityRing.png"); }
+.lb-icon--0 { background-image: url("Art/Skill_LightBeam.png"); }
+.lb-icon--1 { background-image: url("Art/Skill_Heal.png"); }
+.lb-icon--2 { background-image: url("Art/Skill_Ice.png"); }
+.lb-icon--3 { background-image: url("Art/Skill_Shockwave.png"); }
+.lb-icon--4 { background-image: url("Art/Skill_Meteor.png"); }
 
 /* ---------- Level-up blessings ----------
    Full-screen overlay above the paused battle: three large cards dealt in by LevelUpView.
@@ -1338,12 +1337,11 @@
 .lb-hud .lb-socket-orb { width: 66px; height: 66px; border-width: 1px; border-color: rgba(199, 188, 146, 0.65); border-radius: 2px; background-color: rgba(12, 23, 26, 0.93); }
 .lb-hud .lb-orb, .lb-hud .lb-orb-dial { left: 7px; top: 7px; width: 50px; height: 50px; }
 .lb-hud .lb-orb { border-radius: 1px; background-color: rgba(0, 0, 0, 0); background-size: contain; }
-.lb-hud .lb-orb--0 { background-image: url("Art/Item_LightStaff.png"); }
-.lb-hud .lb-orb--1 { background-image: url("Art/Item_HealingStaff.png"); }
-.lb-hud .lb-orb--2 { background-image: url("Art/Item_RuneStaff.png"); }
-.lb-hud .lb-orb--3 { background-image: url("Art/Item_FoodRing.png"); }
-.lb-hud .lb-orb--4 { background-image: url("Art/Item_ManaRing.png"); }
-.lb-hud .lb-orb--5 { background-image: url("Art/Item_VitalityRing.png"); }
+.lb-hud .lb-orb--0 { background-image: url("Art/Skill_LightBeam.png"); }
+.lb-hud .lb-orb--1 { background-image: url("Art/Skill_Heal.png"); }
+.lb-hud .lb-orb--2 { background-image: url("Art/Skill_Ice.png"); }
+.lb-hud .lb-orb--3 { background-image: url("Art/Skill_Shockwave.png"); }
+.lb-hud .lb-orb--4 { background-image: url("Art/Skill_Meteor.png"); }
 .lb-hud .lb-orb-key { bottom: -10px; }
 .lb-hud .lb-slot-caption { flex-direction: column; border-radius: 2px; margin-top: 16px; padding: 5px 8px; background-color: rgba(10, 20, 23, 0.9); }
 .lb-hud .lb-cost { margin: 3px 0 0 0; font-size: 11px; }

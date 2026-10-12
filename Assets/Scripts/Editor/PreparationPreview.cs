@@ -147,17 +147,17 @@ namespace Lightbringer.EditorTools
             PreparationView view = new PreparationView(root);
             view.Refresh(session);
             view.SelectSlot(2);
-            view.SelectItem((int)Lightbringer.Player.EquipmentKind.ManaRing);
+            view.SelectItem((int)Lightbringer.Player.SkillKind.Heal);
             return () => view.Refresh(session);
         }, 1280, 1024);
 
         [MenuItem("Lightbringer/UI/Capture Level-Up Preview")]
         public static void CaptureLevelUp() => Render(LevelUpOutput, profile =>
         {
-            profile.ranks[(int)GrowthKind.AuraSize] = 2;
+            profile.ranks[(int)GrowthKind.FoodProduction] = 2;
             profile.GainExperience(profile.ExperienceToNext - profile.experience + 140);
             // A fixed, varied hand so the preview shows three categories.
-            profile.choices = new[] { (int)GrowthKind.AuraSize, (int)GrowthKind.Leadership, (int)GrowthKind.HeroVitality };
+            profile.choices = new[] { (int)GrowthKind.FoodProduction, (int)GrowthKind.Leadership, (int)GrowthKind.HeroVitality };
         }, (root, session) =>
         {
             // The preparation screen stands in for the paused battle behind the overlay.
@@ -280,7 +280,7 @@ namespace Lightbringer.EditorTools
             profile.level = 4;
             profile.experience = 52;
             profile.ranks[(int)GrowthKind.ManaRecovery] = 2;
-            profile.ranks[(int)GrowthKind.AuraSize] = 1;
+            profile.ranks[(int)GrowthKind.HeroPower] = 1;
             customize(profile);
             session.InitializeForValidation(profile);
             EditorAssets.ConfigureSession(session, material);

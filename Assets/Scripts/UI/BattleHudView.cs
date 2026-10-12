@@ -18,7 +18,7 @@ namespace Lightbringer.UI
     public sealed class BattleHudView
     {
         private const float ToastSeconds = 2.5f;
-        private static readonly string[] SlotKeys = { "LMB", "Q", "E" };
+        private static readonly string[] SlotKeys = SkillCatalog.SlotKeys;
         private static readonly Color CooldownShade = new Color(0.01f, 0.02f, 0.05f, 0.72f);
 
         public readonly VisualElement Root;
@@ -180,7 +180,7 @@ namespace Lightbringer.UI
                 Hud.Box(chip, "lb-hud-icon", "lb-hud-icon--enemy", "lb-front-icon");
                 frontChips.Add(new FrontChip { Root = chip, Allies = allies, Enemies = Hud.Text(chip, "", "lb-front-enemies") });
             }
-            for (int i = 0; i < EquipmentCatalog.Slots; i++)
+            for (int i = 0; i < SkillCatalog.Slots; i++)
             {
                 VisualElement slot = Hud.Box(abilities, "lb-slot");
                 VisualElement socket = Hud.Box(slot, "lb-socket-orb");
@@ -283,8 +283,8 @@ namespace Lightbringer.UI
             {
                 Slot slot = slots[i];
                 int id = battle.Abilities.Equipped(i);
-                bool valid = id >= 0 && id < EquipmentCatalog.Count;
-                bool active = valid && EquipmentCatalog.IsActive(id);
+                bool valid = SkillCatalog.IsSkill(id);
+                bool active = valid;
                 if (slot.Shown != id)
                 {
                     // Each item has its own emblem orb.
@@ -292,16 +292,16 @@ namespace Lightbringer.UI
                     if (valid) slot.Orb.AddToClassList("lb-orb--" + id);
                     slot.Shown = id;
                 }
-                Hud.Set(slot.Name, valid ? EquipmentCatalog.Names[id] : "-");
-                Hud.Set(slot.Cost, active ? EquipmentCatalog.Cost(id).ToString("0") + " MP" : "지속 효과");
+                Hud.Set(slot.Name, valid ? SkillCatalog.Names[id] : "비어 있음");
+                Hud.Set(slot.Cost, active ? SkillCatalog.Cost(id).ToString("0") + " MP" : "");
                 float remaining = battle.Abilities.CooldownRemaining(i);
                 bool cooling = active && remaining > 0f;
-                slot.Dial.Set(cooling ? remaining / EquipmentCatalog.Cooldown(id) : 0f);
+                slot.Dial.Set(cooling ? remaining / SkillCatalog.Cooldown(id) : 0f);
                 // Only cooldowns long enough to read get a countdown.
-                Hud.Set(slot.Timer, cooling && EquipmentCatalog.Cooldown(id) >= 1f ? remaining.ToString(remaining < 1f ? "0.0" : "0") : "");
+                Hud.Set(slot.Timer, cooling && SkillCatalog.Cooldown(id) >= 1f ? remaining.ToString(remaining < 1f ? "0.0" : "0") : "");
                 slot.Root.EnableInClassList("lb-slot--passive", !active);
                 slot.Root.EnableInClassList("lb-slot--cooling", cooling);
-                slot.Root.EnableInClassList("lb-slot--nomana", active && manaStore.Current < EquipmentCatalog.Cost(id));
+                slot.Root.EnableInClassList("lb-slot--nomana", active && manaStore.Current < SkillCatalog.Cost(id));
             }
         }
 
