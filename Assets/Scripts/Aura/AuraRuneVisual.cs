@@ -6,7 +6,7 @@ namespace Lightbringer.Aura
 {
     // Art Pass aura: a rotating rune circle on the ground, light motes rising inside the radius,
     // with a shared world-space origin for other aura presentation effects.
-    // Radius always follows HeroAura, so Aura Size growth is visible immediately.
+    // Radius always follows HeroAura (the circle is the exact buff range), so Aura Size growth is visible immediately.
     [DisallowMultipleComponent]
     [RequireComponent(typeof(HeroAura))]
     public sealed class AuraRuneVisual : MonoBehaviour

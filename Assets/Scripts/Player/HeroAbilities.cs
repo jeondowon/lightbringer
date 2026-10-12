@@ -29,6 +29,7 @@ namespace Lightbringer.Player
         private float damageMultiplier = 1f;
         private int[] growthRanks = new int[CampaignProgress.GrowthCount];
         private bool capturedBaseStats;
+        private int inputEnabledFrame = -1;
         private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraRadius, baseAuraBonus;
         public string Feedback { get; private set; } = "";
         // Raised after a successful cast with the equipment slot; visuals play the cast animation.
@@ -46,6 +47,7 @@ namespace Lightbringer.Player
         }
 
         private void Start() => ApplyProgression(growthRanks);
+        private void OnEnable() => inputEnabledFrame = Time.frameCount;
 
         public void ApplyProgression(int[] ranks)
         {
@@ -60,7 +62,7 @@ namespace Lightbringer.Player
                 baseFoodCapacity = food != null ? food.MaximumFood : 100;
                 baseFoodProduction = food != null ? food.ProductionPerSecond : 5;
                 baseManaCapacity = mana.Maximum; baseManaRecovery = mana.RecoveryPerSecond;
-                baseAuraRadius = aura != null ? aura.Radius : 6;
+                baseAuraRadius = aura != null ? aura.Radius : 3;
                 baseAuraBonus = aura != null ? aura.AttackBonus : 0.25f;
             }
             growthRanks = ranks != null && ranks.Length == CampaignProgress.GrowthCount
@@ -70,9 +72,11 @@ namespace Lightbringer.Player
             int lifeRing = RingLevel(EquipmentKind.VitalityRing);
             int capacity = Rank(GrowthKind.Capacity) * 10;
             if (food != null) food.Configure(baseFoodCapacity + capacity, baseFoodProduction + Rank(GrowthKind.FoodProduction) + foodRing);
-            mana.Configure(baseManaCapacity + capacity + manaRing * 15, baseManaRecovery + Rank(GrowthKind.ManaRecovery) * 2 + manaRing * 2);
+            mana.Configure(baseManaCapacity + capacity + manaRing * 15,
+                baseManaRecovery + Rank(GrowthKind.ManaRecovery) * GrowthCatalog.ManaRecoveryPerRank
+                + manaRing * EquipmentCatalog.ManaRecoveryPerRingLevel);
             self.SetMaximumHealth(baseHealth + Rank(GrowthKind.HeroVitality) * 20 + lifeRing * 30);
-            if (aura != null) aura.Configure(baseAuraRadius + Rank(GrowthKind.AuraSize) * 0.6f, baseAuraBonus + Rank(GrowthKind.AuraBuff) * 0.05f);
+            if (aura != null) aura.Configure(baseAuraRadius + Rank(GrowthKind.AuraSize) * GrowthCatalog.AuraRadiusPerRank, baseAuraBonus + Rank(GrowthKind.AuraBuff) * 0.05f);
             if (summoner != null) summoner.SetCostMultiplier(1f - Rank(GrowthKind.Leadership) * 0.025f);
             damageMultiplier = 1 + Rank(GrowthKind.HeroPower) * 0.1f;
         }
@@ -102,7 +106,7 @@ namespace Lightbringer.Player
         private void Update()
         {
             Tick(Time.deltaTime);
-            if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || Time.timeScale <= 0)
+            if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || Time.timeScale <= 0 || Time.frameCount == inputEnabledFrame)
                 return;
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) TryCast(0, FindAimedTarget());
             if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(1, FindAimedTarget());
@@ -139,10 +143,10 @@ namespace Lightbringer.Player
             if (!isActiveAndEnabled || !self.IsAlive || slot < 0 || slot >= equipment.Length || cooldowns[slot] > 0)
                 return false;
             int id = equipment[slot];
-            if (!EquipmentCatalog.IsActive(id)) { Feedback = "이 슬롯의 반지는 지속 효과를 제공합니다."; return false; }
+            if (!EquipmentCatalog.IsActive(id)) { Feedback = "이 슬롯의 반지는 지속 효과를 제공합니다."; return RejectCast(); }
             if (id != (int)EquipmentKind.HealingStaff && !CanAttack(target))
-            { Feedback = "15m 이내에 보이는 적을 조준하세요."; return false; }
-            if (!mana.TrySpend(EquipmentCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return false; }
+            { Feedback = "15m 이내에 보이는 적을 조준하세요."; return RejectCast(); }
+            if (!mana.TrySpend(EquipmentCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return RejectCast(); }
             cooldowns[slot] = EquipmentCatalog.Cooldown(id);
             float power = (1f + 0.2f * (levels[id] - 1)) * damageMultiplier;
             if (id == (int)EquipmentKind.LightStaff)
@@ -165,6 +169,12 @@ namespace Lightbringer.Player
             Feedback = EquipmentCatalog.Names[id];
             Casted?.Invoke(slot);
             return true;
+        }
+
+        private static bool RejectCast()
+        {
+            Lightbringer.Audio.SoundEffects.UI(Lightbringer.Audio.SoundCue.Denied);
+            return false;
         }
 
         private IEnumerable<Combatant> Collect(Vector3 position, float radius)

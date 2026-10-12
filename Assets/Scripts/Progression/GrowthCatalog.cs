@@ -6,6 +6,8 @@ namespace Lightbringer.Progression
     public static class GrowthCatalog
     {
         public const int LeadershipMaxRank = 20;
+        public const float ManaRecoveryPerRank = 0.5f;
+        public const float AuraRadiusPerRank = 0.3f;
 
         public static readonly string[] Titles = { "찬란한 빛", "풍요로운 수확", "마력의 샘", "넉넉한 비축",
             "지휘관의 부름", "축복의 오라", "빛의 권능", "굳건한 심장" };
@@ -23,7 +25,7 @@ namespace Lightbringer.Progression
             "영웅의 지팡이 공격과 마법 피해가 증가합니다.",
             "영웅의 최대 체력이 증가합니다.",
         };
-        public static readonly string[] Effects = { "오라 반경 +0.6m", "초당 식량 생산 +1", "초당 마나 회복 +2",
+        public static readonly string[] Effects = { $"오라 반경 +{AuraRadiusPerRank:0.0}m", "초당 식량 생산 +1", $"초당 마나 회복 +{ManaRecoveryPerRank:0.#}",
             "최대 식량·마나 +10", "소환 비용 -2.5%", "오라 공격력 보너스 +5%", "영웅 피해량 +10%", "최대 체력 +20" };
 
         public static bool IsMaxed(GrowthKind kind, int rank) => kind == GrowthKind.Leadership && rank >= LeadershipMaxRank;
@@ -33,9 +35,9 @@ namespace Lightbringer.Progression
         {
             switch (kind)
             {
-                case GrowthKind.AuraSize: return $"+{rank * 0.6f:0.0} m";
+                case GrowthKind.AuraSize: return $"+{rank * AuraRadiusPerRank:0.0} m";
                 case GrowthKind.FoodProduction: return $"+{rank}/s";
-                case GrowthKind.ManaRecovery: return $"+{rank * 2}/s";
+                case GrowthKind.ManaRecovery: return $"+{rank * ManaRecoveryPerRank:0.#}/s";
                 case GrowthKind.Capacity: return $"+{rank * 10}";
                 case GrowthKind.Leadership: return $"-{Mathf.Min(rank, LeadershipMaxRank) * 2.5f:0.#}%";
                 case GrowthKind.AuraBuff: return $"+{rank * 5}%";

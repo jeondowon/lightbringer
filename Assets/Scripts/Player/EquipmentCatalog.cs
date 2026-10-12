@@ -6,6 +6,7 @@ namespace Lightbringer.Player
     {
         public const int Count = 6;
         public const int Slots = 3;
+        public const float ManaRecoveryPerRingLevel = 0.5f;
         public static readonly string[] Names = { "빛의 지팡이", "치유의 지팡이", "룬 지팡이", "풍요의 반지", "마나의 반지", "생명의 반지" };
         public static bool IsActive(int id) => id >= 0 && id <= (int)EquipmentKind.RuneStaff;
         public static float Cost(int id) => id == 0 ? 8f : id == 1 ? 25f : 30f;

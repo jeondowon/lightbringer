@@ -39,12 +39,12 @@ namespace Lightbringer.EditorTools
             Invoke(aura, "RefreshRecipients");
             Check(combat.EffectiveDamage == 12.5f, "Re-entering the aura restores exactly one bonus");
 
-            ally.transform.position = origin + Vector3.right * 6.1f;
+            ally.transform.position = origin + Vector3.right * (aura.Radius + 0.1f);
             Check(combat.EffectiveDamage == 10f, "Unit outside the radius is not buffed despite collider overlap");
-            ally.transform.position = origin + Vector3.right * 6f;
+            ally.transform.position = origin + Vector3.right * aura.Radius;
             Check(combat.EffectiveDamage == 12.5f, "A unit centre exactly on the radius is included");
-            ally.transform.position = origin + Vector3.up * 7f;
-            Check(combat.EffectiveDamage == 10f, "Aura uses 3D distance rather than an unlimited vertical cylinder");
+            ally.transform.position = origin + Vector3.up * (aura.Radius + 1f);
+            Check(combat.EffectiveDamage == 10f, "Aura is a bounded cylinder rather than an unlimited vertical one");
             ally.transform.position = origin + Vector3.right * 2f;
             SetFloat(aura, "radius", 1f);
             Check(combat.EffectiveDamage == 10f, "Shrinking the radius removes the bonus immediately");

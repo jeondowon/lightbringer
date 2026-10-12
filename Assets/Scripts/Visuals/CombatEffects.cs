@@ -12,20 +12,21 @@ namespace Lightbringer.Visuals
     {
         private static GameObject host;
         private static ParticleSystem sparks, flashes, flares, slashes, motes, rings, runes, dust;
+        private static ParticleSystem impactWaves, healingGlow, healingMotes;
         private static readonly System.Collections.Generic.List<Material> materials = new System.Collections.Generic.List<Material>();
 
         public static readonly Color SteelSpark = new Color(1f, 0.86f, 0.55f);
         public static readonly Color AlliedLight = new Color(0.6f, 0.82f, 1f);
         public static readonly Color HolyGold = new Color(1f, 0.82f, 0.45f);
         public static readonly Color Corruption = new Color(1f, 0.2f, 0.42f);
-        public static readonly Color HealLight = new Color(0.75f, 1f, 0.6f);
+        public static readonly Color HealLight = new Color(0.25f, 1f, 0.48f);
         private static readonly Color DustColor = new Color(0.62f, 0.55f, 0.45f, 1f);
 
         private enum Sprite { Dot = 0, Star = 1, Ring = 2, Slash = 3, RuneRing = 4, Flame = 5, Puff = 6 }
 
         private static bool Ready(ArtStyleLibrary style)
         {
-            if (!Application.isPlaying || style == null || style.auraMotesMaterial == null) return false;
+            if (!Application.isPlaying || style == null || (style.vfxMaterial == null && style.auraMotesMaterial == null)) return false;
             if (host != null) return true;
             foreach (Material material in materials) if (material != null) Object.Destroy(material);
             materials.Clear();
@@ -37,6 +38,9 @@ namespace Lightbringer.Visuals
             motes = Create("Motes", ParticleSystemRenderMode.Billboard, -0.25f, 1200, Make(style, Sprite.Dot, 1.5f, 1.8f));
             rings = Create("Rings", ParticleSystemRenderMode.HorizontalBillboard, 0f, 120, Make(style, Sprite.Ring, 1.4f));
             runes = Create("Runes", ParticleSystemRenderMode.HorizontalBillboard, 0f, 200, Make(style, Sprite.RuneRing, 1.3f));
+            impactWaves = Create("Impact Ripples", ParticleSystemRenderMode.Billboard, 0f, 120, Make(style, Sprite.Ring, 1.1f));
+            healingGlow = Create("Healing Light", ParticleSystemRenderMode.Billboard, 0f, 180, Make(style, Sprite.Dot, 1.2f, 2.8f), soft: true);
+            healingMotes = Create("Healing Motes", ParticleSystemRenderMode.Billboard, -0.025f, 500, Make(style, Sprite.Dot, 1.4f, 2f), soft: true);
             Material puff = Make(style, Sprite.Puff, 1f, 1.4f, additive: false);
             if (puff != null) dust = Create("Dust", ParticleSystemRenderMode.Billboard, -0.05f, 300, puff, soft: true);
             Grow(flashes, 0.7f, 1.25f);
@@ -45,6 +49,9 @@ namespace Lightbringer.Visuals
             Grow(rings, 0.25f, 1f);
             Grow(runes, 0.6f, 1f);
             Grow(motes, 1f, 0.2f);
+            Grow(impactWaves, 0.2f, 1f);
+            Grow(healingGlow, 0.6f, 1.35f);
+            Grow(healingMotes, 0.7f, 0.15f);
             if (dust != null) Grow(dust, 0.5f, 1.4f);
             Spin(runes, 40f);
             Spin(dust, 25f);
@@ -60,11 +67,19 @@ namespace Lightbringer.Visuals
             float scale = Mathf.Sqrt(intensity);
             Flash(point, color, 0.55f * scale, 0.1f);
             Emit(flares, point, Vector3.zero, Color.Lerp(color, Color.white, 0.4f), 0.9f * scale, 0.14f, Random.Range(0f, 90f));
-            if (melee)
-                Emit(slashes, point + Vector3.up * 0.1f, Vector3.zero, Color.Lerp(color, Color.white, 0.25f),
-                    Mathf.Lerp(1.1f, 1.9f, intensity / 2.5f), 0.16f, Random.Range(-70f, 70f) + (Random.value < 0.5f ? 0f : 180f));
             Vector3 forward = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.up;
-            int count = Mathf.RoundToInt(6 + 6 * intensity);
+            if (melee)
+            {
+                // Follow the projected attack direction instead of rotating every contact randomly.
+                UnityEngine.Camera view = UnityEngine.Camera.main;
+                Vector3 screenDirection = view != null ? view.transform.InverseTransformDirection(forward) : forward;
+                float angle = -Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + 65f;
+                float length = Mathf.Lerp(1.05f, 1.7f, intensity / 2.5f);
+                Emit(slashes, point, forward * 0.65f, color, length, 0.19f, angle);
+                Emit(slashes, point + forward * 0.06f, forward * 0.9f, Color.Lerp(color, Color.white, 0.75f),
+                    length * 0.78f, 0.095f, angle + 6f);
+            }
+            int count = Mathf.RoundToInt(5 + 4 * intensity);
             for (int i = 0; i < count; i++)
             {
                 Vector3 spread = (forward + Random.insideUnitSphere * 0.9f + Vector3.up * 0.35f).normalized;
@@ -77,7 +92,9 @@ namespace Lightbringer.Visuals
         public static void Burst(ArtStyleLibrary style, Vector3 point, Color color, float radius)
         {
             if (!Ready(style)) return;
+            radius = Mathf.Clamp(radius, 0f, 6f);
             Flash(point, color, 1.1f + radius * 0.3f, 0.2f);
+            Emit(impactWaves, point, Vector3.zero, color * 0.65f, 1.4f + radius * 0.3f, 0.28f);
             Emit(flares, point, Vector3.zero, Color.Lerp(color, Color.white, 0.5f), 1.8f + radius * 0.4f, 0.22f, Random.Range(0f, 90f));
             for (int i = 0; i < 18; i++)
                 Emit(motes, point + Random.insideUnitSphere * 0.25f, Random.insideUnitSphere * 3f + Vector3.up * 1f,
@@ -86,6 +103,16 @@ namespace Lightbringer.Visuals
                 Emit(sparks, point, (Random.onUnitSphere + Vector3.up * 0.5f).normalized * Random.Range(2.5f, 6f),
                     color, Random.Range(0.035f, 0.065f), Random.Range(0.15f, 0.35f));
             Ring(point, color, Mathf.Max(radius, 1.1f));
+        }
+
+        // Corrupted bolts add torn arcs. Light bolts skip ground runes, which read as the hero aura.
+        public static void SpellImpact(ArtStyleLibrary style, Vector3 point, Color color, float radius, bool allied)
+        {
+            Burst(style, point, color, radius);
+            if (host == null || allied) return;
+            for (int i = 0; i < 3; i++)
+                Emit(slashes, point, Quaternion.Euler(0f, i * 120f, 0f) * Vector3.forward * 0.8f,
+                    color * 0.7f, 0.95f, 0.24f, i * 120f + 20f);
         }
 
         // Expanding shock ring on the ground (slams, charges, splash spells), with a low dust skirt for big ones.
@@ -130,6 +157,36 @@ namespace Lightbringer.Visuals
             Emit(flares, point, Vector3.zero, Color.Lerp(color, Color.white, 0.4f), 0.7f, 0.1f, Random.Range(0f, 90f));
         }
 
+        // Where an arrow lands: a crisp star glint and a tight ripple (the struck unit adds its own sparks), or a
+        // spit of sparks and dirt when it buries itself in the ground.
+        public static void ArrowImpact(ArtStyleLibrary style, Vector3 point, Vector3 direction, Color color, bool grounded)
+        {
+            if (!Ready(style)) return;
+            Emit(flares, point, Vector3.zero, Color.Lerp(color, Color.white, 0.45f), 0.95f, 0.13f, Random.Range(0f, 90f));
+            Emit(impactWaves, point, Vector3.zero, color * 0.55f, 0.7f, 0.16f);
+            if (!grounded) return;
+            Vector3 back = direction.sqrMagnitude > 0.0001f ? -direction.normalized : Vector3.up;
+            for (int i = 0; i < 5; i++)
+                Emit(sparks, point, (back + Random.insideUnitSphere * 0.7f + Vector3.up * 0.8f).normalized * Random.Range(2f, 4.5f),
+                    color, Random.Range(0.03f, 0.055f), Random.Range(0.12f, 0.25f));
+            DustRing(point, 0.15f, 3);
+        }
+
+        // Dark smoke curling up from a corrupted impact (alpha-blended, so it can shade the ground under the fire).
+        public static void Smoke(Vector3 ground, float radius, int count)
+        {
+            if (host == null || dust == null) return;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * radius;
+                Color tint = Color.Lerp(new Color(0.09f, 0.03f, 0.1f), new Color(0.22f, 0.06f, 0.14f), Random.value);
+                tint.a = Random.Range(0.45f, 0.7f);
+                Emit(dust, ground + new Vector3(offset.x, Random.Range(0.2f, 0.6f), offset.y),
+                    new Vector3(offset.x, 0f, offset.y) * 1.2f + Vector3.up * Random.Range(1f, 1.9f),
+                    tint, Random.Range(0.9f, 1.5f), Random.Range(0.7f, 1.1f), Random.Range(0f, 360f));
+            }
+        }
+
         // A magic bolt's sparkle trail: called every few frames while it flies.
         public static void Trail(ArtStyleLibrary style, Vector3 point, Color color)
         {
@@ -161,19 +218,31 @@ namespace Lightbringer.Visuals
                 Color.Lerp(color, Color.white, Random.value * 0.3f), Random.Range(0.025f, 0.06f), Random.Range(0.6f, 1f));
         }
 
-        // Healing pulse: a rune circle across the heal radius, a soft ring and motes rising around the healer.
-        public static void Heal(ArtStyleLibrary style, Vector3 feet, float radius, Color color)
+        // Priests use only green light: soft overlapping blooms and rising motes, no ring or glyph shapes.
+        public static void Heal(ArtStyleLibrary style, Vector3 feet, float radius, Color color, bool patterned = false)
         {
             if (!Ready(style)) return;
+            radius = Mathf.Clamp(radius, 0.5f, 6f);
             Vector3 ground = feet + Vector3.up * 0.05f;
-            Emit(runes, ground, Vector3.zero, color * 0.8f, radius * 2.1f, 0.7f, Random.Range(0f, 360f));
-            Emit(rings, ground + Vector3.up * 0.01f, Vector3.zero, color * 0.7f, radius * 2.2f, 0.45f);
-            Flash(feet + Vector3.up * 1.2f, color, 0.9f, 0.2f);
-            for (int i = 0; i < 14; i++)
+            if (patterned)
             {
-                Vector2 offset = Random.insideUnitCircle * radius * 0.8f;
-                Emit(motes, ground + new Vector3(offset.x, 0.1f, offset.y), Vector3.up * Random.Range(1.2f, 2.2f),
-                    Color.Lerp(color, Color.white, Random.value * 0.4f), Random.Range(0.08f, 0.14f), Random.Range(0.5f, 0.9f));
+                Emit(runes, ground, Vector3.zero, color * 0.65f, radius * 2.1f, 0.6f);
+                Emit(rings, ground + Vector3.up * 0.01f, Vector3.zero, color * 0.5f, radius * 2.2f, 0.4f);
+            }
+            Color veil = color;
+            veil.a = 0.22f;
+            Emit(healingGlow, feet + Vector3.up * 0.65f, Vector3.up * 0.25f, veil, radius * 1.4f, 0.85f);
+            Color core = Color.Lerp(color, new Color(0.7f, 1f, 0.8f), 0.4f);
+            core.a = 0.7f;
+            Emit(healingGlow, feet + Vector3.up * 1.15f, Vector3.up * 0.45f, core, 1.25f, 0.55f);
+            for (int i = 0; i < 20; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * radius * 0.7f;
+                Vector3 position = ground + new Vector3(offset.x, Random.Range(0.1f, 0.65f), offset.y);
+                Emit(healingMotes, position, Vector3.up * Random.Range(0.65f, 1.6f),
+                    Color.Lerp(color, core, Random.value * 0.5f), Random.Range(0.055f, 0.13f), Random.Range(0.65f, 1.15f));
+                if (i < 5)
+                    Emit(healingGlow, position, Vector3.up * 0.35f, veil, Random.Range(0.65f, 1.1f), Random.Range(0.65f, 1f));
             }
         }
 

@@ -26,6 +26,8 @@ namespace Lightbringer.Visuals
         private Vector3 gripInProp;
         private float lean;
         private float leanTarget;
+        private float authored;
+        private float authoredTarget;
 
         // Called once the prop sits at its bind-pose attachment under `handBone`.
         public void Configure(Transform handBone, Transform modelRoot)
@@ -38,6 +40,10 @@ namespace Lightbringer.Visuals
         }
 
         public void SetCasting(bool casting) => leanTarget = casting ? castLean : 0f;
+
+        // Authored clips (Thrust, Slam, Raise) aim the staff with the hand themselves: the staff then follows the hand
+        // exactly instead of being kept upright, which also avoids the pitch/roll flips of a near-horizontal staff.
+        public void SetAuthored(bool authored) => authoredTarget = authored ? 1f : 0f;
 
         private Vector3 MeasureGrip()
         {
@@ -74,7 +80,9 @@ namespace Lightbringer.Visuals
             float roll = Mathf.Atan2(animatedUp.x, Mathf.Max(animatedUp.y, 0.05f)) * Mathf.Rad2Deg;
             pitch = Mathf.Clamp(pitch * follow, -maxPitch, maxPitch) + lean;
             roll = Mathf.Clamp(roll * follow, -maxRoll, maxRoll);
-            transform.rotation = root * Quaternion.Euler(pitch, 0f, 0f) * Quaternion.Euler(0f, 0f, -roll);
+            Quaternion upright = root * Quaternion.Euler(pitch, 0f, 0f) * Quaternion.Euler(0f, 0f, -roll);
+            authored = Mathf.MoveTowards(authored, authoredTarget, deltaTime * 12f);
+            transform.rotation = authored > 0f ? Quaternion.Slerp(upright, bone.rotation * restInBone, authored) : upright;
             // Rotate about the grip so the staff never slides out of the hand.
             Vector3 grip = bone.TransformPoint(gripInBone);
             transform.position += grip - transform.TransformPoint(gripInProp);

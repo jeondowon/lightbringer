@@ -6,7 +6,7 @@ namespace Lightbringer.Resources
     public sealed class ManaResource : MonoBehaviour
     {
         [SerializeField, Min(1)] private float maximum = 100f;
-        [SerializeField, Min(0)] private float recovery = 8f;
+        [SerializeField, Min(0)] private float recovery = 2f;
         public float Current { get; private set; }
         public float Maximum => maximum;
         public float RecoveryPerSecond => recovery;

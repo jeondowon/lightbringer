@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Lightbringer.Visuals
 {
-    // Heal pulse feedback for support units (allied Priest, enemy Shaman): a rune circle across the heal radius,
-    // a soft ring and rising motes, in holy light or corruption. Presentation only; UnitSupport owns the heal.
+    // Priests heal with soft green light and rising motes; enemy Shamans retain corruption glyphs.
+    // Presentation only; UnitSupport owns the heal.
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UnitSupport))]
     public sealed class SupportVfx : MonoBehaviour
@@ -36,7 +36,7 @@ namespace Lightbringer.Visuals
             if (!Application.isPlaying || style == null) return;
             bool allied = TryGetComponent(out Combatant self) && self.Faction == Faction.Allied;
             Color color = allied ? CombatEffects.HealLight : CombatEffects.Corruption;
-            CombatEffects.Heal(style, transform.position + Vector3.up * feetOffset, Mathf.Min(support.Radius, 6f), color);
+            CombatEffects.Heal(style, transform.position + Vector3.up * feetOffset, Mathf.Min(support.Radius, 6f), color, patterned: !allied);
         }
     }
 }

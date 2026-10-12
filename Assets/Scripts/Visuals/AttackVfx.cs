@@ -6,8 +6,8 @@ using UnityEngine.Rendering;
 
 namespace Lightbringer.Visuals
 {
-    // Feedback on the attacking unit: dresses ranged shots (a fletched arrow with a faint streak, or a glowing
-    // magic bolt with a light trail), bursts them on impact, and adds shock rings to charges and splash slams.
+    // Feedback on the attacking unit: dresses ranged shots (ShotVfx: a glinting arrow with an energy streak, or a
+    // comet bolt with spiral sparks), lands them in impacts, and adds shock rings to charges and splash slams.
     // Presentation only; the Projectile and UnitCombat own timing and damage.
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UnitCombat))]
@@ -20,7 +20,6 @@ namespace Lightbringer.Visuals
         private bool allied;
 
         private static readonly Dictionary<long, Mesh> meshes = new Dictionary<long, Mesh>();
-        private static readonly Dictionary<long, Material> trails = new Dictionary<long, Material>();
 
         public void Configure(ArtStyleLibrary library) => style = library;
 
@@ -46,38 +45,62 @@ namespace Lightbringer.Visuals
         {
             if (!Application.isPlaying || style == null || !style.HasMaterials || shot == null) return;
             allied = shot.Faction == Faction.Allied;
-            Material body = allied ? style.alliedMaterial : style.enemyMaterial;
+            if (shot.Kind == ProjectileKind.Arrow) DressArrow(shot);
+            else DressBolt(shot);
+        }
+
+        // Fletched arrow with a flickering glint on its head and a keen streak behind it: holy gold for
+        // troops, crimson with a wisp of smoke for enemies.
+        private void DressArrow(Projectile shot)
+        {
             GameObject visual = new GameObject("Visual");
             visual.transform.SetParent(shot.transform, false);
-            AddRenderer(visual, shot.Kind == ProjectileKind.Arrow ? ArrowMesh(style, allied) : BoltMesh(style, allied), body);
-            TrailRenderer trail = AddTrail(shot.transform, shot.Kind);
-            if (shot.Kind == ProjectileKind.Bolt)
-            {
-                visual.AddComponent<BoltFlicker>().Configure(style, Tint, HaloMaterial(style, Tint, allied));
-                CombatEffects.Muzzle(style, shot.transform.position, Tint);
-            }
-            Color tint = Tint;
-            bool bolt = shot.Kind == ProjectileKind.Bolt;
-            float splash = bolt ? combat.SplashRadius : 0f;
+            AddRenderer(visual, ArrowMesh(style, allied), allied ? style.alliedMaterial : style.enemyMaterial);
+            Renderer glint = ShotVfx.Billboard(shot.transform, "Arrowhead Glint", allied ? 0.5f : 0.42f, ShotVfx.GlintMode, allied);
+            if (glint != null) glint.transform.localPosition = Vector3.back * 0.05f;
+            TrailRenderer streak = ShotVfx.Trail(shot.transform, "Streak", allied, false, 0.2f, allied ? 0.15f : 0.14f);
+            Color tint = allied ? CombatEffects.HolyGold : CombatEffects.Corruption;
             ArtStyleLibrary library = style;
             shot.Landed += (projectile, point, struck) =>
             {
-                if (trail != null)
-                {
-                    // Let the streak fade out where the shot ended instead of vanishing with it.
-                    trail.transform.SetParent(projectile.transform.parent, true);
-                    trail.emitting = false;
-                    Destroy(trail.gameObject, trail.time + 0.05f);
-                }
-                if (bolt)
-                {
-                    CombatEffects.Burst(library, point, tint, splash);
-                    return;
-                }
+                // The streak finishes fading at the contact instead of disappearing with the projectile.
+                ReleaseTrail(streak, projectile.transform.parent);
+                CombatEffects.ArrowImpact(library, point, projectile.transform.forward, tint, struck == null);
                 // Arrows stick in what they hit for a moment (or in the ground where the target fell).
                 visual.transform.SetParent(struck != null ? struck.transform : projectile.transform.parent, true);
                 visual.transform.position = point + projectile.transform.forward * 0.18f;
                 Destroy(visual, StuckArrowLife);
+            };
+        }
+
+        // Comet of light (or corrupted fire) with two orbiting sparks drawing spiral trails around a plasma
+        // ribbon. It lands in a rising column and a flash (enemy bolts add a corrupted ground splash).
+        private void DressBolt(Projectile shot)
+        {
+            Transform root = shot.transform;
+            Renderer head = ShotVfx.Billboard(root, "Bolt Head", allied ? 0.95f : 1.05f, ShotVfx.CometMode, allied, 2.6f);
+            var orbit = new GameObject("Orbit").transform;
+            orbit.SetParent(root, false);
+            var trails = new List<TrailRenderer> { ShotVfx.Trail(root, "Ribbon", allied, true, 0.3f, allied ? 0.5f : 0.6f) };
+            for (int i = 0; i < 2; i++)
+            {
+                Renderer spark = ShotVfx.Billboard(orbit, "Orbit Spark", 0.34f, ShotVfx.GlintMode, allied);
+                if (spark == null) continue;
+                spark.transform.localPosition = (i == 0 ? Vector3.right : Vector3.left) * 0.32f;
+                trails.Add(ShotVfx.Trail(spark.transform, "Spiral", allied, false, 0.18f, 0.07f));
+            }
+            Light glow = ShotVfx.Glow(root, Vector3.zero, Tint, 4.5f, allied ? 2.4f : 2f);
+            if (head != null) head.gameObject.AddComponent<ShotFlight>().Configure(style, Tint, head.transform, orbit, glow);
+            CombatEffects.Muzzle(style, root.position, Tint);
+            Color tint = Tint;
+            bool friendly = allied;
+            float splash = combat.SplashRadius;
+            ArtStyleLibrary library = style;
+            shot.Landed += (projectile, point, struck) =>
+            {
+                foreach (TrailRenderer trail in trails) ReleaseTrail(trail, projectile.transform.parent);
+                CombatEffects.SpellImpact(library, point, tint, splash, friendly);
+                SpellImpactVfx.Spawn(projectile.transform.parent, HeroSpellVfx.GroundBelow(point), splash, friendly);
             };
         }
 
@@ -95,36 +118,20 @@ namespace Lightbringer.Visuals
         {
             if (!Application.isPlaying || style == null) return;
             Vector3 front = transform.position + transform.forward * 1f;
-            CombatEffects.Ring(front, CombatEffects.HolyGold, 1.8f);
-            CombatEffects.Hit(style, front + Vector3.up * 0.4f, transform.forward, CombatEffects.SteelSpark, 2.5f, true);
+            bool friendly = GetComponent<Combatant>().Faction == Faction.Allied;
+            Color color = friendly ? CombatEffects.HolyGold : CombatEffects.Corruption;
+            CombatEffects.Hit(style, front + Vector3.up * 0.4f, transform.forward, color, 2.5f, true);
+            CombatEffects.Ring(front, color, 1.8f);
             CombatEffects.DustRing(HeroSpellVfx.GroundBelow(front + Vector3.up * 0.5f), 0.8f, 8);
             ThirdPersonCamera.Shake(front, 0.5f);
         }
 
-        private TrailRenderer AddTrail(Transform parent, ProjectileKind kind)
+        private static void ReleaseTrail(TrailRenderer trail, Transform parent)
         {
-            Material material = TrailMaterial(style);
-            if (material == null) return null;
-            GameObject item = new GameObject("Trail");
-            item.transform.SetParent(parent, false);
-            TrailRenderer trail = item.AddComponent<TrailRenderer>();
-            trail.sharedMaterial = material;
-            bool bolt = kind == ProjectileKind.Bolt;
-            trail.time = bolt ? 0.3f : 0.16f;
-            trail.minVertexDistance = 0.1f;
-            trail.widthMultiplier = bolt ? 0.38f : 0.08f;
-            trail.widthCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
-            trail.textureMode = LineTextureMode.Stretch;
-            trail.alignment = LineAlignment.View;
-            trail.shadowCastingMode = ShadowCastingMode.Off;
-            trail.receiveShadows = false;
-            Color head = bolt ? Tint : (allied ? new Color(1f, 0.92f, 0.75f) : CombatEffects.Corruption);
-            float strength = bolt ? 1f : 0.6f;
-            Gradient gradient = new Gradient();
-            gradient.SetKeys(new[] { new GradientColorKey(head, 0f), new GradientColorKey(head, 1f) },
-                new[] { new GradientAlphaKey(strength, 0f), new GradientAlphaKey(0f, 1f) });
-            trail.colorGradient = gradient;
-            return trail;
+            if (trail == null) return;
+            trail.transform.SetParent(parent, true);
+            trail.emitting = false;
+            Destroy(trail.gameObject, trail.time + 0.05f);
         }
 
         private static void AddRenderer(GameObject target, Mesh mesh, Material material)
@@ -138,7 +145,6 @@ namespace Lightbringer.Visuals
         }
 
         private static Mesh haloQuad;
-        private static readonly Dictionary<long, Material> halos = new Dictionary<long, Material>();
 
         // Unit quad in the XY plane (faces -Z toward a camera looking down +Z) with white vertex colours.
         public static Mesh HaloQuad
@@ -156,35 +162,6 @@ namespace Lightbringer.Visuals
             }
         }
 
-        // Soft additive glow around a magic bolt, tinted per faction.
-        private static Material HaloMaterial(ArtStyleLibrary style, Color tint, bool allied)
-        {
-            Material source = style.vfxMaterial != null ? style.vfxMaterial : style.auraMotesMaterial;
-            if (source == null) return null;
-            long key = ((long)style.GetInstanceID() << 2) | (allied ? 1L : 2L);
-            if (halos.TryGetValue(key, out Material cached) && cached != null) return cached;
-            Material material = new Material(source) { name = allied ? "LB Bolt Halo" : "LB Dark Bolt Halo", hideFlags = HideFlags.DontSave };
-            if (material.HasProperty("_Shape")) material.SetFloat("_Shape", 0f);
-            if (material.HasProperty("_Additive")) material.SetFloat("_Additive", 1f);
-            material.SetFloat("_Softness", 2.2f);
-            material.SetColor("_Color", tint * 1.6f);
-            halos[key] = material;
-            return material;
-        }
-
-        // Neutral white so the gradient on each trail decides its colour.
-        private static Material TrailMaterial(ArtStyleLibrary style)
-        {
-            if (style.lightningMaterial == null) return null;
-            long key = style.GetInstanceID();
-            if (trails.TryGetValue(key, out Material cached) && cached != null) return cached;
-            Material material = new Material(style.lightningMaterial) { name = "LB Shot Trail", hideFlags = HideFlags.DontSave };
-            material.SetColor("_Color", new Color(1.4f, 1.4f, 1.4f));
-            material.SetFloat("_CoreBoost", 0.6f);
-            trails[key] = material;
-            return material;
-        }
-
         // A fletched arrow along +Z (tip at the pivot), oversized slightly so it reads at battle distance.
         private static Mesh ArrowMesh(ArtStyleLibrary s, bool allied)
         {
@@ -192,87 +169,17 @@ namespace Lightbringer.Visuals
             if (meshes.TryGetValue(key, out Mesh cached) && cached != null) return cached;
             SilhouetteFactory.Shapes b = new SilhouetteFactory.Shapes();
             Color shaft = allied ? new Color(0.62f, 0.48f, 0.3f) : s.corruptArmor;
-            Color tip = allied ? s.steel : s.corruptGlow;
+            // Troop arrowheads carry a little of the hero's light; enemy heads smoulder.
+            Color tip = allied ? Color.Lerp(s.steel, s.lightGlow, 0.45f) : s.corruptGlow;
             Color fletch = allied ? s.royalBlue : s.corruptBody;
             b.Add(SilhouetteFactory.Shape.Cube, shaft, new Vector3(0f, 0f, -0.36f), new Vector3(0.03f, 0.03f, 0.64f));
             b.Cone(0f, tip, new Vector3(0f, 0f, -0.06f), new Vector3(0.07f, 0.14f, 0.07f), new Vector3(90f, 0f, 0f), 6,
-                emission: allied ? 0f : 0.8f, spec: allied ? 1f : 0f);
+                emission: allied ? 0.45f : 0.8f, spec: allied ? 1f : 0f);
             b.Add(SilhouetteFactory.Shape.Cube, fletch, new Vector3(0f, 0f, -0.62f), new Vector3(0.12f, 0.008f, 0.14f));
             b.Add(SilhouetteFactory.Shape.Cube, fletch, new Vector3(0f, 0f, -0.62f), new Vector3(0.008f, 0.12f, 0.14f));
             Mesh mesh = b.Bake(allied ? "LB Arrow" : "LB Enemy Arrow");
             meshes[key] = mesh;
             return mesh;
-        }
-
-        // A glowing orb in a faint shell of the caster's colour.
-        private static Mesh BoltMesh(ArtStyleLibrary s, bool allied)
-        {
-            long key = ((long)s.GetInstanceID() << 4) | (allied ? 3L : 4L);
-            if (meshes.TryGetValue(key, out Mesh cached) && cached != null) return cached;
-            SilhouetteFactory.Shapes b = new SilhouetteFactory.Shapes();
-            b.Add(SilhouetteFactory.Shape.Ball, allied ? s.lightGlow : s.corruptGlow, Vector3.zero, Vector3.one * 0.26f, emission: 1f);
-            b.Add(SilhouetteFactory.Shape.Ball, Color.white, Vector3.zero, Vector3.one * 0.13f, emission: 1f);
-            Mesh mesh = b.Bake(allied ? "LB Arcane Bolt" : "LB Dark Bolt");
-            meshes[key] = mesh;
-            return mesh;
-        }
-    }
-
-    // Pulses and spins a magic bolt's orb while it flies, keeps a soft halo facing the camera and sheds
-    // sparkles behind it.
-    public sealed class BoltFlicker : MonoBehaviour
-    {
-        private const float TrailInterval = 0.025f;
-        private float seed;
-        private ArtStyleLibrary style;
-        private Color tint;
-        private Transform halo;
-        private float trailTimer;
-
-        public void Configure(ArtStyleLibrary library, Color color, Material haloMaterial)
-        {
-            style = library;
-            tint = color;
-            if (haloMaterial == null || halo != null) return;
-            GameObject item = new GameObject("Halo");
-            // Sibling of the orb so the orb's spin and pulse do not tumble the halo.
-            item.transform.SetParent(transform.parent, false);
-            item.transform.localScale = Vector3.one * 1.3f;
-            item.AddComponent<MeshFilter>().sharedMesh = AttackVfx.HaloQuad;
-            MeshRenderer renderer = item.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = haloMaterial;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            renderer.lightProbeUsage = LightProbeUsage.Off;
-            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            halo = item.transform;
-        }
-
-        private void OnEnable() => seed = Random.value * 10f;
-
-        private void OnDestroy()
-        {
-            if (halo != null) Destroy(halo.gameObject);
-        }
-
-        private void Update()
-        {
-            float t = Time.time * 22f + seed;
-            float pulse = 1f + 0.18f * Mathf.Sin(t) + 0.08f * Mathf.Sin(t * 2.7f);
-            transform.localScale = Vector3.one * pulse;
-            transform.localRotation = Quaternion.Euler(Time.time * 360f, Time.time * 220f, 0f);
-            UnityEngine.Camera view = UnityEngine.Camera.main;
-            if (halo != null && view != null)
-            {
-                halo.rotation = Quaternion.LookRotation(halo.position - view.transform.position, view.transform.up);
-                halo.localScale = Vector3.one * (1.3f * (0.9f + 0.1f * pulse));
-            }
-            // Only a bolt still in flight sheds sparkles (the orb stays parented to its projectile until it lands).
-            if (style == null || transform.parent == null || transform.parent.GetComponent<Projectile>() == null) return;
-            trailTimer -= Time.deltaTime;
-            if (trailTimer > 0f) return;
-            trailTimer = TrailInterval;
-            CombatEffects.Trail(style, transform.position, tint);
         }
     }
 }

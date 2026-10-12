@@ -87,12 +87,12 @@ namespace Lightbringer.Visuals
             return root;
         }
 
-        // Allied fighters show the hero aura's blessing on any model; healers show their heal pulse.
-        // The hero and objectives get neither.
+        // Allied troops (healers included) show the hero aura's blessing on any model; healers also show their
+        // heal pulse. The hero and objectives get neither.
         private static void AddSupportFeedback(GameObject owner, VisualId id, Transform root, ArtStyleLibrary style, float feetOffset)
         {
             if (id == VisualId.Hero || !owner.TryGetComponent(out CharacterController _)) return;
-            if (!ArtStyleLibrary.IsEnemy(id) && owner.TryGetComponent(out UnitCombat combat) && combat.enabled)
+            if (!ArtStyleLibrary.IsEnemy(id) && owner.TryGetComponent(out UnitCombat _))
             {
                 if (!owner.TryGetComponent(out AuraBlessingVisual blessing)) blessing = owner.AddComponent<AuraBlessingVisual>();
                 blessing.Configure(style, feetOffset, root);

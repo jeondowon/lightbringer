@@ -64,7 +64,7 @@ namespace Lightbringer.EditorTools
             Check(hero.MaximumHealth == 180, "Vitality Ring level increases maximum hero health");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
             Check(hero.MaximumHealth == 200 && food.MaximumFood == 110 && food.ProductionPerSecond == 6
-                && mana.Maximum == 110 && mana.RecoveryPerSecond == 10,
+                && mana.Maximum == 110 && mana.RecoveryPerSecond == 2.5f,
                 "Permanent resource and hero ranks apply alongside equipment bonuses");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
             Check(hero.MaximumHealth == 200 && food.MaximumFood == 110 && food.ProductionPerSecond == 6,
