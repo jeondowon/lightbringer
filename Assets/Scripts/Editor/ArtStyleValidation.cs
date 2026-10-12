@@ -16,6 +16,25 @@ namespace Lightbringer.EditorTools
     {
         private static void ValidateArtStyle()
         {
+            ArtStyleLibrary configuredStyle = AssetDatabase.LoadAssetAtPath<ArtStyleLibrary>(ArtStyleSetup.LibraryPath);
+            BattlefieldBackdropProfile region = configuredStyle != null ? configuredStyle.FindBackdrop(1) : null;
+            Check(region != null && Enumerable.Range(1, 8).All(stage => configuredStyle.FindBackdrop(stage) == region)
+                && configuredStyle.FindBackdrop(9) != region,
+                "Forest panorama applies to stages 1-8 and does not leak into stage 9");
+            Check(region != null && region.panorama.width == region.panorama.height * 2
+                && region.fogEnd > region.fogStart && region.forest != null && region.forest.IsReady,
+                "Forest backdrop has a 2:1 panorama, valid haze distances and the imported forest");
+            Shader skyShader = Shader.Find(ArtStyleSetup.SkyShader);
+            Check(skyShader != null && skyShader.isSupported && !ShaderUtil.ShaderHasError(skyShader),
+                "Panoramic sky shader compiles for URP");
+            ForestEnvironmentProfile openingForest = configuredStyle != null ? configuredStyle.forestEnvironment : null;
+            Check(openingForest != null && openingForest.openingGlade && openingForest.AppliesTo(1)
+                && !openingForest.AppliesTo(2) && region != null && openingForest != region.forest
+                && openingForest.terrain != region.forest.terrain && !region.forest.openingGlade,
+                "Opening glade terrain and dressing are isolated to stage 1 within the shared forest region");
+            Shader terrainShader = Shader.Find(ArtStyleSetup.TerrainShader);
+            Check(terrainShader != null && terrainShader.isSupported && !ShaderUtil.ShaderHasError(terrainShader),
+                "Weathered ground shader compiles for URP");
             Shader toon = Shader.Find(ArtStyleSetup.ToonShader);
             Shader runes = Shader.Find(ArtStyleSetup.RuneShader);
             Shader glow = Shader.Find(ArtStyleSetup.GlowShader);
@@ -72,7 +91,7 @@ namespace Lightbringer.EditorTools
                 Vector4 sphere = Shader.GetGlobalVector("_LB_AuraSphere");
                 Check(rune.Disc != null && Mathf.Approximately(rune.Disc.transform.localScale.x, aura.Radius * 2f)
                     && Mathf.Approximately(sphere.w, aura.Radius) && rune.Disc.transform.parent == battle.Root.transform,
-                    "Rune circle and ally glow follow the real aura radius");
+                    "Rune circle and ally glow match the gameplay buff radius");
                 aura.Configure(aura.Radius + 1.2f, aura.AttackBonus);
                 Invoke(rune, "LateUpdate");
                 Check(Mathf.Approximately(rune.Disc.transform.localScale.x, aura.Radius * 2f)
@@ -100,6 +119,11 @@ namespace Lightbringer.EditorTools
                 BattlefieldEnvironment environment = battle.Root.GetComponentInChildren<BattlefieldEnvironment>(true);
                 Check(environment != null && environment.Terrain != null && !battle.Root.transform.Find("Ground").gameObject.activeSelf,
                     "Styled battle replaces the greybox plane with the environment terrain");
+                Transform foothills = environment.transform.Find("Distant Foothills");
+                Check(environment.transform.Find("Backdrop") == null && foothills != null
+                    && foothills.GetComponent<Collider>() == null
+                    && foothills.GetComponent<MeshFilter>().sharedMesh.normals.All(normal => normal.y > 0f),
+                    "Old cone mountains are replaced by upward-facing distant terrain without gameplay colliders");
                 bool flat = true;
                 foreach (Lightbringer.Pathing.WaypointPath lane in battle.Paths)
                     for (int w = 0; w < lane.Count; w++)

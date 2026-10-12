@@ -1,0 +1,52 @@
+스테이지 1 숲속 진입로 아트 패스
+
+적용
+- StageOneGlade.asset: 1스테이지 전용 숲 설정. ArtStyleLibrary의 Forest Environment에 연결.
+- 해당 스테이지의 개별 숲 설정을 먼저 사용하고, 나머지는 배경 구간의 Forest 설정을 사용한다.
+- 2~8스테이지는 ForestValleyBackdrop의 기존 ForestEnvironment 및 ForestTerrain을 유지한다.
+- 플레이 지형 높이, 경로, 충돌, 소환 및 전투 규칙은 그대로 사용한다.
+
+표현
+- 나무 크기와 간격 변화, 숲 가장자리 보강.
+- 바위·작은 돌·어린 나무·관목을 무리로 배치하고 큰 바위의 크기를 낮춤.
+- 길 가장자리 풀의 크기와 음영 보강. 기존 패치 단위 거리 컬링 유지.
+- 흙이 드러난 잔디, 확대된 지면 텍스처, 마모된 석재와 이끼 틈 표현.
+- 유적 전용 복제 재질을 사용해 색을 낮추고 쓰러진 기둥 추가.
+- 원본 공급업체 재질은 수정하지 않으며, 생성한 재질은 전장 종료 시 해제한다.
+
+Unity 확인
+1. Play 중이면 종료한 뒤 스크립트 컴파일을 기다린다.
+2. CampaignPrototype에서 Play → 스테이지 1 전투 진입.
+3. 별도 오브젝트 배치나 Inspector 연결은 필요하지 않다.
+4. Lightbringer/Art/Capture Forest Ground Preview 메뉴로 고정 카메라 비교 가능.
+5. Docs/ArtPass/Preview/ForestGround_Hero.png 및 ForestGround_Checks.txt 확인.
+
+추가 파일 (Unity 메타 파일 포함)
+Assets/Art/Environment/Forest/StageOneGlade.asset
+Assets/Art/Environment/Forest/StageOneGladeGround.mat
+
+수정 파일
+Assets/Art/ArtStyleLibrary.asset
+Assets/Art/Shaders/LightbringerTerrain.shader
+Assets/Scripts/Visuals/ForestEnvironmentProfile.cs
+Assets/Scripts/Visuals/ForestEnvironmentDressing.cs
+Assets/Scripts/Visuals/BattlefieldEnvironment.cs
+Assets/Scripts/Visuals/BattlefieldPropDressing.cs
+Assets/Scripts/Editor/ArtAnimationPreview.cs
+Assets/Scripts/Editor/ArtStyleValidation.cs
+Assets/Scripts/Editor/EnemyRosterValidation.cs (컴파일을 막던 중복 지역 변수 이름만 정리)
+
+검증 산출물
+Docs/ArtPass/Preview/StageOne_Before_Hero.png
+Docs/ArtPass/Preview/StageOne_Before_Overview.png
+Docs/ArtPass/Preview/ForestGround_*.png
+Docs/ArtPass/Preview/ForestGround_Checks.txt
+Docs/ArtPass/Preview/Battlefield_*.png
+Docs/ArtPass/Preview/Battlefield_Checks.txt
+
+검증 결과 (2026-10-13 KST)
+- Unity 재컴파일 완료. Greybox 자동 검사 380개 PASS.
+- 1·8스테이지 미리보기에서 장식물 충돌체 없음, 경로 여유 공간, 평탄한 이동 지면,
+  지면 셰이더 컴파일, 스테이지별 재질 분리 모두 PASS.
+- 영웅 시점, 전경, 지면 근접 화면을 렌더링해 확인.
+- 실제 전투 중 프레임 성능 및 수동 입력 플레이는 이번 확인에 포함하지 않음.

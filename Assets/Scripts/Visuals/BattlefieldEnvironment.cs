@@ -36,6 +36,7 @@ namespace Lightbringer.Visuals
         private float seed;
         private ArtStyleLibrary style;
         private ForestEnvironmentProfile forest;
+        private Material instanceSky, previousSky;
 
         public MeshCollider Terrain { get; private set; }
         public int GrassChunks { get; private set; }
@@ -55,8 +56,12 @@ namespace Lightbringer.Visuals
         private void Generate(ArtStyleLibrary library, int stage, WaypointPath[] paths, Vector3 deploy, Vector3[] clearPoints, Light sun)
         {
             style = library;
+            BattlefieldBackdropProfile panorama = library.FindBackdrop(stage);
+            // An explicit stage profile can refine a battlefield inside a larger backdrop region.
             forest = library.forestEnvironment != null && library.forestEnvironment.AppliesTo(stage)
-                ? library.forestEnvironment : null;
+                ? library.forestEnvironment
+                : panorama != null && panorama.forest != null && panorama.forest.IsReady
+                    ? panorama.forest : null;
             random = new System.Random(stage * 7919 + 13);
             seed = stage * 17.31f;
             foreach (WaypointPath path in paths)
@@ -76,10 +81,11 @@ namespace Lightbringer.Visuals
             PublishLanes();
 
             BuildTerrain();
-            BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length);
+            BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length,
+                forest != null && forest.openingGlade);
             // Imported forest tufts replace the old solid-colour blade carpet.
             if (forest == null && style.grassMaterial != null) BuildGrass();
-            Shapes near = new Shapes(), far = new Shapes(), backdrop = new Shapes();
+            Shapes near = new Shapes(), far = new Shapes();
             if (forest == null)
             {
                 ScatterTrees(near, far);
@@ -87,17 +93,19 @@ namespace Lightbringer.Visuals
             }
             else ForestEnvironmentDressing.Build(forest, this, stage);
 
-            BuildBackdrop(backdrop);
+            BuildDistantFoothills();
             AddMesh("Props (Near)", near.Bake("LB Env Props Near"), style.propsMaterial, true);
             AddMesh("Props (Far)", far.Bake("LB Env Props Far"), style.propsMaterial, false);
-            AddMesh("Backdrop", backdrop.Bake("LB Env Backdrop"), style.propsMaterial, false);
             if (style.skyMaterial != null)
             {
                 Material sky = new Material(style.skyMaterial) { name = "Sky (Instance)" };
                 sky.SetColor("_HorizonColor", style.fogColor);
                 // Match the sun glow to the styled sun angle (applied after the environment is built).
                 sky.SetVector("_SunDirection", -(Quaternion.Euler(style.sunEuler) * Vector3.forward));
+                if (panorama != null) panorama.ApplyTo(sky);
                 owned.Add(sky);
+                previousSky = RenderSettings.skybox;
+                instanceSky = sky;
                 RenderSettings.skybox = sky;
             }
         }
@@ -434,19 +442,64 @@ namespace Lightbringer.Visuals
             target.Pattern = Surface.None;
         }
 
-        private void BuildBackdrop(Shapes target)
+        private void BuildDistantFoothills()
         {
-            // Mountain ring inside the far fog band so it reads as a soft silhouette.
-            for (int i = 0; i < 26; i++)
+            // Continue the terrain's exact perimeter into distant rolling hills, with no colliders.
+            // The outer edge is fully in fog; unlike the old cone mountains it has no repeated peaks.
+            const int perimeter = 400, rings = 5;
+            Vector3[] vertices = new Vector3[perimeter * rings];
+            Color[] colors = new Color[vertices.Length];
+            var masks = new List<Vector4>(vertices.Length);
+            Vector2 centre = new Vector2(0f, 27.5f);
+            for (int ring = 0; ring < rings; ring++)
+                for (int i = 0; i < perimeter; i++)
+                {
+                    int side = i / 100;
+                    float t = i % 100 / 100f;
+                    Vector2 edge = side == 0 ? new Vector2(Mathf.Lerp(-110f, 110f, t), -95f)
+                        : side == 1 ? new Vector2(110f, Mathf.Lerp(-95f, 150f, t))
+                        : side == 2 ? new Vector2(Mathf.Lerp(110f, -110f, t), 150f)
+                        : new Vector2(-110f, Mathf.Lerp(150f, -95f, t));
+                    Vector2 point = centre + (edge - centre) * (1f + ring * 0.42f);
+                    float h = Height(point.x, point.y) + ring * 1.2f;
+                    int index = ring * perimeter + i;
+                    vertices[index] = new Vector3(point.x, h, point.y);
+                    colors[index] = GroundColor(vertices[index], Vector3.up);
+                    masks.Add(new Vector4(30f, 0f, 0f, 1f));
+                }
+            int[] triangles = new int[(rings - 1) * perimeter * 6];
+            int cursor = 0;
+            for (int ring = 0; ring < rings - 1; ring++)
+                for (int i = 0; i < perimeter; i++)
+                {
+                    int a = ring * perimeter + i, b = ring * perimeter + (i + 1) % perimeter;
+                    int c = a + perimeter, d = b + perimeter;
+                    triangles[cursor++] = a; triangles[cursor++] = b; triangles[cursor++] = c;
+                    triangles[cursor++] = b; triangles[cursor++] = d; triangles[cursor++] = c;
+                }
+            Mesh mesh = new Mesh { name = "LB Distant Foothills", hideFlags = HideFlags.DontSave };
+            mesh.vertices = vertices;
+            mesh.colors = colors;
+            mesh.SetUVs(0, masks);
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            AddMesh("Distant Foothills", mesh,
+                forest != null && forest.terrain != null ? forest.terrain : style.terrainMaterial, false);
+        }
+
+        private void OnEnable()
+        {
+            if (instanceSky != null && RenderSettings.skybox != instanceSky)
             {
-                float angle = i / 26f * Mathf.PI * 2f + Range(-0.08f, 0.08f);
-                float radius = Range(118f, 145f);
-                Vector3 foot = new Vector3(Mathf.Cos(angle) * radius, -2f, 12f + Mathf.Sin(angle) * radius);
-                float height = Range(35f, 72f), width = Range(45f, 85f);
-                target.Cone(0.08f, style.mountain, foot, new Vector3(width, height, width * Range(0.8f, 1.2f)), new Vector3(0f, Range(0f, 360f), 0f), 7);
-                target.Cone(0f, Color.Lerp(style.mountain, Color.white, 0.6f), foot + Vector3.up * height * 0.72f,
-                    new Vector3(width * 0.3f, height * 0.3f, width * 0.3f), new Vector3(0f, Range(0f, 360f), 0f), 7);
+                previousSky = RenderSettings.skybox;
+                RenderSettings.skybox = instanceSky;
             }
+        }
+
+        private void OnDisable()
+        {
+            if (instanceSky != null && RenderSettings.skybox == instanceSky) RenderSettings.skybox = previousSky;
         }
 
         // ---------- Stronghold grounds ----------
@@ -526,6 +579,7 @@ namespace Lightbringer.Visuals
 
         private void OnDestroy()
         {
+            OnDisable();
             foreach (Object item in owned)
                 if (item != null)
                 {

@@ -79,7 +79,7 @@ namespace Lightbringer.Visuals
         public Material grassMaterial;
         [Tooltip("Lightbringer/Toon, baked vertex palette with outline (trees, rocks, ruins).")]
         public Material propsMaterial;
-        [Tooltip("Lightbringer/Sky Gradient skybox.")]
+        [Tooltip("Lightbringer/Sky Gradient skybox, with optional stage panorama overrides.")]
         public Material skyMaterial;
         [Tooltip("Lightbringer/VFX Shape: procedural sprite for sparks, flares, rings, slashes, flames and dust.")]
         public Material vfxMaterial;
@@ -89,6 +89,16 @@ namespace Lightbringer.Visuals
         [Header("Stage environment overrides")]
         public ForestEnvironmentProfile forestEnvironment;
         public BattlefieldPropProfile battlefieldProps;
+        [Tooltip("First matching stage range wins. Add a new profile for the next region.")]
+        public BattlefieldBackdropProfile[] backdrops = new BattlefieldBackdropProfile[0];
+
+        public BattlefieldBackdropProfile FindBackdrop(int stage)
+        {
+            if (backdrops != null)
+                foreach (BattlefieldBackdropProfile backdrop in backdrops)
+                    if (backdrop != null && backdrop.AppliesTo(stage)) return backdrop;
+            return null;
+        }
 
         [Header("Allied palette (character sheet v1)")]
         public Color ivory = new Color(0.93f, 0.91f, 0.86f);

@@ -8,7 +8,8 @@ namespace Lightbringer.Visuals
     // trilight ambient, distance haze that hides the ground edge, and optional post-processing.
     public static class BattlefieldStyling
     {
-        public static void Apply(ArtStyleLibrary style, Light sun, Renderer ground, Camera camera, Transform root)
+        public static void Apply(ArtStyleLibrary style, Light sun, Renderer ground, Camera camera, Transform root,
+            BattlefieldBackdropProfile backdrop = null)
         {
             if (style == null) return;
             if (ground != null && style.groundMaterial != null)
@@ -32,15 +33,18 @@ namespace Lightbringer.Visuals
             RenderSettings.ambientGroundColor = style.ambientGround;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = style.fogColor;
-            RenderSettings.fogStartDistance = style.fogStart;
-            RenderSettings.fogEndDistance = Mathf.Max(style.fogStart + 1f, style.fogEnd);
+            Color fogColor = backdrop != null ? backdrop.fogColor : style.fogColor;
+            float fogStart = backdrop != null ? backdrop.fogStart : style.fogStart;
+            float fogEnd = backdrop != null ? backdrop.fogEnd : style.fogEnd;
+            RenderSettings.fogColor = fogColor;
+            RenderSettings.fogStartDistance = fogStart;
+            RenderSettings.fogEndDistance = Mathf.Max(fogStart + 1f, fogEnd);
             if (camera != null)
             {
-                // The gradient sky (set by the environment) meets the fog colour at the horizon.
+                // The sky (set by the environment) meets the terrain's haze at the horizon.
                 camera.clearFlags = style.skyMaterial != null && RenderSettings.skybox != null
                     ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
-                camera.backgroundColor = style.fogColor;
+                camera.backgroundColor = fogColor;
             }
             if (style.postProcessing != null && root != null)
             {

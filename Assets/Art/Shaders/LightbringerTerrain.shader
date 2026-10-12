@@ -27,6 +27,7 @@ Shader "Lightbringer/Terrain"
         [HDR] _ForestGroundTint ("Forest Ground Tint", Color) = (1, 1, 1, 1)
         _ForestTextureStrength ("Forest Texture Blend", Range(0, 1)) = 0
         _ForestTextureScale ("Forest Texture Repeats Per Metre", Float) = 0.25
+        _Weathering ("Overgrown Ground and Worn Stone", Range(0, 1)) = 0
     }
 
     SubShader
@@ -52,6 +53,7 @@ Shader "Lightbringer/Terrain"
             float _ForestTextureScale;
             half _ForestNormalStrength;
             half4 _ForestGroundTint;
+            half _Weathering;
         CBUFFER_END
         TEXTURE2D(_ForestGrassTex); SAMPLER(sampler_ForestGrassTex);
         TEXTURE2D(_ForestSoilTex); SAMPLER(sampler_ForestSoilTex);
@@ -184,13 +186,17 @@ Shader "Lightbringer/Terrain"
                 half broad = ValueNoise(p * 0.11);
                 half fine = ValueNoise(p * 0.55 + 7.3);
                 half3 albedo = input.color.rgb * (1.0h + (broad - 0.5h) * 2.0h * _PatchStrength) * lerp(0.96h, 1.04h, fine);
+                half soilMix = saturate(road + _Weathering * smoothstep(0.5h, 0.77h, broad) * 0.6h);
+                half3 groundUnderStone = albedo;
                 if (_ForestTextureStrength > 0.001h)
                 {
                     float2 forestUV = p * _ForestTextureScale;
                     half3 forestGrass = SAMPLE_TEXTURE2D(_ForestGrassTex, sampler_ForestGrassTex, forestUV).rgb;
                     half3 forestSoil = SAMPLE_TEXTURE2D(_ForestSoilTex, sampler_ForestSoilTex, forestUV).rgb;
-                    half3 forestGround = lerp(forestGrass, forestSoil, road) * _ForestGroundTint.rgb * lerp(0.9h, 1.08h, broad);
-                    albedo = lerp(albedo, forestGround, _ForestTextureStrength * (1.0h - plaza));
+                    half3 forestGround = lerp(forestGrass, forestSoil, soilMix) * _ForestGroundTint.rgb
+                        * lerp(0.9h - _Weathering * 0.15h, 1.08h + _Weathering * 0.15h, broad);
+                    groundUnderStone = forestGround;
+                    albedo = lerp(albedo, forestGround, _ForestTextureStrength * (1.0h - plaza * (1.0h - _Weathering)));
                 }
                 float2 strokeA = float2(p.x * 0.9 + p.y * 0.35, p.y * 4.5 - p.x * 1.2);
                 float2 strokeB = float2(p.y * 0.9 - p.x * 0.3, p.x * 4.5 + p.y * 1.1);
@@ -219,6 +225,7 @@ Shader "Lightbringer/Terrain"
 
                 // Plaza flagstones: staggered rows of irregular slabs with grout and moss in the joints.
                 float2 sp = p / _StoneSize;
+                sp += _Weathering * float2(ValueNoise(p * 1.8), ValueNoise(p * 1.8 + 17.0)) * 0.13;
                 float row = floor(sp.y);
                 sp.x += Hash(float2(row, 3.0)) * 0.8 + row * 0.5;
                 float2 cell = floor(sp);
@@ -234,8 +241,16 @@ Shader "Lightbringer/Terrain"
                 slab *= 1.0h - crack * 0.35h;
                 half3 groutColor = lerp(half3(0.26h, 0.25h, 0.23h), half3(0.3h, 0.42h, 0.24h), step(0.45h, ValueNoise(p * 0.8 + 4.0)));
                 half3 paved = lerp(slab, groutColor, grout);
+                // Optional opening-glade treatment: chipped, earth-stained stone with moss spreading
+                // out of the joints. Disabled on the other terrain materials.
+                half erosion = ValueNoise(p * 2.7 + 43.0);
+                half moss = (1.0h - smoothstep(0.04h, 0.24h, joint)) * smoothstep(0.35h, 0.7h, fine);
+                half3 agedStone = slab * half3(0.62h, 0.65h, 0.59h) * lerp(0.75h, 1.12h, erosion);
+                agedStone = lerp(agedStone, groundUnderStone * half3(0.73h, 0.86h, 0.62h), saturate(grout + moss * 0.8h));
+                paved = lerp(paved, agedStone, _Weathering);
                 // Slabs give way to grass at the plaza rim through noise.
                 half pave = smoothstep(0.35h, 0.65h, plaza + (Fbm(p * 0.6 + 2.0) - 0.5) * 0.5h);
+                pave *= 1.0h - _Weathering * step(0.89h, slabId) * (1.0h - smoothstep(0.65h, 1.0h, plaza));
                 albedo = lerp(albedo, paved, pave);
 
                 // Corruption: ashen purple soil with glowing veins that pulse, strongest by the enemy gate.
@@ -262,7 +277,7 @@ Shader "Lightbringer/Terrain"
                     float2 uv = p * _ForestTextureScale;
                     half3 grassNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestGrassNormal, sampler_ForestGrassNormal, uv), _ForestNormalStrength);
                     half3 soilNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestSoilNormal, sampler_ForestSoilNormal, uv), _ForestNormalStrength);
-                    half3 mapped = normalize(lerp(grassNormal, soilNormal, road));
+                    half3 mapped = normalize(lerp(grassNormal, soilNormal, soilMix));
                     // UVs are world XZ: +U is X and +V is Z, including on the hills.
                     float3 tangent = normalize(float3(geometricNormal.y, -geometricNormal.x, 0));
                     float3 bitangent = normalize(cross(tangent, geometricNormal));

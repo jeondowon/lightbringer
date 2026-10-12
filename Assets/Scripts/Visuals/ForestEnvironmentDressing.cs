@@ -16,6 +16,7 @@ namespace Lightbringer.Visuals
         private System.Random random;
         private BattlefieldEnvironment terrain;
         private float nextCull;
+        private bool openingGlade;
         public int TreeCount { get; private set; }
         public int PropCount { get; private set; }
         public int GrassCount { get; private set; }
@@ -36,6 +37,7 @@ namespace Lightbringer.Visuals
 
         private void Generate(ForestEnvironmentProfile profile)
         {
+            openingGlade = profile.openingGlade;
             // Staggered forest edges frame the front without covering the central camera corridor.
             foreach (int side in new[] { -1, 1 })
                 for (int row = 0; row < 3; row++)
@@ -43,17 +45,33 @@ namespace Lightbringer.Visuals
                     {
                         Vector2 p = new Vector2(side * (23f + row * 18f + Range(-3f, 3f)),
                             -34f + i * 12f + Range(-4f, 4f));
+                        if (openingGlade) p += new Vector2(Range(-5f, 5f), Range(-5f, 5f));
                         if (!terrain.ClearOfPlay(p, 12f, 18f) || !terrain.ClearOfProps(p, 11f)) continue;
-                        Spawn(profile.tree, p, Range(0.8f, 1.35f), 1.5f);
+                        Spawn(profile.tree, p, openingGlade ? Range(0.65f, 1.4f) : Range(0.8f, 1.35f), 1.5f);
                         trunks.Add(p);
                         TreeCount++;
                     }
 
+            // Rear and forward groves soften the join from real terrain to the panoramic forest.
+            foreach (float depth in new[] { -67f, 108f })
+                for (int i = 0; i < 13; i++)
+                {
+                    Vector2 p = new Vector2(-86f + i * 14f + Range(-4f, 4f), depth + Range(-7f, 7f));
+                    if (!terrain.ClearOfProps(p, 11f)) continue;
+                    Spawn(profile.tree, p, Range(0.75f, 1.2f), 1.5f);
+                    trunks.Add(p);
+                    TreeCount++;
+                }
+
             // Low foliage and stones tie the canopy to the ground. Roads and deployment plazas stay bare.
-            Scatter(profile.sapling, 30, 9f, 14f, 0.7f, 1.2f, false);
-            Scatter(profile.rock, 40, 7f, 13f, 0.7f, 1.7f, false);
-            Scatter(profile.stone, 70, 4.5f, 10f, 0.6f, 1.4f, false);
-            Scatter(profile.plant, 95, 4f, 10f, 0.7f, 1.2f, true);
+            if (openingGlade) BuildGladeUnderstory(profile);
+            else
+            {
+                Scatter(profile.sapling, 30, 9f, 14f, 0.7f, 1.2f, false);
+                Scatter(profile.rock, 40, 7f, 13f, 0.7f, 1.7f, false);
+                Scatter(profile.stone, 70, 4.5f, 10f, 0.6f, 1.4f, false);
+                Scatter(profile.plant, 95, 4f, 10f, 0.7f, 1.2f, true);
+            }
             BuildGrassPatches(profile.grass);
             if (profile.wind != null)
             {
@@ -64,6 +82,49 @@ namespace Lightbringer.Visuals
             }
         }
 
+        private void BuildGladeUnderstory(ForestEnvironmentProfile profile)
+        {
+            foreach (int side in new[] { -1, 1 })
+                foreach (float depth in new[] { -9f, 17f, 44f })
+                {
+                    Vector2 point = new Vector2(side * Range(29f, 34f), depth + Range(-3f, 3f));
+                    if (!terrain.ClearOfPlay(point, 14f, 18f) || !terrain.ClearOfProps(point, 10f) || NearTrunk(point)) continue;
+                    Spawn(profile.tree, point, Range(1.05f, 1.4f), 1.5f);
+                    trunks.Add(point);
+                    TreeCount++;
+                }
+            // Unequal woodland islands, with open sightlines between them. Small companion stones
+            // and shrubs ground each outcrop instead of scattering isolated giant boulders.
+            Vector2[] islands = {
+                new Vector2(-20f, -14f), new Vector2(24f, -10f),
+                new Vector2(-26f, 7f), new Vector2(21f, 2f),
+                new Vector2(-19f, 22f), new Vector2(28f, 29f),
+                new Vector2(-38f, 39f), new Vector2(41f, 48f),
+                new Vector2(-30f, 65f), new Vector2(24f, 76f)
+            };
+            foreach (Vector2 centre in islands)
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    float angle = Range(0f, Mathf.PI * 2f);
+                    float radius = i < 3 ? Range(0f, 2.8f) : Range(2.2f, 7.5f);
+                    Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                    if (!terrain.ClearOfPlay(point, 6f, 12f) || NearTrunk(point)) continue;
+                    GameObject prefab = i < 3 ? profile.rock : i < 8 ? profile.stone
+                        : i < 12 ? profile.sapling : profile.plant;
+                    float scale = i < 3 ? Range(0.5f, 0.95f) : i < 8 ? Range(0.5f, 1.1f)
+                        : i < 12 ? Range(0.65f, 1.3f) : Range(1.1f, 1.8f);
+                    GameObject prop = Spawn(prefab, point, scale);
+                    if (i < 3) prop.transform.localScale = Vector3.Scale(prop.transform.localScale,
+                        new Vector3(Range(1.15f, 1.6f), Range(0.65f, 0.85f), 1f));
+                    if (i >= 12) groundCover.Add(prop);
+                }
+            }
+            // Short plants and small pebbles soften the road edge while preserving its open centre.
+            Scatter(profile.stone, 65, 4.5f, 11f, 0.25f, 0.65f, false);
+            Scatter(profile.plant, 95, 4.5f, 11f, 0.9f, 1.6f, true);
+        }
+
         private void BuildGrassPatches(GameObject prefab)
         {
             // Cull whole patches, sharing the supplier mesh and instanced material between tufts.
@@ -71,6 +132,8 @@ namespace Lightbringer.Visuals
             for (int attempt = 0, placed = 0; attempt < 1400 && placed < 140; attempt++)
             {
                 Vector2 centre = new Vector2(Range(-33f, 33f), Range(-27f, 62f));
+                if (openingGlade && attempt % 3 == 0)
+                    centre = new Vector2((attempt % 2 == 0 ? -1f : 1f) * Range(5f, 10f), Range(-16f, 29f));
                 if (!terrain.ClearOfPlay(centre, 5f, 11f)) continue;
                 bool overlaps = false;
                 foreach (Vector2 other in grassCentres)
@@ -106,14 +169,22 @@ namespace Lightbringer.Visuals
                                 if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.3f, 0.38f, 0.14f));
                                 if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.95f, 1f, 0.72f));
                                 if (shared.HasProperty("_RootMaskStrength")) shared.SetFloat("_RootMaskStrength", 0.1f);
+                                if (openingGlade)
+                                {
+                                    if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.12f, 0.19f, 0.065f));
+                                    if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.83f, 0.95f, 0.65f));
+                                    if (shared.HasProperty("_NormalScale")) shared.SetFloat("_NormalScale", 0.65f);
+                                    if (shared.HasProperty("_TransStrength")) shared.SetFloat("_TransStrength", 0.25f);
+                                }
                                 grassMaterials.Add(source, shared);
                             }
                             materials[m] = shared;
                         }
                         renderer.sharedMaterials = materials;
                     }
-                    float width = Range(1.3f, 2f);
-                    float height = Range(0.7f, 1.1f) * Mathf.Lerp(1f, 0.7f, distance / radius);
+                    float width = openingGlade ? Range(1.6f, 2.5f) : Range(1.3f, 2f);
+                    float height = (openingGlade ? Range(1.25f, 1.85f) : Range(0.7f, 1.1f))
+                        * Mathf.Lerp(1f, 0.7f, distance / radius);
                     tuft.transform.localScale = new Vector3(width, height, width);
                     tuft.transform.SetParent(patch.transform, true);
                     GrassCount++;

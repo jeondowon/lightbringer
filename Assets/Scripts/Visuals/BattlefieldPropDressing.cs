@@ -20,9 +20,11 @@ namespace Lightbringer.Visuals
         public IReadOnlyList<Placement> Placements => placements;
         private BattlefieldPropProfile profile;
         private BattlefieldEnvironment terrain;
+        private readonly Dictionary<Material, Material> agedMaterials = new Dictionary<Material, Material>();
+        private bool openingGlade;
 
         public static BattlefieldPropDressing Build(BattlefieldPropProfile profile, BattlefieldEnvironment terrain,
-            Vector2? alliedKeep, Vector2? enemyKeep, int pathCount)
+            Vector2? alliedKeep, Vector2? enemyKeep, int pathCount, bool openingGlade = false)
         {
             if (profile == null) return null;
             GameObject root = new GameObject("Authored Battlefield Props");
@@ -30,12 +32,21 @@ namespace Lightbringer.Visuals
             var dressing = root.AddComponent<BattlefieldPropDressing>();
             dressing.profile = profile;
             dressing.terrain = terrain;
+            dressing.openingGlade = openingGlade;
             if (alliedKeep.HasValue) dressing.AlliedCamp(alliedKeep.Value);
             if (enemyKeep.HasValue) dressing.EnemyCamp(enemyKeep.Value);
             // Bring the ruins into view on narrow early maps; move them out beside the outer lanes later.
             float shrineX = 14f + 9f * Mathf.Clamp(pathCount - 1, 0, 2);
             dressing.Ruins(new Vector2(-shrineX, 3f), 18f);
             dressing.Ruins(new Vector2(shrineX, 17f), -24f);
+            if (openingGlade)
+            {
+                Transform debris = dressing.Group("Fallen Shrine Columns");
+                dressing.FallenColumn(debris, new Vector2(-9f, -2f), 32f, 0.65f);
+                dressing.FallenColumn(debris, new Vector2(-20f, -3f), -15f, 0.8f);
+                dressing.FallenColumn(debris, new Vector2(20f, 12f), 55f, 0.7f);
+                dressing.FallenColumn(debris, new Vector2(9f, 23f), -28f, 0.6f);
+            }
             return dressing;
         }
 
@@ -93,8 +104,66 @@ namespace Lightbringer.Visuals
             instance.transform.localPosition = new Vector3(point.x, terrain.SurfaceHeight(point.x, point.y) - 0.025f, point.y);
             instance.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             instance.transform.localScale = Vector3.one * scale;
+            if (openingGlade && (kind == BattlefieldPropKind.RuinArch || kind == BattlefieldPropKind.RuinColumn))
+                AgeStone(instance);
             placements.Add(new Placement(kind, point, radius, instance));
             terrain.ReserveProp(point, radius + 0.4f);
+        }
+
+        private void FallenColumn(Transform group, Vector2 point, float yaw, float scale)
+        {
+            BattlefieldPropAsset asset = profile.Find(BattlefieldPropKind.RuinColumn);
+            if (asset == null) return;
+            float radius = asset.size.magnitude * scale * 0.5f;
+            if (!terrain.ClearForProp(point, radius)) return;
+            GameObject instance = Instantiate(asset.prefab, group);
+            instance.name = "Fallen Ruin Column";
+            instance.transform.localScale = Vector3.one * scale;
+            instance.transform.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(0f, 0f, 86f);
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                Vector3 target = terrain.transform.TransformPoint(new Vector3(point.x,
+                    terrain.SurfaceHeight(point.x, point.y) - 0.08f, point.y));
+                instance.transform.position += target - new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+            }
+            AgeStone(instance);
+            placements.Add(new Placement(BattlefieldPropKind.RuinColumn, point, radius, instance));
+            terrain.ReserveProp(point, radius + 0.4f);
+        }
+
+        private void AgeStone(GameObject instance)
+        {
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>())
+            {
+                Material[] materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    Material source = materials[i];
+                    if (source == null) continue;
+                    if (!agedMaterials.TryGetValue(source, out Material aged))
+                    {
+                        aged = new Material(source) { name = source.name + " (Forest Weathering)", enableInstancing = true };
+                        if (aged.HasProperty("_BaseColor")) aged.SetColor("_BaseColor",
+                            aged.GetColor("_BaseColor") * new Color(0.64f, 0.69f, 0.57f, 1f));
+                        agedMaterials.Add(source, aged);
+                    }
+                    materials[i] = aged;
+                }
+                renderer.sharedMaterials = materials;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (Material material in agedMaterials.Values)
+                if (material != null)
+                {
+                    if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
+                }
+            agedMaterials.Clear();
         }
     }
 }

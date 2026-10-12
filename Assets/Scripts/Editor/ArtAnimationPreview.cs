@@ -173,6 +173,7 @@ namespace Lightbringer.EditorTools
         private static void CaptureBattlefieldStage(int stageNumber)
         {
             if (Application.isPlaying) { Debug.LogWarning("Stop Play mode before capturing the battlefield preview."); return; }
+            AssetDatabase.Refresh();
             // Async shader compilation would render not-yet-compiled variants as missing in the first frames.
             bool asyncCompile = ShaderUtil.allowAsyncCompilation;
             ShaderUtil.allowAsyncCompilation = false;
@@ -222,8 +223,15 @@ namespace Lightbringer.EditorTools
                 string prefix = stageNumber == 1 ? "ForestGround" : "Battlefield";
                 RenderView(camera, Stage + new Vector3(-55f, 38f, -40f), Stage + new Vector3(0f, 0f, 10f), prefix + "_Overview.png");
                 RenderView(camera, hero + new Vector3(0f, 3.6f, -7.5f), hero + new Vector3(0f, 1.2f, 6f), prefix + "_Hero.png");
+                // Inspect the panorama at eye level as well as the normal downward gameplay angle.
+                Vector3 eye = hero + Vector3.up * 2.5f;
+                RenderView(camera, eye, eye + Vector3.forward * 80f, prefix + "_HorizonForward.png");
+                Vector3 rearEye = eye + Vector3.right * 24f; // look past the allied fortress, not into its gate
+                RenderView(camera, rearEye, rearEye + Vector3.back * 80f, prefix + "_HorizonRear.png");
+                RenderView(camera, eye, eye + new Vector3(-76f, 0f, 25f), prefix + "_HorizonSeam.png");
                 Vector3 field = hero + new Vector3(9f, -1.05f, 4f);
                 RenderView(camera, field + new Vector3(0f, 1.2f, -3f), field + new Vector3(0f, 0.2f, 2f), prefix + "_GrassCloseup.png");
+                WriteEnvironmentChecks(battle, library, stageNumber, prefix);
                 camera.targetTexture = null;
                 Debug.Log("Battlefield preview written to " + PreviewFolder);
             }
@@ -236,6 +244,43 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(target);
                 Object.DestroyImmediate(material);
             }
+        }
+
+        private static void WriteEnvironmentChecks(Lightbringer.Core.PrototypeBattle battle,
+            ArtStyleLibrary library, int stage, string prefix)
+        {
+            BattlefieldEnvironment environment = battle.Root.GetComponentInChildren<BattlefieldEnvironment>();
+            ForestEnvironmentDressing forest = environment.GetComponentInChildren<ForestEnvironmentDressing>();
+            BattlefieldPropDressing props = environment.GetComponentInChildren<BattlefieldPropDressing>();
+            bool decorative = forest != null && forest.GetComponentsInChildren<Collider>(true).Length == 0
+                && props != null && props.GetComponentsInChildren<Collider>(true).Length == 0;
+            bool routesClear = true;
+            foreach (BattlefieldPropDressing.Placement placement in props.Placements)
+                routesClear &= environment.LaneDistance(placement.Point) >= 4.5f + placement.Radius;
+            foreach (Transform child in forest.transform)
+                if (child.GetComponentInChildren<Renderer>(true) != null)
+                    routesClear &= environment.LaneDistance(new Vector2(child.localPosition.x, child.localPosition.z)) >= 4f;
+            bool flat = true;
+            foreach (Lightbringer.Pathing.WaypointPath path in battle.Paths)
+                for (int i = 0; i < path.Count; i++)
+                {
+                    Vector3 point = environment.transform.InverseTransformPoint(path.GetPosition(i));
+                    flat &= Mathf.Abs(environment.SurfaceHeight(point.x, point.z)) < 0.01f;
+                }
+            Material ground = environment.Terrain.GetComponent<Renderer>().sharedMaterial;
+            bool shader = ground != null && ground.shader.isSupported && !ShaderUtil.ShaderHasError(ground.shader);
+            bool scoped = stage == 1 ? ground == library.forestEnvironment.terrain
+                && library.forestEnvironment.openingGlade && !library.forestEnvironment.AppliesTo(2)
+                : ground == library.FindBackdrop(stage).forest.terrain && ground.GetFloat("_Weathering") == 0f;
+            bool passed = decorative && routesClear && flat && shader && scoped;
+            File.WriteAllText(Path.Combine(PreviewFolder, prefix + "_Checks.txt"),
+                (passed ? "PASS" : "FAIL") + " | Stage " + stage + " | " + System.DateTime.UtcNow.ToString("O")
+                + "\nDecorations have no gameplay colliders: " + decorative
+                + "\nRoads clear of dressing: " + routesClear + "\nPaths remain flat: " + flat
+                + "\nTerrain shader compiled: " + shader + "\nStage material isolation: " + scoped
+                + "\nTrees: " + forest.TreeCount + "; decorative instances (including grass): " + forest.PropCount
+                + "; grass tufts: " + forest.GrassCount + "; authored props: " + props.Placements.Count + "\n");
+            if (!passed) Debug.LogError("Battlefield visual checks failed: " + prefix);
         }
 
         private static void RenderView(Camera camera, Vector3 position, Vector3 lookAt, string fileName)

@@ -11,6 +11,8 @@ namespace Lightbringer.Visuals
         public GameObject tree, sapling, rock, stone, grass, plant;
         public GameObject wind;
         public Material terrain;
+        [Tooltip("Clustered undergrowth and fuller roadside grass for the opening forest glade.")]
+        public bool openingGlade;
 
         public bool IsReady => tree != null && sapling != null && rock != null
             && stone != null && grass != null && plant != null;

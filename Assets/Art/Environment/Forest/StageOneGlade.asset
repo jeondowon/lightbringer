@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac21bc29a128b48448ecd0e5e4df7b6c, type: 3}
+  m_Name: StageOneGlade
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Visuals.ForestEnvironmentProfile
+  firstStage: 1
+  lastStage: 1
+  tree: {fileID: 2083840747512434971, guid: a8b85271b2804f3479c183789c9ed7d0, type: 3}
+  sapling: {fileID: 3051279442735525990, guid: 4a97e5bb429dca94796da9d25d80c1ac, type: 3}
+  rock: {fileID: 3426524862027865085, guid: c0de4e942a4e9b14ea34942781c07b2a, type: 3}
+  stone: {fileID: 8779018751471391929, guid: b2f0a8936619ff844afa6d706ee9b956, type: 3}
+  grass: {fileID: 8270039366476343980, guid: 992c275276cc4f644a83c81301d71ade, type: 3}
+  plant: {fileID: 1509979490399850824, guid: e96f128ce559ec046b40972e490edb67, type: 3}
+  wind: {fileID: 4722715177083764979, guid: b69f8301e72b3234bb08e8411fd73c53, type: 3}
+  terrain: {fileID: 2100000, guid: 9f366b5e7e784a56bff57bf27b7bc8e2, type: 2}
+  openingGlade: 1
