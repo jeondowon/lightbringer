@@ -1,24 +1,55 @@
-/* Lightbringer desktop HUD. Palette follows the character sheet: navy panels, gold trim, ivory text.
-   The view code only depends on the class names. Battle HUD art: Assets/UI/Art/Hud_*.png
-   (Lightbringer/UI/Build Battle HUD Art). */
+/* Lightbringer UI, styled after the prologue and title storybook paintings (Docs/ArtPass/ArtDirection_Storybook.md):
+   matte ink-night paper, hand-ruled faded-gold lines, gold kept for light and focus; the battle minimap is a treasure
+   map. The view code only depends on the class names.
+   Chrome art: Assets/UI/Art/Chrome (Lightbringer/UI/Build UI Chrome Art). Portraits and icons: Assets/UI/Art.
+   9-slice, tiled so the paper grain never stretches: Ui_Panel 32 px, Ui_Dialog 48 px, Ui_Card* 24 px (the Story*Slice
+   constants in UiChromePainter.Storybook). Buttons are painted at their USS height (56, 44, 32, 48) and slice
+   everything except a 2 px band, so keep those heights in sync with UiChromePainter.Catalog.
+   Fonts (Lightbringer/UI/Build Storybook Fonts): Gowun Batang for text with its real Bold in the weight table,
+   Song Myung for display titles, Nanum Gothic as the symbol fallback. */
 
-/* ---------- Shared ---------- */
+/* Bundle the Korean fonts so player builds do not depend on OS fallback fonts. */
+:root {
+    /* Minimum authored text size is 13px at the 1920x1080 reference resolution. */
+    font-size: 13px;
+    -unity-font-definition: url("Fonts/GowunBatang.asset");
+    --gold: rgb(220, 176, 116);
+    --gold-bright: rgb(248, 210, 148);
+    --gold-dim: rgba(220, 176, 116, 0.45);
+    --gold-faint: rgba(181, 150, 114, 0.22);
+    --ivory: rgb(234, 224, 202);
+    --muted: rgb(198, 188, 170);
+    --gold-text: rgb(234, 202, 154);
+    --ink: rgb(58, 34, 16);
+}
+
+/* ---------- Boss cinematic and dialogue ---------- */
 
 .lb-boss-cinematic { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(12, 2, 24, 0.12); }
 .lb-boss-letterbox { position: absolute; left: 0; right: 0; top: 0; height: 8%; background-color: rgba(3, 2, 8, 0.95); }
 .lb-boss-chapter { position: absolute; left: 8%; right: 8%; bottom: 12%; font-size: 40px; letter-spacing: 5px; color: rgb(230, 212, 250); -unity-text-align: middle-center; text-shadow: 0 3px 12px rgb(0, 0, 0); }
-.lb-boss-dialogue { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 10% 24px 10%; background-color: rgba(8, 4, 17, 0.96); border-top-width: 2px; border-top-color: rgb(119, 74, 151); }
-.lb-boss-speaker { font-size: 22px; color: rgb(203, 159, 235); margin-bottom: 12px; }
-.lb-boss-line { font-size: 24px; white-space: normal; min-height: 65px; color: rgb(245, 239, 251); }
+.lb-boss-dialogue {
+    position: absolute; left: 6%; right: 6%; bottom: 2%; padding: 22px 38px 20px 38px;
+    background-image: url("Art/Chrome/Ui_Dialog.png"); background-color: rgba(0, 0, 0, 0);
+    -unity-slice-left: 48; -unity-slice-right: 48; -unity-slice-top: 48; -unity-slice-bottom: 48; -unity-slice-type: tiled;
+    border-width: 0; -unity-font-definition: url("Fonts/GowunBatang.asset");
+}
+.lb-boss-speaker { font-size: 20px; -unity-font-style: bold; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
+.lb-boss-line { font-size: 24px; white-space: normal; min-height: 50px; color: var(--ivory); }
 .lb-boss-dialogue-controls { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 14px; }
-.lb-boss-dialogue-count { font-size: 14px; color: rgb(166, 151, 181); }
-.lb-boss-next { padding: 10px 22px; background-color: rgb(43, 24, 61); border-width: 1px; border-color: rgb(129, 88, 160); color: rgb(240, 230, 251); font-size: 17px; }
-.lb-boss-next:hover { background-color: rgb(71, 38, 96); }
+.lb-boss-dialogue-count { font-size: 14px; letter-spacing: 2px; color: var(--muted); }
+.lb-boss-dialogue .lb-boss-next { min-width: 232px; font-size: 16px; flex-shrink: 0; }
+/* Locked while the retreat animates: a plain grey plate instead of a status caption. */
+.lb-boss-dialogue .lb-boss-next:disabled { opacity: 1; background-image: url("Art/Chrome/Ui_BtnSecondary.png"); -unity-background-image-tint-color: rgb(120, 120, 120); color: rgb(128, 128, 128); }
 .lb-boss-story { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(4, 3, 8); }
-.lb-boss-story-caption { padding: 18px 8% 20px 8%; background-color: rgba(5, 4, 11, 0.84); border-top-width: 0; }
+/* The finale speaks over the live battlefield so the Demon King in the sky stays visible. */
+.lb-boss-story--live { background-color: rgba(0, 0, 0, 0); }
+.lb-boss-story-caption { padding: 20px 38px 18px 38px; }
 .lb-boss-story-caption .lb-boss-speaker { font-size: 20px; margin-bottom: 8px; }
 .lb-boss-story-caption .lb-boss-line { font-size: 24px; min-height: 50px; }
 .lb-boss-story-caption .lb-boss-dialogue-controls { margin-top: 8px; }
+
+/* ---------- Prologue ---------- */
 
 .lb-campaign-content { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .lb-prologue { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(4, 6, 9); overflow: hidden; }
@@ -37,13 +68,116 @@
 .lb-prologue-music { position: absolute; left: 4%; top: 9%; }
 .lb-prologue-credits { background-color: rgba(7, 11, 17, 0.96); padding: 18px; color: rgb(216, 211, 192); font-size: 14px; }
 
-/* Campaign atlas: matte cartography, small ivory typography and restrained brass accents. */
+
+/* ---------- Shared ---------- */
+
+.lb-hidden { display: none; }
+.lb-display { -unity-font-definition: url("Fonts/GowunBatang.asset"); -unity-font-style: bold; }
+
+.lb-panel {
+    background-image: url("Art/Chrome/Ui_Panel.png");
+    -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 32; -unity-slice-bottom: 32; -unity-slice-type: tiled;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 22px 26px;
+}
+
+.lb-rule { height: 24px; flex-shrink: 0; margin: 4px 0 12px 0; background-image: url("Art/Chrome/Ui_Divider.png"); -unity-background-scale-mode: scale-to-fit; }
+
+/* Buttons: chamfered lacquer with gold rims. Primary carries warm gold type. */
+.lb-atlas-primary, .lb-button {
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    -unity-background-image-tint-color: rgb(228, 228, 228);
+    transition-property: -unity-background-image-tint-color, color, translate;
+    transition-duration: 0.12s;
+}
+.lb-atlas-primary {
+    height: 56px;
+    padding: 0 36px 2px 36px;
+    background-image: url("Art/Chrome/Ui_BtnPrimary.png");
+    -unity-slice-left: 30; -unity-slice-right: 30; -unity-slice-top: 27; -unity-slice-bottom: 27;
+    color: var(--gold-bright);
+    font-size: 19px;
+    letter-spacing: 2px;
+}
+.lb-button {
+    height: 44px;
+    padding: 0 26px 1px 26px;
+    background-image: url("Art/Chrome/Ui_BtnSecondary.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 21; -unity-slice-bottom: 21;
+    color: var(--ivory);
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+.lb-button--gold { background-image: url("Art/Chrome/Ui_BtnPrimary44.png"); color: var(--gold-bright); }
+.lb-button--small {
+    height: 32px;
+    padding: 0 18px 1px 18px;
+    background-image: url("Art/Chrome/Ui_BtnSecondary32.png");
+    -unity-slice-left: 18; -unity-slice-right: 18; -unity-slice-top: 15; -unity-slice-bottom: 15;
+    font-size: 13px;
+}
+.lb-button--back { min-width: 118px; font-size: 16px; }
+.lb-atlas-primary:hover, .lb-atlas-primary:focus, .lb-button:hover, .lb-button:focus {
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0);
+    color: rgb(255, 246, 222);
+}
+.lb-atlas-primary:active, .lb-button:active { -unity-background-image-tint-color: rgb(180, 180, 180); background-color: rgba(0, 0, 0, 0); translate: 0 1px; }
+.lb-atlas-primary:disabled, .lb-button:disabled { opacity: 0.4; }
+
+.lb-keycap {
+    flex-shrink: 0;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px 1px 7px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(30, 30, 36);
+    border-width: 1px 1px 3px 1px;
+    border-color: var(--gold-dim);
+    border-bottom-color: rgb(96, 72, 34);
+    border-radius: 4px;
+}
+.lb-keycap-text { margin: 0; padding: 0; font-size: 13px; -unity-font-style: bold; -unity-text-align: middle-center; color: var(--ivory); }
+
+.lb-coin { width: 24px; height: 24px; flex-shrink: 0; margin-right: 8px; background-image: url("Art/Chrome/Ui_Shard.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-coin--large { width: 36px; height: 36px; margin-right: 10px; }
+
+.lb-icon { width: 48px; height: 48px; background-size: contain; }
+.lb-icon--0 { background-image: url("Art/Skill_LightBeam.png"); }
+.lb-icon--1 { background-image: url("Art/Skill_Heal.png"); }
+.lb-icon--2 { background-image: url("Art/Skill_Ice.png"); }
+.lb-icon--3 { background-image: url("Art/Skill_Shockwave.png"); }
+.lb-icon--4 { background-image: url("Art/Skill_Meteor.png"); }
+.lb-icon--shard { background-image: url("Art/Chrome/Ui_Shard.png"); -unity-background-scale-mode: scale-to-fit; }
+
+.lb-caption { font-size: 13px; color: var(--muted); -unity-font-style: bold; letter-spacing: 1px; }
+
+.lb-bar { height: 18px; margin: 2px 0; border-radius: 1px; background-color: rgb(16, 15, 18); border-width: 1px; border-color: rgba(181, 150, 114, 0.5); overflow: hidden; }
+.lb-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; background-image: url("Art/Chrome/Ui_Gloss.png"); -unity-background-scale-mode: stretch-to-fill; transition-property: width; transition-duration: 0.15s; }
+.lb-bar-text { position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: 0; padding: 0; -unity-text-align: middle-center; font-size: 13px; -unity-font-style: bold; color: rgb(255, 250, 240); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95); }
+.lb-bar--hp .lb-bar-fill { -unity-background-image-tint-color: rgb(178, 66, 56); }
+.lb-bar--mana .lb-bar-fill { -unity-background-image-tint-color: rgb(88, 122, 182); }
+.lb-bar--food .lb-bar-fill { -unity-background-image-tint-color: rgb(214, 164, 86); }
+.lb-bar--ally .lb-bar-fill { -unity-background-image-tint-color: rgb(98, 132, 186); }
+.lb-bar--enemy .lb-bar-fill { -unity-background-image-tint-color: rgb(178, 66, 56); }
+.lb-bar--boss .lb-bar-fill { -unity-background-image-tint-color: rgb(152, 42, 62); }
+.lb-bar--shielded .lb-bar-fill { -unity-background-image-tint-color: rgb(130, 106, 196); }
+.lb-bar--shielded .lb-bar-text { color: rgb(236, 220, 255); }
+
+/* ---------- Campaign map ---------- */
 .lb-atlas { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(8, 14, 18); overflow: hidden; }
 .lb-atlas-canvas { position: absolute; }
 .lb-atlas-paper, .lb-atlas-roads { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act1_v1.png"); -unity-background-scale-mode: stretch-to-fill; }
-.lb-atlas--act2 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act2_v1.png"); }
-.lb-atlas--act3 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act3_v1.png"); }
+.lb-atlas--act2 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act2_v2.png"); }
+.lb-atlas--act3 .lb-atlas-paper { background-image: url("Art/CampaignAtlas_Act3_v2.png"); }
 .lb-atlas-nav { position: absolute; top: 50%; width: 64px; height: 104px; margin: -52px 0 0 0; padding: 0; border-width: 0; border-radius: 4px; background-color: rgba(8, 14, 18, 0.25); color: rgb(212, 203, 178); font-size: 44px; -unity-text-align: middle-center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); transition-property: color, background-color; transition-duration: 0.18s; }
 .lb-atlas-nav--previous { left: 24px; }
 .lb-atlas-nav--next { right: 24px; }
@@ -54,380 +188,55 @@
 .lb-atlas-title { font-size: 32px; color: rgb(235, 234, 222); letter-spacing: 2px; }
 .lb-atlas-subtitle { font-size: 14px; color: rgb(153, 168, 167); margin-top: 9px; }
 .lb-atlas-progress { font-size: 14px; color: rgb(212, 203, 178); margin-top: 12px; letter-spacing: 1px; }
-.lb-atlas-footer { position: absolute; left: 64px; right: 64px; bottom: 40px; flex-direction: row; justify-content: space-between; align-items: center; border-top-width: 1px; border-top-color: rgba(210, 204, 176, 0.28); padding-top: 20px; padding-bottom: 12px; background-color: rgba(8, 14, 18, 0.86); }
-.lb-atlas-detail { flex-shrink: 1; padding-left: 18px; }
-.lb-atlas-eyebrow { font-size: 11px; letter-spacing: 2px; color: rgb(169, 158, 127); }
-.lb-atlas-selected { font-size: 27px; color: rgb(234, 232, 217); margin-top: 6px; margin-bottom: 7px; }
-.lb-atlas-description { font-size: 14px; color: rgb(166, 179, 177); white-space: normal; }
-.lb-atlas-action { width: 310px; margin-left: 24px; margin-right: 18px; }
-.lb-atlas-hint { font-size: 11px; color: rgb(155, 165, 161); margin-bottom: 12px; -unity-text-align: middle-right; }
-.lb-atlas-primary { height: 52px; background-color: rgb(195, 177, 130); color: rgb(21, 29, 30); border-width: 1px; border-color: rgb(211, 195, 154); border-radius: 2px; font-size: 17px; margin: 0; }
-.lb-atlas-primary:hover, .lb-atlas-primary:focus { background-color: rgb(224, 209, 169); border-color: rgb(249, 238, 208); }
-.lb-atlas-primary:active { background-color: rgb(169, 149, 103); }
-.lb-atlas-primary:disabled { opacity: 0.4; }
-.lb-atlas-status { position: absolute; bottom: 8px; left: 64px; color: rgb(212, 184, 145); font-size: 12px; }
+.lb-atlas-footer { position: absolute; left: 64px; right: 64px; bottom: 40px; padding: 18px 28px 20px 28px; background-color: rgba(0, 0, 0, 0); background-image: url("Art/Chrome/Ui_Panel.png"); -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 32; -unity-slice-bottom: 32; -unity-slice-type: tiled; }
+.lb-atlas-detail { flex-shrink: 1; align-items: center; }
+.lb-atlas-eyebrow { font-size: 13px; letter-spacing: 2px; color: var(--gold); -unity-text-align: middle-center; }
+.lb-atlas-selected { -unity-font-definition: url("Fonts/SongMyung.asset"); font-size: 27px; color: var(--ivory); margin-top: 4px; margin-bottom: 2px; -unity-text-align: middle-center; }
+.lb-atlas-caption-rule { width: 240px; height: 16px; flex-shrink: 0; margin: 0 0 3px 0; background-image: url("Art/Chrome/Ui_Divider.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-atlas-description { font-size: 15px; color: var(--ivory); white-space: normal; -unity-text-align: middle-center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+.lb-atlas-hint { font-size: 13px; color: rgb(155, 165, 161); margin-bottom: 12px; -unity-text-align: middle-right; }
+.lb-atlas-status { position: absolute; bottom: 8px; left: 64px; color: rgb(212, 184, 145); font-size: 13px; }
 .lb-beacon { position: absolute; width: 132px; height: 136px; margin: -38px 0 0 -66px; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; align-items: center; transition-duration: 0.15s; transition-property: scale; }
 .lb-beacon:hover, .lb-beacon:focus { scale: 1.06 1.06; background-color: rgba(0, 0, 0, 0); }
 .lb-beacon--selected { scale: 1.16 1.16; background-color: rgba(0, 0, 0, 0); }
 .lb-beacon--selected:hover, .lb-beacon--selected:focus { scale: 1.18 1.18; }
-.lb-beacon:disabled { opacity: 0.6; }
-.lb-beacon--planned:disabled { opacity: 0.85; }
-.lb-beacon--planned .lb-beacon-name { color: rgb(189, 198, 199); }
-.lb-beacon--planned .lb-beacon-state { color: rgb(170, 181, 183); }
-.lb-beacon-symbol { width: 74px; height: 88px; background-image: url("Art/Beacon_Dark.png"); -unity-background-scale-mode: scale-to-fit; }
-.lb-beacon--ready .lb-beacon-symbol { background-image: url("Art/Beacon_Ready.png"); }
-.lb-beacon--lit .lb-beacon-symbol { background-image: url("Art/Beacon_Lit.png"); }
-.lb-beacon-name { color: rgb(127, 144, 156); font-size: 13px; margin-top: 2px; padding: 3px 14px; background-color: rgba(8, 13, 20, 0.88); border-width: 1px; border-color: rgba(120, 140, 155, 0.35); -unity-text-align: middle-center; letter-spacing: 1px; }
-.lb-beacon-state { color: rgb(120, 138, 150); font-size: 10px; margin-top: 3px; -unity-text-align: middle-center; }
-.lb-beacon--ready .lb-beacon-name { color: rgb(236, 246, 255); border-color: rgba(191, 228, 255, 0.65); }
-.lb-beacon--ready .lb-beacon-state { color: rgb(191, 228, 255); }
-.lb-beacon--lit .lb-beacon-name { color: rgb(243, 227, 180); border-color: rgba(214, 178, 100, 0.65); }
-.lb-beacon--lit .lb-beacon-state { color: rgb(239, 217, 161); }
-.lb-beacon--selected .lb-beacon-name { color: rgb(255, 255, 255); border-color: rgb(240, 216, 144); background-color: rgba(18, 32, 48, 0.95); }
+.lb-beacon:disabled { opacity: 0.85; }
+.lb-beacon-symbol { width: 74px; height: 88px; flex-shrink: 0; background-image: url("Art/Chrome/Map_BeaconDark.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-beacon--ready .lb-beacon-symbol { background-image: url("Art/Chrome/Map_BeaconReady.png"); }
+.lb-beacon--lit .lb-beacon-symbol { background-image: url("Art/Chrome/Map_BeaconLit.png"); }
+.lb-beacon-light { position: absolute; left: 29px; top: 0; width: 74px; height: 88px; }
+.lb-beacon-name { width: 112px; height: 28px; flex-shrink: 0; color: var(--ivory); font-size: 13px; margin: 2px 0 0 0; padding: 0 10px; background-color: rgba(0, 0, 0, 0); background-image: url("Art/Chrome/Ui_Tag.png"); -unity-background-scale-mode: stretch-to-fill; border-width: 0; -unity-text-align: middle-center; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9); }
+.lb-beacon-state { color: var(--ivory); font-size: 13px; margin-top: 3px; -unity-text-align: middle-center; text-shadow: 0 1px 3px rgb(0, 0, 0); }
+.lb-beacon--ready .lb-beacon-name, .lb-beacon--selected .lb-beacon-name { color: var(--gold-bright); background-image: url("Art/Chrome/Ui_TagActive.png"); }
+.lb-beacon--ready .lb-beacon-state { color: var(--gold-bright); }
+.lb-beacon--lit .lb-beacon-name, .lb-beacon--lit .lb-beacon-state { color: var(--gold); }
 
-/* Bundle the Korean font so player builds do not depend on OS fallback fonts. */
-:root {
-    -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf");
-}
+.lb-atlas-back { position: absolute; left: 48px; top: 40px; }
+.lb-atlas .lb-atlas-header { left: 196px; }
 
-.lb-caption {
-    font-size: 13px;
-    color: rgba(238, 232, 219, 0.7);
-    -unity-font-style: bold;
-    letter-spacing: 1px;
-}
+/* ---------- Battle HUD ---------- */
 
-.lb-bar {
-    height: 18px;
-    border-radius: 3px;
-    background-color: rgba(0, 0, 0, 0.55);
-    border-width: 1px;
-    border-color: rgba(238, 232, 219, 0.25);
-    overflow: hidden;
-    margin: 2px 0;
-}
-
-.lb-bar-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 50%;
-}
-
-.lb-bar-text {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    -unity-text-align: middle-center;
-    font-size: 12px;
-    -unity-font-style: bold;
-    color: rgb(255, 250, 240);
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
-}
-
-/* ---------- Battle HUD frame ---------- */
-
-.lb-hud {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    color: rgb(244, 238, 226);
-    font-size: 16px;
-}
-
-.lb-hud Label {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-}
-
-/* Darkens the ground behind the command bar so cards and orbs stay readable on bright grass. */
-.lb-hud-vignette {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 300px;
-    background-image: url("Art/Prep_Fade.png");
-    background-size: 100% 100%;
-    opacity: 0.5;
-}
-
+.lb-hud { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: var(--ivory); font-size: 16px; }
+.lb-hud Label { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9); }
+.lb-hud-vignette { position: absolute; left: 0; right: 0; bottom: 0; height: 280px; background-image: url("Art/Prep_Fade.png"); background-size: 100% 100%; opacity: 0.55; }
 .lb-hud-panel {
-    padding: 8px 16px;
+    background-image: url("Art/Chrome/Ui_Panel.png");
+    -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 32; -unity-slice-bottom: 32; -unity-slice-type: tiled;
+    padding: 12px 16px;
 }
-
-.lb-hud-heading {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.lb-hud-title {
-    margin: 0;
-    padding: 0;
-    font-size: 15px;
-    letter-spacing: 3px;
-    color: rgb(244, 212, 140);
-}
-
-.lb-hud-icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    background-size: contain;
-}
-
-.lb-hud-icon--ally { background-image: url("Art/Hud_IconAlly.png"); }
-.lb-hud-icon--enemy { background-image: url("Art/Hud_IconEnemy.png"); }
-.lb-hud-icon--wave { background-image: url("Art/Hud_IconWave.png"); }
+.lb-hud-icon { flex-shrink: 0; width: 20px; height: 20px; background-size: contain; }
+.lb-hud-icon--ally { background-image: url("Art/Chrome/Ui_IconAlly.png"); }
+.lb-hud-icon--enemy { background-image: url("Art/Chrome/Ui_IconEnemy.png"); }
+.lb-hud-icon--wave { background-image: url("Art/Chrome/Ui_IconWave.png"); }
 .lb-hud-icon--food { background-image: url("Art/Growth_FoodProduction.png"); }
 
-.lb-keycap {
-    flex-shrink: 0;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 7px 2px 7px;
-    align-items: center;
-    justify-content: center;
-}
-
-.lb-keycap-text {
-    margin: 0;
-    padding: 0;
-    font-size: 11px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    color: rgb(244, 244, 248);
-}
-
-/* ---------- Gauges ---------- */
-
-.lb-hud .lb-bar {
-    margin: 2px 0;
-    overflow: hidden;
-}
-
-.lb-hud .lb-bar-fill {
-    background-size: 100% 100%;
-    transition-property: width;
-    transition-duration: 0.15s;
-}
-
-.lb-hud .lb-bar-text {
-    font-size: 12px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
-}
-
-.lb-bar--hp .lb-bar-fill { -unity-background-image-tint-color: rgb(228, 58, 60); }
-.lb-bar--mana .lb-bar-fill { -unity-background-image-tint-color: rgb(66, 134, 255); }
-.lb-bar--food .lb-bar-fill { -unity-background-image-tint-color: rgb(244, 182, 58); }
-.lb-bar--ally .lb-bar-fill { -unity-background-image-tint-color: rgb(84, 150, 244); }
-.lb-bar--enemy .lb-bar-fill { -unity-background-image-tint-color: rgb(214, 52, 64); }
-.lb-bar--boss .lb-bar-fill { -unity-background-image-tint-color: rgb(206, 36, 72); }
-.lb-hud .lb-bar--shielded .lb-bar-fill { -unity-background-image-tint-color: rgb(160, 104, 255); }
-.lb-hud .lb-bar--shielded .lb-bar-text { color: rgb(236, 220, 255); }
-
-/* ---------- Top bar ---------- */
-
-.lb-top {
-    position: absolute;
-    top: 14px;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: center;
-}
-
-.lb-top-row {
-    flex-direction: row;
-    align-items: center;
-    height: 52px;
-    padding: 0 20px;
-}
-
-.lb-stage {
-    margin: 0;
-    padding: 0;
-    font-size: 22px;
-    letter-spacing: 2px;
-    color: rgb(255, 224, 150);
-}
-
-.lb-divider {
-    width: 1px;
-    height: 26px;
-    margin: 0 14px;
-    background-color: rgba(219, 174, 90, 0.4);
-}
-
-.lb-fronts {
-    flex-direction: row;
-    align-items: center;
-}
-
-.lb-front {
-    flex-direction: row;
-    align-items: center;
-    margin: 0 4px;
-    padding: 3px 12px 3px 3px;
-    border-radius: 17px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.12);
-    background-color: rgba(255, 255, 255, 0.04);
-    transition-property: background-color, border-color;
-    transition-duration: 0.25s;
-}
-
-.lb-front-number {
-    width: 26px;
-    height: 26px;
-    margin: 0 8px 0 0;
-    padding: 0;
-    border-radius: 13px;
-    border-width: 1px;
-    border-color: rgba(238, 232, 219, 0.45);
-    background-color: rgb(16, 22, 40);
-    -unity-text-align: middle-center;
-    font-size: 14px;
-    color: rgb(238, 232, 219);
-}
-
-.lb-front-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-}
-
-.lb-front-allies, .lb-front-enemies {
-    min-width: 14px;
-    margin: 0;
-    padding: 0;
-    font-size: 15px;
-    -unity-font-style: bold;
-}
-
-.lb-front-allies {
-    margin-right: 10px;
-    color: rgb(168, 210, 255);
-}
-
-.lb-front-enemies {
-    color: rgb(255, 146, 146);
-}
-
-.lb-front--contested {
-    background-color: rgba(214, 150, 50, 0.2);
-}
-
-.lb-front--danger {
-    background-color: rgba(196, 36, 50, 0.5);
-    border-color: rgb(255, 112, 112);
-}
-
-.lb-front--selected {
-    border-color: rgb(244, 204, 120);
-}
-
-.lb-front--selected .lb-front-number {
-    border-width: 2px;
-    border-color: rgb(255, 214, 120);
-    background-color: rgb(92, 64, 18);
-    color: rgb(255, 240, 196);
-}
-
-.lb-waves {
-    margin: 0 0 0 8px;
-    padding: 0;
-    font-size: 16px;
-    -unity-font-style: bold;
-}
-
-.lb-bases {
-    flex-direction: row;
-    margin-top: 4px;
-}
-
-.lb-base {
-    width: 280px;
-    margin: 0 6px;
-    padding: 7px 14px 9px 14px;
-}
-
-.lb-base-head {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 3px;
-}
-
-.lb-base-head .lb-hud-icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 6px;
-}
-
-.lb-base-title {
-    margin: 0;
-    padding: 0;
-    font-size: 11px;
-    letter-spacing: 2px;
-    -unity-font-style: bold;
-}
-
-.lb-base--ally .lb-base-title { color: rgb(176, 210, 255); }
-.lb-base--enemy .lb-base-title { color: rgb(255, 156, 150); }
-
-/* ---------- Boss ---------- */
-
-.lb-boss {
-    position: absolute;
-    top: 150px;
-    left: 32%;
-    right: 32%;
-    align-items: stretch;
-}
-
-.lb-boss-title {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 2px;
-}
-
-.lb-boss-title .lb-hud-icon {
-    width: 22px;
-    height: 22px;
-}
-
-.lb-boss-name {
-    margin: 0 12px;
-    padding: 0;
-    font-size: 20px;
-    letter-spacing: 4px;
-    color: rgb(255, 176, 156);
-}
-
-/* ---------- Battlefield map (top left) ---------- */
-
-.lb-minimap {
-    position: absolute;
-    left: 18px;
-    top: 14px;
-    width: 264px;
-}
-
-.lb-minimap-map {
-    height: 270px;
-    border-radius: 6px;
-    border-width: 1px;
-    border-color: rgba(219, 174, 90, 0.45);
-    background-color: rgba(16, 30, 28, 0.8);
-    overflow: hidden;
-}
-
+/* Battlefield map (top left): a parchment page in a paper panel, titled above, the summon Path below it. The route strip
+   is centred between the map and the panel's gold rule (about 11 px above the panel edge, inside the 12 px padding). */
+.lb-minimap { position: absolute; left: 22px; top: 18px; width: 272px; padding: 12px 14px 12px 14px; align-items: center; }
+.lb-minimap-title { margin: 4px 0 4px 0; padding: 0; -unity-font-definition: url("Fonts/SongMyung.asset"); -unity-font-style: normal; font-size: 17px; letter-spacing: 4px; color: var(--gold-bright); -unity-text-align: middle-center; }
+.lb-minimap-sheet { width: 244px; height: 270px; flex-shrink: 0; background-image: url("Art/Chrome/Map_Parchment.png"); -unity-background-scale-mode: stretch-to-fill; }
+.lb-minimap-compass { position: absolute; right: 9px; top: 9px; width: 30px; height: 30px; background-image: url("Art/Chrome/Map_Compass.png"); -unity-background-scale-mode: scale-to-fit; rotate: -12deg; }
+.lb-minimap-map { position: absolute; left: 12px; right: 12px; top: 12px; bottom: 12px; }
 .lb-minimap-label {
     position: absolute;
     width: 18px;
@@ -437,285 +246,134 @@
     padding: 0;
     border-radius: 9px;
     border-width: 1px;
-    border-color: rgba(238, 232, 219, 0.5);
-    background-color: rgb(16, 24, 44);
+    border-color: rgb(36, 20, 8);
+    background-color: rgb(86, 58, 34);
     -unity-text-align: middle-center;
     -unity-font-style: bold;
-    font-size: 11px;
-    color: rgba(238, 232, 219, 0.75);
-}
-
-.lb-minimap-label--selected {
-    border-width: 2px;
-    border-color: rgb(255, 209, 97);
-    background-color: rgb(70, 52, 16);
-    color: rgb(255, 235, 180);
-}
-
-.lb-minimap-route {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.lb-route-caption {
-    margin: 0 8px 0 0;
-    padding: 0;
-    font-size: 11px;
-    letter-spacing: 2px;
-    -unity-font-style: bold;
-    color: rgba(238, 232, 219, 0.6);
-}
-
-.lb-path-hint {
-    flex-grow: 1;
-    margin: 0;
-    padding: 0;
-    font-size: 18px;
-    letter-spacing: 1px;
-    color: rgb(255, 214, 120);
-}
-
-/* ---------- Hero vitals (bottom left) ---------- */
-
-.lb-vitals {
-    position: absolute;
-    left: 18px;
-    bottom: 18px;
-    width: 392px;
-    flex-direction: row;
-    align-items: center;
-    padding: 12px 18px 12px 12px;
-}
-
-.lb-portrait {
-    width: 112px;
-    height: 112px;
-    flex-shrink: 0;
-    margin-right: 14px;
-}
-
-.lb-portrait-face {
-    position: absolute;
-    left: 11px;
-    top: 11px;
-    width: 90px;
-    height: 90px;
-    border-radius: 45px;
-    overflow: hidden;
-    background-color: rgb(30, 46, 92);
-}
-
-.lb-portrait-art {
-    position: absolute;
-    left: -121px;
-    top: -22px;
-    width: 333px;
-    height: 699px;
-    background-image: url("Art/Hero_Commander.png");
-    background-size: 100% 100%;
-}
-
-.lb-level {
-    position: absolute;
-    left: -4px;
-    bottom: -2px;
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
-    border-width: 2px;
-    border-color: rgb(244, 204, 120);
-    background-color: rgb(18, 28, 60);
-    align-items: center;
-    justify-content: center;
-}
-
-.lb-level-value {
-    margin: 0;
-    padding: 0;
-    font-size: 16px;
-    -unity-text-align: middle-center;
-    color: rgb(255, 238, 196);
-}
-
-.lb-gauges {
-    flex-grow: 1;
-}
-
-.lb-hero-name {
-    margin: 0 0 5px 2px;
-    padding: 0;
     font-size: 13px;
-    letter-spacing: 2px;
-    color: rgb(244, 212, 140);
+    color: rgb(232, 214, 176);
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
+.lb-minimap-label--selected { border-color: rgb(80, 16, 6); background-color: rgb(150, 26, 12); color: rgb(255, 240, 214); }
+.lb-minimap-route { flex-shrink: 0; align-self: stretch; height: 40px; flex-direction: row; justify-content: center; align-items: center; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; }
+/* One baseline across the strip. Gowun Batang sets a line box of 1.448 em with the baseline 1.16 em down, so a centred
+   label's baseline sits 0.436 em below the row centre: 5.67 px for the 13 px caption and the TAB key (a 24 px cap with a
+   plain 1 px gold rim and no padding), 6.98 px for the 16 px Path name, which is lifted the 1.31 px difference. */
+.lb-route-caption { margin: 0 8px 0 0; padding: 0; font-size: 13px; color: var(--muted); }
+.lb-path-hint { margin: 0 10px 0 0; padding: 0; font-size: 16px; color: var(--gold-bright); translate: 0 -1.31px; }
+.lb-minimap-route .lb-keycap { padding: 0 7px; border-width: 1px; border-color: var(--gold-dim); }
 
-.lb-vital-row {
-    flex-direction: row;
-    align-items: center;
-    margin: 1px 0;
+/* Top: one ink band across the standoff, the stage seal at its centre, fronts underneath. */
+.lb-top { position: absolute; top: 8px; left: 300px; right: 300px; align-items: center; }
+.lb-top-row { flex-direction: row; align-items: center; height: 136px; padding: 0 72px; background-image: url("Art/Chrome/Ui_HudBanner.png"); -unity-background-scale-mode: stretch-to-fill; }
+.lb-base { width: 330px; padding: 0 12px; }
+.lb-base.lb-hud-panel { background-image: none; }
+.lb-base .lb-bar { height: 20px; }
+.lb-base .lb-bar-text { font-size: 13px; }
+.lb-base-head { flex-direction: row; align-items: center; margin-bottom: 6px; }
+.lb-base-title { margin: 0; padding: 0; font-size: 15px; letter-spacing: 3px; -unity-font-style: bold; }
+.lb-base--ally .lb-base-title { color: rgb(160, 182, 214); }
+.lb-base--enemy .lb-base-head { justify-content: flex-end; }
+.lb-base--enemy .lb-base-title { color: rgb(222, 140, 128); }
+.lb-top-centre { width: 150px; align-items: center; margin: 0 4px; }
+/* Two lines from StageSealText: stage small in faded gold, the number large beneath it. */
+.lb-stage { width: 136px; height: 136px; margin: 0; padding: 0 0 4px 0; background-image: url("Art/Chrome/Ui_Seal.png"); -unity-background-scale-mode: scale-to-fit; background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-text-align: middle-center; -unity-font-definition: url("Fonts/SongMyung.asset"); -unity-font-style: normal; font-size: 26px; color: var(--gold-bright); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); white-space: normal; }
+
+/* Assault count and front chips: small paper tags with ink icons. */
+.lb-wave-row, .lb-front {
+    background-image: url("Art/Chrome/Ui_Tag.png");
+    -unity-slice-left: 10; -unity-slice-right: 10; -unity-slice-top: 10; -unity-slice-bottom: 10;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
+.lb-wave-row { flex-direction: row; align-items: center; margin-top: -26px; height: 28px; padding: 0 14px 1px 10px; }
+.lb-wave-row .lb-hud-icon { width: 17px; height: 17px; margin-right: 6px; }
+.lb-waves { margin: 0; padding: 0; font-size: 13px; -unity-font-style: bold; color: var(--ivory); }
+.lb-fronts { flex-direction: row; align-items: center; margin-top: 4px; }
+/* Front card: the Path seal drawn exactly like the minimap's route labels (red = the summon Path, as on the map),
+   then our count and theirs either side of a tug-of-war gauge. */
+.lb-front { flex-direction: row; align-items: center; height: 34px; margin: 0 4px; padding: 0 10px 1px 7px; }
+.lb-front-number { width: 20px; height: 20px; margin: 0 8px 0 0; padding: 0; border-radius: 10px; border-width: 1px; border-color: rgb(36, 20, 8); background-color: rgb(86, 58, 34); -unity-text-align: middle-center; -unity-font-style: bold; font-size: 12px; color: rgb(232, 214, 176); text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+.lb-front-icon { width: 16px; height: 16px; margin: 0 3px 0 0; }
+.lb-front-allies, .lb-front-enemies { min-width: 14px; margin: 0; padding: 0; font-size: 14px; -unity-font-style: bold; -unity-text-align: middle-center; }
+.lb-front-allies { color: rgb(170, 190, 220); }
+.lb-front-enemies { margin-right: 3px; color: rgb(226, 148, 134); }
+.lb-front-tug { width: 46px; height: 8px; margin: 0 7px; background-color: rgb(16, 15, 18); border-width: 1px; border-color: rgba(181, 150, 114, 0.55); border-radius: 1px; overflow: hidden; }
+.lb-front-push { position: absolute; top: 0; bottom: 0; width: 0; background-image: url("Art/Chrome/Ui_Gloss.png"); -unity-background-scale-mode: stretch-to-fill; transition-property: width; transition-duration: 0.3s; }
+.lb-front-push--ally { left: 0; -unity-background-image-tint-color: rgb(98, 132, 186); }
+.lb-front-push--enemy { right: 0; -unity-background-image-tint-color: rgb(178, 66, 56); }
+/* The midline marks an even fight; whichever side pushes past it holds the front. */
+.lb-front-tug-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; background-color: rgba(234, 224, 202, 0.7); }
+.lb-front--contested { -unity-background-image-tint-color: rgb(255, 226, 180); }
+.lb-front--selected { background-image: url("Art/Chrome/Ui_TagActive.png"); }
+.lb-front--selected .lb-front-number { border-color: rgb(80, 16, 6); background-color: rgb(150, 26, 12); color: rgb(255, 240, 214); }
+/* Danger outranks selection: the crimson tag stays visible even on the selected front. */
+.lb-front--danger { background-image: url("Art/Chrome/Ui_TagAlert.png"); -unity-background-image-tint-color: rgb(255, 255, 255); }
 
-.lb-vital-label {
-    width: 30px;
-    margin: 0;
-    padding: 0;
-    font-size: 12px;
-    -unity-font-style: bold;
-    color: rgba(238, 232, 219, 0.8);
-}
+.lb-boss { position: absolute; top: 196px; left: 31%; right: 31%; padding: 10px 20px 14px 20px; }
+.lb-boss-title { flex-direction: row; align-items: center; justify-content: center; margin-bottom: 4px; }
+.lb-boss-ornament { width: 8px; height: 8px; rotate: 45deg; background-color: rgb(206, 60, 72); }
+.lb-boss-name { margin: 0 14px; padding: 0; font-size: 16px; letter-spacing: 4px; color: rgb(255, 186, 166); }
+.lb-boss .lb-bar { height: 20px; border-color: rgba(230, 100, 100, 0.6); }
+/* Final battle: the Demon King (abyss core) bar sits under the Warlord's. */
+.lb-boss--second { top: 252px; }
 
-.lb-vital-row .lb-bar {
-    flex-grow: 1;
-}
+/* Hero vitals (bottom left). */
+.lb-vitals { position: absolute; left: 22px; bottom: 20px; width: 410px; flex-direction: row; align-items: center; padding: 14px 20px 14px 14px; }
+.lb-portrait { width: 100px; height: 100px; flex-shrink: 0; margin-right: 14px; }
+.lb-portrait-face { position: absolute; left: 10px; top: 10px; width: 80px; height: 80px; border-radius: 40px; overflow: hidden; background-color: rgb(36, 36, 44); }
+.lb-portrait-art { position: absolute; left: -80px; top: -13px; width: 240px; height: 504px; background-image: url("Art/Hero_Commander.png"); background-size: 100% 100%; }
+.lb-portrait-ring { position: absolute; left: 0; top: 0; width: 100px; height: 100px; background-image: url("Art/Chrome/Ui_Medallion.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-level { position: absolute; left: -4px; bottom: -2px; width: 32px; height: 32px; border-radius: 16px; border-width: 2px; border-color: var(--gold); background-color: rgb(26, 24, 28); align-items: center; justify-content: center; }
+.lb-level-value { margin: 0; padding: 0; font-size: 15px; -unity-text-align: middle-center; color: var(--gold-bright); }
+.lb-gauges { flex-grow: 1; }
+.lb-hero-name { margin: 0 0 6px 2px; padding: 0; font-size: 14px; letter-spacing: 2px; color: var(--gold-bright); }
+.lb-vital-row { flex-direction: row; align-items: center; margin: 1px 0; }
+.lb-vital-label { width: 34px; margin: 0; padding: 0; font-size: 13px; -unity-font-style: bold; color: var(--muted); }
+.lb-vital-row .lb-bar { flex-grow: 1; }
+.lb-bar--hp { height: 22px; }
+.lb-bar--hp .lb-bar-text { font-size: 13px; }
 
-.lb-hud .lb-bar--hp .lb-bar-text {
-    font-size: 13px;
-}
-
-/* ---------- Command bar (bottom centre) ---------- */
-
-.lb-command {
-    position: absolute;
-    bottom: 18px;
-    left: 0;
-    right: 0;
-    align-items: center;
-}
-
-.lb-abilities {
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-end;
-}
-
-.lb-slot {
-    width: 160px;
-    align-items: center;
-    margin: 0 2px;
-}
-
-.lb-socket-orb {
-    width: 96px;
-    height: 96px;
-}
-
-.lb-orb, .lb-orb-dial {
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    width: 72px;
-    height: 72px;
-}
-
-.lb-orb {
-    border-radius: 36px;
-    background-color: rgb(10, 14, 28);
-    background-size: 100% 100%;
-}
-
-.lb-orb-timer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 0;
-    -unity-text-align: middle-center;
-    font-size: 22px;
-    -unity-font-style: bold;
-    color: rgb(255, 255, 255);
-}
-
-.lb-orb-key {
-    position: absolute;
-    bottom: -9px;
-    left: 50%;
-    translate: -50% 0;
-}
-
-.lb-slot-caption {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 13px;
-    padding: 2px 9px;
-    border-radius: 9px;
-    background-color: rgba(5, 8, 18, 0.72);
-}
-
-.lb-name {
-    margin: 0;
-    padding: 0;
-    font-size: 12px;
-    -unity-font-style: bold;
-    white-space: nowrap;
-}
-
-.lb-cost {
-    margin: 0 0 0 6px;
-    padding: 0;
-    font-size: 11px;
-    -unity-font-style: bold;
-    color: rgb(132, 178, 255);
-}
+/* Abilities (bottom centre). */
+.lb-command { position: absolute; left: 450px; right: 450px; bottom: 20px; align-items: center; }
+.lb-abilities { flex-direction: row; justify-content: center; align-items: flex-end; }
+.lb-slot { width: 126px; align-items: center; margin: 0 4px; }
+.lb-socket-orb { width: 88px; height: 88px; }
+.lb-orb, .lb-orb-dial { position: absolute; left: 12px; top: 12px; width: 64px; height: 64px; }
+.lb-orb { border-radius: 32px; background-color: rgb(20, 20, 26); background-size: cover; }
+.lb-orb--0 { background-image: url("Art/Skill_LightBeam.png"); }
+.lb-orb--1 { background-image: url("Art/Skill_Heal.png"); }
+.lb-orb--2 { background-image: url("Art/Skill_Ice.png"); }
+.lb-orb--3 { background-image: url("Art/Skill_Shockwave.png"); }
+.lb-orb--4 { background-image: url("Art/Skill_Meteor.png"); }
+.lb-orb-ring { position: absolute; left: 0; top: 0; width: 88px; height: 88px; background-image: url("Art/Chrome/Ui_Socket.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-orb-timer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: 0; padding: 0; -unity-text-align: middle-center; font-size: 22px; -unity-font-style: bold; color: rgb(255, 255, 255); }
+.lb-orb-key { position: absolute; bottom: -8px; left: 50%; translate: -50% 0; }
+.lb-slot-caption { align-items: center; margin-top: 14px; padding: 4px 12px 5px 12px; border-radius: 3px; background-color: rgba(18, 18, 23, 0.86); }
+.lb-name { margin: 0; padding: 0; font-size: 13px; -unity-font-style: bold; white-space: nowrap; }
+.lb-cost { margin: 2px 0 0 0; padding: 0; font-size: 13px; -unity-font-style: bold; color: rgb(150, 172, 206); }
 .lb-slot--passive .lb-cost { color: rgba(238, 232, 219, 0.5); }
 .lb-slot--cooling .lb-name { color: rgba(238, 232, 219, 0.55); }
-.lb-slot--nomana .lb-orb { -unity-background-image-tint-color: rgb(150, 156, 196); }
+.lb-slot--nomana .lb-orb { -unity-background-image-tint-color: rgb(140, 146, 186); }
 .lb-slot--nomana .lb-cost { color: rgb(255, 118, 118); }
 
-/* ---------- Troop roster (right edge) ----------
-   One row per troop: framed portrait, name and Food cost. The portrait shade drains from the top as Food builds up. */
-
-.lb-troops {
-    position: absolute;
-    right: 18px;
-    top: 0;
-    bottom: 0;
-    justify-content: center;
-    align-items: flex-end;
-}
-
+/* Troop roster (right edge). The portrait shade drains from the top as Food builds up. */
+.lb-troops { position: absolute; right: 22px; top: 186px; bottom: 150px; justify-content: center; align-items: flex-end; }
 .lb-card {
-    width: 232px;
-    height: 88px;
-    margin: 3px 0;
+    width: 214px;
+    height: 66px;
+    margin: 2px 0;
     flex-direction: row;
     align-items: center;
-    padding: 0 12px 0 7px;
+    padding: 6px 12px 6px 7px;
+    background-image: url("Art/Chrome/Ui_Card.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-type: tiled;
     transition-property: translate;
     transition-duration: 0.15s;
 }
-
-.lb-card-portrait {
-    width: 74px;
-    height: 74px;
-    flex-shrink: 0;
-    margin-right: 12px;
-}
-
-.lb-card-body {
-    position: absolute;
-    left: 3px;
-    right: 3px;
-    top: 3px;
-    bottom: 3px;
-    border-radius: 5px;
-    overflow: hidden;
-    background-color: rgb(22, 34, 66);
-}
-
-.lb-card-art {
-    position: absolute;
-    left: -32%;
-    right: -32%;
-    top: 2px;
-    height: 200px;
-    background-size: cover;
-    background-position-x: center;
-    background-position-y: top;
-}
-
+.lb-card-portrait { width: 52px; height: 54px; flex-shrink: 0; margin-right: 12px; }
+.lb-card-body { position: absolute; left: 0; right: 0; top: 0; bottom: 0; border-radius: 3px; overflow: hidden; background-color: rgb(30, 30, 36); }
+.lb-card-art { position: absolute; left: -32%; right: -32%; top: 2px; height: 148px; background-size: cover; background-position-x: center; background-position-y: top; }
 .lb-card--0 .lb-card-art { background-image: url("Art/Unit_Swordsman.png"); }
 .lb-card--1 .lb-card-art { background-image: url("Art/Unit_Archer.png"); }
 .lb-card--2 .lb-card-art { background-image: url("Art/Unit_Shieldbearer.png"); }
@@ -723,386 +381,180 @@
 .lb-card--4 .lb-card-art { background-image: url("Art/Unit_Priest.png"); }
 .lb-card--5 .lb-card-art { background-image: url("Art/Unit_Mage.png"); }
 .lb-card--6 .lb-card-art { background-image: url("Art/Unit_Knight.png"); }
-.lb-card--7 .lb-card-art { background-image: url("Art/Unit_Dragon.png"); left: -60%; right: -20%; height: 110px; background-position-x: right; }
-
-.lb-card-shade {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 0;
-    background-color: rgba(4, 6, 16, 0.74);
-    border-bottom-width: 1px;
-    border-color: rgba(255, 214, 130, 0.7);
-}
-
-.lb-card-key {
-    position: absolute;
-    left: -6px;
-    top: -6px;
-    min-width: 22px;
-    height: 22px;
-}
-
-.lb-card-info {
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
-.lb-card-name {
-    margin: 0 0 3px 0;
-    padding: 0;
-    font-size: 16px;
-    -unity-font-style: bold;
-    white-space: nowrap;
-    color: rgba(238, 232, 219, 0.65);
-}
-
-.lb-card-price {
-    flex-direction: row;
-    align-items: center;
-}
-
-.lb-card-food {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-}
-
-.lb-card-cost {
-    margin: 0;
-    padding: 0;
-    font-size: 16px;
-    -unity-font-style: bold;
-    color: rgba(238, 232, 219, 0.55);
-}
+.lb-card--7 .lb-card-art { background-image: url("Art/Unit_Dragon.png"); left: -60%; right: -20%; height: 90px; background-position-x: right; }
+.lb-card-shade { position: absolute; left: 0; right: 0; top: 0; height: 0; background-color: rgba(4, 6, 16, 0.76); border-bottom-width: 1px; border-color: rgba(255, 214, 130, 0.7); }
+.lb-card-key { position: absolute; left: -8px; top: -6px; min-width: 22px; height: 22px; }
+.lb-card-info { flex-grow: 1; flex-shrink: 1; }
+.lb-card-name { margin: 0 0 3px 0; padding: 0; font-size: 15px; -unity-font-style: bold; white-space: nowrap; color: rgba(238, 232, 219, 0.55); }
+.lb-card-price { flex-direction: row; align-items: center; }
+.lb-card-food { width: 15px; height: 15px; margin-right: 5px; }
+.lb-card-cost { margin: 0; padding: 0; font-size: 14px; -unity-font-style: bold; color: rgba(238, 232, 219, 0.45); }
 .lb-card--ready .lb-card-name { color: rgb(255, 250, 240); }
-.lb-card--ready .lb-card-cost { color: rgb(255, 214, 120); }
+.lb-card--ready .lb-card-cost { color: var(--gold-bright); }
 .lb-card--ready .lb-card-shade { border-bottom-width: 0; }
+.lb-card--selected { translate: -12px 0; background-image: url("Art/Chrome/Ui_CardActive.png"); }
 
-.lb-card--selected {
-    translate: -14px 0;
+.lb-crosshair { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin-left: -8px; margin-top: -8px; border-radius: 8px; border-width: 1.5px; border-color: rgba(255, 250, 240, 0.6); align-items: center; justify-content: center; }
+.lb-crosshair-dot { width: 4px; height: 4px; border-radius: 2px; background-color: rgba(255, 250, 240, 0.95); }
+.lb-toast { position: absolute; bottom: 196px; left: 50%; width: 640px; height: 44px; margin: 0 0 0 -320px; padding: 0 0 1px 0; background-image: url("Art/Chrome/Ui_Toast.png"); -unity-background-scale-mode: stretch-to-fill; -unity-text-align: middle-center; font-size: 17px; -unity-font-style: bold; color: var(--gold-bright); }
+.lb-hints { position: absolute; right: 22px; bottom: 20px; align-items: flex-end; padding: 8px 12px 10px 8px; background-color: rgba(18, 18, 23, 0.7); border-radius: 4px; }
+.lb-hint-row { flex-direction: row; align-items: center; margin-top: 5px; }
+.lb-hint-row .lb-keycap { height: 20px; min-width: 20px; margin-left: 8px; padding: 0 5px 1px 5px; }
+.lb-hint-row .lb-keycap-text { font-size: 13px; }
+.lb-hint-text { margin: 0 0 0 5px; padding: 0; font-size: 13px; color: rgba(238, 232, 219, 0.85); }
+.lb-healthbars { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.lb-unit-bar { position: absolute; width: 40px; height: 6px; margin-left: -20px; border-width: 1px; border-color: rgba(0, 0, 0, 0.85); background-color: rgba(0, 0, 0, 0.6); }
+.lb-unit-bar-fill { height: 100%; }
+.lb-unit-bar--ally .lb-unit-bar-fill { background-color: rgb(98, 165, 230); }
+.lb-unit-bar--enemy .lb-unit-bar-fill { background-color: rgb(214, 80, 80); }
+
+/* ---------- Overlays: pause and result ---------- */
+
+.lb-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(10, 10, 14, 0.62); align-items: center; justify-content: center; }
+.lb-flow { background-color: rgba(10, 10, 13, 0.84); color: var(--ivory); }
+.lb-flow-dialog {
+    width: 860px;
+    max-width: 92%;
+    max-height: 94%;
+    padding: 42px 60px 34px 60px;
+    background-image: url("Art/Chrome/Ui_Dialog.png");
+    -unity-slice-left: 48; -unity-slice-right: 48; -unity-slice-top: 48; -unity-slice-bottom: 48; -unity-slice-type: tiled;
+    align-items: stretch;
 }
+.lb-flow-eyebrow { font-size: 13px; letter-spacing: 4px; color: var(--gold); -unity-text-align: middle-center; margin-bottom: 8px; }
+.lb-flow-title { font-size: 48px; -unity-font-style: bold; color: var(--gold-bright); -unity-text-align: middle-center; margin: 0 0 6px 0; letter-spacing: 8px; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); }
+.lb-flow-description { font-size: 17px; color: rgb(212, 214, 224); white-space: normal; -unity-text-align: middle-center; margin: 2px 0 18px 0; }
+.lb-flow-muted { font-size: 13px; color: var(--muted); white-space: normal; -unity-text-align: middle-center; }
+.lb-flow .lb-flow-primary { width: 320px; flex-shrink: 0; align-self: center; margin-top: 20px; }
+.lb-flow-footnote { font-size: 13px; color: var(--muted); -unity-text-align: middle-center; margin-top: 14px; }
+.lb-title--defeat { color: rgb(232, 146, 132); }
 
-/* ---------- Misc ---------- */
-
-.lb-crosshair {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 16px;
-    height: 16px;
-    margin-left: -8px;
-    margin-top: -8px;
-    border-radius: 8px;
-    border-width: 1.5px;
-    border-color: rgba(255, 250, 240, 0.6);
+.lb-result--victory { background-color: rgba(10, 8, 4, 0.82); }
+.lb-result--defeat { background-color: rgba(14, 4, 6, 0.88); }
+.lb-result-rays { position: absolute; left: 50%; top: 50%; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; background-image: url("Art/Chrome/Ui_Rays.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0.35; }
+.lb-result--defeat .lb-result-rays { display: none; }
+.lb-result-ember { position: absolute; left: 10%; right: 10%; top: -10%; bottom: 30%; background-image: url("Art/Prep_Glow.png"); -unity-background-image-tint-color: rgb(170, 30, 24); -unity-background-scale-mode: stretch-to-fill; opacity: 0; }
+.lb-result--defeat .lb-result-ember { opacity: 0.3; }
+.lb-result-stack { align-items: center; max-height: 100%; }
+.lb-result-dialog { width: 780px; max-height: 100%; padding-top: 52px; flex-shrink: 1; }
+.lb-result-banner { align-self: center; flex-shrink: 0; }
+.lb-result-banner .lb-flow-title { margin: 0; font-size: 60px; letter-spacing: 20px; padding-left: 20px; }
+.lb-result-subtitle { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 15px; letter-spacing: 14px; color: var(--gold); -unity-text-align: middle-center; margin: 2px 0 2px 14px; }
+.lb-result--defeat .lb-result-subtitle { color: rgb(200, 120, 108); }
+.lb-result--defeat .lb-flow-title { color: rgb(232, 146, 132); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); }
+.lb-result-reward { flex-direction: row; flex-shrink: 0; align-self: center; align-items: center; padding: 6px 22px 6px 14px; margin-bottom: 16px; border-width: 1px; border-color: var(--gold-dim); border-radius: 22px; background-color: rgba(226, 186, 108, 0.09); }
+.lb-result-reward-value { font-size: 19px; -unity-font-style: bold; color: var(--gold-bright); }
+.lb-result-summary { flex-direction: row; flex-shrink: 0; margin: 0 0 6px 0; }
+.lb-result-metric {
+    flex-grow: 1;
+    flex-basis: 0;
     align-items: center;
-    justify-content: center;
+    margin: 0 6px;
+    padding: 14px 0 12px 0;
+    background-image: url("Art/Chrome/Ui_Card.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-type: tiled;
 }
+.lb-result-icon { width: 26px; height: 26px; flex-shrink: 0; margin-bottom: 4px; -unity-background-scale-mode: scale-to-fit; }
+.lb-result-icon--time { background-image: url("Art/Chrome/Ui_IconWave.png"); }
+.lb-result-icon--ally { background-image: url("Art/Chrome/Ui_IconAlly.png"); }
+.lb-result-icon--enemy { background-image: url("Art/Chrome/Ui_IconEnemy.png"); }
+.lb-result-value { font-size: 28px; -unity-font-style: bold; color: var(--ivory); margin-bottom: 2px; }
+.lb-result-details { flex-shrink: 0; margin: 16px 0 4px 0; color: var(--muted); font-size: 14px; }
+.lb-result-scroll { max-height: 260px; }
+.lb-stats { align-self: stretch; margin: 6px 0 10px 0; }
+.lb-stat { font-size: 13px; color: var(--muted); white-space: normal; margin-bottom: 8px; }
+.lb-result .lb-caption { color: rgb(220, 208, 178); font-size: 13px; margin-top: 10px; letter-spacing: 0; }
+.lb-ratings { flex-direction: row; margin: 4px 0 8px 0; }
+.lb-rating { width: 44px; height: 32px; margin: 0 3px; background-color: rgb(30, 30, 36); border-width: 1px; border-color: var(--gold-dim); border-radius: 3px; color: var(--ivory); }
+.lb-rating--on { background-color: var(--gold); color: rgb(30, 18, 6); }
+.lb-note { align-self: stretch; min-height: 60px; margin-bottom: 10px; }
+.lb-result .lb-note .unity-text-field__input { background-color: rgb(20, 20, 25); color: var(--ivory); border-width: 1px; border-color: var(--gold-dim); padding: 10px; }
 
-.lb-crosshair-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 2px;
-    background-color: rgba(255, 250, 240, 0.95);
+.lb-pause-dialog { width: 940px; }
+.lb-pause-confirm { width: 720px; }
+.lb-pause-columns { flex-direction: row; margin-top: 2px; }
+.lb-pause-section {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding: 18px 22px;
+    background-image: url("Art/Chrome/Ui_Card.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-type: tiled;
 }
-
-.lb-toast {
-    position: absolute;
-    bottom: 190px;
-    left: 50%;
-    width: 640px;
-    height: 46px;
-    margin: 0 0 0 -320px;
-    padding: 0;
-    -unity-text-align: middle-center;
-    font-size: 17px;
-    -unity-font-style: bold;
-    color: rgb(255, 245, 225);
-}
-
-.lb-hints {
-    position: absolute;
-    right: 18px;
-    bottom: 18px;
-    align-items: flex-end;
-    padding: 4px 14px 10px 4px;
-}
-
-.lb-hint-row {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 6px;
-}
-
-.lb-hint-row .lb-keycap {
-    height: 22px;
-    min-width: 22px;
-}
-
-.lb-hint-text {
-    margin: 0 0 0 6px;
-    padding: 0;
-    font-size: 12px;
-    color: rgba(238, 232, 219, 0.8);
-}
-
-.lb-hint-row .lb-keycap {
-    margin-left: 12px;
-}
-
-.lb-healthbars {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-}
-
-.lb-unit-bar {
-    position: absolute;
-    width: 40px;
-    height: 6px;
-    margin-left: -20px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.85);
-    background-color: rgba(0, 0, 0, 0.6);
-}
-
-.lb-unit-bar-fill {
-    height: 100%;
-    background-size: 100% 100%;
-}
-
-.lb-unit-bar--ally .lb-unit-bar-fill { -unity-background-image-tint-color: rgb(110, 196, 255); }
-.lb-unit-bar--enemy .lb-unit-bar-fill { -unity-background-image-tint-color: rgb(236, 70, 80); }
-
-/* ---------- Overlays: level-up and result ---------- */
-
-.lb-overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(4, 8, 18, 0.62);
-    align-items: center;
-    justify-content: center;
-}
-
-.lb-title--defeat {
-    color: rgb(230, 110, 110);
-}
-
-.lb-stats {
-    align-self: stretch;
-    margin: 6px 0 10px 0;
-}
-
-.lb-stat {
-    font-size: 14px;
-    white-space: normal;
-}
-
-.lb-ratings {
-    flex-direction: row;
-    margin: 4px 0 8px 0;
-}
-
-.lb-rating {
-    width: 44px;
-    height: 32px;
-    margin: 0 3px;
-    background-color: rgba(30, 44, 84, 0.95);
-    border-color: rgba(219, 174, 90, 0.5);
-    color: rgb(238, 232, 219);
-}
-
-.lb-rating--on {
-    background-color: rgb(212, 168, 74);
-    color: rgb(20, 20, 30);
-}
-
-.lb-note {
-    align-self: stretch;
-    min-height: 60px;
-    margin-bottom: 10px;
-}
-
-/* ---------- Shared display text, ornaments and equipment icons ---------- */
-
-.lb-display {
-    -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf");
-    -unity-font-style: bold;
-}
-
-.lb-icon {
-    width: 48px;
+.lb-pause-section--keys { margin-left: 16px; }
+.lb-pause-heading { font-size: 16px; -unity-font-style: bold; letter-spacing: 3px; color: var(--gold-bright); margin-bottom: 14px; }
+.lb-pause-volume-header { flex-direction: row; justify-content: space-between; align-items: center; }
+.lb-pause-volume-name { font-size: 15px; color: var(--ivory); }
+.lb-pause-volume-value { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 15px; color: var(--gold-bright); }
+.lb-pause-volume { margin: 8px 0 18px 0; height: 24px; }
+.lb-pause-volume .unity-base-field__label { display: none; }
+.lb-pause-volume .unity-base-slider__tracker { height: 6px; margin-top: -3px; border-width: 1px; border-color: var(--gold-faint); border-radius: 3px; background-color: rgb(58, 56, 62); }
+.lb-pause-volume .unity-base-slider__dragger { width: 18px; height: 18px; margin-top: -7px; border-radius: 9px; background-color: var(--gold-bright); border-width: 2px; border-color: rgb(110, 76, 22); }
+.lb-pause-credits { color: var(--muted); font-size: 13px; margin: 0; }
+.lb-pause-key-row { flex-direction: row; align-items: center; margin-bottom: 8px; }
+.lb-pause-keycap { min-width: 112px; height: 28px; margin-right: 14px; }
+/* The same plain gold rim as the TAB key under the battle map (two classes so it outranks the shared keycap shadow). */
+.lb-keycap.lb-pause-keycap { padding: 0 7px; border-width: 1px; border-color: var(--gold-dim); }
+.lb-pause-keycap .lb-keycap-text { font-size: 13px; }
+.lb-pause-key-action { font-size: 14px; color: var(--ivory); }
+.lb-pause-actions { flex-direction: row; justify-content: center; align-items: center; margin-top: 24px; }
+.lb-pause-actions .lb-flow-primary { width: 280px; margin: 0 0 0 16px; }
+.lb-pause-end {
+    width: 240px;
     height: 48px;
-    background-size: contain;
-}
-
-.lb-icon--0 { background-image: url("Art/Skill_LightBeam.png"); }
-.lb-icon--1 { background-image: url("Art/Skill_Heal.png"); }
-.lb-icon--2 { background-image: url("Art/Skill_Ice.png"); }
-.lb-icon--3 { background-image: url("Art/Skill_Shockwave.png"); }
-.lb-icon--4 { background-image: url("Art/Skill_Meteor.png"); }
-
-/* ---------- Level-up blessings ----------
-   Full-screen overlay above the paused battle: three large cards dealt in by LevelUpView.
-   Card frame and growth icons come from Lightbringer/UI/Build Preparation Art. */
-
-.lb-levelup {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-    align-items: center;
-    justify-content: center;
-    color: rgb(238, 232, 219);
-}
-
-.lb-levelup-veil {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-}
-
-.lb-levelup-header {
-    align-items: center;
-}
-
-.lb-levelup-title-row {
-    flex-direction: row;
-    align-items: center;
-}
-
-.lb-levelup-title {
-    margin: 0 26px;
-    padding: 0;
-    font-size: 72px;
-    letter-spacing: 10px;
-    color: rgb(250, 222, 150);
-    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
-}
-
-.lb-levelup-subtitle {
-    margin: 4px 0 0 0;
-    padding: 0;
-}
-
-.lb-levelup-remaining {
-    margin: 10px 0 0 0;
-    padding: 4px 14px;
-    border-width: 1px;
-    font-size: 13px;
-    -unity-font-style: bold;
-}
-
-.lb-lvcards {
-    flex-direction: row;
-    justify-content: center;
-}
-
-.lb-lvcard {
-    width: 420px;
-    height: 600px;
     margin: 0;
-    padding: 58px 34px 26px 34px;
-    align-items: center;
-    border-width: 0;
+    flex-shrink: 0;
+    padding: 0 0 1px 0;
+    background-image: url("Art/Chrome/Ui_BtnDanger.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 23; -unity-slice-bottom: 23;
+    -unity-background-image-tint-color: rgb(228, 228, 228);
     background-color: rgba(0, 0, 0, 0);
-    color: rgb(238, 232, 219);
-    transition-property: scale, translate, opacity;
+    border-width: 0;
+    color: rgb(255, 210, 196);
+    font-size: 16px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+.lb-pause-end:hover, .lb-pause-end:focus, .lb-pause-end:active { -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(0, 0, 0, 0); color: rgb(255, 232, 222); }
+
+/* ---------- Level-up blessings ---------- */
+
+.lb-levelup { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; align-items: center; justify-content: center; color: var(--ivory); background-color: rgb(16, 16, 21); }
+.lb-levelup-veil { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("Art/Prep_Glow.png"); -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: rgb(120, 90, 40); opacity: 0.35; }
+.lb-levelup-header { align-items: center; margin-bottom: 30px; }
+.lb-levelup-rule { width: 520px; margin: 4px 0 6px 0; }
+.lb-levelup-title-row { flex-direction: row; align-items: center; }
+.lb-levelup-title { margin: 0 0 6px 0; padding: 0; font-size: 46px; letter-spacing: 8px; color: var(--gold-bright); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); }
+.lb-levelup-subtitle { margin: 4px 0 0 0; padding: 0; font-size: 16px; color: var(--muted); }
+.lb-levelup-remaining { margin: 10px 0 0 0; padding: 4px 14px; font-size: 13px; -unity-font-style: bold; border-width: 1px; border-color: var(--gold-dim); border-radius: 12px; background-color: rgba(226, 186, 108, 0.08); color: var(--gold-bright); }
+.lb-lvcards { flex-direction: row; justify-content: center; width: 86%; max-width: 1240px; }
+.lb-lvslot { flex-grow: 1; flex-basis: 0; margin: 0 12px; }
+.lb-lvcard {
+    width: 100%;
+    height: 470px;
+    margin: 0;
+    padding: 34px 32px 26px 32px;
+    align-items: flex-start;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/Chrome/Ui_Card.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-type: tiled;
+    border-width: 0;
+    color: var(--ivory);
+    transition-property: translate, opacity;
     transition-duration: 0.16s;
     transition-timing-function: ease-out;
 }
-
-.lb-lvcard:hover {
-    scale: 1.035 1.035;
-    translate: 0 -10px;
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.lb-lvcard:active {
-    scale: 1.0 1.0;
-    translate: 0 -4px;
-}
-
-/* Selected card stays raised with a full halo until CONFIRM; the other two step back. */
-.lb-lvcard--selected, .lb-lvcard--selected:hover {
-    scale: 1.05 1.05;
-    translate: 0 -16px;
-}
-
-.lb-lvcard--selected .lb-lvcard-medal {
-    background-color: rgb(196, 150, 64);
-    border-color: rgb(255, 244, 205);
-}
-
-.lb-lvcard--dimmed {
-    opacity: 0.5;
-}
-
-.lb-lvcard--dimmed:hover {
-    opacity: 0.85;
-}
-
-.lb-lvcard-medal {
-    position: absolute;
-    left: 50%;
-    top: -30px;
-    width: 64px;
-    height: 64px;
-    margin-left: -32px;
-    border-radius: 32px;
-    border-width: 2px;
-    border-color: rgb(240, 205, 128);
-    background-color: rgb(24, 36, 72);
-    align-items: center;
-    justify-content: center;
-}
-
-.lb-lvcard:hover .lb-lvcard-medal {
-    background-color: rgb(40, 66, 146);
-    border-color: rgb(255, 236, 180);
-}
-
-.lb-lvcard-number {
-    margin: 0;
-    padding: 0;
-    font-size: 30px;
-    color: rgb(255, 240, 200);
-    -unity-text-align: middle-center;
-}
-
-.lb-lvcard-category {
-    margin: 0;
-    padding: 0;
-    font-size: 13px;
-    letter-spacing: 5px;
-    -unity-font-style: bold;
-}
-
-.lb-lvcard-well {
-    width: 196px;
-    height: 196px;
-    margin: 10px 0 8px 0;
-    align-items: center;
-    justify-content: center;
-}
-
-.lb-growth-icon {
-    width: 150px;
-    height: 150px;
-    background-size: contain;
-}
-
+.lb-lvcard:hover, .lb-lvcard:focus { translate: 0 -6px; background-color: rgba(0, 0, 0, 0); }
+.lb-lvcard:active { translate: 0 -2px; background-color: rgba(0, 0, 0, 0); }
+.lb-lvcard--selected, .lb-lvcard--selected:hover { translate: 0 -10px; background-image: url("Art/Chrome/Ui_CardActive.png"); }
+.lb-lvcard--dimmed { opacity: 0.6; }
+.lb-lvcard--dimmed:hover { opacity: 0.9; }
+.lb-lvcard-medal { position: absolute; right: 22px; top: 22px; width: 34px; height: 34px; border-radius: 17px; border-width: 1px; border-color: var(--gold-dim); background-color: rgb(30, 30, 36); align-items: center; justify-content: center; }
+.lb-lvcard--selected .lb-lvcard-medal { background-color: var(--gold); border-color: var(--gold-bright); }
+.lb-lvcard-number { margin: 0; padding: 0; font-size: 14px; color: var(--ivory); -unity-text-align: middle-center; }
+.lb-lvcard--selected .lb-lvcard-number { color: rgb(30, 18, 6); }
+.lb-lvcard-category { margin: 0; padding: 0; font-size: 13px; letter-spacing: 3px; -unity-font-style: bold; color: var(--muted); }
+.lb-lvcard-well { width: 108px; height: 108px; margin: 18px 0 10px 0; align-items: center; justify-content: center; background-image: url("Art/Chrome/Ui_Socket.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-growth-icon { width: 76px; height: 76px; background-size: contain; }
 .lb-growth-icon--AuraSize { background-image: url("Art/Growth_AuraSize.png"); }
 .lb-growth-icon--FoodProduction { background-image: url("Art/Growth_FoodProduction.png"); }
 .lb-growth-icon--ManaRecovery { background-image: url("Art/Growth_ManaRecovery.png"); }
@@ -1111,364 +563,175 @@
 .lb-growth-icon--AuraBuff { background-image: url("Art/Growth_AuraBuff.png"); }
 .lb-growth-icon--HeroPower { background-image: url("Art/Growth_HeroPower.png"); }
 .lb-growth-icon--HeroVitality { background-image: url("Art/Growth_HeroVitality.png"); }
+.lb-lvcard-title { margin: 4px 0 14px 0; padding: 0; font-size: 26px; -unity-font-style: bold; color: var(--ivory); -unity-text-align: middle-left; white-space: normal; }
+.lb-lvcard-description { min-height: 54px; margin: 0; padding: 0; font-size: 16px; color: var(--muted); -unity-text-align: upper-left; white-space: normal; }
+.lb-lvcard-effect { margin: 16px 0 0 0; padding: 0; font-size: 22px; color: var(--gold-bright); -unity-text-align: middle-left; }
+.lb-lvcard-footer { position: absolute; left: 32px; right: 32px; bottom: 22px; height: 60px; padding: 12px 0 0 0; flex-direction: column; align-items: flex-start; border-top-width: 1px; border-color: var(--gold-faint); }
+.lb-lvcard-rank { margin: 0 0 5px 0; padding: 0; font-size: 13px; -unity-font-style: bold; color: var(--muted); }
+.lb-lvcard-total { margin: 0; padding: 0; font-size: 14px; -unity-font-style: bold; color: var(--ivory); white-space: normal; }
+.lb-lvcard--aura .lb-lvcard-category, .lb-lvcard--aura .lb-lvcard-effect { color: rgb(236, 196, 132); }
+.lb-lvcard--supply .lb-lvcard-category, .lb-lvcard--supply .lb-lvcard-effect { color: rgb(172, 198, 128); }
+.lb-lvcard--magic .lb-lvcard-category, .lb-lvcard--magic .lb-lvcard-effect { color: rgb(152, 174, 214); }
+.lb-lvcard--command .lb-lvcard-category, .lb-lvcard--command .lb-lvcard-effect { color: rgb(180, 160, 210); }
+.lb-lvcard--hero .lb-lvcard-category, .lb-lvcard--hero .lb-lvcard-effect { color: rgb(216, 134, 118); }
+.lb-levelup-prompt { align-items: center; margin-top: 26px; }
+.lb-levelup-prompt-hint { margin: 6px 0 0 0; padding: 0; font-size: 14px; color: var(--muted); }
+.lb-levelup-confirm { width: 320px; margin-top: 14px; }
 
-.lb-lvcard-title {
-    margin: 4px 0 0 0;
-    padding: 0;
-    font-size: 30px;
-    letter-spacing: 1px;
-    color: rgb(250, 222, 150);
-    -unity-text-align: middle-center;
-    white-space: normal;
-}
+/* ---------- Preparation: mission briefing and hero equipment ---------- */
 
-.lb-lvcard-description {
-    min-height: 52px;
-    margin: 0;
-    padding: 0;
-    font-size: 17px;
-    color: rgba(238, 232, 219, 0.82);
-    -unity-text-align: middle-center;
-    white-space: normal;
-}
+.lb-brief { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(16, 16, 21); color: var(--ivory); }
+.lb-brief-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/CampaignAtlas_Act1_v1.png"); -unity-background-scale-mode: scale-and-crop; opacity: 0.12; }
+.lb-brief--act2 .lb-brief-background, .lb-brief--act2 .lb-brief-landscape { background-image: url("Art/CampaignAtlas_Act2_v2.png"); }
+.lb-brief--act3 .lb-brief-background, .lb-brief--act3 .lb-brief-landscape { background-image: url("Art/CampaignAtlas_Act3_v2.png"); }
+.lb-brief-vignette { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/Prep_Fade.png"); background-size: 100% 100%; opacity: 0.8; }
 
-.lb-lvcard-effect {
-    margin: 12px 0 0 0;
-    padding: 0;
-    font-size: 23px;
-    -unity-text-align: middle-center;
-}
-
-.lb-lvcard-footer {
-    position: absolute;
-    left: 34px;
-    right: 34px;
-    bottom: 26px;
-    height: 40px;
-    padding: 0 14px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    border-top-width: 1px;
-    border-color: rgba(240, 205, 128, 0.3);
-}
-
-.lb-lvcard-rank {
-    margin: 0;
-    padding: 0;
-    font-size: 13px;
-    letter-spacing: 2px;
-    -unity-font-style: bold;
-    color: rgba(238, 232, 219, 0.6);
-}
-
-.lb-lvcard-total {
-    margin: 0;
-    padding: 0;
-    font-size: 15px;
-    -unity-font-style: bold;
-    color: rgb(250, 222, 150);
-}
-.lb-lvcard--aura .lb-lvcard-category, .lb-lvcard--aura .lb-lvcard-effect { color: rgb(255, 210, 120); }
-.lb-lvcard--supply .lb-lvcard-category, .lb-lvcard--supply .lb-lvcard-effect { color: rgb(160, 230, 130); }
-.lb-lvcard--magic .lb-lvcard-category, .lb-lvcard--magic .lb-lvcard-effect { color: rgb(140, 185, 255); }
-.lb-lvcard--command .lb-lvcard-category, .lb-lvcard--command .lb-lvcard-effect { color: rgb(195, 165, 255); }
-.lb-lvcard--hero .lb-lvcard-category, .lb-lvcard--hero .lb-lvcard-effect { color: rgb(255, 150, 135); }
-
-.lb-levelup-prompt {
-    align-items: center;
-}
-
-.lb-levelup-prompt-hint {
-    margin: 6px 0 0 0;
-    padding: 0;
-}
-
-.lb-levelup-confirm {
-    width: 340px;
-    height: 62px;
-    margin: 16px 0 0 0;
-    padding: 0;
-    border-width: 2px;
-    border-radius: 6px;
-    border-color: rgb(240, 205, 128);
-    background-color: rgb(40, 66, 146);
-    font-size: 24px;
-    letter-spacing: 6px;
-    color: rgb(255, 246, 225);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-    transition-property: scale, background-color, border-color;
-    transition-duration: 0.15s;
-}
-
-.lb-levelup-confirm:hover {
-    background-color: rgb(56, 88, 186);
-    border-color: rgb(255, 232, 170);
-    scale: 1.03 1.03;
-}
-
-.lb-levelup-confirm:active {
-    background-color: rgb(32, 54, 120);
-    scale: 0.99 0.99;
-}
-
-.lb-levelup-confirm:disabled {
-    background-color: rgb(30, 36, 56);
-    border-color: rgba(238, 232, 219, 0.2);
-    color: rgba(238, 232, 219, 0.4);
-    opacity: 1;
-    scale: 1 1;
-}
-
-/* Destination briefing. Quiet surfaces and typography carry the hierarchy; gold marks decisions. */
-.lb-brief { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(10, 17, 21); color: rgb(223, 226, 217); }
-.lb-brief-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-image: url("Art/CampaignAtlas_Act1_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(35, 45, 49); opacity: 0.22; }
-.lb-brief-header { position: absolute; left: 64px; right: 64px; top: 40px; height: 82px; flex-direction: row; justify-content: space-between; align-items: center; }
-.lb-brief-eyebrow { font-size: 12px; letter-spacing: 2px; color: rgb(181, 171, 141); margin: 0; padding: 0; }
-.lb-brief-title { font-size: 32px; letter-spacing: 1px; margin: 12px 0 0 0; padding: 0; color: rgb(235, 235, 220); }
-.lb-brief-back, .lb-brief-text-button { border-radius: 2px; border-width: 1px; border-color: rgba(183, 185, 164, 0.24); background-color: rgba(21, 31, 35, 0.8); color: rgb(196, 201, 186); font-size: 14px; padding: 10px 18px; margin: 0; }
-.lb-brief-back:hover, .lb-brief-back:focus, .lb-brief-text-button:hover, .lb-brief-text-button:focus { border-color: rgb(196, 179, 133); background-color: rgb(37, 45, 46); color: rgb(235, 222, 187); }
-.lb-brief-body { position: absolute; left: 64px; right: 64px; top: 151px; bottom: 140px; flex-direction: row; }
-.lb-brief-mission { width: 31%; padding-right: 38px; border-right-width: 1px; border-right-color: rgba(183, 185, 164, 0.17); }
-.lb-brief-armory { flex-grow: 1; flex-basis: 0; margin-left: 46px; }
+.lb-brief-header, .lb-upg-header { flex-direction: row; align-items: center; height: 64px; }
+.lb-brief-header { position: absolute; left: 48px; right: 48px; top: 26px; }
+.lb-brief-heading-block, .lb-upg-heading-block { flex-grow: 1; margin-left: 24px; padding-left: 24px; border-left-width: 1px; border-left-color: var(--gold-faint); }
+.lb-brief-eyebrow, .lb-upg-eyebrow { font-size: 13px; letter-spacing: 4px; color: var(--gold); margin: 0; padding: 0; -unity-font-style: bold; }
+.lb-brief-title, .lb-upg-heading { font-size: 30px; -unity-font-style: bold; letter-spacing: 1px; margin: 4px 0 0 0; padding: 0; color: var(--ivory); }
+.lb-brief-actions, .lb-upg-header-right { flex-direction: row; align-items: center; }
+.lb-upg-purse { flex-direction: row; align-items: center; height: 46px; padding: 0 22px 0 14px; background-color: rgba(18, 18, 23, 0.9); border-width: 1px; border-color: var(--gold-dim); border-radius: 23px; }
+.lb-upg-gold { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 21px; color: var(--gold-bright); }
+.lb-brief-body { position: absolute; left: 48px; right: 48px; top: 112px; bottom: 100px; flex-direction: row; }
 .lb-brief .unity-scroll-view__content-container { flex-shrink: 0; }
-.lb-brief-landscape { height: 172px; flex-shrink: 0; background-image: url("Art/CampaignAtlas_Act1_v1.png"); background-size: cover; -unity-background-image-tint-color: rgb(91, 106, 110); padding: 23px 26px; margin-bottom: 8px; border-width: 1px; border-color: rgba(198, 191, 160, 0.25); }
-.lb-brief-destination { font-size: 46px; color: rgb(244, 239, 216); margin: 6px 0; padding: 0; }
-.lb-brief-tag { font-size: 13px; color: rgb(200, 198, 175); margin: 0; padding: 0; }
-.lb-brief-section { font-size: 12px; letter-spacing: 1px; color: rgb(166, 169, 152); margin: 20px 0 10px 0; padding: 0; }
-.lb-brief-objective { font-size: 20px; color: rgb(225, 229, 216); white-space: normal; margin: 0; padding: 0; }
-.lb-brief-metrics { flex-direction: row; margin: 22px 0 0 0; padding-bottom: 14px; border-bottom-width: 1px; border-bottom-color: rgba(180, 185, 168, 0.16); }
-.lb-brief-metric { width: 50%; }
-.lb-brief-metric-value { font-size: 25px; color: rgb(205, 203, 178); margin: 5px 0 0 0; padding: 0; }
-.lb-brief-enemies { flex-direction: row; flex-wrap: wrap; }
-.lb-brief-enemy { font-size: 14px; color: rgb(191, 199, 188); border-bottom-width: 1px; border-bottom-color: rgba(171, 156, 130, 0.35); padding: 4px 0 6px 0; margin: 0 18px 5px 0; }
-.lb-brief-reward { flex-direction: row; align-items: center; min-height: 68px; background-color: rgba(44, 47, 39, 0.42); padding: 10px 12px; }
-.lb-brief-reward .lb-icon { margin-right: 16px; }
-.lb-brief-copy { flex-grow: 1; flex-shrink: 1; min-width: 0; justify-content: center; }
-.lb-brief-muted { font-size: 12px; color: rgb(149, 162, 159); white-space: normal; margin: 3px 0; padding: 0; -unity-text-align: middle-left; }
-.lb-brief-identity { flex-direction: row; align-items: center; height: 77px; margin-bottom: 13px; border-bottom-width: 1px; border-bottom-color: rgba(180, 185, 168, 0.17); padding-bottom: 12px; }
-.lb-brief-portrait { width: 62px; height: 64px; margin-right: 18px; background-image: url("Art/Hero_Commander.png"); background-size: 180% auto; background-position-x: center; background-position-y: top; -unity-background-image-tint-color: rgb(192, 199, 194); overflow: hidden; }
-.lb-brief-hero-name { font-size: 17px; color: rgb(223, 225, 210); margin: 0 0 5px 0; padding: 0; }
-.lb-brief-heading-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.lb-brief-heading { font-size: 23px; color: rgb(233, 232, 213); margin: 0; padding: 0; }
-.lb-brief-slots { flex-direction: row; margin-bottom: 17px; }
-.lb-brief-slot { flex-grow: 1; flex-basis: 0; flex-direction: row; align-items: center; height: 85px; margin: 0 10px 0 0; padding: 13px 12px; border-width: 1px; border-radius: 2px; border-color: rgba(181, 189, 170, 0.2); background-color: rgba(25, 36, 39, 0.72); }
-.lb-brief-slot--active { border-color: rgb(196, 179, 133); background-color: rgb(40, 45, 41); }
-.lb-brief-slot:hover, .lb-brief-slot:focus { border-color: rgb(211, 202, 166); }
-.lb-brief-key { font-size: 11px; color: rgb(191, 183, 151); margin: 0 10px 0 0; padding: 0; min-width: 16px; }
-.lb-brief-slot .lb-icon { width: 42px; height: 48px; flex-shrink: 0; margin-right: 10px; }
-.lb-brief-item-name { font-size: 15px; color: rgb(222, 225, 209); white-space: normal; margin: 0 0 4px 0; padding: 0; -unity-text-align: middle-left; }
-.lb-brief-inventory-hint { font-size: 12px; color: rgb(156, 171, 165); margin: 0 0 12px 0; padding: 0; }
-.lb-brief-inventory { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
-.lb-brief-item { width: 32.4%; height: 78px; margin: 0 0.9% 9px 0; padding: 10px 14px; flex-direction: row; align-items: center; border-width: 1px; border-radius: 2px; border-color: rgba(156, 174, 159, 0.16); background-color: rgba(20, 31, 34, 0.7); }
-.lb-brief-item .lb-icon { width: 42px; height: 46px; flex-shrink: 0; margin-right: 15px; }
-.lb-brief-item:hover, .lb-brief-item:focus { border-color: rgb(181, 188, 159); background-color: rgb(34, 46, 46); }
-.lb-brief-item--selected { border-color: rgb(175, 158, 114); background-color: rgb(38, 43, 37); }
-.lb-brief-item:disabled { opacity: 0.58; }
-.lb-brief-inspect { flex-direction: row; align-items: center; min-height: 137px; padding: 17px 20px; border-top-width: 1px; border-top-color: rgba(194, 179, 134, 0.5); background-color: rgba(29, 37, 35, 0.85); }
-.lb-brief-inspect .lb-brief-detail-icon { width: 60px; height: 82px; margin-right: 24px; flex-shrink: 0; }
-.lb-brief-item-title { font-size: 21px; color: rgb(233, 221, 184); margin: 3px 0 8px 0; padding: 0; }
-.lb-brief-effect { font-size: 13px; color: rgb(184, 197, 188); white-space: normal; margin: 0; padding: 0; }
-.lb-brief-item-stats { font-size: 12px; color: rgb(155, 174, 172); margin: 7px 0 0 0; padding: 0; }
-.lb-brief-equip { min-width: 146px; height: 42px; font-size: 13px; color: rgb(226, 214, 173); border-width: 1px; border-color: rgb(156, 143, 109); border-radius: 2px; background-color: rgb(44, 48, 38); margin-left: 18px; }
-.lb-brief-equip:hover, .lb-brief-equip:focus { background-color: rgb(66, 68, 48); border-color: rgb(221, 204, 151); }
-.lb-brief-equip:disabled { opacity: 0.45; }
-.lb-brief-feedback { height: 24px; margin: 7px 0 0 0; padding: 0; font-size: 12px; color: rgb(194, 201, 160); }
-.lb-brief-roster { position: absolute; left: 64px; right: 64px; bottom: 119px; height: 122px; border-top-width: 1px; border-top-color: rgba(188, 189, 167, 0.18); }
-.lb-brief-roster-heading { flex-direction: row; align-items: center; justify-content: space-between; height: 42px; }
-.lb-brief-roster-heading .lb-brief-section { margin: 0; }
-.lb-brief-troops { flex-direction: row; }
-.lb-brief-troop { flex-grow: 1; flex-basis: 0; flex-direction: row; align-items: center; height: 73px; margin-right: 8px; background-color: rgba(26, 36, 37, 0.45); }
-.lb-brief-unit-art { width: 68px; height: 68px; flex-shrink: 0; margin-right: 10px; background-size: cover; background-position-y: top; -unity-background-image-tint-color: rgb(183, 195, 184); }
-.lb-brief-troop-name { font-size: 14px; color: rgb(202, 211, 194); margin: 0 0 3px 0; padding: 0; }
-.lb-brief-troop-role { font-size: 11px; color: rgb(144, 160, 151); margin: 0 0 3px 0; padding: 0; }
-.lb-brief-troop-cost { font-size: 11px; color: rgb(153, 174, 163); margin: 0; padding: 0; }
-.lb-brief-troop--locked { opacity: 0.5; }
-.lb-brief-unit--0 .lb-brief-unit-art { background-image: url("Art/Unit_Swordsman.png"); }
-.lb-brief-unit--1 .lb-brief-unit-art { background-image: url("Art/Unit_Archer.png"); }
-.lb-brief-unit--2 .lb-brief-unit-art { background-image: url("Art/Unit_Shieldbearer.png"); }
-.lb-brief-unit--3 .lb-brief-unit-art { background-image: url("Art/Unit_Spearman.png"); }
-.lb-brief-unit--4 .lb-brief-unit-art { background-image: url("Art/Unit_Priest.png"); }
-.lb-brief-unit--5 .lb-brief-unit-art { background-image: url("Art/Unit_Mage.png"); }
-.lb-brief-unit--6 .lb-brief-unit-art { background-image: url("Art/Unit_Knight.png"); }
-.lb-brief-unit--7 .lb-brief-unit-art { background-image: url("Art/Unit_Dragon.png"); }
-.lb-brief-footer { position: absolute; left: 64px; right: 64px; bottom: 30px; height: 69px; flex-direction: row; align-items: center; justify-content: space-between; border-top-width: 1px; border-top-color: rgba(198, 184, 143, 0.32); padding-top: 14px; }
-.lb-brief-footer .lb-brief-muted { flex-shrink: 1; margin-right: 30px; }
-.lb-brief .lb-brief-start { width: 340px; height: 52px; flex-shrink: 0; }
-.lb-brief-growth-overlay { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(3, 8, 11, 0.86); align-items: center; justify-content: center; }
-.lb-brief-growth-dialog { width: 660px; max-height: 78%; padding: 32px; background-color: rgb(19, 29, 32); border-width: 1px; border-color: rgba(195, 181, 139, 0.6); }
-.lb-brief-growth-list { margin-top: 22px; flex-shrink: 1; }
-.lb-brief-growth-row { font-size: 16px; white-space: normal; color: rgb(214, 219, 202); padding: 15px 0; border-bottom-width: 1px; border-bottom-color: rgba(166, 181, 163, 0.17); }
-
-/* Unified in-game presentation: matte charcoal, ivory type, brass only for selection. */
-.lb-hud .lb-display, .lb-levelup .lb-display { -unity-font-definition: url("Fonts/NanumGothic-Regular.ttf"); }
-.lb-hud-panel, .lb-hud-frame { background-image: none; background-color: rgba(10, 20, 23, 0.88); border-width: 1px; border-color: rgba(182, 190, 171, 0.24); border-radius: 2px; }
-.lb-hud-frame { padding: 12px; }
-.lb-hud .lb-hud-title { color: rgb(199, 208, 190); font-size: 12px; letter-spacing: 1px; }
-.lb-hud .lb-keycap { background-image: none; background-color: rgb(25, 36, 39); border-width: 1px; border-color: rgba(199, 205, 185, 0.42); border-radius: 2px; padding: 0 6px; }
-.lb-hud .lb-bar { background-image: none; background-color: rgb(9, 16, 20); border-width: 1px; border-color: rgba(190, 201, 181, 0.25); border-radius: 1px; height: 18px; }
-.lb-hud .lb-bar-fill, .lb-unit-bar-fill { background-image: none; border-radius: 0; }
-.lb-hud .lb-bar--hp .lb-bar-fill { background-color: rgb(133, 64, 65); }
-.lb-hud .lb-bar--mana .lb-bar-fill { background-color: rgb(65, 103, 134); }
-.lb-hud .lb-bar--food .lb-bar-fill { background-color: rgb(145, 126, 69); }
-.lb-hud .lb-bar--ally .lb-bar-fill { background-color: rgb(70, 111, 132); }
-.lb-hud .lb-bar--enemy .lb-bar-fill, .lb-hud .lb-bar--boss .lb-bar-fill { background-color: rgb(150, 65, 68); }
-.lb-hud .lb-bar--shielded .lb-bar-fill { background-color: rgb(101, 88, 133); }
-.lb-unit-bar--ally .lb-unit-bar-fill { background-color: rgb(98, 165, 187); }
-.lb-unit-bar--enemy .lb-unit-bar-fill { background-color: rgb(196, 91, 88); }
-.lb-hud .lb-minimap { left: 32px; top: 28px; width: 230px; }
-.lb-hud .lb-minimap-map { height: 195px; border-radius: 1px; border-color: rgba(186, 193, 165, 0.3); background-color: rgba(17, 32, 32, 0.8); }
-.lb-hud .lb-path-hint { font-size: 15px; color: rgb(214, 200, 151); }
-.lb-hud .lb-top { left: 280px; right: 245px; top: 28px; }
-.lb-hud .lb-top-row { height: 44px; padding: 0 14px; }
-.lb-hud .lb-stage { font-size: 16px; letter-spacing: 0; color: rgb(218, 216, 189); }
-.lb-hud .lb-front { border-radius: 2px; padding: 3px 8px 3px 3px; margin: 0 3px; }
-.lb-hud .lb-front-number { border-radius: 1px; background-color: rgb(23, 34, 37); width: 23px; height: 23px; margin-right: 5px; }
-.lb-hud .lb-front--selected { border-color: rgb(199, 182, 127); }
-.lb-hud .lb-front--selected .lb-front-number { border-width: 1px; background-color: rgb(70, 67, 44); border-color: rgb(180, 166, 113); }
-.lb-hud .lb-front--danger { background-color: rgb(88, 37, 38); border-color: rgb(204, 107, 97); }
-.lb-hud .lb-waves { font-size: 13px; }
-.lb-hud .lb-divider { margin: 0 10px; background-color: rgba(201, 197, 163, 0.25); }
-.lb-hud .lb-base { width: 258px; padding: 8px 12px; margin: 4px 4px 0 4px; }
-.lb-hud .lb-base-head .lb-hud-icon { display: none; }
-.lb-hud .lb-base-title { font-size: 11px; letter-spacing: 1px; }
-.lb-hud .lb-boss { top: 165px; left: 35%; right: 35%; background-color: rgba(14, 21, 23, 0.86); padding: 10px 16px; }
-.lb-hud .lb-boss-name { font-size: 16px; letter-spacing: 2px; }
-.lb-hud .lb-boss-title .lb-hud-icon { display: none; }
-.lb-hud .lb-boss .lb-bar { height: 18px; }
-.lb-hud .lb-vitals { left: 32px; bottom: 32px; width: 350px; padding: 14px; }
-.lb-hud .lb-portrait { width: 66px; height: 92px; margin-right: 14px; }
-.lb-hud .lb-portrait-face { left: 0; top: 0; width: 66px; height: 70px; border-radius: 2px; background-color: rgb(26, 39, 39); }
-.lb-hud .lb-portrait-art { left: -70px; top: -12px; width: 206px; height: 434px; }
-.lb-hud .lb-level { left: 0; bottom: 0; width: 66px; height: 22px; border-width: 0; border-radius: 0; background-color: rgb(35, 43, 37); }
-.lb-hud .lb-level-value { font-size: 12px; }
-.lb-hud .lb-hero-name { font-size: 12px; letter-spacing: 0; color: rgb(204, 211, 185); }
-.lb-hud .lb-bar--hp { height: 22px; }
-.lb-hud .lb-command { left: 390px; right: 410px; bottom: 32px; }
-.lb-hud .lb-slot { width: 132px; margin: 0 4px; }
-.lb-hud .lb-socket-orb { width: 66px; height: 66px; border-width: 1px; border-color: rgba(199, 188, 146, 0.65); border-radius: 2px; background-color: rgba(12, 23, 26, 0.93); }
-.lb-hud .lb-orb, .lb-hud .lb-orb-dial { left: 7px; top: 7px; width: 50px; height: 50px; }
-.lb-hud .lb-orb { border-radius: 1px; background-color: rgba(0, 0, 0, 0); background-size: contain; }
-.lb-hud .lb-orb--0 { background-image: url("Art/Skill_LightBeam.png"); }
-.lb-hud .lb-orb--1 { background-image: url("Art/Skill_Heal.png"); }
-.lb-hud .lb-orb--2 { background-image: url("Art/Skill_Ice.png"); }
-.lb-hud .lb-orb--3 { background-image: url("Art/Skill_Shockwave.png"); }
-.lb-hud .lb-orb--4 { background-image: url("Art/Skill_Meteor.png"); }
-.lb-hud .lb-orb-key { bottom: -10px; }
-.lb-hud .lb-slot-caption { flex-direction: column; border-radius: 2px; margin-top: 16px; padding: 5px 8px; background-color: rgba(10, 20, 23, 0.9); }
-.lb-hud .lb-cost { margin: 3px 0 0 0; font-size: 11px; }
-.lb-hud .lb-troops { right: 32px; top: 180px; bottom: 165px; }
-.lb-hud .lb-card { width: 192px; height: 67px; padding: 5px 10px; margin: 3px 0; background-image: none; background-color: rgba(12, 23, 26, 0.9); border-width: 1px; border-color: rgba(166, 181, 164, 0.18); border-radius: 2px; }
-.lb-hud .lb-card-portrait { width: 51px; height: 53px; margin-right: 12px; }
-.lb-hud .lb-card-body { left: 0; right: 0; top: 0; bottom: 0; border-radius: 1px; background-color: rgb(25, 38, 37); }
-.lb-hud .lb-card-art { height: 148px; }
-.lb-hud .lb-card--7 .lb-card-art { height: 90px; }
-.lb-hud .lb-card-name { font-size: 14px; }
-.lb-hud .lb-card-cost { font-size: 13px; }
-.lb-hud .lb-card--ready { border-color: rgba(183, 191, 151, 0.5); }
-.lb-hud .lb-card--selected { translate: -6px 0; border-left-width: 3px; border-left-color: rgb(211, 194, 140); }
-.lb-hud .lb-card-key { left: -7px; top: -3px; }
-.lb-hud .lb-card-food { width: 15px; height: 15px; }
-.lb-hud .lb-hints { right: 32px; bottom: 32px; padding: 8px 10px; }
-.lb-hud .lb-hint-text { font-size: 10px; margin-left: 4px; }
-.lb-hud .lb-hint-row .lb-keycap { margin-left: 7px; height: 20px; padding: 0 4px; }
-.lb-hud .lb-keycap-text { font-size: 10px; }
-.lb-hud .lb-toast { background-image: none; background-color: rgba(13, 23, 26, 0.94); border-bottom-width: 1px; border-bottom-color: rgb(185, 171, 124); height: 42px; bottom: 183px; font-size: 15px; }
-
-/* Level-up comparison: a single row, restrained entrances and no rotating ornament. */
-.lb-levelup { background-color: rgb(10, 18, 22); }
-.lb-levelup-veil { background-color: rgba(10, 18, 22, 0.96); }
-.lb-levelup-header { margin-bottom: 30px; }
-.lb-levelup .lb-levelup-title { font-size: 42px; letter-spacing: 2px; color: rgb(234, 233, 215); text-shadow: none; margin: 0 0 14px 0; }
-.lb-levelup-subtitle { font-size: 15px; letter-spacing: 0; color: rgb(158, 177, 170); -unity-font-style: normal; }
-.lb-levelup-remaining { background-color: rgb(30, 43, 43); color: rgb(192, 195, 164); border-color: rgba(183, 190, 162, 0.3); border-radius: 1px; letter-spacing: 0; }
-.lb-lvcards { width: 86%; max-width: 1240px; }
-.lb-lvslot { flex-grow: 1; flex-basis: 0; margin: 0 10px; }
-.lb-levelup .lb-lvcard { width: 100%; height: 465px; padding: 30px 28px; border-width: 1px; border-color: rgba(173, 191, 174, 0.3); border-radius: 2px; background-image: none; background-color: rgb(21, 32, 35); align-items: flex-start; }
-.lb-levelup .lb-lvcard:hover, .lb-levelup .lb-lvcard:focus { scale: 1 1; translate: 0 -3px; background-color: rgb(29, 42, 43); border-color: rgb(184, 193, 160); }
-.lb-levelup .lb-lvcard--selected, .lb-levelup .lb-lvcard--selected:hover { scale: 1 1; translate: 0 -3px; border-color: rgb(214, 195, 137); background-color: rgb(37, 43, 37); }
-.lb-levelup .lb-lvcard--dimmed { opacity: 0.75; }
-.lb-levelup .lb-lvcard-medal { left: auto; right: 24px; top: 22px; margin-left: 0; width: 30px; height: 30px; border-radius: 2px; border-width: 1px; border-color: rgba(185, 193, 164, 0.35); background-color: rgb(23, 35, 36); }
-.lb-levelup .lb-lvcard-number { font-size: 13px; }
-.lb-levelup .lb-lvcard-category { font-size: 12px; letter-spacing: 1px; color: rgb(184, 190, 163); }
-.lb-levelup .lb-lvcard-well { width: 92px; height: 100px; margin: 20px 0 10px 0; }
-.lb-levelup .lb-growth-icon { width: 88px; height: 88px; }
-.lb-levelup .lb-lvcard-title { font-size: 25px; color: rgb(230, 232, 214); -unity-text-align: middle-left; margin: 4px 0 16px 0; letter-spacing: 0; }
-.lb-levelup .lb-lvcard-description { font-size: 15px; -unity-text-align: upper-left; min-height: 54px; color: rgb(157, 177, 171); }
-.lb-levelup .lb-lvcard-effect { font-size: 22px; color: rgb(217, 203, 157); -unity-text-align: middle-left; margin-top: 16px; }
-.lb-levelup .lb-lvcard-footer { left: 28px; right: 28px; bottom: 22px; height: 50px; padding: 12px 0 0 0; flex-direction: column; align-items: flex-start; border-color: rgba(189, 191, 157, 0.24); }
-.lb-levelup .lb-lvcard-total { font-size: 13px; color: rgb(201, 207, 178); white-space: normal; }
-.lb-levelup .lb-lvcard-rank { font-size: 11px; letter-spacing: 0; }
-.lb-levelup-prompt { margin-top: 24px; }
-.lb-levelup-prompt-hint { font-size: 13px; letter-spacing: 0; color: rgb(154, 174, 165); }
-.lb-levelup .lb-levelup-confirm { width: 300px; height: 52px; font-size: 17px; letter-spacing: 0; border-width: 1px; border-radius: 2px; background-color: rgb(195, 177, 130); border-color: rgb(211, 195, 154); color: rgb(21, 29, 30); text-shadow: none; }
-.lb-levelup .lb-levelup-confirm:hover, .lb-levelup .lb-levelup-confirm:focus { scale: 1 1; background-color: rgb(221, 206, 164); }
-.lb-levelup .lb-levelup-confirm:disabled { background-color: rgb(31, 43, 43); color: rgb(115, 131, 125); border-color: rgb(55, 70, 65); }
-
-/* Pause and result share a quiet, readable modal language. */
-.lb-flow { background-color: rgba(6, 14, 18, 0.96); color: rgb(220, 226, 211); }
-.lb-flow-dialog { width: 850px; max-width: 90%; max-height: 92%; padding: 38px 48px; background-color: rgb(17, 28, 32); border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(193, 180, 137, 0.5); align-items: stretch; }
-.lb-flow-eyebrow { font-size: 12px; letter-spacing: 2px; color: rgb(172, 182, 159); -unity-text-align: middle-center; margin-bottom: 15px; }
-.lb-flow-title { font-size: 58px; color: rgb(228, 220, 181); -unity-text-align: middle-center; margin: 0 0 16px 0; -unity-font-style: normal; }
-.lb-result--defeat .lb-flow-title { color: rgb(203, 147, 132); }
-.lb-flow-description { font-size: 16px; color: rgb(164, 183, 174); white-space: normal; -unity-text-align: middle-center; margin: 0 0 28px 0; }
-.lb-flow-muted { font-size: 13px; color: rgb(153, 173, 162); white-space: normal; }
-.lb-result-summary { flex-direction: row; padding: 22px 0; border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(187, 193, 163, 0.2); }
-.lb-result-metric { flex-grow: 1; flex-basis: 0; align-items: center; }
-.lb-result-value { font-size: 30px; color: rgb(225, 229, 208); margin-top: 12px; }
-.lb-result-details { margin: 20px 0 10px 0; color: rgb(162, 181, 171); font-size: 13px; }
-.lb-result-scroll { max-height: 300px; }
-.lb-result .lb-stat { font-size: 12px; color: rgb(163, 183, 172); margin-bottom: 8px; }
-.lb-result .lb-caption { color: rgb(194, 201, 173); font-size: 12px; margin-top: 10px; letter-spacing: 0; }
-.lb-result .lb-rating { background-color: rgb(27, 41, 43); border-width: 1px; border-color: rgb(78, 96, 84); border-radius: 2px; }
-.lb-result .lb-rating--on { background-color: rgb(190, 174, 126); color: rgb(17, 28, 29); }
-.lb-result .lb-note .unity-text-field__input { background-color: rgb(11, 22, 27); color: rgb(218, 227, 210); border-width: 1px; border-color: rgb(65, 85, 76); padding: 10px; }
-.lb-flow .lb-flow-primary { width: 310px; flex-shrink: 0; align-self: center; margin-top: 20px; }
-.lb-pause-dialog { width: 670px; }
-.lb-pause-end { width: 310px; height: 42px; flex-shrink: 0; align-self: center; margin: 12px 0 0 0; background-color: rgb(38, 29, 29); color: rgb(224, 175, 156); border-width: 1px; border-color: rgb(122, 83, 70); border-radius: 2px; font-size: 16px; }
-.lb-pause-end:hover, .lb-pause-end:focus { background-color: rgb(61, 37, 33); border-color: rgb(211, 150, 122); }
-.lb-pause-dialog .lb-flow-title { font-size: 44px; }
-.lb-pause-volume-header { flex-direction: row; justify-content: space-between; padding-top: 12px; border-top-width: 1px; border-top-color: rgba(183, 190, 158, 0.23); }
-.lb-pause-volume { margin: 16px 0 22px 0; height: 24px; }
-.lb-pause-volume .unity-base-field__label { display: none; }
-.lb-pause-volume .unity-base-slider__tracker { height: 3px; background-color: rgb(61, 80, 72); }
-.lb-pause-volume .unity-base-slider__dragger { width: 14px; height: 20px; border-radius: 2px; background-color: rgb(203, 188, 143); border-width: 0; }
-.lb-pause-controls { font-size: 13px; color: rgb(162, 180, 167); white-space: normal; padding: 18px 0; border-top-width: 1px; border-top-color: rgba(183, 190, 158, 0.23); }
-.lb-pause-credits { color: rgb(136, 157, 146); font-size: 12px; margin: 0 0 10px 0; }
-.lb-flow-footnote { font-size: 12px; color: rgb(135, 158, 145); -unity-text-align: middle-center; margin-top: 14px; }
-
-.lb-hidden {
-    display: none;
+.lb-brief-mission, .lb-brief-armory {
+    background-image: url("Art/Chrome/Ui_Panel.png");
+    -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 32; -unity-slice-bottom: 32; -unity-slice-type: tiled;
+    padding: 22px 26px;
 }
+.lb-brief-mission { width: 34%; margin-right: 20px; align-self: flex-start; max-height: 100%; }
+.lb-brief-armory { flex-grow: 1; flex-basis: 0; }
 
-/* ---------- Gold + troop upgrade ---------- */
-.lb-coin { width: 18px; height: 18px; border-radius: 9px; background-color: rgb(233, 190, 86); border-width: 2px; border-color: rgb(255, 238, 178); margin-right: 9px; flex-shrink: 0; }
-.lb-coin--large { width: 30px; height: 30px; border-radius: 15px; margin-right: 12px; }
-.lb-upg-purse { flex-direction: row; align-items: center; padding: 7px 20px 7px 16px; background-color: rgba(7, 12, 19, 0.92); border-width: 1px; border-color: rgba(214, 178, 100, 0.55); border-radius: 2px; margin-right: 16px; }
-.lb-upg-gold { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; letter-spacing: 1px; color: rgb(246, 224, 160); }
-.lb-brief-actions { flex-direction: row; align-items: center; }
-.lb-brief-upgrade { margin-right: 16px; border-color: rgba(214, 178, 100, 0.6); color: rgb(244, 226, 170); }
+.lb-brief-landscape {
+    height: 236px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    background-image: url("Art/CampaignAtlas_Act1_v1.png");
+    -unity-background-scale-mode: scale-and-crop;
+    border-width: 1px;
+    border-color: var(--gold-faint);
+}
+.lb-brief-destination { font-size: 42px; -unity-font-style: bold; color: var(--ivory); margin: 2px 0 4px 0; padding: 0; text-shadow: 0 2px 10px rgb(0, 0, 0); }
+.lb-brief-tag { font-size: 14px; -unity-font-style: bold; color: rgb(255, 172, 150); margin: 0; padding: 0; text-shadow: 0 1px 4px rgb(0, 0, 0); }
+.lb-brief-landscape--cleared .lb-brief-tag { color: var(--gold-bright); }
+.lb-brief-section-row { flex-direction: row; align-items: center; margin: 22px 0 12px 0; }
+.lb-brief-section-mark { width: 7px; height: 7px; margin: 0 10px 0 1px; rotate: 45deg; background-color: var(--gold); }
+.lb-brief-section { font-size: 15px; letter-spacing: 2px; -unity-font-style: bold; color: var(--gold-bright); margin: 0; padding: 0; }
+.lb-brief-section-line { flex-grow: 1; height: 1px; margin-left: 14px; background-color: var(--gold-faint); }
+.lb-brief-objective { font-size: 18px; color: var(--ivory); white-space: normal; margin: 0; padding: 0; }
+.lb-brief-metrics { flex-direction: row; margin: 16px 0 0 0; }
+.lb-brief-metric, .lb-brief-reward, .lb-brief-slot, .lb-brief-item, .lb-brief-inspect, .lb-upg-tile, .lb-upg-buy {
+    background-image: url("Art/Chrome/Ui_Card.png");
+    -unity-slice-left: 24; -unity-slice-right: 24; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-type: tiled;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+.lb-brief-metric { flex-grow: 1; flex-basis: 0; margin-right: 10px; padding: 12px 16px; }
+.lb-brief-metric .lb-brief-muted { margin: 0; }
+.lb-brief-metric-value { font-size: 26px; -unity-font-style: bold; color: var(--gold-bright); margin: 2px 0 0 0; padding: 0; }
+.lb-brief-enemies { flex-direction: row; flex-wrap: wrap; }
+.lb-brief-enemy { font-size: 14px; color: rgb(250, 212, 202); margin: 0 8px 8px 0; padding: 5px 14px 6px 14px; background-color: rgba(150, 40, 30, 0.22); border-width: 1px; border-color: rgba(226, 110, 90, 0.42); border-radius: 14px; }
+.lb-brief-reward { flex-direction: row; align-items: center; min-height: 72px; padding: 12px 16px; }
+.lb-brief-reward .lb-icon { width: 46px; height: 46px; margin-right: 14px; }
+.lb-brief-copy { flex-grow: 1; flex-shrink: 1; min-width: 0; justify-content: center; }
+.lb-brief-muted { font-size: 13px; color: var(--muted); white-space: normal; margin: 3px 0 0 0; padding: 0; -unity-text-align: middle-left; }
+.lb-brief-item-name { font-size: 17px; -unity-font-style: bold; color: var(--ivory); white-space: normal; margin: 0; padding: 0; -unity-text-align: middle-left; }
 
-.lb-upg { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
-.lb-upg-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(6, 10, 15); }
-.lb-upg-dialog { width: 1240px; height: 780px; max-width: 96%; max-height: 96%; padding: 36px 48px 34px 48px; background-color: rgb(9, 15, 23); border-width: 2px; border-color: rgb(190, 154, 80); border-radius: 3px; }
-.lb-upg-inner { position: absolute; left: 6px; right: 6px; top: 6px; bottom: 6px; border-width: 1px; border-color: rgba(214, 178, 100, 0.22); }
-.lb-upg-header { flex-direction: row; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; }
-.lb-upg-header-right { flex-direction: row; align-items: center; }
-.lb-upg-eyebrow { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 12px; letter-spacing: 5px; color: rgb(196, 172, 120); }
-.lb-upg-heading { font-size: 40px; letter-spacing: 3px; color: rgb(246, 232, 192); margin-top: 8px; }
-.lb-upg-close { height: 40px; padding: 0 24px; margin: 0; background-color: rgba(21, 31, 44, 0.9); border-width: 1px; border-color: rgba(214, 178, 100, 0.5); border-radius: 2px; color: rgb(232, 218, 176); font-size: 15px; }
-.lb-upg-close:hover, .lb-upg-close:focus { border-color: rgb(244, 222, 156); background-color: rgb(36, 46, 56); }
-.lb-upg-body { flex-direction: row; flex-grow: 1; }
-.lb-upg-grid { width: 574px; flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
-.lb-upg-tile { width: 172px; height: 152px; margin: 0 14px 14px 0; padding: 0; background-color: rgb(15, 24, 35); border-width: 1px; border-color: rgba(214, 178, 100, 0.32); border-radius: 3px; overflow: hidden; }
-.lb-upg-tile:hover, .lb-upg-tile:focus { border-color: rgb(226, 200, 130); background-color: rgb(22, 34, 47); }
-.lb-upg-tile--selected { border-width: 2px; border-color: rgb(244, 214, 128); background-color: rgb(28, 42, 58); }
-.lb-upg-tile--locked { opacity: 0.45; }
+.lb-brief-identity { flex-direction: row; align-items: center; padding: 0 0 18px 0; border-bottom-width: 1px; border-bottom-color: var(--gold-faint); }
+.lb-brief-level { width: 72px; height: 72px; flex-shrink: 0; margin-right: 18px; align-items: center; justify-content: center; background-image: url("Art/Chrome/Ui_Medallion.png"); -unity-background-scale-mode: scale-to-fit; background-color: rgb(22, 22, 28); border-radius: 36px; }
+.lb-brief-level-value { font-size: 26px; -unity-font-style: bold; color: var(--gold-bright); margin: 0; padding: 0; }
+.lb-brief-hero-name { font-size: 20px; -unity-font-style: bold; color: var(--ivory); margin: 0; padding: 0; }
+.lb-brief-xp { height: 10px; margin: 8px 30px 2px 0; background-color: rgb(14, 14, 18); border-width: 1px; border-color: var(--gold-dim); border-radius: 5px; overflow: hidden; }
+.lb-brief-xp-fill { height: 100%; width: 0; background-image: url("Art/Chrome/Ui_Gloss.png"); -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: rgb(214, 164, 86); }
+
+.lb-brief-slots { flex-direction: row; }
+.lb-brief-slot { flex-grow: 1; flex-basis: 0; flex-direction: row; align-items: center; height: 100px; margin: 0 10px 0 0; padding: 10px 14px; transition-property: translate; transition-duration: 0.14s; }
+.lb-brief-slot:hover, .lb-brief-slot:focus, .lb-brief-item:hover, .lb-brief-item:focus, .lb-upg-tile:hover, .lb-upg-tile:focus { -unity-background-image-tint-color: rgb(255, 236, 200); background-color: rgba(0, 0, 0, 0); }
+.lb-brief-slot--active, .lb-brief-slot--active:hover, .lb-brief-item--selected, .lb-brief-item--selected:hover, .lb-upg-tile--selected, .lb-upg-tile--selected:hover { background-image: url("Art/Chrome/Ui_CardActive.png"); -unity-background-image-tint-color: rgb(255, 255, 255); }
+.lb-brief-socket { width: 70px; height: 70px; flex-shrink: 0; margin-right: 14px; align-items: center; justify-content: center; }
+.lb-brief-socket .lb-icon { width: 50px; height: 50px; border-radius: 25px; background-color: rgb(20, 20, 25); background-size: cover; }
+.lb-brief-socket-ring { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("Art/Chrome/Ui_Socket.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-brief-key { align-self: flex-start; margin: 0 0 4px 0; padding: 1px 7px 2px 7px; font-size: 13px; -unity-font-style: bold; color: var(--gold-bright); background-color: rgb(30, 30, 36); border-width: 1px 1px 2px 1px; border-color: var(--gold-dim); border-radius: 3px; }
+.lb-brief-slot .lb-brief-item-name { white-space: nowrap; }
+
+.lb-brief-inventory-hint { font-size: 13px; color: var(--muted); margin: -4px 0 12px 0; padding: 0; }
+.lb-brief-library { flex-direction: row; align-items: flex-start; }
+.lb-brief-inventory { width: 42%; flex-shrink: 0; }
+.lb-brief-item { flex-direction: row; align-items: center; height: 76px; margin: 0 0 8px 0; padding: 8px 16px; }
+.lb-brief-item .lb-icon { width: 48px; height: 48px; flex-shrink: 0; margin-right: 14px; border-radius: 24px; border-width: 2px; border-color: var(--gold-dim); background-color: rgb(20, 20, 25); background-size: cover; }
+.lb-brief-item--selected .lb-icon { border-color: var(--gold-bright); }
+.lb-brief-item--equipped .lb-brief-muted { color: var(--gold); }
+.lb-brief-item:disabled { opacity: 0.4; }
+.lb-brief-inspect { flex-grow: 1; margin-left: 16px; padding: 20px 22px; }
+.lb-brief-inspect-top { flex-direction: row; align-items: center; }
+.lb-brief-detail-socket { width: 88px; height: 88px; flex-shrink: 0; margin-right: 18px; align-items: center; justify-content: center; background-image: url("Art/Chrome/Ui_Socket.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-brief-inspect .lb-brief-detail-icon { width: 64px; height: 64px; border-radius: 32px; background-color: rgb(20, 20, 25); background-size: cover; }
+.lb-brief-item-title { font-size: 25px; -unity-font-style: bold; color: var(--gold-bright); margin: 4px 0 0 0; padding: 0; }
+.lb-brief-item-stats { font-size: 14px; color: rgb(150, 172, 206); margin: 16px 0 0 0; padding: 10px 0 0 0; border-top-width: 1px; border-top-color: var(--gold-faint); }
+.lb-brief-effect { font-size: 16px; color: var(--ivory); white-space: normal; margin: 10px 0 0 0; padding: 0; }
+.lb-brief-shards { font-size: 13px; color: var(--muted); margin: 14px 0 10px 0; }
+.lb-brief-inspect-actions { flex-direction: row; align-items: center; }
+.lb-brief-equip { flex-grow: 1; flex-basis: 0; margin-right: 10px; }
+.lb-brief-feedback { height: 24px; margin: 8px 0 0 0; padding: 0; font-size: 14px; color: rgb(168, 200, 132); }
+
+.lb-brief-footer { position: absolute; left: 48px; right: 48px; bottom: 22px; height: 64px; flex-direction: row; align-items: center; justify-content: space-between; }
+.lb-brief-status { flex-shrink: 1; margin-right: 30px; font-size: 14px; }
+.lb-brief .lb-brief-start { width: 380px; flex-shrink: 0; }
+.lb-brief-growth-overlay { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(10, 10, 13, 0.88); align-items: center; justify-content: center; }
+.lb-brief-growth-dialog {
+    width: 680px;
+    max-height: 78%;
+    padding: 34px 42px;
+    background-image: url("Art/Chrome/Ui_Dialog.png");
+    -unity-slice-left: 48; -unity-slice-right: 48; -unity-slice-top: 48; -unity-slice-bottom: 48; -unity-slice-type: tiled;
+}
+.lb-brief-heading-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.lb-brief-heading { font-size: 24px; -unity-font-style: bold; color: var(--gold-bright); margin: 0; padding: 0; }
+.lb-brief-growth-list { margin-top: 4px; flex-shrink: 1; }
+.lb-brief-growth-row { font-size: 16px; white-space: normal; color: var(--ivory); padding: 14px 0; border-bottom-width: 1px; border-bottom-color: var(--gold-faint); }
+
+/* ---------- Troops: light shard upgrades ---------- */
+
+.lb-upg { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.lb-upg-dim { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgb(16, 16, 21); }
+.lb-upg-dialog { position: absolute; left: 48px; right: 48px; top: 26px; bottom: 22px; }
+.lb-upg-body { flex-direction: row; flex-grow: 1; flex-shrink: 1; margin-top: 22px; }
+.lb-upg-roster { width: 52%; }
+.lb-upg-caption { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+.lb-upg-grid { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
+.lb-upg-tile { width: 24%; height: 404px; margin: 0 1% 12px 0; padding: 0; overflow: hidden; }
+.lb-upg-tile--locked { opacity: 0.4; }
+.lb-upg-tile--locked .lb-upg-art { -unity-background-image-tint-color: rgb(60, 66, 84); }
+.lb-upg-art { position: absolute; left: 4px; right: 4px; top: 4px; bottom: 34px; background-size: cover; background-position-y: top; }
+.lb-upg-tile-shade { position: absolute; left: 4px; right: 4px; bottom: 34px; height: 46%; background-image: url("Art/Prep_Fade.png"); background-size: 100% 100%; }
+.lb-upg-tile-glow { position: absolute; left: -10%; right: -10%; top: 0; bottom: 34px; background-image: url("Art/Prep_Glow.png"); -unity-background-scale-mode: stretch-to-fill; opacity: 0.38; }
+.lb-upg-tile--selected .lb-upg-tile-glow { opacity: 0.85; }
+.lb-upg-tile--locked .lb-upg-tile-glow { opacity: 0; }
+/* Upgrade level bands: untrained, green, blue, violet, maximum gold. */
+.lb-upg-level--0 .lb-upg-tile-glow { -unity-background-image-tint-color: rgb(110, 118, 132); }
+.lb-upg-level--1 .lb-upg-tile-glow, .lb-upg-level--2 .lb-upg-tile-glow, .lb-upg-level--3 .lb-upg-tile-glow { -unity-background-image-tint-color: rgb(126, 155, 116); }
+.lb-upg-level--4 .lb-upg-tile-glow, .lb-upg-level--5 .lb-upg-tile-glow, .lb-upg-level--6 .lb-upg-tile-glow { -unity-background-image-tint-color: rgb(112, 143, 180); }
+.lb-upg-level--7 .lb-upg-tile-glow, .lb-upg-level--8 .lb-upg-tile-glow, .lb-upg-level--9 .lb-upg-tile-glow { -unity-background-image-tint-color: rgb(156, 127, 174); }
+.lb-upg-level--10 .lb-upg-tile-glow { -unity-background-image-tint-color: rgb(220, 176, 116); }
+.lb-upg-tile-key { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; padding: 0; -unity-text-align: middle-center; font-size: 13px; -unity-font-style: bold; color: var(--ivory); background-color: rgb(30, 30, 36); border-width: 1px 1px 2px 1px; border-color: var(--gold-dim); border-radius: 4px; }
+.lb-upg-tile-price { position: absolute; left: 10px; top: 10px; flex-direction: row; align-items: center; padding: 2px 10px 2px 6px; background-color: rgba(14, 14, 18, 0.86); border-width: 1px; border-color: var(--gold-dim); border-radius: 11px; }
+.lb-upg-food { width: 16px; height: 16px; margin-right: 4px; background-image: url("Art/Growth_FoodProduction.png"); -unity-background-scale-mode: scale-to-fit; }
+.lb-upg-tile-cost { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; color: var(--gold-bright); }
+.lb-upg-tile-name { position: absolute; left: 0; right: 0; bottom: 40px; font-size: 19px; -unity-font-style: bold; color: var(--ivory); -unity-text-align: middle-center; text-shadow: 0 2px 4px rgb(0, 0, 0); }
+.lb-upg-tile-rank { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 30px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 15px; color: var(--gold); -unity-text-align: middle-center; border-top-width: 1px; border-color: var(--gold-faint); }
 .lb-upg-tile--maxed .lb-upg-tile-rank { color: rgb(255, 236, 160); }
-.lb-upg-art { position: absolute; left: 0; right: 0; top: 0; height: 112px; background-size: cover; background-position-y: top; }
-.lb-upg-tile-cost { position: absolute; left: 8px; top: 8px; min-width: 30px; padding: 2px 8px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; color: rgb(246, 224, 160); background-color: rgba(5, 9, 14, 0.82); border-width: 1px; border-color: rgba(214, 178, 100, 0.55); border-radius: 2px; -unity-text-align: middle-center; }
-.lb-upg-tile-rank { position: absolute; left: 0; right: 0; bottom: 0; height: 34px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 16px; letter-spacing: 1px; color: rgb(218, 196, 140); background-color: rgba(5, 9, 14, 0.88); border-top-width: 1px; border-color: rgba(214, 178, 100, 0.35); -unity-text-align: middle-center; }
+.lb-upg-icon--0 { background-image: url("Art/UnitIcon_Swordsman.png"); }
+.lb-upg-icon--1 { background-image: url("Art/UnitIcon_Archer.png"); }
+.lb-upg-icon--2 { background-image: url("Art/UnitIcon_Shieldbearer.png"); }
+.lb-upg-icon--3 { background-image: url("Art/UnitIcon_Spearman.png"); }
+.lb-upg-icon--4 { background-image: url("Art/UnitIcon_Priest.png"); }
+.lb-upg-icon--5 { background-image: url("Art/UnitIcon_Mage.png"); }
+.lb-upg-icon--6 { background-image: url("Art/UnitIcon_Knight.png"); }
+.lb-upg-icon--7 { background-image: url("Art/UnitIcon_Dragon.png"); }
 .lb-upg-art--0 { background-image: url("Art/Unit_Swordsman.png"); }
 .lb-upg-art--1 { background-image: url("Art/Unit_Archer.png"); }
 .lb-upg-art--2 { background-image: url("Art/Unit_Shieldbearer.png"); }
@@ -1477,47 +740,158 @@
 .lb-upg-art--5 { background-image: url("Art/Unit_Mage.png"); }
 .lb-upg-art--6 { background-image: url("Art/Unit_Knight.png"); }
 .lb-upg-art--7 { background-image: url("Art/Unit_Dragon.png"); }
-.lb-upg-panel { flex-grow: 1; flex-basis: 0; padding: 26px 30px; background-color: rgba(18, 28, 41, 0.92); border-width: 1px; border-color: rgba(214, 178, 100, 0.45); border-radius: 3px; }
-.lb-upg-panel-top { flex-direction: row; align-items: center; }
-.lb-upg-portrait { width: 120px; height: 140px; margin-right: 24px; background-size: cover; background-position-y: top; background-color: rgb(8, 13, 20); border-width: 1px; border-color: rgb(214, 178, 100); border-radius: 3px; flex-shrink: 0; }
-.lb-upg-identity { flex-grow: 1; }
-.lb-upg-name { font-size: 32px; color: rgb(246, 232, 192); letter-spacing: 2px; }
-.lb-upg-rank { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 14px; letter-spacing: 2px; color: rgb(196, 172, 120); margin-top: 6px; }
-.lb-upg-pips { flex-direction: row; flex-wrap: wrap; margin-top: 12px; }
-.lb-upg-pip { width: 10px; height: 10px; margin: 0 7px 6px 0; rotate: 45deg; background-color: rgb(26, 36, 48); border-width: 1px; border-color: rgba(214, 178, 100, 0.3); }
-.lb-upg-pip--on { background-color: rgb(238, 200, 104); border-color: rgb(255, 236, 170); }
-.lb-upg-stats { margin-top: 22px; padding: 14px 0; border-top-width: 1px; border-bottom-width: 1px; border-color: rgba(214, 178, 100, 0.25); }
-.lb-upg-stat { flex-direction: row; align-items: center; padding: 5px 0; }
-.lb-upg-stat-name { width: 90px; font-size: 15px; color: rgb(168, 180, 186); }
-.lb-upg-stat-now { width: 70px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; color: rgb(232, 232, 218); }
-.lb-upg-arrow { width: 34px; font-size: 16px; color: rgb(190, 160, 96); -unity-text-align: middle-center; }
-.lb-upg-stat-next { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 22px; color: rgb(246, 220, 140); }
-.lb-upg-role { margin-top: 16px; font-size: 14px; line-height: 20px; color: rgb(178, 190, 192); white-space: normal; min-height: 44px; }
-.lb-upg-meters { margin-top: 10px; }
-.lb-upg-meter { flex-direction: row; align-items: center; padding: 4px 0; }
-.lb-upg-meter-name { width: 70px; font-size: 13px; color: rgb(150, 164, 170); }
-.lb-upg-track { flex-grow: 1; height: 8px; background-color: rgb(6, 10, 15); border-width: 1px; border-color: rgba(214, 178, 100, 0.3); border-radius: 4px; }
-.lb-upg-fill { height: 100%; background-color: rgb(226, 184, 88); border-radius: 3px; }
-.lb-upg-buy { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 20px; }
+.lb-upg-panel {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-left: 18px;
+    flex-direction: row;
+    padding: 24px 28px;
+    background-image: url("Art/Chrome/Ui_Panel.png");
+    -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 32; -unity-slice-bottom: 32; -unity-slice-type: tiled;
+}
+.lb-upg-stage { width: 38%; flex-shrink: 0; }
+.lb-upg-glow { position: absolute; left: -10%; right: -10%; top: 10%; bottom: 10%; background-image: url("Art/Prep_Glow.png"); -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: rgb(110, 140, 220); opacity: 0.35; }
+.lb-upg-portrait { position: absolute; left: 0; right: 0; top: 8px; bottom: 8px; -unity-background-scale-mode: scale-to-fit; }
+.lb-upg-info { flex-grow: 1; flex-basis: 0; margin-left: 24px; }
+.lb-upg-identity { padding-bottom: 14px; border-bottom-width: 1px; border-bottom-color: var(--gold-faint); }
+.lb-upg-name { font-size: 36px; -unity-font-style: bold; color: var(--ivory); letter-spacing: 2px; }
+.lb-upg-rank { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 15px; letter-spacing: 2px; color: var(--gold); margin-top: 6px; }
+.lb-upg-pips { flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+.lb-upg-pip { width: 11px; height: 11px; margin: 0 9px 6px 1px; rotate: 45deg; background-color: rgb(30, 30, 36); border-width: 1px; border-color: var(--gold-dim); }
+.lb-upg-pip--on { background-color: var(--gold-bright); border-color: rgb(255, 248, 220); }
+.lb-upg-role { margin: 14px 0 12px 0; font-size: 15px; color: var(--muted); white-space: normal; min-height: 40px; }
+.lb-upg-stats { padding: 10px 0; border-top-width: 1px; border-bottom-width: 1px; border-color: var(--gold-faint); }
+.lb-upg-stat { flex-direction: row; align-items: center; padding: 4px 0; }
+.lb-upg-stat-name { width: 84px; font-size: 15px; color: var(--muted); }
+.lb-upg-stat-now { width: 84px; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 24px; color: var(--ivory); }
+.lb-upg-arrow { width: 30px; font-size: 22px; color: var(--gold); -unity-text-align: middle-center; }
+.lb-upg-stat-next { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 24px; color: rgb(168, 200, 132); }
+.lb-upg-meters { margin-top: 12px; }
+.lb-upg-meter { flex-direction: row; align-items: center; padding: 5px 0; }
+.lb-upg-meter-name { width: 64px; font-size: 14px; color: var(--muted); }
+.lb-upg-track { flex-grow: 1; height: 10px; background-color: rgb(14, 14, 18); border-width: 1px; border-color: var(--gold-dim); border-radius: 5px; overflow: hidden; }
+.lb-upg-fill { height: 100%; background-image: url("Art/Chrome/Ui_Gloss.png"); -unity-background-scale-mode: stretch-to-fill; -unity-background-image-tint-color: rgb(214, 164, 86); }
+.lb-upg-buy { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 20px; padding: 14px 16px 14px 20px; }
 .lb-upg-cost { flex-direction: row; align-items: center; }
-.lb-upg-cost-value { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 30px; color: rgb(248, 226, 160); }
+.lb-upg-cost-caption { font-size: 13px; color: var(--muted); margin-right: 10px; }
+.lb-upg-cost-value { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 28px; color: var(--gold-bright); }
 .lb-upg-cost--short .lb-upg-cost-value { color: rgb(236, 112, 118); }
-.lb-upg-button { width: 250px; height: 56px; margin: 0; font-size: 18px; }
-.lb-upg-feedback { margin-top: 10px; font-size: 13px; color: rgb(196, 224, 190); min-height: 18px; }
+.lb-upg-button { width: 230px; }
+.lb-upg-feedback { margin-top: 10px; font-size: 14px; color: rgb(168, 200, 132); min-height: 18px; }
+.lb-upg-footer { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 16px; height: 64px; }
+.lb-upg-footer-note { font-size: 14px; color: var(--muted); }
+.lb-upg-start { width: 380px; }
+
+/* Pressed states keep their own surfaces instead of the default theme grey. */
+.lb-brief-slot:active, .lb-brief-item:active, .lb-upg-tile:active { background-color: rgba(0, 0, 0, 0); }
+.lb-rating:hover { background-color: rgb(44, 42, 48); border-color: var(--gold); }
+.lb-rating--on:hover { background-color: var(--gold-bright); }
+.lb-title-start:active { background-color: rgba(250, 226, 160, 0.3); }
+.lb-title-link:active { background-color: rgba(0, 0, 0, 0); }
+.lb-beacon:active { background-color: rgba(0, 0, 0, 0); }
 
 /* ---------- Title ---------- */
+
 .lb-title { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; background-color: rgb(8, 12, 21); background-image: url("../Art/UI/MainMenu/Title_LastLight_Storybook_v2.png"); -unity-background-scale-mode: scale-and-crop; }
 .lb-title-brand { position: absolute; left: 6%; top: 19%; width: 36%; height: 25%; max-width: 720px; }
-.lb-title-eyebrow { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 12px; letter-spacing: 9px; color: rgba(168, 190, 222, 0.78); }
+.lb-title-eyebrow { -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 13px; letter-spacing: 9px; color: rgba(168, 190, 222, 0.78); }
 .lb-title-logo { width: 100%; height: 100%; background-image: url("../Art/UI/MainMenu/Lightbringer_Storybook_Logo_v1.png"); -unity-background-scale-mode: scale-to-fit; }
 .lb-title-rule { width: 420px; height: 1px; margin-top: 12px; background-color: rgba(250, 226, 160, 0.55); }
 .lb-title-tagline { font-size: 18px; letter-spacing: 4px; color: rgba(214, 220, 232, 0.82); margin-top: 24px; }
 .lb-title-menu { position: absolute; left: 8%; bottom: 14%; width: 320px; }
-.lb-title-start { height: 58px; font-size: 20px; letter-spacing: 8px; margin: 0 0 22px 0; background-color: rgba(250, 226, 160, 0.08); border-width: 1px; border-color: rgba(250, 226, 160, 0.55); border-radius: 2px; color: rgb(252, 244, 220); -unity-text-align: middle-left; padding-left: 20px; }
-.lb-title-start:hover, .lb-title-start:focus { background-color: rgba(250, 226, 160, 0.22); border-color: rgb(255, 236, 184); }
+.lb-title-start { height: 58px; font-size: 20px; letter-spacing: 8px; margin: 0 0 22px 0; background-image: none; background-color: rgba(250, 226, 160, 0.08); border-width: 1px; border-color: rgba(250, 226, 160, 0.55); border-radius: 2px; color: rgb(252, 244, 220); -unity-text-align: middle-left; padding-left: 20px; text-shadow: 0 0 0 rgba(0, 0, 0, 0); -unity-font-style: normal; }
+.lb-title-start:hover, .lb-title-start:focus { background-color: rgba(250, 226, 160, 0.22); border-color: rgb(255, 236, 184); scale: 1 1; }
 .lb-title-link { height: 40px; margin: 0 0 4px 0; background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; color: rgba(190, 202, 222, 0.7); font-size: 15px; letter-spacing: 6px; -unity-text-align: middle-left; padding-left: 20px; }
 .lb-title-link:hover, .lb-title-link:focus { color: rgb(255, 240, 200); background-color: rgba(0, 0, 0, 0); }
-.lb-title-footer { position: absolute; left: 8%; bottom: 4%; font-size: 11px; letter-spacing: 2px; color: rgb(120, 134, 142); }
-.lb-upg-footer { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top-width: 1px; border-color: rgba(214, 178, 100, 0.32); }
-.lb-upg-footer-note { font-size: 13px; color: rgb(150, 164, 170); }
-.lb-upg-start { width: 340px; height: 52px; margin: 0; }
+.lb-title-footer { position: absolute; left: 8%; bottom: 4%; font-size: 13px; letter-spacing: 2px; color: rgb(120, 134, 142); }
+.lb-upg-tile--locked .lb-upg-tile-price { display: none; }
+.lb-brief-landscape .lb-brief-eyebrow { text-shadow: 0 1px 4px rgb(0, 0, 0); }
+
+/* ---------- Storybook type and shapes (last, so they win over the per-screen rules above) ---------- */
+
+/* Display titles in Song Myung: one weight, so never faux-bold it. */
+.lb-flow-title, .lb-levelup-title, .lb-brief-title, .lb-upg-heading, .lb-brief-destination, .lb-upg-name,
+.lb-atlas-title, .lb-atlas-selected, .lb-brief-heading, .lb-brief-item-title, .lb-pause-heading {
+    -unity-font-definition: url("Fonts/SongMyung.asset");
+    -unity-font-style: normal;
+}
+
+/* Ruled tags instead of glossy pills. */
+.lb-upg-purse, .lb-minimap-route, .lb-brief-enemy, .lb-upg-tile-price, .lb-levelup-remaining,
+.lb-result-reward, .lb-slot-caption, .lb-hints { border-radius: 2px; }
+.lb-keycap, .lb-brief-key, .lb-upg-tile-key, .lb-rating { border-radius: 2px; border-bottom-color: rgba(0, 0, 0, 0.6); }
+.lb-result-reward { border-color: var(--gold-faint); background-color: rgba(220, 176, 116, 0.07); }
+
+/* Scrollers only appear on short screens: a thin ruled track with a faded-gold thumb, no arrow buttons. */
+.unity-scroller--vertical { width: 10px; margin-left: 6px; }
+.unity-scroller--vertical .unity-scroller__low-button, .unity-scroller--vertical .unity-scroller__high-button { display: none; }
+.unity-scroller--vertical .unity-base-slider__tracker { background-color: rgba(0, 0, 0, 0.25); border-width: 0 1px; border-color: rgba(181, 150, 114, 0.2); }
+.unity-scroller--vertical .unity-base-slider__dragger { left: 2px; width: 6px; background-color: rgba(181, 150, 114, 0.6); border-width: 0; border-radius: 1px; }
+.unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
+
+/* Title menu: the start button is the primary ribbon, the links are quiet ruled lines beneath it. */
+.lb-title-start {
+    height: 56px;
+    padding: 0 36px 2px 36px;
+    background-image: url("Art/Chrome/Ui_BtnPrimary.png");
+    -unity-slice-left: 30; -unity-slice-right: 30; -unity-slice-top: 27; -unity-slice-bottom: 27;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    color: var(--gold-bright);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    -unity-background-image-tint-color: rgb(228, 228, 228);
+}
+.lb-title-start:hover, .lb-title-start:focus { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(255, 255, 255); color: rgb(255, 240, 206); }
+.lb-title-start:active { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(180, 180, 180); }
+.lb-title-link { -unity-text-align: middle-center; padding-left: 0; border-bottom-width: 1px; border-color: rgba(0, 0, 0, 0); margin: 0 60px 4px 60px; color: rgba(214, 204, 184, 0.75); }
+.lb-title-link:hover, .lb-title-link:focus { border-color: rgba(220, 176, 116, 0.6); }
+
+/* ---------- Small-type legibility ---------- */
+/* Small copy has a 13px floor; keep the larger Song Myung display headings. Gowun Batang's weight table
+   supplies the real Bold face for small copy; reduce tracking rather than increasing its footprint. */
+.lb-caption, .lb-boss-dialogue-count, .lb-prologue-progress, .lb-prologue-button, .lb-prologue-credits,
+.lb-atlas-subtitle, .lb-atlas-progress, .lb-atlas-eyebrow, .lb-atlas-description, .lb-atlas-hint, .lb-atlas-status,
+.lb-beacon-name, .lb-beacon-state, .lb-route-caption, .lb-path-hint, .lb-front-number,
+.lb-level-value, .lb-hero-name, .lb-hint-text,
+.lb-flow-eyebrow, .lb-flow-muted, .lb-flow-footnote, .lb-result-details, .lb-stat,
+.lb-pause-volume-name, .lb-pause-credits, .lb-pause-key-action,
+.lb-levelup-subtitle, .lb-levelup-prompt-hint, .lb-lvcard-number, .lb-lvcard-category,
+.lb-lvcard-description, .lb-lvcard-rank, .lb-lvcard-total,
+.lb-brief-eyebrow, .lb-upg-eyebrow, .lb-brief-enemy, .lb-brief-muted,
+.lb-brief-inventory-hint, .lb-brief-item-stats, .lb-brief-effect, .lb-brief-shards,
+.lb-brief-feedback, .lb-brief-status, .lb-brief-growth-row,
+.lb-upg-caption, .lb-upg-role, .lb-upg-stat-name, .lb-upg-meter-name, .lb-upg-cost-caption,
+.lb-upg-feedback, .lb-upg-footer-note, .lb-title-link, .lb-title-footer {
+    -unity-font-style: bold;
+    letter-spacing: 0;
+}
+
+/* A little tracking still gives chapter labels their printed-book character. */
+.lb-atlas-eyebrow, .lb-flow-eyebrow, .lb-brief-eyebrow, .lb-upg-eyebrow,
+.lb-lvcard-category, .lb-title-link { letter-spacing: 1px; }
+
+/* Text over paintings needs a tight ink shadow rather than a broad blurry glow. */
+.lb-atlas-subtitle, .lb-atlas-progress, .lb-atlas-status, .lb-beacon-name, .lb-beacon-state,
+.lb-prologue-progress, .lb-prologue-button, .lb-title-link, .lb-title-footer,
+.lb-brief-status, .lb-upg-footer-note {
+    text-shadow: 0 1px 2px rgba(8, 9, 13, 0.95);
+}
+.lb-atlas-subtitle, .lb-atlas-progress, .lb-atlas-hint, .lb-prologue-progress,
+.lb-prologue-button, .lb-title-footer { color: var(--muted); }
+.lb-title-link, .lb-hint-text { color: var(--ivory); }
+.lb-atlas-eyebrow, .lb-atlas-status, .lb-flow-eyebrow, .lb-brief-eyebrow, .lb-upg-eyebrow,
+.lb-beacon--lit .lb-beacon-name, .lb-beacon--lit .lb-beacon-state,
+.lb-brief-item--equipped .lb-brief-muted { color: var(--gold-text); }
+.lb-beacon-state { background-color: rgba(14, 15, 20, 0.66); border-radius: 2px; padding: 1px 5px; }
+.lb-brief-item-stats, .lb-cost { color: rgb(186, 204, 228); }
+.lb-card-name, .lb-card-cost { color: var(--muted); }
+
+/* Locked content must still explain itself. Dim the art instead of its name and state label. */
+.lb-beacon:disabled, .lb-brief-item:disabled, .lb-upg-tile--locked { opacity: 1; }
+.lb-beacon:disabled .lb-beacon-symbol { opacity: 0.85; }
+.lb-brief-item:disabled .lb-icon { opacity: 0.45; }
+.lb-brief-item:disabled .lb-brief-item-name,
+.lb-upg-tile--locked .lb-upg-tile-name, .lb-upg-tile--locked .lb-upg-tile-rank { color: var(--muted); }
+.lb-atlas-primary:disabled, .lb-button:disabled, .lb-prologue-button:disabled { opacity: 0.65; }

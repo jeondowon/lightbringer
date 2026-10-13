@@ -20,7 +20,7 @@ namespace Lightbringer.UI
             "빠르게 돌격해 충격과 함께 적을 밀쳐냅니다.\n멀리서 달려올수록 첫 일격이 강해집니다.",
             "불을 내뿜어 넓은 범위를 태우는 최상위 병력입니다.\n전장의 흐름을 바꾸는 한 수입니다."
         };
-        private static readonly string[] StatNames = { "체력", "공격", "사거리", "속도" };
+        private static readonly string[] StatNames ={ "체력", "공격", "사거리", "속도" };
         public readonly VisualElement Root;
         public event Action Closed;
         public event Action Upgraded, StartRequested;
@@ -31,7 +31,7 @@ namespace Lightbringer.UI
         private readonly Button upgrade, begin;
         private CampaignSession session;
         private int selected;
-        private struct Tile { public VisualElement Root; public Label Rank; public Label Note; }
+        private struct Tile { public VisualElement Root; public Label Name; public Label Rank; public Label Note; }
 
         public bool IsOpen => !Root.ClassListContains("lb-hidden");
         public int Selected => selected;
@@ -43,52 +43,64 @@ namespace Lightbringer.UI
             Root = Hud.Box(parent, "lb-upg");
             Hud.Box(Root, "lb-upg-dim");
             VisualElement dialog = Hud.Box(Root, "lb-upg-dialog");
-            Hud.IgnorePicking(Hud.Box(dialog, "lb-upg-inner"));
 
+            // Same header as the preparation screen: the way back top-left, the purse top-right.
             VisualElement header = Hud.Box(dialog, "lb-upg-header");
-            VisualElement heading = Hud.Box(header);
-            Hud.Text(heading, "LIGHTBRINGER", "lb-upg-eyebrow");
-            Hud.Text(heading, "병력 준비", "lb-upg-heading");
+            Hud.Button(header, "‹  영웅 준비", Close, "lb-button", "lb-button--back");
+            VisualElement heading = Hud.Box(header, "lb-upg-heading-block");
+            Hud.Text(heading, "병력 준비", "lb-upg-eyebrow");
+            Hud.Text(heading, "출전할 병력을 정비하세요", "lb-upg-heading");
             VisualElement right = Hud.Box(header, "lb-upg-header-right");
             VisualElement purse = Hud.Box(right, "lb-upg-purse");
             Hud.Box(purse, "lb-coin");
             gold = Hud.Text(purse, "0", "lb-upg-gold");
-            Hud.Button(right, "← 영웅 준비", Close, "lb-upg-close");
+            purse.tooltip = "보유한 빛의 조각";
 
             VisualElement body = Hud.Box(dialog, "lb-upg-body");
-            VisualElement grid = Hud.Box(body, "lb-upg-grid");
+            VisualElement roster = Hud.Box(body, "lb-upg-roster");
+            Hud.Text(roster, "병력 목록  ·  전투 중 1–8 키로 소환", "lb-upg-caption");
+            VisualElement grid = Hud.Box(roster, "lb-upg-grid");
             for (int i = 0; i < tiles.Length; i++)
             {
                 int unit = i;
                 Button tile = Hud.Button(grid, "", () => Select(unit), "lb-upg-tile");
+                Hud.Box(tile, "lb-upg-tile-glow");
                 Hud.Box(tile, "lb-upg-art", "lb-upg-art--" + i);
-                Label note = Hud.Text(tile, "", "lb-upg-tile-cost");
+                Hud.Box(tile, "lb-upg-tile-shade");
+                Hud.Text(tile, (i + 1).ToString(), "lb-upg-tile-key");
+                VisualElement price = Hud.Box(tile, "lb-upg-tile-price");
+                Hud.Box(price, "lb-upg-food");
+                Label note = Hud.Text(price, "", "lb-upg-tile-cost");
+                Label name = Hud.Text(tile, "???", "lb-upg-tile-name");
                 Label count = Hud.Text(tile, "", "lb-upg-tile-rank");
                 foreach (VisualElement child in tile.Children()) Hud.IgnorePicking(child);
-                tiles[i] = new Tile { Root = tile, Rank = count, Note = note };
+                tiles[i] = new Tile { Root = tile, Name = name, Rank = count, Note = note };
             }
 
             VisualElement panel = Hud.Box(body, "lb-upg-panel");
-            VisualElement top = Hud.Box(panel, "lb-upg-panel-top");
-            art = Hud.Box(top, "lb-upg-portrait");
-            VisualElement identity = Hud.Box(top, "lb-upg-identity");
+            VisualElement stage = Hud.Box(panel, "lb-upg-stage");
+            Hud.Box(stage, "lb-upg-glow");
+            art = Hud.Box(stage, "lb-upg-portrait");
+            Hud.IgnorePicking(stage);
+            VisualElement info = Hud.Box(panel, "lb-upg-info");
+            VisualElement identity = Hud.Box(info, "lb-upg-identity");
             title = Hud.Text(identity, "", "lb-upg-name");
             rank = Hud.Text(identity, "", "lb-upg-rank");
             pips = Hud.Box(identity, "lb-upg-pips");
             for (int i = 0; i < UnitCatalog.MaxRank; i++) Hud.Box(pips, "lb-upg-pip");
-            VisualElement stats = Hud.Box(panel, "lb-upg-stats");
+            role = Hud.Text(info, "", "lb-upg-role");
+            VisualElement stats = Hud.Box(info, "lb-upg-stats");
             VisualElement attack = Hud.Box(stats, "lb-upg-stat");
             Hud.Text(attack, "공격력", "lb-upg-stat-name");
             currentAttack = Hud.Text(attack, "", "lb-upg-stat-now");
-            Hud.Text(attack, "→", "lb-upg-arrow");
+            Hud.Text(attack, "›", "lb-upg-arrow");
             nextAttack = Hud.Text(attack, "", "lb-upg-stat-next");
             VisualElement health = Hud.Box(stats, "lb-upg-stat");
             Hud.Text(health, "체력", "lb-upg-stat-name");
             currentHealth = Hud.Text(health, "", "lb-upg-stat-now");
-            Hud.Text(health, "→", "lb-upg-arrow");
+            Hud.Text(health, "›", "lb-upg-arrow");
             nextHealth = Hud.Text(health, "", "lb-upg-stat-next");
-            role = Hud.Text(panel, "", "lb-upg-role");
-            VisualElement meters = Hud.Box(panel, "lb-upg-meters");
+            VisualElement meters = Hud.Box(info, "lb-upg-meters");
             for (int i = 0; i < StatNames.Length; i++)
             {
                 VisualElement row = Hud.Box(meters, "lb-upg-meter");
@@ -96,12 +108,13 @@ namespace Lightbringer.UI
                 VisualElement track = Hud.Box(row, "lb-upg-track");
                 bars[i] = Hud.Box(track, "lb-upg-fill");
             }
-            VisualElement buy = Hud.Box(panel, "lb-upg-buy");
+            VisualElement buy = Hud.Box(info, "lb-upg-buy");
             costRow = Hud.Box(buy, "lb-upg-cost");
+            Hud.Text(costRow, "강화 비용", "lb-upg-cost-caption");
             Hud.Box(costRow, "lb-coin", "lb-coin--large");
             cost = Hud.Text(costRow, "", "lb-upg-cost-value");
             upgrade = Hud.Button(buy, "강화", () => Upgrade(), "lb-atlas-primary", "lb-upg-button");
-            feedback = Hud.Text(panel, "", "lb-upg-feedback");
+            feedback = Hud.Text(info, "", "lb-upg-feedback");
 
             VisualElement footer = Hud.Box(dialog, "lb-upg-footer");
             Hud.Text(footer, "빛의 조각으로 병력을 강화한 뒤 출전하세요.", "lb-upg-footer-note");
@@ -156,7 +169,7 @@ namespace Lightbringer.UI
             CampaignProgress profile = session?.Progress;
             if (profile == null || !IsOpen) return;
             Hud.Set(gold, profile.gold.ToString("N0"));
-            Hud.Set(begin, $"봉화 {session.SelectedStage:00} · 출전하기  →");
+            Hud.Set(begin, $"봉화 {session.SelectedStage:00} · 출전하기  ›");
             float costMultiplier = Lightbringer.Player.HeroAbilities.SummonCostMultiplier(profile.ranks[(int)GrowthKind.Leadership]);
             for (int i = 0; i < tiles.Length; i++)
             {
@@ -165,6 +178,10 @@ namespace Lightbringer.UI
                 tiles[i].Root.EnableInClassList("lb-upg-tile--selected", i == selected);
                 tiles[i].Root.EnableInClassList("lb-upg-tile--locked", !unlocked);
                 tiles[i].Root.EnableInClassList("lb-upg-tile--maxed", unlocked && profile.unitRanks[i] >= UnitCatalog.MaxRank);
+                int level = Mathf.Clamp(profile.unitRanks[i], 0, UnitCatalog.MaxRank);
+                for (int n = 0; n <= UnitCatalog.MaxRank; n++)
+                    tiles[i].Root.EnableInClassList("lb-upg-level--" + n, n == level);
+                Hud.Set(tiles[i].Name, unlocked ? UnitCatalog.Names[i] : "???");
                 Hud.Set(tiles[i].Rank, unlocked ? $"{profile.unitRanks[i]:00}/{UnitCatalog.MaxRank}" : "미해금");
                 Hud.Set(tiles[i].Note, unlocked ? (UnitCatalog.Cost((UnitKind)i) * costMultiplier).ToString("0.#") : "");
             }
@@ -173,7 +190,7 @@ namespace Lightbringer.UI
             int current = profile.unitRanks[selected];
             bool maxed = current >= UnitCatalog.MaxRank;
             int next = Mathf.Min(UnitCatalog.MaxRank, current + 1);
-            for (int i = 0; i < UnitCatalog.Count; i++) art.EnableInClassList("lb-upg-art--" + i, i == selected);
+            for (int i = 0; i < UnitCatalog.Count; i++) art.EnableInClassList("lb-upg-icon--" + i, i == selected);
             Hud.Set(title, UnitCatalog.Names[selected]);
             Hud.Set(rank, $"강화 {current:00} / {UnitCatalog.MaxRank}");
             for (int i = 0; i < pips.childCount; i++) pips[i].EnableInClassList("lb-upg-pip--on", i < current);
@@ -192,7 +209,7 @@ namespace Lightbringer.UI
             Hud.Show(costRow, !maxed);
             Hud.Set(cost, maxed ? "" : UnitCatalog.UpgradeCost(kind, current).ToString("N0"));
             costRow.EnableInClassList("lb-upg-cost--short", !maxed && profile.gold < UnitCatalog.UpgradeCost(kind, current));
-            Hud.Set(upgrade, maxed ? "최대 강화" : profile.CanUpgradeUnit(selected) ? "강화" : "빛의 조각 부족");
+            Hud.Set(upgrade, maxed ? "최대 레벨" : profile.CanUpgradeUnit(selected) ? "강화" : "빛의 조각 부족");
             upgrade.SetEnabled(profile.CanUpgradeUnit(selected));
         }
 

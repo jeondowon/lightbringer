@@ -8,6 +8,7 @@ using UnityEngine.UIElements;
 namespace Lightbringer.UI
 {
     // Destination briefing and the three-slot skill loadout. Inspecting a skill never mutates the saved loadout.
+    // Two columns: the mission briefing at left, the hero's skill equipment at right.
     public sealed class PreparationView
     {
         private static readonly string[] SlotKeys = SkillCatalog.SlotKeys;
@@ -15,8 +16,8 @@ namespace Lightbringer.UI
         public readonly VisualElement Root;
         public event System.Action BackRequested;
         private readonly Label stageTitle, stageTag, objective, paths, waves, rewards, rewardNote, heroLevel, experience;
-        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, shardsLabel, feedback, status;
-        private readonly VisualElement enemies, rewardIcon, detailIcon, growth, growthPanel;
+        private readonly Label inventoryHint, itemTitle, itemEffect, itemStats, currentItem, shardsLabel, feedback, status, purse, levelBadge;
+        private readonly VisualElement enemies, rewardIcon, detailIcon, growth, growthPanel, experienceFill, landscape;
         private readonly Tile[] slots = new Tile[SkillCatalog.Slots];
         private readonly Tile[] items = new Tile[SkillCatalog.Count];
         private readonly Button start, equip, upgradeSkill, growthToggle;
@@ -31,57 +32,73 @@ namespace Lightbringer.UI
         {
             Root = Hud.Box(parent, "lb-brief");
             Hud.IgnorePicking(Hud.Box(Root, "lb-brief-background"));
+            Hud.IgnorePicking(Hud.Box(Root, "lb-brief-vignette"));
+            // Header: the way back sits top-left, the light shard purse top-right.
             VisualElement header = Hud.Box(Root, "lb-brief-header");
-            VisualElement heading = Hud.Box(header);
-            Hud.Text(heading, "LIGHTBRINGER  /  출전 준비", "lb-brief-eyebrow");
+            Button back = Hud.Button(header, "‹  지도", () => BackRequested?.Invoke(), "lb-button", "lb-button--back");
+            back.tooltip = "선택한 봉화를 유지한 채 지도로 돌아갑니다.";
+            VisualElement heading = Hud.Box(header, "lb-brief-heading-block");
+            Hud.Text(heading, "출전 준비", "lb-brief-eyebrow");
             Hud.Text(heading, "전장으로 향하기 전에", "lb-brief-title");
             VisualElement actions = Hud.Box(header, "lb-brief-actions");
-            Button back = Hud.Button(actions, "← 지도로 돌아가기", () => BackRequested?.Invoke(), "lb-brief-back");
-            back.tooltip = "선택한 봉화를 유지한 채 지도로 돌아갑니다.";
+            VisualElement wallet = Hud.Box(actions, "lb-upg-purse");
+            Hud.Box(wallet, "lb-coin");
+            purse = Hud.Text(wallet, "0", "lb-upg-gold");
+            wallet.tooltip = "보유한 빛의 조각 · 기술과 병력 강화에 사용합니다.";
 
             VisualElement body = Hud.Box(Root, "lb-brief-body");
+
+            // Mission briefing.
             ScrollView mission = Scroll(body, "lb-brief-mission");
-            VisualElement landscape = Hud.Box(mission.contentContainer, "lb-brief-landscape");
-            Hud.Text(landscape, "선택한 목적지", "lb-brief-eyebrow");
+            landscape = Hud.Box(mission.contentContainer, "lb-brief-landscape");
+            Hud.Text(landscape, "목적지", "lb-brief-eyebrow");
             stageTitle = Hud.Text(landscape, "", "lb-brief-destination");
             stageTag = Hud.Text(landscape, "", "lb-brief-tag");
-            Hud.Text(mission.contentContainer, "전투 목표", "lb-brief-section");
+            Section(mission.contentContainer, "전투 목표");
             objective = Hud.Text(mission.contentContainer, "", "lb-brief-objective");
             VisualElement metrics = Hud.Box(mission.contentContainer, "lb-brief-metrics");
             paths = Metric(metrics, "진격로"); waves = Metric(metrics, "적 공세");
-            Hud.Text(mission.contentContainer, "등장하는 적", "lb-brief-section");
+            Section(mission.contentContainer, "등장하는 적");
             enemies = Hud.Box(mission.contentContainer, "lb-brief-enemies");
-            Hud.Text(mission.contentContainer, "최초 승리 보상", "lb-brief-section");
+            Section(mission.contentContainer, "최초 승리 보상");
             VisualElement reward = Hud.Box(mission.contentContainer, "lb-brief-reward");
             rewardIcon = Hud.Box(reward, "lb-icon");
             VisualElement rewardText = Hud.Box(reward, "lb-brief-copy");
             rewards = Hud.Text(rewardText, "", "lb-brief-item-name");
             rewardNote = Hud.Text(rewardText, "", "lb-brief-muted");
 
+            // Hero equipment: level, the three equipped skills, then the skill library with its inspector.
             ScrollView armory = Scroll(body, "lb-brief-armory");
             VisualElement identity = Hud.Box(armory.contentContainer, "lb-brief-identity");
-            Hud.Box(identity, "lb-brief-portrait");
+            VisualElement badge = Hud.Box(identity, "lb-brief-level");
+            levelBadge = Hud.Text(badge, "", "lb-brief-level-value");
             VisualElement heroText = Hud.Box(identity, "lb-brief-copy");
             heroLevel = Hud.Text(heroText, "", "lb-brief-hero-name");
+            VisualElement track = Hud.Box(heroText, "lb-brief-xp");
+            experienceFill = Hud.Box(track, "lb-brief-xp-fill");
             experience = Hud.Text(heroText, "", "lb-brief-muted");
-            growthToggle = Hud.Button(identity, "영구 성장 보기", ToggleGrowth, "lb-brief-text-button");
-            VisualElement headingRow = Hud.Box(armory.contentContainer, "lb-brief-heading-row");
-            Hud.Text(headingRow, "기술 정비", "lb-brief-heading");
-            Hud.Text(headingRow, "01  슬롯 선택    02  기술 확인    03  장착 · 강화", "lb-brief-muted");
+            growthToggle = Hud.Button(identity, "영구 성장", ToggleGrowth, "lb-button", "lb-button--small");
+
+            Section(armory.contentContainer, "장착 기술");
             VisualElement socketRow = Hud.Box(armory.contentContainer, "lb-brief-slots");
             for (int i = 0; i < slots.Length; i++)
             {
                 int slot = i;
                 Button button = Hud.Button(socketRow, "", () => SelectSlot(slot), "lb-brief-slot");
-                Hud.Text(button, SlotKeys[i], "lb-brief-key");
-                VisualElement icon = Hud.Box(button, "lb-icon");
+                VisualElement socket = Hud.Box(button, "lb-brief-socket");
+                VisualElement icon = Hud.Box(socket, "lb-icon");
+                Hud.Box(socket, "lb-brief-socket-ring");
                 VisualElement text = Hud.Box(button, "lb-brief-copy");
+                Hud.Text(text, SlotKeys[i], "lb-brief-key");
                 slots[i] = new Tile { Root = button, Icon = icon,
                     Main = Hud.Text(text, "", "lb-brief-item-name"), Note = Hud.Text(text, "", "lb-brief-muted") };
                 Decorate(button);
             }
+
+            Section(armory.contentContainer, "기술 보관함");
             inventoryHint = Hud.Text(armory.contentContainer, "", "lb-brief-inventory-hint");
-            VisualElement inventory = Hud.Box(armory.contentContainer, "lb-brief-inventory");
+            VisualElement library = Hud.Box(armory.contentContainer, "lb-brief-library");
+            VisualElement inventory = Hud.Box(library, "lb-brief-inventory");
             for (int i = 0; i < items.Length; i++)
             {
                 int id = i;
@@ -93,33 +110,32 @@ namespace Lightbringer.UI
                     Note = Hud.Text(text, "", "lb-brief-muted") };
                 button.tooltip = Effects[i]; Decorate(button);
             }
-            VisualElement detail = Hud.Box(armory.contentContainer, "lb-brief-inspect");
-            detailIcon = Hud.Box(detail, "lb-icon", "lb-brief-detail-icon");
-            VisualElement detailText = Hud.Box(detail, "lb-brief-copy");
+            VisualElement detail = Hud.Box(library, "lb-brief-inspect");
+            VisualElement detailTop = Hud.Box(detail, "lb-brief-inspect-top");
+            VisualElement detailSocket = Hud.Box(detailTop, "lb-brief-detail-socket");
+            detailIcon = Hud.Box(detailSocket, "lb-icon", "lb-brief-detail-icon");
+            VisualElement detailText = Hud.Box(detailTop, "lb-brief-copy");
             currentItem = Hud.Text(detailText, "", "lb-brief-muted");
             itemTitle = Hud.Text(detailText, "", "lb-brief-item-title");
-            itemEffect = Hud.Text(detailText, "", "lb-brief-effect");
-            itemStats = Hud.Text(detailText, "", "lb-brief-item-stats");
-            shardsLabel = Hud.Text(detailText, "", "lb-brief-muted");
-            // Equip above upgrade, stacked at the right edge of the inspector.
-            VisualElement buttons = Hud.Box(detail);
-            buttons.style.flexDirection = FlexDirection.Column;
-            buttons.style.flexShrink = 0;
-            equip = Hud.Button(buttons, "", () => EquipSelected(), "lb-brief-equip");
-            upgradeSkill = Hud.Button(buttons, "", () => UpgradeSelected(), "lb-brief-equip");
-            upgradeSkill.style.marginTop = 8;
+            itemStats = Hud.Text(detail, "", "lb-brief-item-stats");
+            itemEffect = Hud.Text(detail, "", "lb-brief-effect");
+            shardsLabel = Hud.Text(detail, "", "lb-brief-shards");
+            VisualElement buttons = Hud.Box(detail, "lb-brief-inspect-actions");
+            equip = Hud.Button(buttons, "", () => EquipSelected(), "lb-button", "lb-brief-equip");
+            upgradeSkill = Hud.Button(buttons, "", () => UpgradeSelected(), "lb-button", "lb-button--gold", "lb-brief-equip");
             feedback = Hud.Text(armory.contentContainer, "", "lb-brief-feedback");
 
             VisualElement footer = Hud.Box(Root, "lb-brief-footer");
-            status = Hud.Text(footer, "", "lb-brief-muted");
+            status = Hud.Text(footer, "", "lb-brief-muted", "lb-brief-status");
             start = Hud.Button(footer, "", () => OpenUpgrade(), "lb-atlas-primary", "lb-brief-start");
 
             growthPanel = Hud.Box(Root, "lb-brief-growth-overlay");
             VisualElement growthDialog = Hud.Box(growthPanel, "lb-brief-growth-dialog");
             VisualElement growthHeader = Hud.Box(growthDialog, "lb-brief-heading-row");
             Hud.Text(growthHeader, "영구 성장", "lb-brief-heading");
-            Hud.Button(growthHeader, "닫기", ToggleGrowth, "lb-brief-text-button");
+            Hud.Button(growthHeader, "닫기", ToggleGrowth, "lb-button", "lb-button--small");
             Hud.Text(growthDialog, "전투 중 선택한 성장 효과는 다음 전투에서도 유지됩니다.", "lb-brief-muted");
+            Hud.Box(growthDialog, "lb-rule");
             growth = Scroll(growthDialog, "lb-brief-growth-list").contentContainer;
             Root.RegisterCallback<KeyDownEvent>(evt =>
             {
@@ -157,6 +173,13 @@ namespace Lightbringer.UI
             scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
             parent.Add(scroll); return scroll;
         }
+        private static void Section(VisualElement parent, string title)
+        {
+            VisualElement row = Hud.Box(parent, "lb-brief-section-row");
+            Hud.Box(row, "lb-brief-section-mark");
+            Hud.Text(row, title, "lb-brief-section");
+            Hud.Box(row, "lb-brief-section-line");
+        }
         private static Label Metric(VisualElement parent, string title)
         {
             VisualElement box = Hud.Box(parent, "lb-brief-metric");
@@ -179,7 +202,7 @@ namespace Lightbringer.UI
             if (opening) { Hud.Set(feedback, ""); slots[ActiveSlot].Root.Focus(); }
             if (!SkillCatalog.IsSkill(selectedItem)) selectedItem = DefaultSelection(profile, ActiveSlot);
             start.SetEnabled(!session.IsChoosing);
-            Hud.Set(start, $"봉화 {session.SelectedStage:00} · 병력 준비  →");
+            Hud.Set(start, $"봉화 {session.SelectedStage:00} · 병력 준비  ›");
             string message = session.SaveStatus;
             Hud.Set(status, !string.IsNullOrEmpty(message) && message != "검증 세션" ? message : "영웅 기술을 정비한 뒤 병력 준비로 넘어갑니다.");
             string key = session.SelectedStage + "|" + profile.unlockedStage + "|" + profile.level + "|" + profile.experience
@@ -190,9 +213,14 @@ namespace Lightbringer.UI
             revision = key;
             int stage = session.SelectedStage;
             bool cleared = profile.cleared[stage - 1], boss = EnemyCatalog.HasBoss(stage);
-            Hud.Set(stageTitle, $"봉화 {stage:00}");
-            Hud.Set(stageTag, cleared ? "해방한 전장 · 재도전" : boss ? "미해방 지역 · 보스 전투" : "미해방 지역 · 탈환 작전");
-            Hud.Set(objective, boss ? "공세를 격퇴하고 적 본진을 파괴하세요.\n등장한 어둠의 군주를 격퇴하세요." : "적군 본진을 파괴하고\n봉화에 다시 빛을 밝혀주세요.");
+            int act = Mathf.Clamp((stage - 1) / 8 + 1, 1, 3);
+            for (int i = 1; i <= 3; i++) Root.EnableInClassList("lb-brief--act" + i, i == act);
+            landscape.EnableInClassList("lb-brief-landscape--cleared", cleared);
+            Hud.Set(stageTitle, CampaignStages.Name(stage));
+            bool finale = EnemyCatalog.IsFinale(stage);
+            Hud.Set(objective, finale ? "공세를 격퇴하고 적 본진을 파괴하세요.\n어둠의 군주와 마왕(어둠의 핵)을 모두 쓰러뜨리세요."
+                : boss ? "공세를 격퇴하고 적 본진을 파괴하세요.\n등장한 어둠의 군주를 격퇴하세요." : "적군 본진을 파괴하고\n봉화에 다시 빛을 밝혀주세요.");
+            Hud.Set(stageTag, cleared ? "해방한 전장 · 재도전" : finale ? "미해방 지역 · 최종 전투" : boss ? "미해방 지역 · 보스 전투" : "미해방 지역 · 탈환 작전");
             Hud.Set(paths, PrototypeBattleBuilder.PathCount(stage) + "개");
             Hud.Set(waves, EnemyWaveSpawner.WaveCount(stage) + "회");
             enemies.Clear();
@@ -201,21 +229,28 @@ namespace Lightbringer.UI
                 if (!EnemyCatalog.AppearsIn((EnemyKind)i, stage)) continue;
                 Hud.Text(enemies, EnemyCatalog.Names[i], "lb-brief-enemy");
             }
+            if (finale) Hud.Text(enemies, "마왕", "lb-brief-enemy");
             int reward = SkillCatalog.RewardFor(stage);
             bool teaches = SkillCatalog.IsSkill(reward);
             Icon(rewardIcon, reward);
+            rewardIcon.EnableInClassList("lb-icon--shard", !teaches);
             Hud.Set(rewards, teaches ? "새 기술 · " + SkillCatalog.Names[reward] : $"빛의 조각 +{100 + 50 * stage}");
             Hud.Set(rewardNote, cleared ? "획득 완료 · 재도전 시 전투 경험치와 빛의 조각 획득"
-                : stage < CampaignProgress.StageCount ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금" : "첫 군주전 · 이후 여정은 준비 중");
-            Hud.Set(heroLevel, "마법 지휘관   ·   LV " + profile.level);
+                : stage < UnitCatalog.Count ? $"다음 봉화와 {UnitCatalog.Names[stage]} 해금"
+                : stage < CampaignProgress.StageCount ? "다음 봉화로 가는 길 해금" : "최종 전투 · 캠페인 완료");
+            Hud.Set(heroLevel, "마법 지휘관");
+            Hud.Set(levelBadge, profile.level.ToString());
             Hud.Set(experience, profile.IsMaxLevel ? "최대 레벨" : $"경험치 {profile.experience} / {profile.ExperienceToNext}");
-            Hud.Set(inventoryHint, $"배운 기술  /  {SlotKeys[ActiveSlot]} 슬롯에 사용할 기술을 확인하세요");
+            Hud.Fraction(experienceFill, profile.IsMaxLevel ? 1f : profile.experience / (float)Mathf.Max(1, profile.ExperienceToNext));
+            Hud.Set(purse, profile.gold.ToString("N0"));
+            Hud.Set(inventoryHint, $"배운 기술  ·  {SlotKeys[ActiveSlot]} 슬롯에 사용할 기술을 확인하세요");
             for (int i = 0; i < slots.Length; i++)
             {
                 int id = profile.loadout[i]; Icon(slots[i].Icon, id);
                 Hud.Set(slots[i].Main, SkillCatalog.IsSkill(id) ? SkillCatalog.Names[id] : "비어 있음");
                 Hud.Set(slots[i].Note, SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP" : "배운 기술을 넣으세요");
                 slots[i].Root.EnableInClassList("lb-brief-slot--active", i == ActiveSlot);
+                slots[i].Root.EnableInClassList("lb-brief-slot--empty", !SkillCatalog.IsSkill(id));
             }
             for (int id = 0; id < items.Length; id++)
             {
@@ -224,6 +259,7 @@ namespace Lightbringer.UI
                 Hud.Set(items[id].Note, !owned ? "미습득" : owner >= 0 ? $"Lv {profile.skillLevels[id]} · {SlotKeys[owner]} 장착 중" : $"Lv {profile.skillLevels[id]} · 장착 가능");
                 items[id].Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
                 items[id].Root.EnableInClassList("lb-brief-item--selected", id == selectedItem);
+                items[id].Root.EnableInClassList("lb-brief-item--equipped", owner >= 0);
             }
             RefreshItem(profile);
             growth.Clear();

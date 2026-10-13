@@ -70,6 +70,8 @@ namespace Lightbringer.UI
                 beacon.style.left = Length.Percent(Sites[i].x * 100);
                 beacon.style.top = Length.Percent(Sites[i].y * 100);
                 canvas.Add(beacon);
+                VisualElement light = Hud.Box(beacon, "lb-beacon-light");
+                light.generateVisualContent += context => DrawBeaconLight(context, beacon);
                 Hud.Box(beacon, "lb-beacon-symbol");
                 names[i] = Hud.Text(beacon, $"봉화 {i + 1:00}", "lb-beacon-name");
                 states[i] = Hud.Text(beacon, "", "lb-beacon-state");
@@ -93,11 +95,12 @@ namespace Lightbringer.UI
             VisualElement detail = Hud.Box(footer, "lb-atlas-detail");
             eyebrow = Hud.Text(detail, "선택한 목적지", "lb-atlas-eyebrow");
             selected = Hud.Text(detail, "", "lb-atlas-selected");
+            Hud.Box(detail, "lb-atlas-caption-rule");
             description = Hud.Text(detail, "", "lb-atlas-description");
-            VisualElement action = Hud.Box(footer, "lb-atlas-action");
+            Hud.IgnorePicking(footer);
             if (backToTitle != null)
             {
-                Hud.Button(action, "← 타이틀로", backToTitle, "lb-prologue-button");
+                Hud.Button(Root, "‹  타이틀", backToTitle, "lb-button", "lb-button--back", "lb-atlas-back");
             }
             status = Hud.Text(Root, "", "lb-atlas-status");
             Hud.Show(Root, false);
@@ -134,6 +137,25 @@ namespace Lightbringer.UI
         {
             if (session != null && session.Battle == null && !session.IsChoosing)
                 openPreparation?.Invoke();
+        }
+
+        private static void DrawBeaconLight(MeshGenerationContext context, Button beacon)
+        {
+            bool lit = beacon.ClassListContains("lb-beacon--lit");
+            bool ready = beacon.ClassListContains("lb-beacon--ready");
+            if (!lit && !ready) return;
+            // A separate layer behind the icon; no glow pixels in the beacon PNGs.
+            var painter = context.painter2D;
+            for (int ring = 24; ring > 0; ring--)
+            {
+                float radius = ring * 1.4f;
+                painter.fillColor = lit
+                    ? new Color(0.94f, 0.70f, 0.32f, 0.022f)
+                    : new Color(0.96f, 0.89f, 0.73f, 0.016f);
+                painter.BeginPath();
+                painter.Arc(new Vector2(37f, 32f), radius, 0f, 360f);
+                painter.Fill();
+            }
         }
 
         public void Refresh(CampaignSession value, bool visible)
@@ -173,10 +195,11 @@ namespace Lightbringer.UI
                 bool implemented = i < available;
                 bool lit = implemented && profile.cleared[index], unlocked = implemented && index < profile.unlockedStage;
                 if (lit) count++;
-                Hud.Set(names[i], $"봉화 {index + 1:00}");
+                Hud.Set(names[i], index >= 8 && implemented ? CampaignStages.Name(index + 1) : $"봉화 {index + 1:00}");
                 beacons[i].SetEnabled(unlocked);
                 beacons[i].EnableInClassList("lb-beacon--lit", lit);
                 beacons[i].EnableInClassList("lb-beacon--ready", unlocked && !lit);
+                beacons[i].Q<VisualElement>(className: "lb-beacon-light").MarkDirtyRepaint();
                 beacons[i].EnableInClassList("lb-beacon--planned", !implemented);
                 beacons[i].EnableInClassList("lb-beacon--selected", index + 1 == session.SelectedStage);
                 Hud.Set(states[i], !implemented ? "준비 중" : lit ? "밝혀진 봉화" : unlocked ? "탈환 가능" : "미해방");
@@ -187,11 +210,11 @@ namespace Lightbringer.UI
                 : $"밝혀진 봉화   {count:00} / {available:00}");
             bool selectedHere = session.SelectedStage > first && session.SelectedStage <= first + available;
             Hud.Set(eyebrow, selectedHere ? "선택한 목적지" : "다음 여정");
-            Hud.Set(selected, selectedHere ? $"봉화 {session.SelectedStage:00}" : ActTitles[ViewedAct - 1]);
+            Hud.Set(selected, selectedHere ? CampaignStages.Name(session.SelectedStage) : ActTitles[ViewedAct - 1]);
             Hud.Set(description, available == 0 ? "아직 열리지 않은 여정입니다. 이 지역의 전투는 준비 중입니다."
                 : !selectedHere ? "봉화를 선택해 출전을 준비하세요."
                 : profile.cleared[session.SelectedStage - 1] ? "빛을 되찾은 전장입니다. 다시 도전할 수 있습니다."
-                : "아직 빛을 잃은 봉화입니다. 전장을 돌파하고 이 땅을 되찾으세요.");
+                : CampaignStages.Brief(session.SelectedStage));
             roads.MarkDirtyRepaint();
         }
 

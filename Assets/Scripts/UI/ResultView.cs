@@ -1,16 +1,19 @@
 using Lightbringer.Core;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
     // Victory / defeat screen with the playtest summary, a fun rating and a note, then back to preparation.
+    // Victory shows the result card in slowly turning lamplight; defeat over a dying crimson ember.
     public sealed class ResultView
     {
+        private const float IntroSeconds = 0.7f;
         public readonly VisualElement Root;
-        private readonly Label title, result;
+        private readonly Label title, subtitle, result, reward;
         private readonly Label destination;
         private readonly Label[] summary = new Label[3];
-        private readonly VisualElement summaryRow;
+        private readonly VisualElement summaryRow, rewardRow, rays, dialog, banner;
         private readonly Foldout details;
         private readonly VisualElement stats;
         private readonly Label[] lines = new Label[3];
@@ -18,22 +21,34 @@ namespace Lightbringer.UI
         private readonly TextField note;
         private CampaignSession session;
         private PrototypeBattle shownFor;
+        private float shownAt;
         public int Rating { get; private set; }
 
         public ResultView(VisualElement parent)
         {
             Root = Hud.Box(parent, "lb-overlay", "lb-flow", "lb-result");
-            VisualElement dialog = Hud.Box(Root, "lb-flow-dialog");
+            rays = Hud.Box(Root, "lb-result-rays");
+            Hud.Box(Root, "lb-result-ember");
+            VisualElement stack = Hud.Box(Root, "lb-result-stack");
+            dialog = Hud.Box(stack, "lb-flow-dialog", "lb-result-dialog");
             destination = Hud.Text(dialog, "", "lb-flow-eyebrow");
-            title = Hud.Text(dialog, "", "lb-flow-title");
+            banner = Hud.Box(dialog, "lb-result-banner");
+            title = Hud.Text(banner, "", "lb-flow-title");
+            subtitle = Hud.Text(dialog, "", "lb-result-subtitle");
+            Hud.Box(dialog, "lb-rule");
             result = Hud.Text(dialog, "", "lb-flow-description");
+            rewardRow = Hud.Box(dialog, "lb-result-reward");
+            Hud.Box(rewardRow, "lb-coin", "lb-coin--large");
+            reward = Hud.Text(rewardRow, "", "lb-result-reward-value");
             summaryRow = Hud.Box(dialog, "lb-result-summary");
             string[] captions = { "전투 시간", "아군 소환", "적 처치" };
+            string[] icons = { "lb-result-icon--time", "lb-result-icon--ally", "lb-result-icon--enemy" };
             for (int i = 0; i < summary.Length; i++)
             {
                 VisualElement metric = Hud.Box(summaryRow, "lb-result-metric");
-                Hud.Text(metric, captions[i], "lb-flow-muted");
+                Hud.Box(metric, "lb-result-icon", icons[i]);
                 summary[i] = Hud.Text(metric, "", "lb-result-value");
+                Hud.Text(metric, captions[i], "lb-flow-muted");
             }
             details = new Foldout { text = "상세 기록 · 플레이 의견", value = false };
             details.AddToClassList("lb-result-details");
@@ -57,7 +72,8 @@ namespace Lightbringer.UI
             note = new TextField { multiline = true, maxLength = 400 };
             note.AddToClassList("lb-note");
             stats.Add(note);
-            Hud.Button(dialog, "지도로 돌아가기", () => Return(), "lb-atlas-primary", "lb-flow-primary");
+            Hud.Button(dialog, "지도로 돌아가기  ›", () => Return(), "lb-atlas-primary", "lb-flow-primary");
+            Hud.IgnorePicking(rays);
             Hud.Show(Root, false);
         }
 
@@ -68,17 +84,24 @@ namespace Lightbringer.UI
         {
             session = value;
             PrototypeBattle battle = session != null ? session.Battle : null;
-            bool visible = battle != null && battle.Objective.HasEnded && !session.IsChoosing;
+            bool visible = battle != null && battle.Objective.HasEnded && !session.IsChoosing
+                && (battle.Beacon == null || !battle.Beacon.IsPresenting);
             Hud.Show(Root, visible);
+            if (visible && shownFor == battle) Animate();
             if (!visible || shownFor == battle) return;
             // Fill once per finished battle so the rating and note stay editable.
             shownFor = battle;
+            shownAt = Time.unscaledTime;
             bool won = battle.Objective.HasWon;
             Root.EnableInClassList("lb-result--defeat", !won);
-            Hud.Set(destination, $"봉화 {session.SelectedStage:00}  /  전투 종료");
+            Root.EnableInClassList("lb-result--victory", won);
+            Hud.Set(destination, $"봉화 {session.SelectedStage:00}  ·  전투 종료");
             Hud.Set(title, won ? "승리" : "패배");
+            Hud.Set(subtitle, won ? "VICTORY" : "DEFEAT");
             title.EnableInClassList("lb-title--defeat", !won);
-            Hud.Set(result, session.BattleGold > 0 ? session.LastResult + $"\n획득한 빛의 조각  +{session.BattleGold:N0}" : session.LastResult);
+            Hud.Set(result, session.LastResult);
+            Hud.Show(rewardRow, session.BattleGold > 0);
+            Hud.Set(reward, $"빛의 조각  +{session.BattleGold:N0}");
             PlaytestRecord record = session.PlaytestRecord;
             Hud.Show(stats, record != null);
             Hud.Show(summaryRow, record != null);
@@ -86,7 +109,7 @@ namespace Lightbringer.UI
             details.value = false;
             if (record != null)
             {
-                int seconds = UnityEngine.Mathf.Max(0, UnityEngine.Mathf.RoundToInt(record.durationSeconds));
+                int seconds = Mathf.Max(0, Mathf.RoundToInt(record.durationSeconds));
                 Hud.Set(summary[0], $"{seconds / 60:00}:{seconds % 60:00}");
                 Hud.Set(summary[1], record.alliesSummoned + "명");
                 Hud.Set(summary[2], record.enemiesDefeated + "명");
@@ -97,6 +120,21 @@ namespace Lightbringer.UI
             }
             SetRating(0);
             note.value = "";
+            Animate();
+        }
+
+        // Transform and opacity only: the card fades in, the title stamps in, the lamplight keeps turning.
+        private void Animate()
+        {
+            // Edit-mode previews have no running clock: show the settled frame.
+            float age = Application.isPlaying ? Time.unscaledTime - shownAt : 10f;
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(age / IntroSeconds));
+            float stamp = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - 0.15f) / 0.4f));
+            dialog.style.opacity = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - 0.1f) / 0.45f));
+            banner.style.scale = new Scale(Vector2.one * Mathf.Lerp(1.4f, 1f, stamp));
+            banner.style.opacity = stamp;
+            rays.style.rotate = new Rotate(new Angle(age * 7f % 360f, AngleUnit.Degree));
+            rays.style.opacity = t * (0.75f + 0.25f * Mathf.Sin(age * 1.7f));
         }
 
         public void SetRating(int value)

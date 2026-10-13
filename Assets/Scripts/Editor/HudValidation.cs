@@ -226,12 +226,12 @@ namespace Lightbringer.EditorTools
                     var planned = map.Root.Query<Button>(className: "lb-beacon").ToList();
                     var labels = map.Root.Query<Label>(className: "lb-beacon-name").ToList();
                     Check(planned.Count == 8 && planned.TrueForAll(button => !button.ClassListContains("lb-hidden")
-                        && button.ClassListContains("lb-beacon--planned") && !button.enabledSelf)
-                        && labels[0].text == $"봉화 {(act - 1) * 8 + 1:00}" && labels[7].text == $"봉화 {act * 8:00}",
-                        $"Act {act} shows eight numbered future beacons without allowing battle entry");
+                        && !button.ClassListContains("lb-beacon--planned") && !button.enabledSelf)
+                        && labels[0].text == CampaignStages.Name((act - 1) * 8 + 1) && labels[7].text == CampaignStages.Name(act * 8),
+                        $"Act {act} shows all eight implemented stages as locked until reached");
                 }
                 Check(!map.Select(9) && !map.ShowAct(0) && !map.ShowAct(4) && map.ViewedAct == 3,
-                    "Atlas rejects unimplemented stages and invalid acts");
+                    "Atlas rejects locked stages and invalid acts");
                 map.Refresh(session, false);
                 map.Refresh(session, true);
                 Check(map.ViewedAct == 1 && session.SelectedStage == 3

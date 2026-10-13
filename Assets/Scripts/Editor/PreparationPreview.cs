@@ -44,6 +44,7 @@ namespace Lightbringer.EditorTools
             EditorRequests.Register("Docs/Validation/ResultPreview.request", CaptureResult);
             EditorRequests.Register("Docs/Validation/DefeatPreview.request", CaptureDefeat);
             EditorRequests.Register("Docs/Validation/PausePreview.request", CapturePause);
+            EditorRequests.Register("Docs/Validation/TroopsPreview.request", CaptureTroops);
             EditorRequests.Register("Docs/Validation/ProloguePreview.request", CapturePrologue);
             EditorRequests.Register("Docs/Validation/PrologueCompactPreview.request", () => CapturePrologueAt(1280, 1024, "PrologueCompactPreview"));
             EditorRequests.Register("Docs/Validation/PrologueWidePreview.request", () => CapturePrologueAt(2560, 1080, "PrologueWidePreview"));
@@ -125,6 +126,15 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(item);
             }
         }
+
+        [MenuItem("Lightbringer/UI/Capture Troops Preview")]
+        public static void CaptureTroops() => Render("Docs/Validation/TroopsPreview.png", profile => { }, (root, session) =>
+        {
+            PreparationView view = new PreparationView(root);
+            view.Refresh(session);
+            if (!view.OpenUpgrade()) throw new InvalidOperationException("Troops preview could not open the troop screen.");
+            return () => { view.Refresh(session); view.Upgrade.Refresh(); };
+        });
 
         [MenuItem("Lightbringer/UI/Capture Preparation Preview")]
         public static void Capture() => Render(Output, profile => { }, (root, session) =>

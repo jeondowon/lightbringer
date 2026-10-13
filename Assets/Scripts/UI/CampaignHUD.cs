@@ -151,7 +151,8 @@ namespace Lightbringer.UI
             Result.Refresh(session);
             Pause.Refresh(session);
             BossDialogue.Refresh(session);
-            Hud.Show(BattleView.Root, session.Battle != null && !session.IsBossCinematic);
+            Hud.Show(BattleView.Root, session.Battle != null && !session.IsBossCinematic
+                && (session.Battle.Beacon == null || !session.Battle.Beacon.IsPresenting));
         }
 
         private void RefreshTitleMusic(bool playing)

@@ -42,6 +42,7 @@ namespace Lightbringer.UI
             VisualElement header = Hud.Box(Root, "lb-levelup-header");
             VisualElement titleRow = Hud.Box(header, "lb-levelup-title-row");
             Hud.Text(titleRow, "더 강해진 빛", "lb-display", "lb-levelup-title");
+            Hud.Box(header, "lb-rule", "lb-levelup-rule");
             subtitle = Hud.Text(header, "", "lb-levelup-subtitle");
             remaining = Hud.Text(header, "", "lb-levelup-remaining");
 
@@ -69,7 +70,7 @@ namespace Lightbringer.UI
             VisualElement prompt = Hud.Box(Root, "lb-levelup-prompt");
             hint = Hud.Text(prompt, SelectHint, "lb-levelup-prompt-hint");
             Hud.IgnorePicking(header); Hud.IgnorePicking(prompt);
-            confirm = Hud.Button(Root, "이 축복 선택하기", () => Confirm(), "lb-display", "lb-levelup-confirm");
+            confirm = Hud.Button(Root, "이 축복 선택하기", () => Confirm(), "lb-atlas-primary", "lb-levelup-confirm");
             SetSelected(-1);
             Hud.Show(Root, false);
         }

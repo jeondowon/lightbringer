@@ -11,7 +11,7 @@ namespace Lightbringer.UI
 {
     public enum FrontStatus { Clear, Contested, Danger }
 
-    // In-battle HUD: battlefield map top-left, fronts and bases on top, hero portrait and vitals bottom-left,
+    // In-battle HUD: parchment battlefield map top-left, the base standoff and fronts on top, hero portrait and vitals bottom-left,
     // ability orbs bottom-centre, the troop roster down the right edge, key hints bottom-right.
     // Pure view: it reads the battle every frame and never changes gameplay state.
     // Art comes from Assets/UI/Art (Lightbringer/UI/Build Battle HUD Art).
@@ -23,8 +23,8 @@ namespace Lightbringer.UI
 
         public readonly VisualElement Root;
         private readonly Label stage, waves, pathHint, level, toast;
-        private readonly VisualElement fronts, boss, abilities, troops, pathKey;
-        private readonly HudBar alliedBase, enemyBase, bossBar, health, mana, food;
+        private readonly VisualElement fronts, boss, demonBoss, abilities, troops, pathKey;
+        private readonly HudBar alliedBase, enemyBase, bossBar, demonBar, health, mana, food;
         private readonly List<FrontChip> frontChips = new List<FrontChip>();
         private readonly List<Slot> slots = new List<Slot>();
         private readonly List<Card> cards = new List<Card>();
@@ -35,7 +35,7 @@ namespace Lightbringer.UI
         private string lastSummonFeedback = "", lastAbilityFeedback = "";
         private float toastUntil;
 
-        private struct FrontChip { public VisualElement Root; public Label Allies, Enemies; }
+        private struct FrontChip { public VisualElement Root, AllyPush, EnemyPush; public Label Allies, Enemies; }
         private class Slot { public VisualElement Root, Orb; public HudDial Dial; public Label Name, Cost, Timer; public int Shown = -1; }
         private struct Card { public VisualElement Root, Shade; public Label Cost; }
 
@@ -46,30 +46,33 @@ namespace Lightbringer.UI
             Hud.Box(Root, "lb-hud-vignette");
 
             // The map also names the Path new troops will take; Tab cycles it.
-            VisualElement mapPanel = Hud.Box(Root, "lb-minimap", "lb-hud-frame");
-            Heading(mapPanel, "전장");
-            minimap = new BattleMinimap(mapPanel);
+            // The battlefield map is a parchment page with a compass rose, set in a paper panel under its title.
+            VisualElement mapPanel = Hud.Box(Root, "lb-minimap", "lb-hud-panel");
+            Hud.Text(mapPanel, "전장 지도", "lb-minimap-title");
+            VisualElement sheet = Hud.Box(mapPanel, "lb-minimap-sheet");
+            minimap = new BattleMinimap(sheet);
+            Hud.Box(sheet, "lb-minimap-compass");
             VisualElement route = Hud.Box(mapPanel, "lb-minimap-route");
             Hud.Text(route, "소환 진로", "lb-route-caption");
             pathHint = Hud.Text(route, "", "lb-display", "lb-path-hint");
             pathKey = Key(route, "TAB");
 
+            // Standoff across the top on one ink band: our stronghold, the stage seal with the assault count, theirs.
             VisualElement top = Hud.Box(Root, "lb-top");
-            VisualElement row = Hud.Box(top, "lb-top-row", "lb-hud-panel");
-            stage = Hud.Text(row, "", "lb-display", "lb-stage");
-            Hud.Box(row, "lb-divider");
-            fronts = Hud.Box(row, "lb-fronts");
-            Hud.Box(row, "lb-divider");
-            Hud.Box(row, "lb-hud-icon", "lb-hud-icon--wave");
-            waves = Hud.Text(row, "", "lb-waves");
-            VisualElement bases = Hud.Box(top, "lb-bases");
-            alliedBase = Base(bases, "아군 본진", "lb-base--ally", "lb-bar--ally");
-            enemyBase = Base(bases, "적군 본진", "lb-base--enemy", "lb-bar--enemy");
+            VisualElement row = Hud.Box(top, "lb-top-row");
+            alliedBase = Base(row, "아군 본진", "lb-base--ally", "lb-bar--ally");
+            VisualElement centre = Hud.Box(row, "lb-top-centre");
+            stage = Hud.Text(centre, "", "lb-display", "lb-stage");
+            VisualElement waveRow = Hud.Box(centre, "lb-wave-row");
+            Hud.Box(waveRow, "lb-hud-icon", "lb-hud-icon--wave");
+            waves = Hud.Text(waveRow, "", "lb-waves");
+            enemyBase = Base(row, "적군 본진", "lb-base--enemy", "lb-bar--enemy");
+            fronts = Hud.Box(top, "lb-fronts");
 
-            boss = Hud.Box(Root, "lb-boss");
-            VisualElement bossTitle = Hud.Box(boss, "lb-boss-title");
-            Hud.Text(bossTitle, "군주", "lb-display", "lb-boss-name");
-            bossBar = new HudBar(boss, "lb-bar--boss");
+            boss = BossPanel("군주", out bossBar);
+            // Final battle only: the Demon King's health, carried by the abyss core.
+            demonBoss = BossPanel("마왕 · 어둠의 핵", out demonBar);
+            demonBoss.AddToClassList("lb-boss--second");
 
             VisualElement crosshair = Hud.Box(Root, "lb-crosshair");
             Hud.Box(crosshair, "lb-crosshair-dot");
@@ -80,6 +83,7 @@ namespace Lightbringer.UI
             VisualElement portrait = Hud.Box(vitals, "lb-portrait");
             VisualElement face = Hud.Box(portrait, "lb-portrait-face");
             Hud.Box(face, "lb-portrait-art");
+            Hud.Box(portrait, "lb-portrait-ring");
             VisualElement badge = Hud.Box(portrait, "lb-level");
             level = Hud.Text(badge, "", "lb-display", "lb-level-value");
             VisualElement gauges = Hud.Box(vitals, "lb-gauges");
@@ -99,12 +103,6 @@ namespace Lightbringer.UI
             Hint(hints, ("WASD", "이동"), ("마우스", "시점"), ("휠", "확대·축소"));
             Hint(hints, ("1-8", "소환"), ("F", "재소환"), ("Tab", "진로 변경"), ("Esc", "일시정지"));
             Hud.IgnorePicking(Root);
-        }
-
-        private static void Heading(VisualElement parent, string title)
-        {
-            VisualElement head = Hud.Box(parent, "lb-hud-heading");
-            Hud.Text(head, title, "lb-display", "lb-hud-title");
         }
 
         private static VisualElement Key(VisualElement parent, string key)
@@ -145,6 +143,7 @@ namespace Lightbringer.UI
         public string PathHintText => pathHint.text;
         public int MinimapSelectedPath => minimap.SelectedPath;
         public bool BossVisible => !boss.ClassListContains("lb-hidden");
+        public bool DemonKingVisible => !demonBoss.ClassListContains("lb-hidden");
         public bool EnemyBaseShielded => enemyBase.Root.ClassListContains("lb-bar--shielded");
         public bool IsCardReady(int index) => cards[index].Root.ClassListContains("lb-card--ready");
         public bool IsCardSelected(int index) => cards[index].Root.ClassListContains("lb-card--selected");
@@ -153,6 +152,10 @@ namespace Lightbringer.UI
         public FrontStatus FrontStatusOf(int index) =>
             frontChips[index].Root.ClassListContains("lb-front--danger") ? FrontStatus.Danger
             : frontChips[index].Root.ClassListContains("lb-front--contested") ? FrontStatus.Contested : FrontStatus.Clear;
+
+        // The seal shows a small stage label above the stage number.
+        public static string StageSealText(int stage) =>
+            $"<size=18><color=#CDB48C>stage</color></size>\n{stage}";
 
         // A front is in danger when the enemy clearly outnumbers our troops there.
         public static FrontStatus Evaluate(int allies, int enemies) =>
@@ -173,12 +176,19 @@ namespace Lightbringer.UI
             if (battle == null) return;
             for (int i = 0; i < battle.Paths.Length; i++)
             {
+                // A front card reads like the minimap: the Path seal, then our troops and theirs pushing on a
+                // tug-of-war gauge between them.
                 VisualElement chip = Hud.Box(fronts, "lb-front");
                 Hud.Text(chip, (i + 1).ToString(), "lb-display", "lb-front-number");
                 Hud.Box(chip, "lb-hud-icon", "lb-hud-icon--ally", "lb-front-icon");
                 Label allies = Hud.Text(chip, "", "lb-front-allies");
+                VisualElement tug = Hud.Box(chip, "lb-front-tug");
+                VisualElement allyPush = Hud.Box(tug, "lb-front-push", "lb-front-push--ally");
+                VisualElement enemyPush = Hud.Box(tug, "lb-front-push", "lb-front-push--enemy");
+                Hud.Box(tug, "lb-front-tug-mid");
+                Label enemies = Hud.Text(chip, "", "lb-front-enemies");
                 Hud.Box(chip, "lb-hud-icon", "lb-hud-icon--enemy", "lb-front-icon");
-                frontChips.Add(new FrontChip { Root = chip, Allies = allies, Enemies = Hud.Text(chip, "", "lb-front-enemies") });
+                frontChips.Add(new FrontChip { Root = chip, Allies = allies, Enemies = enemies, AllyPush = allyPush, EnemyPush = enemyPush });
             }
             for (int i = 0; i < SkillCatalog.Slots; i++)
             {
@@ -186,6 +196,7 @@ namespace Lightbringer.UI
                 VisualElement socket = Hud.Box(slot, "lb-socket-orb");
                 VisualElement orb = Hud.Box(socket, "lb-orb");
                 HudDial dial = new HudDial(socket, "lb-orb-dial", CooldownShade);
+                Hud.Box(socket, "lb-orb-ring");
                 Label timer = Hud.Text(socket, "", "lb-orb-timer");
                 Key(socket, SlotKeys[i]).AddToClassList("lb-orb-key");
                 VisualElement caption = Hud.Box(slot, "lb-slot-caption");
@@ -216,7 +227,7 @@ namespace Lightbringer.UI
         public void Refresh(CampaignSession session)
         {
             if (battle == null || session == null) return;
-            Hud.Set(stage, $"봉화 {session.SelectedStage:00}");
+            Hud.Set(stage, StageSealText(session.SelectedStage));
             Hud.Set(waves, battle.Encounter != null && battle.Waves.AssaultCleared ? battle.Encounter.ObjectiveText
                 : $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
             if (session.Progress != null) Hud.Set(level, session.Progress.level.ToString());
@@ -250,6 +261,10 @@ namespace Lightbringer.UI
                 FrontChip chip = frontChips[i];
                 Hud.Set(chip.Allies, allies.ToString());
                 Hud.Set(chip.Enemies, enemies.ToString());
+                // Each side fills from its own end in proportion to its share; an empty front leaves the gauge bare.
+                int total = allies + enemies;
+                chip.AllyPush.style.width = Length.Percent(total > 0 ? 100f * allies / total : 0f);
+                chip.EnemyPush.style.width = Length.Percent(total > 0 ? 100f * enemies / total : 0f);
                 chip.Root.EnableInClassList("lb-front--selected", i == selected);
                 chip.Root.EnableInClassList("lb-front--contested", status == FrontStatus.Contested);
                 chip.Root.EnableInClassList("lb-front--danger", status == FrontStatus.Danger);
@@ -275,6 +290,23 @@ namespace Lightbringer.UI
             bool bossAlive = warlord != null && warlord.IsAlive;
             Hud.Show(boss, bossAlive);
             if (bossAlive) bossBar.Set(warlord.CurrentHealth, warlord.MaximumHealth, $"{warlord.CurrentHealth:0} / {warlord.MaximumHealth:0}");
+            Combatant core = battle.Encounter != null ? battle.Encounter.DemonCore : null;
+            bool coreAlive = core != null && core.IsAlive;
+            Hud.Show(demonBoss, coreAlive);
+            // With the Warlord down, the Demon King's bar takes his place.
+            demonBoss.EnableInClassList("lb-boss--second", bossAlive);
+            if (coreAlive) demonBar.Set(core.CurrentHealth, core.MaximumHealth, $"{core.CurrentHealth:0} / {core.MaximumHealth:0}");
+        }
+
+        private VisualElement BossPanel(string title, out HudBar bar)
+        {
+            VisualElement panel = Hud.Box(Root, "lb-boss");
+            VisualElement heading = Hud.Box(panel, "lb-boss-title");
+            Hud.Box(heading, "lb-boss-ornament");
+            Hud.Text(heading, title, "lb-display", "lb-boss-name");
+            Hud.Box(heading, "lb-boss-ornament");
+            bar = new HudBar(panel, "lb-bar--boss");
+            return panel;
         }
 
         private void RefreshAbilities(ManaResource manaStore)

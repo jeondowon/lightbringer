@@ -82,7 +82,6 @@ namespace Lightbringer.EditorTools
             SaveGrowthFallback("Growth_AuraBuff", BlessedBladeIcon);
             SaveGrowthFallback("Growth_HeroPower", MightIcon);
             SaveGrowthFallback("Growth_HeroVitality", HeartIcon);
-            SaveBattleHudArt();
 
             ImportWritten();
             Debug.Log("Preparation art built: " + Written.Count + " textures in " + Folder);
