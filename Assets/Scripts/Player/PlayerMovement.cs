@@ -18,6 +18,7 @@ namespace Lightbringer.Player
         [SerializeField] private float gravity = -25f;
 
         private CharacterController controller;
+        private BattlefieldBoundary boundary;
         private InputAction moveAction;
         private float verticalSpeed;
         public void Configure(Transform camera, InputActionAsset actions)
@@ -26,6 +27,7 @@ namespace Lightbringer.Player
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
+            boundary = GetComponent<BattlefieldBoundary>();
         }
 
         private void OnEnable()
@@ -74,8 +76,9 @@ namespace Lightbringer.Player
                 verticalSpeed = -2f;
 
             verticalSpeed += gravity * Time.deltaTime;
-            CollisionFlags collisions = controller.Move(
-                (direction * moveSpeed + Vector3.up * verticalSpeed) * Time.deltaTime);
+            Vector3 motion = (direction * moveSpeed + Vector3.up * verticalSpeed) * Time.deltaTime;
+            if (boundary != null) motion = boundary.ConstrainMotion(motion);
+            CollisionFlags collisions = controller.Move(motion);
             if ((collisions & CollisionFlags.Below) != 0 && verticalSpeed < 0f)
                 verticalSpeed = -2f;
             if ((collisions & CollisionFlags.Above) != 0 && verticalSpeed > 0f)

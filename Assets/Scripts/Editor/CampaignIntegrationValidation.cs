@@ -24,6 +24,9 @@ namespace Lightbringer.EditorTools
                 Check(!session.SelectStage(2) && session.StartBattle() && !session.StartBattle(),
                     "Campaign starts an unlocked stage once and rejects locked or duplicate starts");
                 PrototypeBattle battle = session.Battle;
+                Check(Mathf.Abs(Vector3.Distance(battle.AlliedBase.transform.position, battle.Objective.EnemyBase.transform.position) - 100f) < 0.01f
+                    && battle.Hero.GetComponent<Lightbringer.Player.BattlefieldBoundary>() != null,
+                    "Campaign strongholds are 100m apart and the hero has a battlefield boundary");
                 Invoke(battle.Objective, "OnEnable");
                 Check(battle.Paths.Length == 1 && battle.Summoner.UnlockedUnitCount == 1,
                     "First campaign stage begins with one Path and only the first troop");

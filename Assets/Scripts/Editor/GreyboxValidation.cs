@@ -73,7 +73,10 @@ namespace Lightbringer.EditorTools
                 ValidateHeroSystems();
                 ValidateProgression();
                 ValidateCampaignIntegration();
+                ValidateBattlefieldBoundary();
                 ValidateEnemyRoster();
+                ValidateActTwo();
+                ValidateActThree();
                 ValidateKnightCharge();
                 ValidateCombatFeel();
                 ValidateHud();

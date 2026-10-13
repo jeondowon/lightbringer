@@ -28,7 +28,7 @@ namespace Lightbringer.Core
 
         public int WavesSpawned => waves;
         public int TotalWaves => WaveCount(stage);
-        public static int WaveCount(int stage) => 3 + stage / 2;
+        public static int WaveCount(int stage) => CampaignStages.WaveCount(stage);
         public bool HasBoss => EnemyCatalog.HasBoss(stage);
         public Combatant Boss { get; private set; }
         public bool BossDefeated { get; private set; }
@@ -90,7 +90,23 @@ namespace Lightbringer.Core
         public Combatant SpawnFinalBoss(Vector3 position)
         {
             if (!HasBoss || !AssaultCleared || Boss != null || BossDefeated || routes == null || routes.Length == 0) return null;
+            // After the first encounter the army survives and may already surround the ruined gate.
+            if (stage != EnemyCatalog.BossStage)
+            {
+                Vector3 ground = position - Vector3.up * .85f;
+                if (!TryFindSlot(ground, EnemyCatalog.Radius(EnemyKind.Boss), out position)
+                    && !TryFindSlot(ground + Vector3.forward * 10, EnemyCatalog.Radius(EnemyKind.Boss), out position))
+                    return null;
+            }
             return Spawn(EnemyKind.Boss, routes.Length / 2, position);
+        }
+
+        // A boss built outside the squads (the Demon King's core) still reports to rewards, audio and the playtest log.
+        public void RegisterBossPart(Combatant part)
+        {
+            if (part == null || kinds.ContainsKey(part)) return;
+            kinds[part] = EnemyKind.Boss;
+            Spawned?.Invoke(part);
         }
 
         public int SummonBossGuard()

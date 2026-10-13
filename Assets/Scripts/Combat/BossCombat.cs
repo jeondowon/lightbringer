@@ -19,14 +19,21 @@ namespace Lightbringer.Combat
         private UnitPathFollower movement;
         private CharacterController body;
         private BossVfx warning;
-        private float cooldown = 2.5f, timer, chargeRemaining;
+        private float cooldown = 1.5f, timer, chargeRemaining;
         private float chargeVfxTimer;
         private int nextAttack;
+        private bool followupCharge;
         private Vector3 origin, aim, direction;
         private readonly HashSet<Combatant> hit = new HashSet<Combatant>();
         public BossAttack CurrentAttack { get; private set; }
         public bool IsAttacking { get; private set; }
-        public bool IsEnraged => self != null && self.CurrentHealth <= self.MaximumHealth * 0.5f;
+        public bool IsEnraged => Bereaved || (self != null && self.CurrentHealth <= self.MaximumHealth * 0.5f);
+        // Final battle: no special starts while this returns true (the Demon King is casting), so big attacks alternate.
+        public System.Func<bool> HoldSpecials { get; set; }
+        // Final battle: the Demon King fell first; the Warlord fights on at the enraged pace without healing.
+        public bool Bereaved { get; set; }
+        // Casting, charging or about to chain the crescent into a charge.
+        public bool IsBusy => IsAttacking || followupCharge;
         public int SpecialsResolved { get; private set; }
         public float Windup => CurrentAttack == BossAttack.Lightning ? 1.6f : CurrentAttack == BossAttack.Shockwave ? 1.5f : 1.25f;
 
@@ -37,7 +44,15 @@ namespace Lightbringer.Combat
             melee = GetComponent<UnitCombat>();
             movement = GetComponent<UnitPathFollower>();
             body = GetComponent<CharacterController>();
+            // The Warlord hunts the commander instead of marching on the allied gate.
+            melee.Quarry = battle.Hero;
         }
+
+        // How far the hero may stand for a special to be worth casting; close strikes are skipped at range.
+        private static float Reach(BossAttack attack) =>
+            attack == BossAttack.Cleave ? 6 : attack == BossAttack.Shockwave ? 8 : attack == BossAttack.Charge ? 18
+            : attack == BossAttack.Lightning ? 30 : attack == BossAttack.Crescent ? 35 : MaxReach;
+        private const float MaxReach = 42;
 
         private void Update() => Tick(Time.deltaTime);
 
@@ -80,9 +95,27 @@ namespace Lightbringer.Combat
                 return;
             }
             cooldown -= delta;
-            if (cooldown > 0 || melee.IsStrikePending || Vector3.Distance(transform.position, battle.Hero.transform.position) > 42) return;
-            BeginSpecial((BossAttack)nextAttack);
-            nextAttack = (nextAttack + 1) % 6;
+            if (cooldown > 0 || melee.IsStrikePending || (HoldSpecials != null && HoldSpecials())) return;
+            Vector3 offset = battle.Hero.transform.position - transform.position; offset.y = 0;
+            float distance = offset.magnitude;
+            if (followupCharge)
+            {
+                followupCharge = false;
+                if (distance <= Reach(BossAttack.Charge))
+                {
+                    BeginSpecial(BossAttack.Charge);
+                    return;
+                }
+            }
+            // Keep the rotation order, but skip strikes that cannot reach the hero so the boss never swings at air.
+            for (int i = 0; i < 6; i++)
+            {
+                int attack = (nextAttack + i) % 6;
+                if (distance > Reach((BossAttack)attack)) continue;
+                BeginSpecial((BossAttack)attack);
+                nextAttack = (attack + 1) % 6;
+                return;
+            }
         }
 
         private void BeginSpecial(BossAttack attack)
@@ -202,7 +235,10 @@ namespace Lightbringer.Combat
         private void FinishSpecial()
         {
             IsAttacking = false; chargeRemaining = 0;
-            cooldown = IsEnraged ? 2.6f : 4f;
+            // From the rematch on, the crescent links into a charge.
+            followupCharge = battle.Stage != EnemyCatalog.BossStage && CurrentAttack == BossAttack.Crescent;
+            // The follow-up retains its full warning and locks a fresh aim point.
+            cooldown = followupCharge ? .65f : IsEnraged ? 1.6f : 2.5f;
             if (self != null && self.IsAlive && !battle.Objective.HasEnded)
             { melee.enabled = true; movement.enabled = true; }
         }

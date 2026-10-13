@@ -79,9 +79,9 @@ namespace Lightbringer.EditorTools
             }
             for (int stage = 3; stage <= CampaignProgress.StageCount; stage++)
                 Check(progress.CompleteStage(stage), "Campaign stage " + stage + " can be unlocked and cleared sequentially");
-            Check(progress.skillLevels[(int)SkillKind.Shockwave] == 1 && progress.skillLevels[(int)SkillKind.Ice] == 0
-                && progress.skillLevels[(int)SkillKind.Meteor] == 0 && progress.IsValid(),
-                "Act 1 teaches Heal and Shockwave; Ice and Meteor wait for Act 2");
+            Check(progress.skillLevels[(int)SkillKind.Shockwave] == 1 && progress.skillLevels[(int)SkillKind.Ice] == 1
+                && progress.skillLevels[(int)SkillKind.Meteor] == 1 && progress.IsValid(),
+                "Acts 1 and 2 teach Heal, Shockwave, Ice and Meteor through first clears");
             Check(SkillCatalog.RewardFor(7) == (int)SkillKind.Shockwave && SkillCatalog.RewardFor(15) == (int)SkillKind.Ice
                 && SkillCatalog.RewardFor(16) == (int)SkillKind.Meteor && SkillCatalog.RewardFor(8) == SkillCatalog.Empty,
                 "The skill reward table: Shockwave at stage 7, Ice at 15, Meteor at 16");
@@ -108,7 +108,7 @@ namespace Lightbringer.EditorTools
             Check(Mathf.Approximately(GrowthCatalog.AuraRadiusAt(1), 1.5f) && Mathf.Approximately(GrowthCatalog.AuraRadiusAt(CampaignProgress.MaxLevel), 8f),
                 "Aura radius grows with hero level from 1.5 m to 8 m");
 
-            CampaignProgress old = new CampaignProgress { version = 1, level = 40 };
+            CampaignProgress old = new CampaignProgress { version = 1, level = 40, cleared = new bool[8] };
             old.ranks = new[] { 5, 10, 0, 0, 20, 4, 0, 0 };
             old.unitRanks[0] = 15;
             old.equipmentLevels = new[] { 25, 1, 0, 1, 0, 0 };
@@ -119,7 +119,7 @@ namespace Lightbringer.EditorTools
                 && old.version == CampaignProgress.Version && old.skillLevels[0] == SkillCatalog.MaxLevel,
                 "Version 1 saves keep their EXP on the new curve, return over-cap growth, refund troop ranks and carry gear into skills");
 
-            CampaignProgress v2 = new CampaignProgress { version = 2, equipmentLevels = new[] { 3, 2, 1, 2, 0, 1 }, loadout = new[] { 0, 2, 3 } };
+            CampaignProgress v2 = new CampaignProgress { version = 2, cleared = new bool[8], equipmentLevels = new[] { 3, 2, 1, 2, 0, 1 }, loadout = new[] { 0, 2, 3 } };
             v2.UpgradeSavedData();
             Check(v2.IsValid() && v2.version == CampaignProgress.Version && v2.skillLevels.SequenceEqual(new[] { 3, 2, 0, 0, 0 })
                 && v2.loadout.SequenceEqual(new[] { 0, SkillCatalog.Empty, SkillCatalog.Empty }) && v2.gold == 4 * 40 && v2.equipmentLevels.Length == 0,

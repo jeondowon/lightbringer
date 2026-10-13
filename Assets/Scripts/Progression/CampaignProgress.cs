@@ -9,13 +9,13 @@ namespace Lightbringer.Progression
     [Serializable]
     public sealed class CampaignProgress
     {
-        public const int StageCount = 8;
+        public const int StageCount = Core.CampaignStages.Count;
         public const int GrowthCount = 8;
-        public const int Version = 3;
+        public const int Version = 5;
         public const int MaxLevel = 30;
         // EXP from level n to n + 1 (index n - 1). Tuned so stage bosses 8 / 16 / 24 expect Lv 15 / 25 / 30 with
         // replays: first clears of stages 1-7 give ~6,000 EXP (Lv 12) and a few stage 6-7 replays reach Lv 15.
-        // Levels 16+ are an extrapolation until the stages of Acts 2 and 3 exist.
+        // Acts 2 and 3 use this existing curve; level pacing still needs manual playtesting.
         private static readonly int[] ExperienceTable =
         {
             100, 130, 170, 220, 290, 370, 480, 630, 820, 1060, 1380, 1790, 2330, 3030,
@@ -112,13 +112,28 @@ namespace Lightbringer.Progression
         {
             if (version == 1) UpgradeFromVersion1();
             if (version == 2) UpgradeFromVersion2();
+            if (version == 3) ExtendStages(8);
+            if (version == 4) ExtendStages(16);
+        }
+
+        // Version 3 saved 8 stages and version 4 saved 16. A finished act opens the next one; the rest is kept.
+        private void ExtendStages(int savedStages)
+        {
+            if (cleared == null || cleared.Length != savedStages || unlockedStage < 1 || unlockedStage > savedStages) return;
+            // Check the old progression before extending it; malformed records must still fail validation.
+            for (int i = 0; i < unlockedStage - 1; i++) if (!cleared[i]) return;
+            for (int i = unlockedStage; i < savedStages; i++) if (cleared[i]) return;
+            bool finishedAct = cleared[savedStages - 1];
+            Array.Resize(ref cleared, StageCount);
+            if (finishedAct) unlockedStage = savedStages + 1;
+            version = Version;
         }
 
         // Version 2 kept staffs and rings in equipmentLevels (Light, Healing, Rune, Food, Mana, Vitality). Rings and the
         // Rune staff are gone: Light and Healing carry over as skills, and every level of the others becomes light shards.
         private void UpgradeFromVersion2()
         {
-            version = Version;
+            version = 3;
             int[] old = equipmentLevels ?? new int[0];
             int refund = 0;
             for (int i = 2; i < old.Length; i++) refund += Mathf.Clamp(old[i], 0, 99) * RetiredGearRefund;

@@ -377,6 +377,55 @@ namespace Lightbringer.UI
             }
         }
 
+        // A tendril of void energy reaching along a path: a charged violet sheath round an ink-black core, with
+        // sparks running towards its tip, so it reads over dark armour and dark portals alike.
+        public void VoidTendril(Vector2[] path, float width, float strength, int seed)
+        {
+            if (path == null || path.Length < 2 || width <= 0f || strength <= 0.002f) return;
+            float length = 0f;
+            for (int i = 1; i < path.Length; i++) length += Vector2.Distance(path[i - 1], path[i]);
+            if (length < 1f) return;
+            int steps = Mathf.Clamp(Mathf.CeilToInt(length / 8f), 2, 512);
+            for (int strand = 0; strand < 2; strand++)
+            {
+                if (darkInk.Vertices.Count + (steps + 1) * 2 > 60000) return;
+                int start = darkInk.Vertices.Count;
+                for (int i = 0; i <= steps; i++)
+                {
+                    float u = (float)i / steps, distance = u * length;
+                    Vector2 point = PointAlong(path, distance, out _);
+                    Vector2 before = PointAlong(path, Mathf.Max(0f, distance - 10f), out _);
+                    Vector2 after = PointAlong(path, Mathf.Min(length, distance + 10f), out _);
+                    Vector2 direction = (after - before).normalized;
+                    Vector2 normal = new Vector2(-direction.y, direction.x);
+                    float travel = distance - Time * 300f;
+                    float swell = 0.5f + 0.5f * Mathf.Sin(travel * 0.05f + seed * 1.3f);
+                    float curl = Mathf.Sin(travel * 0.03f + seed) * width * 0.15f;
+                    // Thick at the portal, thinning to a whip at the tip.
+                    float taper = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(distance / 30f)) * Mathf.Lerp(1f, 0.35f, u);
+                    float half = width * (0.55f + 0.3f * swell) * Scale * taper * (strand == 0 ? 1f : 0.42f);
+                    Color color = strand == 0 ? new Color(0.6f, 0.32f, 0.95f, 0.62f * (0.7f + 0.3f * swell))
+                        : new Color(0.025f, 0.01f, 0.04f, 0.94f);
+                    color.a *= Mathf.Clamp01(strength);
+                    Vector2 centre = At(point + normal * curl);
+                    AddVertex(darkInk, centre - normal * half, new Vector2(u, 0f), color);
+                    AddVertex(darkInk, centre + normal * half, new Vector2(u, 1f), color);
+                    if (i == 0) continue;
+                    int a = start + (i - 1) * 2;
+                    AddTriangle(darkInk, a, a + 2, a + 3);
+                    AddTriangle(darkInk, a, a + 3, a + 1);
+                }
+            }
+            for (int k = 0; k < 3; k++)
+            {
+                float u = Mathf.Repeat(Time * 1.6f + k / 3f + Hash(seed + k), 1f);
+                Vector2 position = At(PointAlong(path, u * length, out _));
+                float fade = Mathf.Sin(u * Mathf.PI) * Mathf.Clamp01(strength);
+                Quad(halo, position, Vector2.one * width * 0.7f * Scale, 0f, new Color(0.62f, 0.38f, 1f, 0.3f * fade));
+                Quad(core, position, Vector2.one * width * 0.18f * Scale, 0f, new Color(0.88f, 0.78f, 1f, 0.75f * fade));
+            }
+        }
+
         private static Vector2 PointAlong(Vector2[] path, float distance, out Vector2 direction)
         {
             for (int k = 1; k < path.Length; k++)
@@ -437,6 +486,29 @@ namespace Lightbringer.UI
                 float r = (0.8f + Hash(index + 7) * 0.7f) * Scale;
                 Quad(halo, position, Vector2.one * r * 5f, 0f, new Color(1f, 0.85f, 0.55f, 0.2f * fade));
                 Quad(core, position, Vector2.one * r * 1.6f, 0f, new Color(1f, 0.96f, 0.84f, 0.75f * fade));
+            }
+        }
+
+        // Sparks and smoke spiralling into a vortex from an elliptical ring, accelerating as they fall in.
+        public void Inflow(Vector2 centre, Vector2 radii, int count, Color color, float period, float strength, int seed)
+        {
+            if (strength <= 0.002f) return;
+            for (int i = 0; i < count; i++)
+            {
+                int index = seed * 229 + i;
+                float life = period * (0.7f + 0.6f * Hash(index + 1));
+                float age = Mathf.Repeat(Time / life + Hash(index + 2), 1f);
+                float fall = age * age;
+                float angle = Hash(index) * Mathf.PI * 2f + fall * 1.6f;
+                float reach = (0.75f + 0.35f * Hash(index + 3)) * (1f - fall);
+                Vector2 position = At(centre + new Vector2(Mathf.Cos(angle) * radii.x, Mathf.Sin(angle) * radii.y) * reach);
+                float fade = Mathf.Clamp01(age * 5f) * Mathf.Clamp01((1f - age) * 4f) * strength;
+                float r = (0.9f + Hash(index + 4)) * Scale;
+                float heading = angle + Mathf.PI * 0.62f;
+                Quad(dark, position, new Vector2(r * 9f, r * 5f), heading, new Color(0.05f, 0.02f, 0.08f, 0.32f * fade));
+                Quad(halo, position, new Vector2(r * 6f * (1f + fall * 2f), r * 3.5f), heading, new Color(color.r, color.g, color.b, 0.28f * fade));
+                Quad(core, position, new Vector2(r * 1.8f * (1f + fall * 2f), r * 1.3f), heading,
+                    new Color(Mathf.Lerp(color.r, 1f, 0.45f), Mathf.Lerp(color.g, 1f, 0.45f), Mathf.Lerp(color.b, 1f, 0.45f), 0.85f * fade));
             }
         }
 

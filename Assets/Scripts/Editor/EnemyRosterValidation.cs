@@ -94,7 +94,7 @@ namespace Lightbringer.EditorTools
             host = new GameObject("Enemy roster validation host");
             CampaignSession session = host.AddComponent<CampaignSession>();
             CampaignProgress profile = new CampaignProgress();
-            for (int cleared = 1; cleared < CampaignProgress.StageCount; cleared++) profile.CompleteStage(cleared);
+            for (int cleared = 1; cleared < stage; cleared++) profile.CompleteStage(cleared);
             session.InitializeForValidation(profile);
             EditorAssets.ConfigureSession(session, material);
             Check(session.SelectStage(stage) && session.StartBattle(), "Validation can start campaign stage " + stage);
@@ -234,7 +234,7 @@ namespace Lightbringer.EditorTools
                 Check(!battle.Objective.HasEnded && session.Progress.gold == goldBeforeClear,
                     "The closing illustration fades before clear rewards or victory are granted");
                 battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds);
-                Check(battle.Objective.HasWon && session.Progress.IsComplete && victories == 1
+                Check(battle.Objective.HasWon && session.Progress.cleared[7] && session.Progress.unlockedStage == 9 && !session.Progress.IsComplete && victories == 1
                     && session.Progress.gold == goldBeforeClear + 500,
                     "Completing the retreat grants the stage victory and clear reward exactly once");
                 battle.Encounter.Tick(10);

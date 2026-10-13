@@ -19,6 +19,10 @@ namespace Lightbringer.Combat
         [SerializeField] private LayerMask obstructionMask = ~0;
 
         public Combatant Target { get; private set; }
+        // A hunted target (the Warlord's hero) is chased across the whole field, ignoring detection radius and
+        // anything nearer; enemies standing within reach on the way are still struck while it is out of reach.
+        public Combatant Quarry { get; set; }
+        private Combatant blocker;
         public float AttackRange => attackRange;
         public float BaseDamage => attackDamage;
         public float AttackInterval => attackInterval;
@@ -162,6 +166,7 @@ namespace Lightbringer.Combat
             // A pause keeps a swing in progress; it resolves when combat resumes. Death cancels it.
             if (self == null || !self.IsAlive) CancelStrike();
             Target = null;
+            blocker = null;
             auras.Clear();
             if (movement != null)
                 movement.ClearSteeringOverride();
@@ -198,7 +203,9 @@ namespace Lightbringer.Combat
                 if (!isActiveAndEnabled) return;
             }
             searchCooldown -= deltaTime;
-            if (!IsValidTarget(Target))
+            if (IsValidQuarry())
+                Target = Quarry;
+            else if (!IsValidTarget(Target))
             {
                 bool lostTarget = Target != null;
                 Target = null;
@@ -222,14 +229,27 @@ namespace Lightbringer.Combat
             float height = aimPoint.y - transform.position.y;
             movement.SetSteeringOverride(aimPoint, Mathf.Sqrt(Mathf.Max(0.01f, reach * reach - height * height)));
             // Simple rule: an enemy ahead is approached and attacked; with no enemy the unit keeps advancing.
-            if ((aimPoint - transform.position).sqrMagnitude > attackRange * attackRange
-                || cooldown > 0f || !HasLineOfSight(Target))
+            Combatant victim = Target;
+            if (Target == Quarry && !CanStrike(Quarry))
+            {
+                if (!IsValidTarget(blocker) || !CanStrike(blocker))
+                {
+                    blocker = null;
+                    if (searchCooldown <= 0f)
+                    {
+                        blocker = FindTarget(attackRange);
+                        searchCooldown = 0.1f + (GetInstanceID() & 7) * 0.005f;
+                    }
+                }
+                victim = blocker;
+            }
+            if (victim == null || cooldown > 0f || !CanStrike(victim))
                 return;
 
             // One swing at a time: a slow attack whose blow has not landed yet does not start another.
             if (strikePending)
                 return;
-            strikeTarget = Target;
+            strikeTarget = victim;
             strikeDamage = EffectiveDamage;
             strikeCharging = IsChargeReady;
             travelled = 0f;
@@ -261,7 +281,7 @@ namespace Lightbringer.Combat
             }
             if (ProjectileType != ProjectileKind.None)
             {
-                Vector3 muzzle = transform.position + Vector3.up * 0.45f + transform.forward * 0.35f;
+                Vector3 muzzle = transform.position + Vector3.up * (ProjectileType == ProjectileKind.Arrow ? 1.15f : 0.45f) + transform.forward * 0.35f;
                 Projectile shot = Lightbringer.Combat.Projectile.Launch(ProjectileType, self, muzzle, primary, projectileSpeed, projectileArc,
                     damage, HeavyMultiplier, splashRadius, detectionMask);
                 ProjectileLaunched?.Invoke(shot);
@@ -317,16 +337,26 @@ namespace Lightbringer.Combat
             return Mathf.Abs(offset.y) < attackRange * 0.95f && offset.sqrMagnitude <= detectionRadius * detectionRadius;
         }
 
-        private Combatant FindTarget()
+        private bool IsValidQuarry() =>
+            Quarry != null && Quarry.IsAlive && !Quarry.Invulnerable && Quarry.Faction != self.Faction
+            && Quarry.gameObject.scene == gameObject.scene;
+
+        private bool CanStrike(Combatant candidate) =>
+            (candidate.GetAimPoint(transform.position) - transform.position).sqrMagnitude <= attackRange * attackRange
+            && HasLineOfSight(candidate);
+
+        private Combatant FindTarget() => FindTarget(detectionRadius);
+
+        private Combatant FindTarget(float radius)
         {
             TargetSearches++;
-            int count = candidates.Overlap(transform.position, detectionRadius, detectionMask);
+            int count = candidates.Overlap(transform.position, radius, detectionMask);
             Combatant nearest = null;
             float nearestDistance = float.PositiveInfinity;
             for (int i = 0; i < count; i++)
             {
                 Combatant candidate = candidates.Items[i].GetComponentInParent<Combatant>();
-                if (!IsValidTarget(candidate))
+                if (!IsValidTarget(candidate) || candidate == Quarry)
                     continue;
                 float distance = (candidate.GetAimPoint(transform.position) - transform.position).sqrMagnitude;
                 if (distance < nearestDistance && HasLineOfSight(candidate))

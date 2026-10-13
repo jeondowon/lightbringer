@@ -20,9 +20,12 @@ namespace Lightbringer.Core
         public event System.Action<Combatant> BaseDestroyed;
         public bool RequiresBossVictory { get; private set; }
         public bool IsBaseDestroyed { get; private set; }
-        private Combatant finalBoss;
+        // Every tracked boss must fall (the final stage tracks the Warlord and the Demon King's core).
+        private readonly System.Collections.Generic.List<Combatant> finalBosses = new System.Collections.Generic.List<Combatant>();
         private bool deferBossVictory, bossDefeated;
         public event System.Action FinalBossDefeated;
+        // One of several tracked bosses fell while another still stands.
+        public event System.Action<Combatant> BossFellEarly;
         private Combatant subscribedBase;
         private Combatant subscribedHero;
         [Tooltip("Optional allied stronghold; its destruction is a defeat (as is the hero's death).")]
@@ -34,11 +37,18 @@ namespace Lightbringer.Core
 
         public void TrackFinalBoss(Combatant boss, bool waitForOutro = false)
         {
-            if (finalBoss != null) finalBoss.Died -= OnBossDefeated;
-            finalBoss = boss;
+            foreach (Combatant tracked in finalBosses) if (tracked != null) tracked.Died -= OnBossDefeated;
+            finalBosses.Clear();
             deferBossVictory = waitForOutro;
             bossDefeated = false;
-            if (finalBoss != null) finalBoss.Died += OnBossDefeated;
+            AddFinalBoss(boss);
+        }
+
+        public void AddFinalBoss(Combatant boss)
+        {
+            if (boss == null || finalBosses.Contains(boss)) return;
+            finalBosses.Add(boss);
+            if (isActiveAndEnabled) boss.Died += OnBossDefeated;
         }
 
         public void Configure(Combatant objective, Combatant player, Transform root, ThirdPersonCamera camera, Combatant allied = null)
@@ -58,7 +68,7 @@ namespace Lightbringer.Core
             if (subscribedHero != null) subscribedHero.Died += OnHeroDefeated;
             subscribedAlliedBase = alliedBase;
             if (subscribedAlliedBase != null) subscribedAlliedBase.Died += OnAlliedBaseLost;
-            if (finalBoss != null) finalBoss.Died += OnBossDefeated;
+            foreach (Combatant tracked in finalBosses) if (tracked != null) tracked.Died += OnBossDefeated;
         }
 
         private void OnDisable()
@@ -70,7 +80,7 @@ namespace Lightbringer.Core
             subscribedHero = null;
             if (subscribedAlliedBase != null) subscribedAlliedBase.Died -= OnAlliedBaseLost;
             subscribedAlliedBase = null;
-            if (finalBoss != null) finalBoss.Died -= OnBossDefeated;
+            foreach (Combatant tracked in finalBosses) if (tracked != null) tracked.Died -= OnBossDefeated;
         }
 
         private void Start()
@@ -97,7 +107,9 @@ namespace Lightbringer.Core
         private void OnBossDefeated(Combatant defeated)
         {
             if (HasEnded || !isActiveAndEnabled || bossDefeated || !RequiresBossVictory || !IsBaseDestroyed
-                || defeated != finalBoss || defeated.IsAlive) return;
+                || !finalBosses.Contains(defeated) || defeated.IsAlive) return;
+            foreach (Combatant tracked in finalBosses)
+                if (tracked != null && tracked.IsAlive) { BossFellEarly?.Invoke(defeated); return; }
             bossDefeated = true;
             FinalBossDefeated?.Invoke();
             if (!deferBossVictory) Win();

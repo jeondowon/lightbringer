@@ -35,7 +35,8 @@ namespace Lightbringer.Core
         }
         public string SaveStatus => store == null ? "검증 세션" : store.Error;
         public bool IsBossCinematic => Battle != null && Battle.Encounter != null && Battle.Encounter.IsCinematic;
-        public bool IsChoosing => !IsBossCinematic && Progress != null && Progress.pendingLevels > 0;
+        public bool IsChoosing => !IsBossCinematic && !(Battle?.Beacon != null && Battle.Beacon.IsPresenting)
+            && Progress != null && Progress.pendingLevels > 0;
         public bool IsBattlePaused => simulation.IsPaused;
         public bool IsUserPaused => userPaused;
         public bool CanPause => Battle != null && !Battle.Objective.HasEnded && !IsChoosing && !IsBossCinematic;
@@ -139,10 +140,18 @@ namespace Lightbringer.Core
             LastResult = victory
                 ? rewarded ? "최초 승리! " + (skillLine != "" ? skillLine + " " : "") + "다음 콘텐츠를 해금했습니다." : "승리! 최초 승리 보상은 이미 획득했습니다."
                 : "패배했습니다. 영구 성장과 기술은 유지됩니다.";
+            if (victory && SelectedStage == 1)
+                LastResult = "첫 번째 봉화를 되살렸습니다.\n" + LastResult;
             if (victory && SelectedStage == 8)
                 LastResult = "어둠의 군주가 물러났습니다. 봉화에 다시 빛이 돌아옵니다.\n"
                     + "군주: ‘이것으로 끝이라 생각하지 마라. 우리는 다시 만날 것이다.’\n"
-                    + (rewarded ? (skillLine != "" ? skillLine : "최초 승리 보상을 획득했습니다.") : "최초 승리 보상은 이미 획득했습니다.");
+                    + (rewarded ? (skillLine != "" ? skillLine : "2막으로 가는 길이 열렸습니다.") : "최초 승리 보상은 이미 획득했습니다.");
+            if (victory && SelectedStage == 16)
+                LastResult = "군주를 다시 몰아내고 성채를 되찾았습니다.\n2막 완료 · 마왕의 영역으로 가는 길이 열렸습니다.\n"
+                    + (rewarded ? skillLine : "최초 승리 보상은 이미 획득했습니다.");
+            if (victory && SelectedStage == Lightbringer.Units.EnemyCatalog.FinalStage)
+                LastResult = "어둠의 군주와 마왕을 쓰러뜨렸습니다. 하늘의 어둠이 걷히고 모든 봉화에 빛이 돌아옵니다.\n"
+                    + (rewarded ? "캠페인 완료 · 빛을 되찾은 전장에 언제든 다시 도전할 수 있습니다." : "최초 승리 보상은 이미 획득했습니다.");
             dirty = true;
             Flush();
         }

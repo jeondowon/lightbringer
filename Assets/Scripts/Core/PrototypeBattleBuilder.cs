@@ -14,6 +14,7 @@ namespace Lightbringer.Core
 {
     public sealed class PrototypeBattle
     {
+        public int Stage;
         public GameObject Root;
         public Combatant Hero;
         public UnitSummoner Summoner;
@@ -25,23 +26,25 @@ namespace Lightbringer.Core
         public Combatant AlliedBase;
         public Transform DeployPoint;
         public BossEncounter Encounter;
+        public BeaconSanctuary Beacon;
     }
 
     public static class PrototypeBattleBuilder
     {
-        public static int PathCount(int stage) => stage <= 2 ? 1 : stage <= 5 ? 2 : 3;
+        public static int PathCount(int stage) => CampaignStages.PathCount(stage);
 
         public static PrototypeBattle Build(int stage, CampaignProgress progress, InputActionAsset input,
             Material material, Shader ringShader, Transform parent, ArtStyleLibrary art = null)
         {
             PrototypeBattle battle = new PrototypeBattle();
+            battle.Stage = stage;
             battle.Root = new GameObject("Campaign Battlefield " + stage);
             battle.Root.SetActive(false);
             battle.Root.transform.SetParent(parent, false);
             Transform root = battle.Root.transform;
             GameObject ground = Primitive("Ground", PrimitiveType.Plane, root, material);
-            ground.transform.localPosition = new Vector3(0, 0, 12);
-            ground.transform.localScale = new Vector3(12, 1, 12);
+            ground.transform.localPosition = new Vector3(0, 0, BattlefieldLayout.CentreZ);
+            ground.transform.localScale = new Vector3(12, 1, 16);
             SetColor(ground, new Color(0.24f, 0.29f, 0.27f));
             GameObject sun = Child("Sun", root);
             sun.transform.rotation = Quaternion.Euler(50, -30, 0);
@@ -70,6 +73,7 @@ namespace Lightbringer.Core
             cameraObject.AddComponent<AudioListener>();
             ThirdPersonCamera follow = cameraObject.AddComponent<ThirdPersonCamera>();
             follow.Configure(hero.transform, input);
+            hero.AddComponent<BattlefieldBoundary>().Configure(root);
             hero.AddComponent<PlayerMovement>().Configure(cameraObject.transform, input);
             battle.Abilities.ConfigureCamera(battle.Camera);
 
@@ -78,11 +82,9 @@ namespace Lightbringer.Core
             WaypointPath[] enemyRoutes = new WaypointPath[lanes];
             for (int i = 0; i < lanes; i++)
             {
-                float x = (i - (lanes - 1) * 0.5f) * 22f;
-                Vector3[] points = { new Vector3(x, 0, -5), new Vector3(x, 0, 14), new Vector3(x * 0.5f, 0, 29), new Vector3(0, 0, 38) };
+                Vector3[] points = CampaignStages.RoutePoints(stage, i);
                 battle.Paths[i] = Path("Path " + (i + 1), root, points);
-                enemyRoutes[i] = Path("Enemy Route " + (i + 1), root, new[] {
-                    new Vector3(x * 0.5f, 0, 29), new Vector3(x, 0, 14), new Vector3(x, 0, -5), new Vector3(0, 0, -19.5f) });
+                enemyRoutes[i] = Path("Enemy Route " + (i + 1), root, CampaignStages.EnemyRoutePoints(stage, i));
             }
             CharacterController template = UnitTemplate(root, material, art);
             Transform soldiers = Child("Allied Units", root).transform;
@@ -94,7 +96,7 @@ namespace Lightbringer.Core
             // After the summoner exists, so Leadership also lowers summon costs.
             battle.Abilities.ApplyProgression(progress.ranks, progress.level);
             GameObject objective = Primitive("Enemy Stronghold", PrimitiveType.Cube, root, material);
-            objective.transform.localPosition = new Vector3(0, 2, 38);
+            objective.transform.localPosition = new Vector3(0, 2, BattlefieldLayout.EnemyBaseZ);
             objective.transform.localScale = new Vector3(6, 4, 4);
             Combatant baseHealth = objective.AddComponent<Combatant>();
             baseHealth.Configure(Faction.Enemy, 150 + stage * 50);
@@ -112,17 +114,23 @@ namespace Lightbringer.Core
                 battle.Encounter = battle.Root.AddComponent<BossEncounter>();
                 battle.Encounter.Configure(battle, art);
             }
-            battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle, ringShader, art != null && art.HasMaterials);
+            battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle);
+            ArtStyleLibrary environmentArt = ActTwoScenery.CreatePalette(root, art, stage);
             if (art != null && art.HasMaterials)
             {
                 // The environment's flat play area replaces the greybox plane (same height, so nothing moves).
                 Vector3 enemyGate = objective.transform.position + Vector3.back * 5f;
-                BattlefieldEnvironment environment = BattlefieldEnvironment.Build(art, stage, root, battle.Paths,
+                BattlefieldEnvironment environment = BattlefieldEnvironment.Build(environmentArt, stage, root, battle.Paths,
                     battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate }, light);
                 if (environment != null) ground.SetActive(false);
+                if (stage == 1 && environment != null)
+                {
+                    battle.Beacon = environment.GetComponentInChildren<BeaconSanctuary>(true);
+                    if (battle.Beacon != null) battle.Beacon.Configure(battle.Objective, battle.Camera);
+                }
             }
-            BattlefieldStyling.Apply(art, light, ground.GetComponent<Renderer>(), battle.Camera, root,
-                art != null ? art.FindBackdrop(stage) : null);
+            BattlefieldStyling.Apply(environmentArt, light, ground.GetComponent<Renderer>(), battle.Camera, root,
+                environmentArt != null ? environmentArt.FindBackdrop(stage) : null);
             return battle;
         }
 
@@ -131,7 +139,7 @@ namespace Lightbringer.Core
         private static void BuildAlliedBase(PrototypeBattle battle, int stage, Transform root, Material material, ArtStyleLibrary art)
         {
             GameObject stronghold = Primitive("Allied Stronghold", PrimitiveType.Cube, root, material);
-            stronghold.transform.localPosition = new Vector3(0, 2, -22);
+            stronghold.transform.localPosition = new Vector3(0, 2, BattlefieldLayout.AlliedBaseZ);
             stronghold.transform.localScale = new Vector3(6, 4, 4);
             battle.AlliedBase = stronghold.AddComponent<Combatant>();
             battle.AlliedBase.Configure(Faction.Allied, 400 + stage * 50);

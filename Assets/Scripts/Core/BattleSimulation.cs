@@ -32,7 +32,7 @@ namespace Lightbringer.Core
             || component is PlayerMovement || component is HeroAbilities || component is ThirdPersonCamera
             || component is FoodResource || component is ManaResource || component is EnemyWaveSpawner
             || component is UnitSupport || component is Projectile || component is BossCombat || component is DarkCrescent
-            || component is StatusEffects;
+            || component is StatusEffects || component is DemonKingCombat;
 
         public void Resume(bool battleEnded)
         {

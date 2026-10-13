@@ -21,6 +21,10 @@ namespace Lightbringer.EditorTools
     public static partial class CampaignPlayValidation
     {
         private const string RunningKey = "Lightbringer.CampaignPlayValidation.Running";
+        private const string ActTwoKey = "Lightbringer.CampaignPlayValidation.ActTwoOnly";
+        private const string ActThreeKey = "Lightbringer.CampaignPlayValidation.ActThreeOnly";
+        private static string ReportName => SessionState.GetBool(ActThreeKey, false) ? "ActThreePlayChecks.txt"
+            : SessionState.GetBool(ActTwoKey, false) ? "ActTwoPlayChecks.txt" : "CampaignPlayChecks.txt";
         private const string PreviousSceneKey = "Lightbringer.CampaignPlayValidation.PreviousStartScene";
         private const string PreviousBackgroundKey = "Lightbringer.CampaignPlayValidation.PreviousBackground";
         private const string TestScenePath = "Assets/Scenes/CampaignValidation.unity";
@@ -61,6 +65,20 @@ namespace Lightbringer.EditorTools
             File.WriteAllText(RequestPath, "Run isolated campaign validation");
         }
 
+        [MenuItem("Lightbringer/Validate Act Two in Play Mode")]
+        public static void RequestActTwo()
+        {
+            Directory.CreateDirectory(DirectoryPath);
+            File.WriteAllText(RequestPath, "ActTwoOnly");
+        }
+
+        [MenuItem("Lightbringer/Validate Act Three in Play Mode")]
+        public static void RequestActThree()
+        {
+            Directory.CreateDirectory(DirectoryPath);
+            File.WriteAllText(RequestPath, "ActThreeOnly");
+        }
+
         private static void Update()
         {
             // An explicit validation request may arrive while a manual play session is still running.
@@ -92,6 +110,9 @@ namespace Lightbringer.EditorTools
                     || File.Exists(Path.Combine(DirectoryPath, "ImportDeathAndHeroSounds.request"))
                     || File.Exists(Path.Combine(DirectoryPath, "NormalizeSoundLevels.request"))
                     || File.Exists(Path.Combine(DirectoryPath, "ImportSelectedAdditionalSounds.request"))) return;
+                string mode = File.ReadAllText(RequestPath).Trim();
+                SessionState.SetBool(ActTwoKey, mode == "ActTwoOnly");
+                SessionState.SetBool(ActThreeKey, mode == "ActThreeOnly");
                 File.Delete(RequestPath);
                 Begin();
                 return;
@@ -103,7 +124,7 @@ namespace Lightbringer.EditorTools
             {
                 if (runtimeError != null) throw new InvalidOperationException(runtimeError);
                 if (session == null) Initialize();
-                if (EditorApplication.timeSinceStartup - started > 150) throw new TimeoutException("Play validation exceeded 150 seconds.");
+                if (EditorApplication.timeSinceStartup - started > 300) throw new TimeoutException("Play validation exceeded 300 seconds.");
                 Step();
             }
             catch (Exception exception) { Finish(false, exception.ToString()); }
@@ -135,8 +156,8 @@ namespace Lightbringer.EditorTools
             EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(SessionState.GetString(PreviousSceneKey, ""));
             SessionState.SetBool(RunningKey, false);
             Application.runInBackground = SessionState.GetBool(PreviousBackgroundKey, false);
-            if (!finishing && !File.Exists(Path.Combine(DirectoryPath, "CampaignPlayChecks.txt")))
-                File.WriteAllText(Path.Combine(DirectoryPath, "CampaignPlayChecks.txt"), "INCOMPLETE: Play mode exited before the probe finished.");
+            if (!finishing && !File.Exists(Path.Combine(DirectoryPath, ReportName)))
+                File.WriteAllText(Path.Combine(DirectoryPath, ReportName), "INCOMPLETE: Play mode exited before the probe finished.");
         }
 
         private static void Initialize()
@@ -150,10 +171,19 @@ namespace Lightbringer.EditorTools
             material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             EditorAssets.ConfigureSession(session, material);
             session.ConfigureArt(AssetDatabase.LoadAssetAtPath<Lightbringer.Visuals.ArtStyleLibrary>(ArtStyleSetup.LibraryPath));
-            session.InitializeForValidation(new CampaignProgress());
+            CampaignProgress profile = new CampaignProgress();
+            bool actThree = SessionState.GetBool(ActThreeKey, false);
+            if (SessionState.GetBool(ActTwoKey, false) || actThree)
+                for (int stage = 1; stage <= (actThree ? 16 : 8); stage++) profile.CompleteStage(stage);
+            session.InitializeForValidation(profile);
             host.AddComponent<Lightbringer.UI.CampaignHUD>();
             host.SetActive(true);
             Assert(Cursor.lockState == CursorLockMode.None && Cursor.visible, "Campaign preparation releases menu input");
+            if (SessionState.GetBool(ActTwoKey, false) || actThree)
+            {
+                phase = 32; phaseTime = Time.realtimeSinceStartup;
+                return;
+            }
             Assert(session.StartBattle(), "Actual Play mode can start a campaign with isolated progress");
             battleStartTime = Time.time;
             phase = 1; phaseTime = Time.realtimeSinceStartup;
@@ -358,8 +388,8 @@ namespace Lightbringer.EditorTools
                     phase = 21; phaseTime = Time.realtimeSinceStartup; break;
                 case 21:
                     if (elapsed < 1.2f) return;
-                    Assert(battle.Root.GetComponentsInChildren<Lightbringer.Visuals.BossVfx>().Length > 0,
-                        "Runtime rupture creates the procedural aurora and collapse effects");
+                    Assert(battle.Root.GetComponentsInChildren<Lightbringer.Visuals.BossArrivalVfx>().Length > 0,
+                        "Runtime rupture creates the citadel collapse dust wave and rubble");
                     Screenshot("BossRupture.png");
                     phase = 22; phaseTime = Time.realtimeSinceStartup; break;
                 case 22:
@@ -452,12 +482,161 @@ namespace Lightbringer.EditorTools
                     // Wait for the in-game fade to finish, with a bounded wall-clock timeout.
                     if (!battle.Objective.HasEnded && elapsed < 8f) return;
                     while (session.IsChoosing) session.ChooseGrowth(0);
-                    Assert(battle.Objective.HasWon && session.Progress.IsComplete,
+                    Assert(battle.Objective.HasWon && session.Progress.cleared[7] && session.Progress.unlockedStage == 9 && !session.Progress.IsComplete,
                         "Runtime victory is awarded only after the retreat story and its closing fade");
                     Assert(session.ReturnToPreparation(), "Final boss victory cleans up and returns to preparation");
+                    phase = 32; phaseTime = Time.realtimeSinceStartup; break;
+                case 32:
+                    if (elapsed < .3f) return;
+                    Assert(session.StartBattle(), $"Runtime starts Act {CampaignStages.ActOf(session.SelectedStage)} stage {session.SelectedStage}");
+                    session.Battle.Hero.Invulnerable = true;
+                    session.Battle.AlliedBase.Invulnerable = true;
+                    soldier = null;
+                    session.Battle.Summoner.Summoned += unit => soldier = unit;
+                    phase = 33; phaseTime = Time.realtimeSinceStartup; break;
+                case 33:
+                    if (soldier == null)
+                    {
+                        if (battle.Hero.GetComponent<FoodResource>().CurrentFood < 10) return;
+                        Assert(battle.Summoner.TrySummon(), $"Stage {session.SelectedStage} summons an allied soldier on its selected path");
+                        soldier.Invulnerable = true;
+                        soldierStart = soldier.transform.position;
+                        phaseTime = Time.realtimeSinceStartup;
+                        return;
+                    }
+                    if (elapsed < 1.5f) return;
+                    Assert(soldier.transform.position.z > soldierStart.z + .5f,
+                        $"Stage {session.SelectedStage} soldier advances through the rendered battlefield");
+                    var scenery = battle.Root.GetComponent<Lightbringer.Visuals.ActTwoScenery>();
+                    Assert(scenery != null && scenery.DeadTrees > 30 && scenery.Landmarks >= 2,
+                        $"Stage {session.SelectedStage} renders its atlas-based ruined inland environment");
+                    Screenshot(session.SelectedStage > 16 ? $"ActThreeBattle{session.SelectedStage}.png" : $"ActTwoBattle{session.SelectedStage}.png");
+                    phase = 34; phaseTime = Time.realtimeSinceStartup; break;
+                case 34:
+                    // Drain real spawn queues across frames so destroyed colliders can leave the physics world.
+                    if (!battle.Waves.AssaultCleared)
+                    {
+                        battle.Waves.Tick(10);
+                        foreach (Combatant enemy in battle.Root.GetComponentsInChildren<Combatant>())
+                            if (enemy.Faction == Faction.Enemy && enemy != battle.Objective.EnemyBase)
+                                enemy.TakeDamage(100000);
+                        return;
+                    }
+                    battle.Objective.EnemyBase.TakeDamage(100000);
+                    phase = EnemyCatalog.IsFinale(session.SelectedStage) ? 39 : session.SelectedStage == 16 ? 36 : 35;
+                    phaseTime = Time.realtimeSinceStartup; break;
+                case 35:
+                    if (elapsed < .3f) return;
+                    while (session.IsChoosing) session.ChooseGrowth(0);
+                    Assert(battle.Objective.HasWon && session.Progress.cleared[session.SelectedStage - 1],
+                        $"Stage {session.SelectedStage} grants runtime victory and persists its clear");
+                    Assert(session.ReturnToPreparation(), $"Stage {session.SelectedStage - 1} result returns to the next preparation screen");
+                    phase = 32; phaseTime = Time.realtimeSinceStartup; break;
+                case 36:
+                    if (!battle.Encounter.IsDialogue) return;
+                    if (elapsed < .5f) return;
+                    if (battle.Encounter.DialogueIndex == 0)
+                        Assert(soldier != null && soldier.IsAlive && battle.Encounter.FallenAllies == 0,
+                            "Runtime second Warlord arrival preserves the existing army");
+                    battle.Encounter.AdvanceDialogue();
+                    phaseTime = Time.realtimeSinceStartup;
+                    if (battle.Encounter.Phase == BossEncounterPhase.Fight) phase = 37;
+                    break;
+                case 37:
+                    while (session.IsChoosing) session.ChooseGrowth(0);
+                    if (elapsed < 1f) return;
+                    Assert(battle.Waves.Boss.GetComponent<BossCombat>().enabled && battle.Summoner.enabled,
+                        "Runtime rematch resumes boss AI and allied deployment after dialogue");
+                    battle.Waves.Boss.TakeDamage(100000);
+                    Assert(!battle.Objective.HasEnded, "Runtime second boss defeat waits for its outro");
+                    phase = 38; phaseTime = Time.realtimeSinceStartup; break;
+                case 38:
+                    if (battle.Encounter.IsDialogue && elapsed >= 1f)
+                    {
+                        battle.Encounter.AdvanceDialogue();
+                        phaseTime = Time.realtimeSinceStartup;
+                    }
+                    if (!battle.Objective.HasEnded) return;
+                    Assert(battle.Objective.HasWon && !session.Progress.IsComplete && session.Progress.unlockedStage == 17
+                        && session.Progress.IsLearned((int)SkillKind.Ice) && session.Progress.IsLearned((int)SkillKind.Meteor),
+                        "Runtime Act 2 completes all eight stages, awards Ice and Meteor and opens Act 3");
+                    while (session.IsChoosing) session.ChooseGrowth(0);
+                    Assert(session.ReturnToPreparation(), "Second Warlord victory returns to preparation");
+                    if (SessionState.GetBool(ActTwoKey, false)) { Finish(true, null); break; }
+                    phase = 32; phaseTime = Time.realtimeSinceStartup; break;
+                // Final battle (stage 24): the Warlord and the Demon King's abyss core, both must fall.
+                case 39:
+                    if (!battle.Encounter.IsDialogue || elapsed < .6f) return;
+                    var finaleView = session.GetComponent<Lightbringer.UI.CampaignHUD>().BossDialogue;
+                    if (battle.Encounter.DialogueIndex == 0 && !storyShotCaptured)
+                    {
+                        Assert(soldier != null && soldier.IsAlive && battle.Encounter.FallenAllies == 0
+                            && battle.Encounter.DemonCore != null && battle.Encounter.DemonCore.Invulnerable && battle.Waves.Boss != null,
+                            "Runtime finale keeps the army and raises the Warlord and the abyss core together");
+                        Assert(battle.Encounter.Sky != null && battle.Encounter.Sky.Revealed && finaleView.StoryVisible
+                            && finaleView.StoryImage == null && finaleView.LineText == BossEncounter.FinaleLines[0],
+                            "Runtime finale dialogue plays over the live sky with the Demon King's eyes open");
+                        Screenshot("ActThreeFinaleDialogue.png");
+                        storyShotCaptured = true;
+                        return;
+                    }
+                    storyShotCaptured = false;
+                    battle.Encounter.AdvanceDialogue();
+                    phaseTime = Time.realtimeSinceStartup;
+                    if (battle.Encounter.Phase == BossEncounterPhase.Fight) { phase = 40; finaleCast = false; }
+                    break;
+                case 40:
+                    while (session.IsChoosing) session.ChooseGrowth(0);
+                    if (elapsed < 1f) return;
+                    DemonKingCombat demonKing = battle.Encounter.DemonKing;
+                    if (!finaleCast)
+                    {
+                        Assert(battle.Waves.Boss.GetComponent<BossCombat>().enabled && demonKing.enabled
+                            && !battle.Encounter.DemonCore.Invulnerable && battle.Summoner.enabled
+                            && session.GetComponent<Lightbringer.UI.CampaignHUD>().BattleView.DemonKingVisible,
+                            "Runtime finale resumes both bosses, shows the Demon King's health and keeps deployment");
+                        if (!demonKing.IsAttacking && elapsed < 15f) return;
+                        Assert(demonKing.IsAttacking && !battle.Waves.Boss.GetComponent<BossCombat>().IsAttacking,
+                            "Runtime Demon King casts a sky attack while the Warlord holds his specials");
+                        Screenshot("ActThreeFinaleSkyStrike.png");
+                        finaleCast = true;
+                        phaseTime = Time.realtimeSinceStartup;
+                        return;
+                    }
+                    battle.Encounter.DemonCore.TakeDamage(1000000, battle.Hero);
+                    Assert(!battle.Objective.HasEnded && battle.Waves.Boss.GetComponent<BossCombat>().Bereaved
+                        && battle.Encounter.Sky.Dissipating,
+                        "Runtime core destruction disperses the sky but the battle waits for the Warlord");
+                    battle.Waves.Boss.TakeDamage(1000000, battle.Hero);
+                    Assert(!battle.Objective.HasEnded && battle.Encounter.IsRetreating,
+                        "Runtime finale victory waits for its closing dialogue");
+                    phase = 41; phaseTime = Time.realtimeSinceStartup; break;
+                case 41:
+                    if (battle.Encounter.IsDialogue && elapsed >= 1f)
+                    {
+                        if (battle.Encounter.DialogueIndex == 0 && !storyShotCaptured)
+                        {
+                            Assert(session.GetComponent<Lightbringer.UI.CampaignHUD>().BossDialogue.LineText == BossEncounter.FinaleEndLines[0],
+                                "Runtime finale ending speaks over the clearing sky");
+                            Screenshot("ActThreeFinaleEnding.png");
+                            storyShotCaptured = true;
+                            return;
+                        }
+                        storyShotCaptured = false;
+                        battle.Encounter.AdvanceDialogue();
+                        phaseTime = Time.realtimeSinceStartup;
+                    }
+                    if (!battle.Objective.HasEnded) { if (elapsed > 8f) Assert(false, "Runtime finale ending reaches victory"); return; }
+                    while (session.IsChoosing) session.ChooseGrowth(0);
+                    Assert(battle.Objective.HasWon && session.Progress.IsComplete && session.LastResult.Contains("캠페인 완료"),
+                        "Runtime final victory completes all 24 stages of the campaign");
+                    Screenshot("ActThreeFinaleVictory.png");
+                    Assert(session.ReturnToPreparation(), "Final victory returns to preparation");
                     Finish(true, null); break;
             }
         }
+
+        private static bool finaleCast;
 
         private static void StartStress(int count)
         {
@@ -492,7 +671,7 @@ namespace Lightbringer.EditorTools
             Application.logMessageReceived -= CaptureError;
             if (error != null) results.Add("FAIL: " + error);
             Directory.CreateDirectory(DirectoryPath);
-            File.WriteAllText(Path.Combine(DirectoryPath, "CampaignPlayChecks.txt"),
+            File.WriteAllText(Path.Combine(DirectoryPath, ReportName),
                 (passed ? "PASS" : "FAIL") + " | CampaignPlay.v1 | " + DateTime.UtcNow.ToString("O") + "\n" + string.Join("\n", results));
             if (material != null) UnityEngine.Object.Destroy(material);
             EditorApplication.isPlaying = false;
