@@ -15,8 +15,11 @@ namespace Lightbringer.Visuals
         private const float AreaStrength = 1.6f;
         private static readonly Color IceBlue = new Color(0.55f, 0.88f, 1f);
 
+        private static readonly Color MeteorFire = new Color(1f, 0.5f, 0.14f);
+
         [SerializeField] private ArtStyleLibrary style;
         private HeroAbilities abilities;
+        private readonly List<(float start, float delay, Vector3 point)> meteors = new List<(float, float, Vector3)>();
         private readonly List<(float time, Vector3 point, float radius, float strength)> pending =
             new List<(float, Vector3, float, float)>();
 
@@ -26,16 +29,48 @@ namespace Lightbringer.Visuals
         {
             abilities = GetComponent<HeroAbilities>();
             abilities.SpellLanded += OnSpellLanded;
+            abilities.SpellTargeted += OnSpellTargeted;
         }
 
         private void OnDisable()
         {
-            if (abilities != null) abilities.SpellLanded -= OnSpellLanded;
+            if (abilities != null)
+            {
+                abilities.SpellLanded -= OnSpellLanded;
+                abilities.SpellTargeted -= OnSpellTargeted;
+            }
             pending.Clear();
+            meteors.Clear();
+        }
+
+        // Meteor: a warning mark on the ground now, the fireball falling in over the delay.
+        private void OnSpellTargeted(int equipment, Vector3 point, float radius, float delay)
+        {
+            if (equipment != (int)SkillKind.Meteor) return;
+            CombatEffects.Warning(style, point, MeteorFire, radius, delay);
+            meteors.Add((Time.time, delay, point));
         }
 
         private void OnSpellLanded(int equipment, Vector3 impact, float radius)
         {
+            if (equipment == (int)SkillKind.Meteor)
+            {
+                // A wide blast: a core burst, ring after ring out to the edge, a ring of smaller bursts, dust and smoke.
+                CombatEffects.Burst(style, impact + Vector3.up * 0.4f, MeteorFire, radius);
+                CombatEffects.Burst(style, impact + Vector3.up * 1.2f, Color.white, radius * 0.5f);
+                CombatEffects.Ring(impact, MeteorFire, radius);
+                CombatEffects.Ring(impact, CombatEffects.HolyGold, radius * 0.6f);
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 around = Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward * radius * 0.6f;
+                    CombatEffects.Burst(style, impact + around + Vector3.up * 0.3f, MeteorFire, 2.5f);
+                }
+                CombatEffects.DustRing(impact, radius * 0.7f, 48);
+                CombatEffects.Smoke(impact, radius * 0.7f, 28);
+                CameraSystem.ThirdPersonCamera.Shake(impact, 1f);
+                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.MeteorImpact, impact);
+                return;
+            }
             if (equipment == (int)SkillKind.LightBeam)
             {
                 // Start the clock at cast time, not in a later Update after a queued delay.
@@ -49,11 +84,13 @@ namespace Lightbringer.Visuals
                 CombatEffects.Burst(style, ground + Vector3.up * 0.3f, CombatEffects.HolyGold, radius * 0.5f);
                 CombatEffects.Ring(ground, CombatEffects.HolyGold, radius);
                 CombatEffects.DustRing(ground, radius * 0.7f, 24);
+                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.ShockwaveBoom, ground);
                 return;
             }
             if (equipment == (int)SkillKind.Ice)
             {
                 CombatEffects.SpellImpact(style, impact, IceBlue, radius, true);
+                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.IceMagic, impact);
                 return;
             }
             float strength = radius > 1.5f ? AreaStrength : 1f;
@@ -62,6 +99,14 @@ namespace Lightbringer.Visuals
 
         private void Update()
         {
+            for (int i = meteors.Count - 1; i >= 0; i--)
+            {
+                float t = (Time.time - meteors[i].start) / Mathf.Max(0.01f, meteors[i].delay);
+                if (t >= 1f) { meteors.RemoveAt(i); continue; }
+                // It enters the sky above and to the side of the mark, and speeds up as it falls.
+                Vector3 position = meteors[i].point + Vector3.Lerp(new Vector3(-10f, 45f, -6f), Vector3.up * 0.3f, t * t);
+                CombatEffects.Fireball(style, position, MeteorFire, 5f);
+            }
             for (int i = pending.Count - 1; i >= 0; i--)
             {
                 if (Time.time < pending[i].time) continue;

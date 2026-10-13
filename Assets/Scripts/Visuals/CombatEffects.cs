@@ -260,6 +260,28 @@ namespace Lightbringer.Visuals
             }
         }
 
+        // Ground warning for a delayed area spell: a rune mark of the full area that stays for `life` seconds,
+        // with a ring closing in on it from beyond the edge.
+        public static void Warning(ArtStyleLibrary style, Vector3 ground, Color color, float radius, float life)
+        {
+            if (!Ready(style)) return;
+            Vector3 flat = ground + Vector3.up * 0.07f;
+            Color faint = color * 0.55f;
+            Emit(runes, flat, Vector3.zero, faint, radius * 2f, life, Random.Range(0f, 360f));
+            Emit(rings, flat + Vector3.up * 0.01f, Vector3.zero, color, radius * 2.2f, life);
+        }
+
+        // A falling fireball: call every frame at its position. Leaves a hot core and a trail of embers.
+        public static void Fireball(ArtStyleLibrary style, Vector3 point, Color color, float size)
+        {
+            if (!Ready(style)) return;
+            Flash(point, color, size, 0.08f);
+            Emit(flares, point, Vector3.zero, Color.Lerp(color, Color.white, 0.6f), size * 0.8f, 0.07f, Random.Range(0f, 90f));
+            for (int i = 0; i < 3; i++)
+                Emit(motes, point + Random.insideUnitSphere * size * 0.25f, Random.insideUnitSphere * 1.2f + Vector3.up * 1.5f,
+                    Color.Lerp(color, Color.white, Random.value * 0.3f), Random.Range(0.12f, 0.3f), Random.Range(0.4f, 0.8f));
+        }
+
         private static void Flash(Vector3 point, Color color, float size, float life) =>
             Emit(flashes, point, Vector3.zero, Color.Lerp(color, Color.white, 0.35f), size, life);
 

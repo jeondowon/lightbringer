@@ -21,7 +21,7 @@ namespace Lightbringer.Player
             "영웅 주변 6m 안의 아군을 회복합니다.",
             "조준한 적을 얼려 잠시 움직이지 못하게 합니다.",
             "지팡이를 내려쳐 주변 적에게 피해를 주고 밀어냅니다.",
-            "지정한 지점에 운석을 떨어뜨려 넓은 범위를 공격합니다.",
+            "조준한 땅(최대 15m)에 운석을 떨어뜨립니다. 1.8초 뒤 반경 8m의 적에게 큰 피해를 줍니다.",
         };
         private static readonly float[] Costs = { 8f, 25f, 20f, 25f, 50f };
         private static readonly float[] Cooldowns = { 0.5f, 5f, 6f, 8f, 15f };

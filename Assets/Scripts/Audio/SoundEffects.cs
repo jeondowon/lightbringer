@@ -7,7 +7,8 @@ namespace Lightbringer.Audio
     {
         Click, Denied, Summon, MeleeHit, HeavyImpact, FireBreath, BossWarning,
         MageFire, PriestHeal, Victory, HeroLightStaff, ArrowHit, HeroHurt, BossImpact, ArrowRelease, Defeat,
-        TroopDeathFemale, TroopDeathMale, ShamanWater, EnemyDeath, BossSummon, HeroHeal
+        TroopDeathFemale, TroopDeathMale, ShamanWater, EnemyDeath, BossSummon, HeroHeal,
+        MeteorImpact, IceMagic, ShockwaveBoom
     }
 
     // One bounded pool per campaign, independent of music. No AudioSources on individual troops.
@@ -19,6 +20,7 @@ namespace Lightbringer.Audio
         private const string VolumeKey = "Lightbringer.SoundEffectsVolume";
         private static SoundEffects current;
         private readonly AudioSource[] sources = new AudioSource[WorldVoices + InterfaceVoices];
+        private readonly float[] sourceGains = new float[WorldVoices + InterfaceVoices];
         private static readonly int CueCount = System.Enum.GetValues(typeof(SoundCue)).Length;
         private readonly float[] nextAllowed = new float[CueCount];
         private readonly AudioClip[][] clips = new AudioClip[CueCount][];
@@ -116,8 +118,12 @@ namespace Lightbringer.Audio
                 || cue == SoundCue.TroopDeathFemale || cue == SoundCue.TroopDeathMale
                 || cue == SoundCue.ShamanWater || cue == SoundCue.EnemyDeath || cue == SoundCue.BossSummon
                 ? 1f : 0.98f + (float)variation.NextDouble() * 0.04f;
-            // Clips share an offline RMS reference. The user's slider is the only gain here.
-            source.volume = volume;
+            // Keep clicks softer while preserving the user's effects volume setting.
+            // Boss attacks stay at full level and mostly ignore distance falloff so they read as the loudest sound; everything else sits lower.
+            bool boss = cue == SoundCue.BossWarning || cue == SoundCue.BossImpact || cue == SoundCue.BossSummon;
+            sourceGains[slot] = boss ? 1f : cue == SoundCue.Click ? 0.35f : 0.7f;
+            if (!interfaceSound) source.spatialBlend = boss ? 0.15f : 0.85f;
+            source.volume = volume * sourceGains[slot];
             source.Play();
             return true;
         }
@@ -141,7 +147,8 @@ namespace Lightbringer.Audio
         private void ApplyVolume()
         {
             volume = Volume;
-            for (int i = 0; i < sources.Length; i++) if (sources[i] != null) sources[i].volume = volume;
+            for (int i = 0; i < sources.Length; i++)
+                if (sources[i] != null) sources[i].volume = volume * sourceGains[i];
         }
 
         private void OnDisable()

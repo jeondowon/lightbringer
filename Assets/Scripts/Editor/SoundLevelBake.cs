@@ -22,9 +22,9 @@ namespace Lightbringer.EditorTools
         {
             Bake();
             var report = new StringBuilder("PASS | " + DateTime.UtcNow.ToString("O") + "\n");
-            report.AppendLine("24 clips: max sliding 100ms RMS -20 dBFS +/- 0.1 dB; sample peak <= -1 dBFS.");
+            report.AppendLine("27 clips: max sliding 100ms RMS -20 dBFS +/- 0.1 dB; sample peak <= -1 dBFS.");
             string[] paths = Directory.GetFiles(Output, "*.wav");
-            if (paths.Length != 24) throw new InvalidOperationException("Expected 24 SFX WAVs.");
+            if (paths.Length != 27) throw new InvalidOperationException("Expected 27 SFX WAVs.");
             foreach (string path in paths)
             {
                 string assetPath = path.Replace('\\', '/');

@@ -49,9 +49,10 @@ namespace Lightbringer.EditorTools
             BakeSelectedHeroSounds();
             BakeSelectedCombatSounds();
             BakeSelectedAdditionalSounds();
+            BakeSkillSounds();
             AssetDatabase.Refresh();
             File.WriteAllText("Docs/Validation/FoleyBakeChecks.txt", "PASS | " + DateTime.UtcNow.ToString("O")
-                + "\n24 recorded/layered clips baked as mono PCM; no generated sine tones.\n"
+                + "\n27 recorded/layered clips baked as mono PCM; no generated sine tones.\n"
                 + "Sources and attribution: Assets/Audio/SoundEffectsNotes.txt\n");
             cache.Clear();
             Debug.Log("Foley sound effects rebuilt.");

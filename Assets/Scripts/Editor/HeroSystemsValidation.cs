@@ -121,6 +121,39 @@ namespace Lightbringer.EditorTools
             StatusEffects bossAfterIce = bossLike.GetComponent<StatusEffects>();
             Check(bossLike.CurrentHealth == 70 && (bossAfterIce == null || !bossAfterIce.IsFrozen),
                 "The Boss takes Ice damage but is never frozen");
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Meteor, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 }),
+                "Meteor can be loadout");
+            abilities.Tick(20);
+            mana.Tick(100);
+            Vector3 strike = origin + new Vector3(10, 0, 0);
+            Combatant inBlast = CreateCombatUnit(strike + new Vector3(1.5f, 0, 0), Faction.Enemy);
+            inBlast.Configure(Faction.Enemy, 200);
+            Combatant outBlast = CreateCombatUnit(strike + new Vector3(HeroAbilities.MeteorRadius + 2f, 0, 0), Faction.Enemy);
+            outBlast.Configure(Faction.Enemy, 200);
+            Combatant allyBlast = CreateCombatUnit(strike, Faction.Allied);
+            allyBlast.Configure(Faction.Allied, 200);
+            Physics.SyncTransforms();
+            float manaBeforeMeteor = mana.Current;
+            Check(abilities.TryCast(0, null, strike) && inBlast.CurrentHealth == 200 && mana.Current == manaBeforeMeteor - SkillCatalog.Cost((int)SkillKind.Meteor),
+                "Meteor needs no target, spends mana and waits for the warning delay");
+            abilities.Tick(HeroAbilities.MeteorDelay - 0.1f);
+            Check(inBlast.CurrentHealth == 200, "Meteor has not landed before the delay ends");
+            abilities.Tick(0.2f);
+            Check(inBlast.CurrentHealth == 200 - HeroAbilities.MeteorDamage && outBlast.CurrentHealth == 200 && allyBlast.CurrentHealth == 200,
+                "Meteor hurts enemies in the radius and spares enemies outside it and allies");
+            Check(!abilities.TryCast(0, null, strike)
+                && Mathf.Approximately(SkillCatalog.Cooldown((int)SkillKind.Meteor), 15f)
+                && Mathf.Approximately(abilities.CooldownRemaining(0), 15f - HeroAbilities.MeteorDelay - 0.1f),
+                "Meteor has a 15 second cooldown");
+            abilities.Tick(20);
+            mana.Tick(100);
+            Combatant far =CreateCombatUnit(origin + new Vector3(HeroAbilities.MeteorRange + HeroAbilities.MeteorRadius + 3f, 0, 0), Faction.Enemy);
+            far.Configure(Faction.Enemy, 200);
+            Physics.SyncTransforms();
+            Check(abilities.TryCast(0, null, origin + new Vector3(HeroAbilities.MeteorRange + HeroAbilities.MeteorRadius + 3f, 0, 0)),
+                "Meteor aimed beyond its range is pulled in rather than refused");
+            abilities.Tick(HeroAbilities.MeteorDelay + 0.01f);
+            Check(far.CurrentHealth == 200, "An aim point beyond 15m lands at 15m, out of reach of distant enemies");
             Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
             abilities.Tick(20);
             mana.Tick(100);

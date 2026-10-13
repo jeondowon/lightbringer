@@ -15,7 +15,7 @@ namespace Lightbringer.Core
 
         public static float Volume
         {
-            get => Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.35f));
+            get => Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.5f));
             set => PlayerPrefs.SetFloat(VolumeKey, Mathf.Clamp01(value));
         }
 

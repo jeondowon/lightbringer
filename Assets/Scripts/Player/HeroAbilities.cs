@@ -25,7 +25,12 @@ namespace Lightbringer.Player
         public const float IceImpactDelay = 0.3f;
         public const float IceDamage = 10f;
         public const float IceFreeze = 3f;
-        private struct Delayed { public SkillKind Skill; public Combatant Target; public float Power, Remaining; }
+        // Meteor falls on the ground point under the aim after a warning delay, hitting enemies only.
+        public const float MeteorRange = 15f;
+        public const float MeteorRadius = 8f;
+        public const float MeteorDamage = 80f;
+        public const float MeteorDelay = 1.8f;
+        private struct Delayed { public SkillKind Skill; public Combatant Target; public Vector3 Point; public float Power, Remaining; }
         private readonly List<Delayed> delayed = new List<Delayed>();
         private readonly List<(Combatant target, float damage, float remaining)> pendingLightHits =
             new List<(Combatant, float, float)>();
@@ -48,6 +53,8 @@ namespace Lightbringer.Player
         public event System.Action<int> Casted;
         // Raised for offensive spells with the impact point and area radius; visuals draw the strike.
         public event System.Action<int, Vector3, float> SpellLanded;
+        // Raised when a ground-targeted spell is aimed: skill, warning point, area radius and seconds until it lands.
+        public event System.Action<int, Vector3, float, float> SpellTargeted;
         public int Equipped(int slot) => slot >= 0 && slot < equipment.Length ? equipment[slot] : -1;
         public float CooldownRemaining(int slot) => cooldowns[slot];
         public void ConfigureCamera(UnityEngine.Camera camera) => aimCamera = camera;
@@ -175,6 +182,19 @@ namespace Lightbringer.Player
                     if (!isActiveAndEnabled) return;
                 }
             }
+            else if (pending.Skill == SkillKind.Meteor)
+            {
+                SpellLanded?.Invoke(id, pending.Point, MeteorRadius);
+                var struck = new List<Combatant>();
+                foreach (Combatant unit in Collect(pending.Point, MeteorRadius))
+                    if (unit != null && unit.IsAlive && !unit.Invulnerable && unit.Faction != self.Faction) struck.Add(unit);
+                foreach (Combatant unit in struck)
+                {
+                    if (unit == null || !unit.IsAlive) continue;
+                    unit.TakeDamage(MeteorDamage * pending.Power, self);
+                    if (!isActiveAndEnabled) return;
+                }
+            }
             else if (pending.Skill == SkillKind.Ice)
             {
                 Combatant target = pending.Target;
@@ -191,7 +211,8 @@ namespace Lightbringer.Player
             delayed.Clear();
         }
 
-        public bool TryCast(int slot, Combatant target)
+        // `groundPoint` overrides the aimed ground for Meteor (tests, scripted casts).
+        public bool TryCast(int slot, Combatant target, Vector3? groundPoint = null)
         {
             if (self == null || mana == null) Awake();
             if (!isActiveAndEnabled || !self.IsAlive || slot < 0 || slot >= equipment.Length || cooldowns[slot] > 0)
@@ -200,6 +221,9 @@ namespace Lightbringer.Player
             if (!SkillCatalog.IsSkill(id)) return false;
             if (SkillCatalog.NeedsTarget(id) && !CanAttack(target))
             { Feedback = "15m 이내에 보이는 적을 조준하세요."; return RejectCast(); }
+            Vector3 meteorPoint = default;
+            if (id == (int)SkillKind.Meteor && !TryFindGroundPoint(groundPoint, out meteorPoint))
+            { Feedback = "운석을 떨어뜨릴 땅을 조준하세요."; return RejectCast(); }
             if (!mana.TrySpend(SkillCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return RejectCast(); }
             cooldowns[slot] = SkillCatalog.Cooldown(id);
             float power = SkillCatalog.Power(levels[id]) * damageMultiplier;
@@ -217,8 +241,46 @@ namespace Lightbringer.Player
                 delayed.Add(new Delayed { Skill = SkillKind.Shockwave, Power = power, Remaining = ShockwaveImpactDelay });
             else if (id == (int)SkillKind.Ice)
                 delayed.Add(new Delayed { Skill = SkillKind.Ice, Target = target, Power = power, Remaining = IceImpactDelay });
+            else if (id == (int)SkillKind.Meteor)
+            {
+                delayed.Add(new Delayed { Skill = SkillKind.Meteor, Point = meteorPoint, Power = power, Remaining = MeteorDelay });
+                SpellTargeted?.Invoke(id, meteorPoint, MeteorRadius, MeteorDelay);
+            }
             Feedback = SkillCatalog.Names[id];
             Casted?.Invoke(slot);
+            return true;
+        }
+
+        // The ground under the aim camera's centre, pulled in to MeteorRange from the hero.
+        private bool TryFindGroundPoint(Vector3? forced, out Vector3 point)
+        {
+            Vector3 hero = transform.position;
+            Vector3 aimed = hero;
+            bool found = false;
+            if (forced.HasValue) { aimed = forced.Value; found = true; }
+            else
+            {
+                Vector3 origin = aimCamera != null ? aimCamera.transform.position : hero + Vector3.up * 1.5f;
+                Vector3 direction = aimCamera != null ? aimCamera.transform.forward : transform.forward;
+                if (Physics.Raycast(origin, direction, out RaycastHit hit, 200f, ~0, QueryTriggerInteraction.Ignore))
+                { aimed = hit.point; found = true; }
+                else if (new Plane(Vector3.up, hero).Raycast(new Ray(origin, direction), out float distance))
+                { aimed = origin + direction * distance; found = true; }
+            }
+            point = hero;
+            if (!found) return false;
+            Vector3 flat = Vector3.ProjectOnPlane(aimed - hero, Vector3.up);
+            if (flat.magnitude > MeteorRange) aimed = hero + flat.normalized * MeteorRange + Vector3.up * (aimed.y - hero.y);
+            // Settle on the ground below, so a point on a unit or at the edge of the sky lands on the terrain.
+            point = aimed;
+            RaycastHit[] ground = Physics.RaycastAll(aimed + Vector3.up * 20f, Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            foreach (RaycastHit hit in ground)
+            {
+                if (hit.collider.GetComponentInParent<Combatant>() != null || hit.distance >= best) continue;
+                best = hit.distance;
+                point = hit.point;
+            }
             return true;
         }
 
