@@ -1,0 +1,13 @@
+2026-10-13 — 군주 포탈 퇴장용 배경
+
+내장 image_gen 편집 도구 사용.
+원본: Assets/UI/Resources/BossStory/Retreat_v1.png (유지)
+추가: Assets/UI/Resources/BossStory/Retreat_Empty_v1.png
+군주와 검을 제거한 포탈/계단 배경. 실제 UI에서는 군주 주변 패치에만 사용.
+여성 영웅과 지팡이는 원본 이미지 그대로 표시.
+현재 연출 (2026-10-14): 이 plate와 원본의 차이로 군주 컷아웃(Retreat_Lord_v1.png)을 굽고
+(Lightbringer > Boss Story > Bake Retreat Lord Cutout), 컷아웃을 변형해 포탈로 끌고 들어간다.
+plate는 군주 영역(BossPortalEscape.LordRect)에만 패치로 쓰인다.
+
+Final prompt:
+Use case: precise-object-edit. Create a CLEAN BACKGROUND PLATE for animating the kneeling dark armored lord out of this exact Retreat story painting. Remove ONLY the entire kneeling dark lord on the RIGHT, including his helmet, body, both hands, armor, cape, boots and his planted vertical sword. Reconstruct the purple-black portal and stone steps naturally behind where he used to be. Keep the portal fully open in the SAME exact position and shape, near-black center and violet smoky outline, now unobstructed. Preserve ALL other scene elements pixel-aligned as closely as possible: the female heroine at left, her black tights, white/navy/gold clothing and cape, her staff, architecture, steps outside the removed lord, distant beacon, sunset and ground. Do not change female heroine at all. No new people, no ghost of lord, no remaining sword, no silhouette or extra props. Same exact painterly inked fantasy illustration style and same 1672x941 opaque landscape. This plate will be shown only under the removed lord; stable surrounding geometry is critical.

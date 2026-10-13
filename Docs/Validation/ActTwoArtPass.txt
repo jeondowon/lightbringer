@@ -1,0 +1,33 @@
+2막 환경 에셋 1차 구성 — 2026-10-14
+
+적용 범위
+9~16 스테이지 환경만 구성. 군주 외형, 음악, 이펙트는 추가/교체하지 않음.
+Dry Trees는 기존 URP 변환 결과를 재사용했으며 이번 작업에서 재변환하지 않음.
+로컬 Asset Store 캐시에 있던 Ruined Tower Free, Altar Ruins Free에서 필요한 모델과 의존 파일만 가져옴.
+망루와 성소는 URP 재질, 지면 기준 피벗, 통행 여유 공간에 맞춘 프리팹으로 조립함.
+12~14 보급시설은 기존 코드 구조물과 이미 보유한 상자/통을 사용함. 새 마차 구매/다운로드 없음.
+기존 숲의 흙 텍스처를 재사용한 2막 전용 바닥 재질을 연결함.
+전용 대화 삽화는 별도 제작 대상으로 남아 있음.
+
+주요 생성/수정 파일
+Assets/Scripts/Visuals/ActTwoEnvironmentProfile.cs (추가)
+Assets/Scripts/Visuals/ArtStyleLibrary.cs (환경 프로필 참조 추가)
+Assets/Scripts/Visuals/ActTwoScenery.cs (마른 나무 배치, 전용 바닥 및 풀 색감)
+Assets/Scripts/Visuals/ActTwoScenery.Landmarks.cs (폐허 프리팹/기존 보급 소품 배치)
+Assets/Scripts/Editor/ActTwoEnvironmentSetup.cs (선택 에셋 URP 재질/프리팹 구성)
+Assets/Scripts/Editor/ActTwoEnvironmentPreview.cs (독립 장면 환경 캡처)
+Assets/Scripts/Editor/ActTwoValidation.cs (실제 에셋 배치 검사 추가)
+Assets/Art/Environment/ActTwo/ (출처, 모델, 재질, 프리팹, 프로필)
+Assets/Art/ArtStyleLibrary.asset (기존 라이브러리에 프로필 연결; 실제 경로는 ArtStyleSetup.LibraryPath 기준)
+
+확인
+GreyboxChecks.txt: 594개 컴포넌트/물리 검사 통과.
+ActTwoPlayChecks.txt: 53개 실제 플레이 검사 통과. 9~16 병사 이동, 승리, 군주 재전투/2막 완료 확인.
+ActTwoEnvironmentChecks.txt: 7종 나무와 4종 폐허 조립 프리팹의 피벗/크기/URP 재질/충돌체 검사 통과.
+Docs/ArtPass/Preview/ActTwo/: 최종 밝기 조정 후 대표 스테이지 9, 11, 12, 15, 16 화면.
+실제 플레이 검사는 환경 배치/바닥 텍스처 적용 후 실행했고, 마지막 밝기 조정은 환경 캡처로 확인함.
+
+Unity에서 확인
+별도 수동 배치 없이 캠페인의 9~16 스테이지를 실행하면 적용됨.
+재구성: Lightbringer > Art > Build Act Two Environment
+환경 이미지 재촬영: Lightbringer > Art > Capture Act Two Environment

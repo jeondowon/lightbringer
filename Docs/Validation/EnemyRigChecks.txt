@@ -1,4 +1,4 @@
-PASS | Enemy rigs | 2026-10-12 07:13
+PASS | Enemy rigs | 2026-10-14 02:27
 Project-native skeletons (RobedHumanoid, auto-measured landmarks), generated weapons and clips. Source GLBs preserved.
 
 == EnemyRaider (Raider, 1.7 m, no skirt) ==
@@ -40,9 +40,13 @@ Override: scale 1, move clip speed 1.28 m/s (enemy speed 1.3), contact phase 0.3
 == EnemyBoss (Boss, 2.3 m, robe) ==
 Placement: source height 0.999, scale x1.701, yaw 0 (from the ankle: toes 0.121 ahead / heels 0.061 behind).
 Landmarks: head centre x +0.003 z +0.019; shoulder 1.28 (joint dx 0.18), elbow 1.12 (dx>0.20), wrist 0.96 (dx>0.28), hand bottom 0.82 (palm dx>0.29); crotch 0.41, hip 0.71 (dx 0.15), knee 0.44, toe z 0.11; arm r 0.064, leg r 0.128; skirt to 0.41 (half width 0.28).
-EnemyBoss_Idle: vertex motion 0.276 m, grip error 0.0016 m, lowest weapon point 0.73 m.
-EnemyBoss_Walk: vertex motion 0.324 m, grip error 0.0016 m, lowest weapon point 0.71 m.
-EnemyBoss_Cleave: vertex motion 0.643 m, grip error 0.0023 m, lowest weapon point 0.38 m; at contact 0.55 the greatsword reaches 1.47 m ahead at 0.56 m.
+Run mocap: EnemyBoss_Mocap_RunFast.glb, cycle 0.500 s x1.14 -> 0.570 s, mocap ground speed 6.88 m/s, leg ratio 0.80, stride x0.45, lift and lean x0.67, planted 13/60 left, 14/60 right samples, hips -0.024..-0.010 -> -0.030..-0.010 (rig units).
+EnemyBoss_Idle: vertex motion 0.292 m, grip error 0.0022 m, lowest weapon point 0.12 m.
+EnemyBoss_Run: vertex motion 0.733 m, grip error 0.0021 m, lowest weapon point 0.13 m.
+EnemyBoss_Cleave: vertex motion 0.770 m, grip error 0.0023 m, lowest weapon point 0.09 m; at contact 0.55 the greatsword reaches 1.65 m ahead at 1.12 m.
+EnemyBoss_Idle feet: deepest sink 0.000 m, planted slide 0.000 m.
+EnemyBoss_Run feet: deepest sink 0.005 m, planted slide 0.028 m at 2.16 m/s ground speed (rig units).
+EnemyBoss_Cleave feet: deepest sink 0.003 m, planted slide 0.006 m.
 Mesh: 29,604 vertices, 49,954 -> 25,588 triangles (crowd copy), 23 bones.
-Override: scale 1.353, move clip speed 0.97 m/s (enemy speed 0.9), contact phase 0.55.
+Override: scale 1.353, move clip speed 3.50 m/s (enemy speed 3.5), contact phase 0.55.
 

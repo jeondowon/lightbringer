@@ -1,5 +1,5 @@
-PASS | 2026-10-12T17:27:59.8194352Z
-24 clips: max sliding 100ms RMS -20 dBFS +/- 0.1 dB; sample peak <= -1 dBFS.
+PASS | 2026-10-13T08:15:16.7528754Z
+27 clips: max sliding 100ms RMS -20 dBFS +/- 0.1 dB; sample peak <= -1 dBFS.
 ArrowHit: 0.335s, max100ms RMS -20.00 dBFS, peak -9.95 dBFS
 ArrowRelease: 0.920s, max100ms RMS -20.00 dBFS, peak -7.23 dBFS
 BossImpact: 4.957s, max100ms RMS -20.00 dBFS, peak -17.13 dBFS
@@ -14,12 +14,15 @@ HeavyImpact: 0.800s, max100ms RMS -20.00 dBFS, peak -6.70 dBFS
 HeroHeal: 2.373s, max100ms RMS -20.00 dBFS, peak -10.92 dBFS
 HeroHurt: 0.645s, max100ms RMS -20.00 dBFS, peak -7.79 dBFS
 HeroLightStaff: 0.834s, max100ms RMS -20.00 dBFS, peak -10.60 dBFS
+IceMagic: 2.400s, max100ms RMS -20.00 dBFS, peak -2.80 dBFS
 MageFire: 0.900s, max100ms RMS -20.00 dBFS, peak -10.35 dBFS
 MeleeHit: 0.320s, max100ms RMS -20.00 dBFS, peak -9.06 dBFS
 MeleeHit_2: 0.350s, max100ms RMS -20.00 dBFS, peak -6.16 dBFS
 MeleeHit_3: 0.320s, max100ms RMS -20.00 dBFS, peak -8.85 dBFS
+MeteorImpact: 3.200s, max100ms RMS -20.00 dBFS, peak -17.12 dBFS
 PriestHeal: 1.200s, max100ms RMS -20.00 dBFS, peak -11.31 dBFS
 ShamanWater: 1.400s, max100ms RMS -20.00 dBFS, peak -8.53 dBFS
+ShockwaveBoom: 3.000s, max100ms RMS -20.00 dBFS, peak -15.10 dBFS
 Summon: 2.397s, max100ms RMS -20.00 dBFS, peak -8.51 dBFS
 TroopDeathFemale: 0.384s, max100ms RMS -20.00 dBFS, peak -13.63 dBFS
 TroopDeathMale: 0.871s, max100ms RMS -20.00 dBFS, peak -10.65 dBFS

@@ -1,0 +1,53 @@
+﻿2026-10-13 — 어둠 응집 강화 및 군주 포탈 퇴장
+
+변경: BossRetreatEffects.cs, BossDialogueView.cs
+추가: BossPortalEscape.cs, Editor/BossRetreatPreview.cs (각 .meta 포함)
+이미지: Assets/UI/Resources/BossStory/Retreat_Empty_v1.png (+ .meta)
+생성 기록: Docs/ArtReference/BossPortalEscapePlate.txt
+
+WarlordDefeated: 20갈래 먹선, 주 폭 84/가지 54, 흐름 속도 180.
+머리 위의 어둠 안개와 64개 잔광/연기가 응집. 2.4초까지 다음 입력 잠금.
+Retreat: 마지막 대사를 읽은 후 다음 입력 시 3.1초 먹선 결박/해제 연출.
+원본 군주의 위치/크기/자세 고정. 군주 이미지의 이동/축소/변형 제거.
+개별 먹선이 아래부터 팔/검/굽힌 다리/몸통/머리 윤곽을 따라 교차하며 감김.
+큰 안개 도형, 불투명 코어, 군주 축소/이동 없음. 선의 중첩만으로 가림.
+1.5초 결박 완료 → 1.75초 배경 교체 → 1.95초부터 선들이 차례로 풀림.
+군주 뒤 배경은 별도 clean plate의 국소 패치로 복원. 영웅/지팡이는 원본 유지.
+퇴장 완료 시 자동으로 Aftermath 대사로 진행, 1.1초 이미지 전환.
+전환 중 clean plate는 이전 그림 위/새 그림 아래에 유지해 군주 재출현 방지.
+연출 도중 버튼/Enter/Space 차단. 비표시 시 중지, 재진입 시 초기화.
+모든 시간은 unscaledDeltaTime 사용. 게임 로직 및 대사 텍스트 변경 없음.
+
+검증:
+- git diff --check 및 Unity 컴파일 통과.
+- 미리보기는 Play 중에도 별도 오프스크린 패널로 캡처 가능.
+- 실제 대화창 포함 7프레임 및 결박 완료/교체 시점/재시작 검사.
+- 렌더 결과: Docs/Validation/BossRetreatMotion_0.png ~ _6.png.
+- 검사 결과: Docs/Validation/BossRetreatRenderChecks.txt.
+- 이전 버전의 배경 이미지 군주 제거와 배경 유지는 육안 확인.
+- 전체 보스 전투 플레이는 미실행.
+
+Unity: 보스 격파 → 응집 2.4초 대기 → 다음 → 군주 마지막 대사 → 다음.
+퇴장 모션 완료 후 Aftermath 자동 전환 확인.
+전투 없이 정지 프레임 검토: Lightbringer > Boss Story > Capture Retreat Motion.
+
+대화창 통일: LightbringerHUD.uss의 보스 대화창에 기존 Ui_Dialog 종이/금 테두리,
+공통 lb-button/lb-button--gold 버튼, 번들 GowunBatang, 금색 화자명/상아색 본문 적용.
+
+2026-10-14 — 군주 퇴장: 먹선 결박 → 포탈로 끌려 들어가는 연출로 교체
+
+변경: BossPortalEscape.cs(재작성), SpriteFx.cs(Inflow, VoidTendril 추가),
+      EditorRequests.cs(Play 중 실행 허용 옵션), Editor/BossRetreatPreview.cs
+추가: Editor/BossRetreatMaskBake.cs, Assets/UI/Resources/BossStory/Retreat_Lord_v1.png
+      (Retreat_v1과 Retreat_Empty_v1의 차이로 구운 군주 컷아웃, 640x480, LordRect 기준)
+
+연출(3.2초): 0~0.9초 포탈이 깨어나고 보라색 촉수 6개가 주먹/투구/어깨/허리/무릎/망토를
+감음. 군주는 그림자가 드리우며 포탈 반대쪽으로 버티고 떨림. 0.9초부터 포탈과 가까운
+부위부터 나선을 그리며 빨려 들어가 나머지가 늘어나고, 어두워지며 잉크로 흩어짐.
+2.25초 소멸, 2.2초 포탈이 삼키는 섬광, 이후 3.2초까지 진정. 이후 Aftermath 전환은 기존과 동일.
+이전의 가로 먹선 105줄, 손으로 찍은 윤곽 다각형, 배경 교체 타이밍은 제거.
+
+검증:
+- Unity 컴파일 통과, 마스크 베이크 PASS(BossRetreatMaskChecks.txt, 마스크 미리보기 BossRetreatMaskPreview.png).
+- 미리보기 캡처 PASS: 형성 2프레임 + 퇴장 14프레임, 한 장 요약 BossRetreatMotionSheet.png.
+- 전체 보스 전투 플레이는 미실행.

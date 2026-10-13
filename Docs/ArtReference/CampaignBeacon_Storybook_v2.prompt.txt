@@ -1,0 +1,22 @@
+캠페인 봉화 아이콘 — Storybook v2
+
+제작: built-in image_gen, 2026-10-14
+형태 및 그림체 기준: Docs/ArtReference/Prologue/Prologue_03_Beacons_Storybook_v5.png
+지도 기준: Docs/Validation/CampaignMapPreview.png
+
+기존 화로/불꽃 아이콘을 세계관의 석조 기둥, 남색 첨탑 지붕, 금색 고딕 등실,
+마름모 수정, 별 문양으로 교체한다. 기존 프롤로그의 먹선과 무광 과슈 질감,
+남색/석재색/금색을 유지하며 작은 지도 표식으로 단순화한다.
+
+Assets/UI/Art/Chrome/Map_BeaconDark_Storybook_v2.png: 꺼진 회색 수정.
+Assets/UI/Art/Chrome/Map_BeaconReady_Storybook_v2.png: 꺼진 수정, 외부 별 표식과 선택 후광.
+Assets/UI/Art/Chrome/Map_BeaconLit_Storybook_v2.png: 금빛으로 점화된 수정과 국소 후광.
+
+첫 점화 이미지를 기준으로 소등 상태를 편집하고, 소등 이미지에서 탈환 가능 상태를 편집했다.
+세 이미지 모두 투명 PNG이며 원본 생성 해상도와 알파 채널을 보존했다.
+LightbringerHUD.uss의 기존 74x88 표식 크기와 상태별 선택자를 유지한다.
+기존 절차 생성기는 이전 파일명만 출력하므로 새 이미지에 영향을 주지 않는다.
+
+검증: 생성 이미지 형태/색감 육안 확인, PNG 32-bit ARGB 및 모서리 알파 확인,
+USS 3개 상태별 경로 확인. C# 변경 없음. Unity 실제 지도 렌더/Play 확인은 미실행.
+Unity: 이미지 임포트 후 캠페인 지도를 다시 열어 미해방/탈환 가능/점화 완료 상태를 확인한다.

@@ -1,0 +1,12 @@
+2026-10-13 — Retreat 여성 영웅 뒷모습 교정
+
+도구: 내장 image_gen 이미지 편집.
+교체: Assets/UI/Resources/BossStory/Retreat_v1.png
+원본 백업: Docs/ArtReference/BossStoryPrevious/Retreat_before_anatomy_correction.png
+기존 .meta 및 연결 유지. 코드 변경 없음.
+시각 확인: 등 방향에 앞가슴이 표현되던 문제 수정, 상체·골반·다리 방향 정렬,
+자연스러운 지팡이 잡는 팔, 기존 그림체·군주·포탈·배경 유지.
+Unity 플레이 확인은 수행하지 않음. Assets > Refresh 후 Retreat 대화 장면 확인.
+
+Final prompt:
+Use case: precise-object-edit. Edit the supplied BossStory Retreat game illustration. Change ONLY the female heroine at left to correct her malformed anatomy and make her a coherent natural REAR VIEW looking toward the kneeling lord on right. Her head, shoulders, rib cage, waist, pelvis, knees and boots must all agree on the SAME rear-three-quarter orientation toward upper-right; no front-facing breastplate or breasts on a back-facing torso, no twisted waist, reversed knees or feet. Show the BACK of her costume beneath the cape, natural shoulder blades and back silhouette, normal human proportions, two anatomically attached arms and two legs in a stable relaxed vigilant standing stance. Right hand naturally holds the existing staff, elbow and wrist aligned. Keep same adult woman, brown bun, white/navy/gold fantasy outfit, cape blowing to left, opaque dark leggings and boots; coat skirt covers hips and upper thighs. Her rear silhouette may be locally redrawn to achieve correct human anatomy, not merely keep the flawed chest. Preserve original illustrated painterly inked storybook rendering, fine linework and textured brushwork exactly. Preserve everything outside heroine as closely as possible: exact kneeling black-and-gold armored lord with hand atop planted sword and other hand clutching torso, purple portal, stone steps and ruins, star banners, distant illuminated castle and beacon, sunset, framing and lighting. Keep existing blue spherical staff gem, circular gold frame and blue crystal points without redesign. No added people, text, UI or border. Same landscape 1672x941 framing, opaque image.

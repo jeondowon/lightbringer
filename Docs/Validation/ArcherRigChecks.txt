@@ -1,4 +1,4 @@
-PASS | 2026-10-12T10:52:38.3320811Z
+PASS | 2026-10-13T14:13:09.9093491Z
 Unity-native prototype skeleton on Assets/Art/Characters/Archer/ShadowHood/Archer_ShadowHood.asset (source mesh unchanged).
 ok   skeleton: 19 bones, 19 bind poses
 ok   normalized weights on 205927 vertices

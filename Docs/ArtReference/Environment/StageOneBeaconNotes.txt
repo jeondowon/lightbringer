@@ -1,0 +1,46 @@
+스테이지 1 — 중앙 측면 봉화와 성역
+
+배치
+- 중앙 길 왼편 (전장 로컬 좌표 X=-13, Z=10)에 주 봉화 하나를 배치한다.
+- 기존 봉화 모델을 1.9배로 확대한다. 모델 높이는 약 9.12m이다.
+- 야영지의 기존 봉화 두 개는 낮은 철제 등불로 교체한다.
+- 성역에는 낮은 받침과 숲 쪽의 부서진 기둥을 배치한다.
+- 중앙 길에서 성역으로 석조 진입로를 연결하고, 성역 및 진입로의 수목·관목·풀을 비운다.
+- 병사 Path, 이동 지면과 충돌 규칙은 유지한다.
+
+점화
+- 전투 시작 및 재도전 시 꺼진 상태이다.
+- 적 본진 파괴로 승리하면 보상 및 진행 저장은 기존 순서로 처리한다.
+- 4.5초간 카메라가 봉화를 향하고, 룬과 금빛 핵이 켜진 뒤 빛의 파동이 퍼진다.
+- 지형 전용 봉화 조명은 해당 Renderer의 MaterialPropertyBlock으로 전달한다.
+- 결과창 및 레벨업 선택은 점화가 끝난 후 표시한다. 패배 시에는 점화하지 않는다.
+- 미니맵에는 금색 테두리의 마름모로 봉화 위치를 표시한다.
+
+Unity 확인
+1. Play 중이면 종료하고 컴파일을 기다린다.
+2. CampaignPrototype에서 스테이지 1에 진입한다. 수동 Inspector 연결은 필요 없다.
+3. 출발 지점에서 왼편 봉화가 보이는지, 성역 접근과 중앙 전투에 방해가 없는지 확인한다.
+4. 적 본진 격파 후 봉화 점화 → 필요 시 성장 선택 → 결과창 순서를 확인한다.
+5. Lightbringer/Art/Capture Forest Ground Preview로 스테이지 1 정적 미리보기와 봉화 검사를 실행한다.
+6. Docs/ArtPass/Preview/Beacon_Checks.txt, Beacon_Dormant.png, Beacon_Ignition.png를 확인한다.
+
+추가 파일
+Assets/Scripts/Visuals/BeaconSanctuary.cs (+ Unity meta)
+Docs/ArtReference/Environment/StageOneBeaconNotes.txt
+
+수정 파일
+Assets/Scripts/Visuals/BattlefieldPropDressing.cs
+Assets/Scripts/Visuals/BattlefieldEnvironment.cs
+Assets/Scripts/Visuals/ForestEnvironmentDressing.cs
+Assets/Art/Shaders/LightbringerTerrain.shader
+Assets/Scripts/Core/PrototypeBattleBuilder.cs
+Assets/Scripts/Core/CampaignSession.cs
+Assets/Scripts/UI/ResultView.cs
+Assets/Scripts/UI/BattleMinimap.cs
+Assets/Scripts/UI/CampaignHUD.cs
+Assets/Scripts/Editor/ArtAnimationPreview.cs
+Assets/Scripts/Editor/HeroSystemsValidation.cs (중복 지역 변수 이름 및 메테오 경과시간을 반영하지 않던 쿨다운 검사 정리)
+
+검증 범위
+- 에디터 렌더 및 결정적 시간 진행으로 배치, 점화, 결과창 지연, 재도전, 패배를 검사한다.
+- 실제 전투 중 수동 입력과 카메라 이동의 체감은 Play 모드에서 별도로 확인한다.

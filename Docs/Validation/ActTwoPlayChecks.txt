@@ -1,0 +1,54 @@
+PASS | CampaignPlay.v1 | 2026-10-13T18:31:15.8546472Z
+PASS: Campaign preparation releases menu input
+PASS: Runtime starts Act 2 stage 9
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 9 soldier advances through the rendered battlefield
+PASS: Stage 9 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 9 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 10
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 10 soldier advances through the rendered battlefield
+PASS: Stage 10 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 10 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 11
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 11 soldier advances through the rendered battlefield
+PASS: Stage 11 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 11 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 12
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 12 soldier advances through the rendered battlefield
+PASS: Stage 12 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 12 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 13
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 13 soldier advances through the rendered battlefield
+PASS: Stage 13 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 13 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 14
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 14 soldier advances through the rendered battlefield
+PASS: Stage 14 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 14 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 15
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 15 soldier advances through the rendered battlefield
+PASS: Stage 15 renders its atlas-based ruined inland environment
+PASS: Act 2 stage 15 grants runtime victory and persists its clear
+PASS: Act 2 result returns to the next preparation screen
+PASS: Runtime starts Act 2 stage 16
+PASS: Act 2 summons an allied soldier on its selected path
+PASS: Stage 16 soldier advances through the rendered battlefield
+PASS: Stage 16 renders its atlas-based ruined inland environment
+PASS: Runtime second Warlord arrival preserves the existing army
+PASS: Runtime second Warlord arrival preserves the existing army
+PASS: Runtime rematch resumes boss AI and allied deployment after dialogue
+PASS: Runtime second boss defeat waits for its outro
+PASS: Runtime Act 2 completes all eight stages and awards Ice and Meteor without opening Act 3
+PASS: Second Warlord victory returns to preparation

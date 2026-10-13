@@ -1,0 +1,14 @@
+Mode: built-in image_gen (imagegen skill)
+Output: Assets/Art/Environment/Act3_DarkCitadel_Panorama_v2.png
+Edit target: Assets/Art/Environment/Act3_DarkCitadel_Panorama_v1.png
+Motif reference: Assets/UI/Prologue/Prologue_00C_BirthOfDarkness_Storybook_v1.png
+Implementation reference: Assets/Scripts/UI/SpriteFx.cs, DarkInkFlow; Assets/Scripts/UI/PrologueEffects.cs
+Scope: Static background image only; runtime assignment unchanged.
+
+Use case: precise-object-edit.
+Edit image 1, the approved Act III panoramic battlefield background. Image 2 is ONLY a motif reference for the long black-violet ink streams in the prologue illustration; do not copy its people, village, perspective, paper texture or illustration style.
+Keep image 1's EXACT 2:1 framing, all terrain and castle geometry, landmark placement, distant scale, dark exposure, heavy storm clouds, dense grey fog, muted painterly dimensional environment rendering. User approves the overall atmosphere.
+CHANGE 1: completely REMOVE the pair of tiny red eyes above the castle. Fill this area seamlessly with ordinary dark cloud. No demon king appearance of any kind: no eyes, face, body, humanoid or creature silhouette anywhere.
+CHANGE 2: add visibly recognizable long flowing strands of dark PURPLE MIST through the existing landscape and lower storm clouds, matching the prologue's 'DarkInkFlow' motif. They have ink-black charcoal cores with muted smoky violet edges, irregular varying thickness, gently curling directional flow, splitting and rejoining branches, tapering ends that disperse into wisps. Translate the flat ink motif into translucent volumetric smoky ribbons with depth appropriate to this environment. Several long distinct flows snake through the distant valleys, coil around hills and ruined towers, and gather around the fortress slopes; a few thinner ascending wisps connect to low cloud banks around the castle. Existing grey fog remains, with violet strands clearly distinguishable within it. Make the desaturated purple readable enough to notice at panorama scale, but retain the gloomy low-light exposure.
+These must feel like evil spreading as ink in air: organic drifting mist streams with frayed soft edges, not solid tentacles, ropes, pipes, giant worms, cracks in terrain, laser beams, lightning, luminous neon lines, aurora curtains or uniform purple color grading. Not enormous foreground ribbons obscuring the world. No new objects or characters. No bright bloom or light sources, no sunlight, no red color. Castle silhouette and geography must stay readable and unchanged.
+Preserve 360 equirectangular wrap intentions and matching left/right edge tones. Keep low-detail zenith and bottom fog fade. Output ONE edited panorama only, no text, interface, borders or watermark.

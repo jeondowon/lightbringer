@@ -1,0 +1,50 @@
+숲 지면과 뿌리 접지 개선 (2026-10-13)
+
+변경
+- 나무 원본의 가장 낮은 뿌리 끝과 실제 줄기 밑동 높이가 다르므로, 한 점이나 고정 반경만으로 배치하지 않는다.
+- 큰 나무 116개, 어린 나무 4개의 하단 지점을 prefab에 저장한다.
+- 인스턴스의 회전과 크기를 적용한 각 지점에서 실제 지형 삼각형의 높이를 구하고, 뿌리가 지면 안으로 약 6cm 들어가도록 배치한다.
+- 런타임 Mesh Read/Write나 프레임마다 Raycast는 필요 없다. 생성할 때 한 번 계산한다.
+- 숲 진영과 성역 바닥에 암석 색상·노멀·AO 텍스처를 적용한다.
+- 기존의 굵고 반복적인 사각 줄눈을 제거하고, 닳은 암석과 흙을 불규칙하게 섞는다.
+- 잔디·흙 텍스처에 큰 크기의 패턴을 함께 섞어 반복감을 줄인다.
+- 텍스처 지면의 빛 반응을 부드러운 확산광과 약한 거친 표면 반사로 보완한다.
+- 암석 텍스처에 밉맵, trilinear, anisotropy 8을 적용한다.
+- ForestTerrain과 StageOneGladeGround 양쪽에 적용한다. 병사 경로와 지형 충돌은 유지한다.
+- 추가 색감 조정: 흙·풀 지면의 색 배율을 약 25~30% 낮추고 풀을 짙은 올리브색으로 조정한다. 지면 그림자도 더 깊게 한다.
+- 전장 길 위의 발광선은 생성하지 않는다. 전선 선택, 미니맵 경로와 전선별 병력 표시는 유지한다.
+
+검증
+- ForestGround_SurfaceChecks.txt: 1스테이지 나무·어린 나무 118개, 접지 지점 9,656개 검사.
+- Battlefield_SurfaceChecks.txt: 8스테이지 나무·어린 나무 104개, 접지 지점 8,704개 검사.
+- 계산한 높이를 실제 지형 MeshCollider Raycast와 비교한다.
+- 경로 여유 공간, 지형 평탄성, 셰이더 컴파일, 봉화 승리 연출도 기존 검사로 확인한다.
+- 수동 플레이 및 실제 전투 프레임 성능 측정은 포함하지 않는다.
+
+Unity에서 확인
+1. Play 종료 후 컴파일을 기다리고 스테이지 1에 다시 진입한다.
+2. 숲 경사면의 나무 밑동, 아군 성문 앞 지면, 봉화 성역의 바닥을 확인한다.
+3. 별도 Inspector 연결은 필요 없다.
+4. 재설정: Lightbringer/Art/Improve Forest Surfaces and Root Contact
+5. 미리보기와 검사: Lightbringer/Art/Capture Forest Ground Preview
+   출력 폴더: Docs/ArtPass/Preview
+   ForestGround_Hero.png / ForestGround_RootContact.png / ForestGround_StoneCloseup.png
+
+추가 파일 (스크립트별 Unity meta 포함)
+Assets/Scripts/Visuals/ForestGroundContact.cs
+Assets/Scripts/Editor/ForestSurfaceSetup.cs
+Docs/ArtReference/Environment/ForestSurfaceNotes.txt
+
+수정 파일
+Assets/Scripts/Visuals/ForestEnvironmentDressing.cs
+Assets/Scripts/UI/BattlefieldReadability.cs
+Assets/Scripts/Core/PrototypeBattleBuilder.cs
+Assets/Scripts/Editor/ArtAnimationPreview.cs
+Assets/Art/Shaders/LightbringerTerrain.shader
+Assets/Art/Environment/Forest/ForestTree.prefab
+Assets/Art/Environment/Forest/ForestSapling.prefab
+Assets/Art/Environment/Forest/ForestTerrain.mat
+Assets/Art/Environment/Forest/StageOneGladeGround.mat
+Assets/TriForge Assets/Fantasy Worlds - DEMO Content/Textures/Terrain/T_fwOF_RockSurf_02_BC.png.meta
+Assets/TriForge Assets/Fantasy Worlds - DEMO Content/Textures/Terrain/T_fwOF_RockSurf_02_N.png.meta
+Assets/TriForge Assets/Fantasy Worlds - DEMO Content/Textures/Terrain/T_fwOF_RockSurf_02_Mask.png.meta

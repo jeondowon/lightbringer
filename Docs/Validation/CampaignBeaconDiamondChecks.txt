@@ -1,0 +1,15 @@
+2026-10-14 — 봉화 수정 아이콘 / 빛 분리
+
+Assets/Scripts/Editor/UiChromePainter.Beacons.cs:
+기존 148x176 받침을 유지하고 불꽃만 두 면의 마름모 수정으로 교체.
+PNG에 후광을 그리던 BeaconHalo 제거. 미해방/탈환 가능/완료 PNG 3종 재생성.
+
+Assets/Scripts/UI/CampaignMapView.cs 및 Assets/UI/LightbringerHUD.uss:
+아이콘 뒤 별도 UI 레이어에서 코드로 후광을 그린다.
+미해방은 빛 없음, 탈환 가능은 연한 색, 완료는 금색. 상태 변경 시 다시 그린다.
+생성형 Diamond 및 Storybook_v2 이미지는 지도에서 사용하지 않는다.
+
+확인: 순수 C# 아이콘 생성기 Add-Type 컴파일 및 실행 성공.
+세 PNG 모두 148x176, 외부 배경 표본 알파 0. 완료 아이콘 육안 확인.
+변경 코드/USS diff --check 통과. Unity 에셋 새로고침 요청.
+Unity 런타임 렌더 및 상태 전환 수동 확인은 별도 필요.

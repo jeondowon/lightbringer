@@ -1,0 +1,93 @@
+2막 스테이지 구현 — 2026-10-14
+
+범위: 9~16스테이지. 8 첫 격퇴 이후 9가 열리며, 16 완료 후 3막은 준비 중으로 남는다.
+기준: Docs/Audio/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx 및 CampaignStoryProgression.md.
+막별 배경의 구체 기준: Docs/ArtReference/CampaignAtlas_Acts_v1.prompt.txt 및 CampaignAtlas_Acts_v2.prompt.txt.
+v1의 내륙 강 유역·옛 용사 유적·군용 보급로 지형에 v2의 쇠락과 전쟁 피해를 반영한다.
+기존 소환/성장/병종 해금은 유지한다. 신규 병력만 선택 Path에 배정된다.
+
+9  잿빛 순례길          2 Path / 6 공세 / 지붕 없는 성소, 쓰러진 기둥, 부서진 포장 순례길
+10 무너진 용사의 뜰     2 Path / 6 공세 / 부러진 용사 기념비, 낡은 성소의 뜰
+11 무너진 감시탑        2 Path / 7 공세 / 붕괴한 감시탑과 경계 벽, 좁게 모이는 길
+12 점령된 보급창        3 Path / 7 공세 / 군용 목책, 반쯤 무너진 창고, 보급품
+13 잿빛 목재 야적장     2 Path / 8 공세 / 쌓인 벌목재, 불탄 경작지, 두 외곽 보급로
+14 군용 마차 교차로     3 Path / 8 공세 / 목책 안 마차 집결지와 보급 초소
+15 경비대의 돌다리      3 Path / 8 공세 / 얕은 강과 세 돌다리, 경비대 초소, 얼음 마법 해금
+16 돌아온 군주의 성채   2 Path / 9 공세 / 외곽 탑 폐허와 건재한 후방 성벽, 군주 재대결, 운석 해금
+
+CampaignStages는 이름·작전 설명·공세 수·경로 좌표를 보관한다.
+EnemyCatalog는 9~16 전용 공세 조합을 보관한다. 기존 능력치 성장식을 사용한다.
+적은 아군 진격로를 역방향으로 따라간다. 모든 경로는 기존 전장 경계 안의 평지다.
+ActTwoScenery가 전장마다 회갈색 지면·드문 올리브색 잔존 식생·고사목·그루터기·불탄 흙·묵은 밭고랑을 생성한다.
+2막 재질/팔레트는 전장 수명의 복사본으로 관리하며 1막과 공유하는 에셋을 변경하지 않는다.
+기존 푸른 나무 군락, 빽빽한 잔디, 야생화, 적 본진 주변 지면의 네온 균열은 2막에서 사용하지 않는다.
+석조/목재 건물, 돌길, 강, 안개는 실제 전장에 생성된다. 색 보정만으로 배경을 표현하지 않는다.
+별도 최종 모델 제작은 아닌 Greybox 환경이다. 눈·얼음 지형, 해안선, 사막, 화산, 거대 산맥은 추가하지 않는다.
+15의 얼음은 기술 보상이며 지형 테마가 아니다. 강은 기존 평면 충돌 바닥을 유지한 얕은 여울로 영웅이 걸어서 건널 수 있다.
+다리는 각 Path의 강 통과 위치에 생성한다. 구조물은 진격로·양 본진과 간격을 두며 추가 길막 콜라이더를 만들지 않는다.
+
+16 군주전:
+정규 공세 격퇴 → 성채 파괴 → 등장/대화 → 재대결 → 퇴각/페이드 → 승리.
+8의 강제 아군 전멸과 전장 충격파는 재사용하지 않는다.
+기존 여섯 기술에 검기 → 0.65초 간격 → 예고 1.25초 돌진 연계를 추가한다.
+돌진 사거리 밖이면 기존 기술 순서로 돌아간다. 예고 시작 때 조준을 고정한다.
+옛 용사 정체와 두 번째 패배를 전달하는 한국어 대사로 분기한다.
+등장/퇴각 삽화와 보스 모델은 기존 에셋을 재사용한다. 손상된 갑주 전용 모델은 아직 없다.
+
+저장:
+버전 4. 기존 버전 1/2는 종전 성장·장비 이관을 거쳐 버전 3 → 4로 이어진다.
+정상적인 8칸 cleared 배열만 16칸으로 확장한다. 8 클리어 저장은 9를 자동 해금한다.
+기존 레벨·경험치·미선택 성장 카드·빛의 조각·병종 강화·기술·장비 슬롯을 보존한다.
+깨진 진행 순서나 알 수 없는 버전은 기존 저장 보호/백업 복구 규칙으로 처리한다.
+
+Unity:
+Assets/Scenes/CampaignPrototype.unity 실행. 8 클리어 후 지도 오른쪽 화살표로 2막 이동.
+이미 8을 클리어한 저장은 불러오기 후 9가 선택된다. 수동 씬 재생성은 필요 없다.
+검증은 Lightbringer > Validate Greybox Systems / Validate Act Two in Play Mode.
+전용 Play 검사는 기존 1막 효과음 회귀 검사와 분리해 실제 9~16 전장을 순서대로 실행한다.
+전체 검사는 Validate Campaign in Play Mode로 실행하며 동일한 2막 검사도 마지막에 포함한다.
+검증용 진행은 메모리 또는 고유 임시 파일만 사용하며 실제 개인 저장을 수정하지 않는다.
+
+체감 난이도, 성장 속도, 장시간 자동 진격 및 지도 텍스트 가독성은 수동 플레이 확인 대상이다.
+
+검증 결과 (2026-10-14 KST):
+지도 환경 반영 후 Unity 컴파일 성공, 시스템 581개 PASS, 2막 실제 Play 53개 PASS.
+시스템 검사는 전장별 주요 건물·고사목·그루터기·안개, 공유 1막 재질 불변, 세 교량과 Path 연결을 추가로 확인한다.
+Play 검사는 각 전장에서 소환과 초기 자동 이동을 확인하고 공세를 강제로 정리해 승패 전환을 검증한다.
+군주 연계·도착 위치 충돌 회피·저장 이관은 시스템 검사로 확인한다. 자연 플레이 완주/밸런스 검증은 아니다.
+전체 캠페인 Play 검사는 기존 효과음 음량 검사
+"Normalized SFX follow the user's slider without hidden per-cue attenuation"에서 중단됐다.
+이번 스테이지 작업에서는 기존 효과음 동작이나 해당 검사를 수정하지 않았다.
+
+이번 작업에서 생성한 코드:
+Assets/Scripts/Core/CampaignStages.cs (+ .meta)
+Assets/Scripts/Editor/ActTwoValidation.cs (+ .meta)
+Assets/Scripts/Visuals/ActTwoScenery.cs (+ .meta)
+Assets/Scripts/Visuals/ActTwoScenery.Landmarks.cs (+ .meta)
+
+수정한 코드 (기존 작업 내용을 보존하고 관련 부분만 확장):
+Assets/Scripts/Core/PrototypeBattleBuilder.cs
+Assets/Scripts/Core/EnemyWaveSpawner.cs
+Assets/Scripts/Core/BossEncounter.cs
+Assets/Scripts/Core/CampaignSession.cs
+Assets/Scripts/Combat/BossCombat.cs
+Assets/Scripts/Progression/CampaignProgress.cs
+Assets/Scripts/Units/EnemyCatalog.cs
+Assets/Scripts/UI/CampaignMapView.cs
+Assets/Scripts/UI/PreparationView.cs
+Assets/Scripts/Editor/GreyboxValidation.cs
+Assets/Scripts/Editor/ProgressionValidation.cs
+Assets/Scripts/Editor/EnemyRosterValidation.cs
+Assets/Scripts/Editor/HudValidation.cs
+Assets/Scripts/Editor/CampaignPlayValidation.cs
+Assets/Scripts/Visuals/BattlefieldEnvironment.cs
+
+문서/검증 산출물:
+Docs/DevelopmentStatus.md
+Docs/Audio/GameDesign/CampaignStoryProgression.md
+Docs/Validation/ActTwoImplementation.txt
+Docs/Validation/ActTwoPlayChecks.txt
+Docs/Validation/ActTwoBattle9.png ~ ActTwoBattle16.png (각 전장 실제 Play 캡처)
+Docs/Validation/CampaignMapAct2Preview.png
+Docs/Validation/GreyboxChecks.txt (로컬 생성)
+Docs/Validation/CampaignPlayChecks.txt (기존 효과음 검사에서 중단한 전체 실행 결과)
