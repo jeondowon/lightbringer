@@ -43,6 +43,9 @@ namespace Lightbringer.EditorTools
 
         public int[] Palm(string side) => palms[side];
 
+        // Hip, knee, ankle and toe of one leg (+1 right, -1 left) in root space at rest.
+        public Vector3[] LegLine(int sign) => legLines[sign];
+
         public void Build(Transform root, Vector3[] v)
         {
             Spec s = spec;

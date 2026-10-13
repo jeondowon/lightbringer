@@ -277,17 +277,10 @@ namespace Lightbringer.EditorTools
             limbs.SetParent(bow, false);
             limbs.gameObject.AddComponent<MeshFilter>().sharedMesh = SaveAsset(LimbMesh(), RigFolder + "/BowLimbs.asset");
             limbs.gameObject.AddComponent<MeshRenderer>().sharedMaterial = wood;
-            WeaponMeshes.BowFittings("Archer", out Mesh bowGripMesh, out Mesh bowGold, out Mesh nock);
-            Transform nockTop = MeshPart(limbs, "TipTop", nock, gold, RigFolder);
-            nockTop.localPosition = new Vector3(0, BowHalf, -Brace);
-            var nockBottom = new GameObject("TipBottom").transform;
-            nockBottom.SetParent(limbs, false);
-            nockBottom.gameObject.AddComponent<MeshFilter>().sharedMesh = nockTop.GetComponent<MeshFilter>().sharedMesh;
-            nockBottom.gameObject.AddComponent<MeshRenderer>().sharedMaterial = gold;
-            nockBottom.localPosition = new Vector3(0, -BowHalf, -Brace);
-            nockBottom.localRotation = Quaternion.Euler(180f, 0f, 0f);
-            MeshPart(bow, "Grip", bowGripMesh, leather, RigFolder);
-            MeshPart(bow, "Fittings", bowGold, gold, RigFolder);
+            // Same plain silhouette as the enemy bow (wood limbs, round tips, short grip); only the colours differ.
+            Part(limbs, "TipTop", PrimitiveType.Sphere, new Vector3(0, BowHalf, -Brace), Vector3.one * .03f, gold);
+            Part(limbs, "TipBottom", PrimitiveType.Sphere, new Vector3(0, -BowHalf, -Brace), Vector3.one * .03f, gold);
+            Part(bow, "Grip", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.06f, .07f, .05f), leather);
             upperString = Part(bow, "StringUpper", PrimitiveType.Cylinder, Vector3.zero, Vector3.one, cord);
             lowerString = Part(bow, "StringLower", PrimitiveType.Cylinder, Vector3.zero, Vector3.one, cord);
             arrow = new GameObject("NockedArrow").transform;

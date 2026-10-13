@@ -41,9 +41,12 @@ namespace Lightbringer.EditorTools
             public Func<Transform, Transform, List<Weapon>> Weapons; // (right hand, left hand)
             public Func<string, string, float, Vector3> Pose;        // (bone, role, phase) -> euler
             public Func<string, float, Vector3> RightAim, LeftAim;   // weapon aim in root space; null = free hand
+            public Func<string, float, Vector3> Hips;                // hips offset from rest (role, phase); null = the bob below
+            public float GroundSpeed;                                // move clip ground speed (rig units/s); 0 = from Stride
             public float Lift(string role, float phase) => role == Move
                 ? (Move == "Run" ? .03f : .016f) * (1f - Mathf.Cos(phase * Mathf.PI * 4f))
                 : role == "Idle" ? .006f * Mathf.Sin(phase * Mathf.PI * 2f) : -.05f * Strike(this, phase);
+            public Vector3 HipsOffset(string role, float phase) => Hips != null ? Hips(role, phase) : Vector3.up * Lift(role, phase);
             public string Folder => "Assets/Art/Characters/" + Id;
             public string RigFolder => Folder + "/Rigged";
             public float Contact => EnemyCatalog.StrikePhase(Kind);
@@ -117,6 +120,9 @@ namespace Lightbringer.EditorTools
                 body = new RobedHumanoid(root.transform, spec);
                 body.Build(root.transform, mesh.vertices);
                 body.Skin(mesh);
+                rightLeg = new Leg(body.LegLine(1));
+                leftLeg = new Leg(body.LegLine(-1));
+                if (e == Boss) lines.AppendLine(PrepareWarlordRun());
                 SkinnedMeshRenderer skin = rig.AddSkin("Body", mesh, null, new Bounds(new Vector3(0f, .9f, 0f), new Vector3(2f, 2.4f, 2f)));
                 skin.sharedMaterials = SourceMaterials(source);
 
@@ -131,6 +137,9 @@ namespace Lightbringer.EditorTools
                 AnimationClip move = MakeClip(e, root.transform, e.Move, e.MoveLength, WrapMode.Loop);
                 AnimationClip action = MakeClip(e, root.transform, e.Action, 1f, WrapMode.Once);
                 Validate(e, root, skin, weapons, lines, idle, move, action);
+                if (e.Hips != null)
+                    foreach (AnimationClip clip in new[] { idle, move, action })
+                        lines.AppendLine(FootContact(root, clip, clip == move ? e.GroundSpeed : 0f));
 
                 // Crowd copy of the skinned mesh (weights and UVs unchanged); validation used the full mesh.
                 Mesh crowd = CrowdMeshOptimizer.Simplify(mesh, skin.sharedMaterials, CrowdBudget, out Material[] merged);
@@ -145,7 +154,8 @@ namespace Lightbringer.EditorTools
 
                 float scale = e.Height / H;
                 // Leg length times the stride swing, two steps per cycle: ground speed at normal playback.
-                float speed = 2f * 2f * spec.HipY * Mathf.Sin(e.Stride * Mathf.Deg2Rad) / e.MoveLength * scale * TroopVisualScale;
+                float speed = (e.GroundSpeed > 0f ? e.GroundSpeed : 2f * 2f * spec.HipY * Mathf.Sin(e.Stride * Mathf.Deg2Rad) / e.MoveLength)
+                    * scale * TroopVisualScale;
                 Assign(library, new VisualOverride
                 {
                     id = e.Id, prefab = prefab, scale = scale,
@@ -159,6 +169,9 @@ namespace Lightbringer.EditorTools
             finally
             {
                 body = null;
+                leftLeg = rightLeg = null;
+                warlordRun = null;
+                cachedRole = null;
                 mats = null;
                 EditorSceneManager.ClosePreviewScene(scene);
             }
@@ -366,7 +379,7 @@ namespace Lightbringer.EditorTools
             Vector3 hipsRest = rig.RestPosition(hips);
             return GeneratedRig.Clip(root, rig.Bones, $"{e.RigFolder}/{e.Id}_{role}.anim", duration, wrap,
                 (bone, phase) => Rotation(e, bone.name, role, phase),
-                (bone, phase) => bone == hips ? hipsRest + Vector3.up * e.Lift(role, phase) : (Vector3?)null);
+                (bone, phase) => bone == hips ? hipsRest + e.HipsOffset(role, phase) : (Vector3?)null);
         }
 
         private static Quaternion Rotation(Enemy e, string name, string role, float phase)
@@ -513,29 +526,13 @@ namespace Lightbringer.EditorTools
                 RightAim = (role, p) => new Vector3(role == "Cast" ? 6f - 20f * Windup(Shaman, p) + 62f * Strike(Shaman, p)
                     : role == "Walk" ? 10f + 4f * Mathf.Sin(p * Mathf.PI * 2f) : 6f, 0f, 0f),
             });
-            // Warlord: a corrupted greatsword; a wide diagonal cleave.
+            // Warlord: a corrupted greatsword carried low; it runs the hero down and lands a wide diagonal cleave.
             yield return Behave(Boss, new Enemy
             {
                 Weapons = (right, left) => new List<Weapon> { Greatsword() },
-                Pose = (n, role, p) =>
-                {
-                    var e = Boss;
-                    Vector3 pose = Rest(n, p);
-                    if (n == "RightUpperArm") pose = new Vector3(-25, 0, -20);
-                    if (n == "RightForeArm") pose = new Vector3(-45, 0, 0);
-                    pose = Locomotion(e, n, role, p, pose, true);
-                    if (role != e.Action) return pose;
-                    float w = Windup(e, p), s = Strike(e, p);
-                    if (n == "RightUpperArm") pose += new Vector3(-130 * w - 50 * s, 0, 25 * w - 10 * s);
-                    if (n == "RightForeArm") pose.x += -30 * w + 40 * s;
-                    if (n == "LeftUpperArm") pose += new Vector3(-40 * w - 40 * s, 0, -10 * s);
-                    if (n == "Chest") pose = new Vector3(-6 * w + 12 * s, 25 * w - 20 * s, 0);
-                    if (n == "Spine") pose.x = 4 * s;
-                    if (n == "LeftThigh") pose.x = -16 * s;
-                    if (n == "LeftShin") pose.x = 14 * s;
-                    return pose;
-                },
-                RightAim = (role, p) => new Vector3(40f + (role == "Cleave" ? -70f * Windup(Boss, p) + 80f * Strike(Boss, p) : 0f), 0f, 0f),
+                Pose = (n, role, p) => WarlordPose(n, Warlord(role, p)),
+                RightAim = (role, p) => Warlord(role, p).Aim,
+                Hips = (role, p) => Warlord(role, p).Hips,
             });
         }
 
@@ -547,7 +544,7 @@ namespace Lightbringer.EditorTools
             Stride = 18f, MoveLength = 1.3f, Action = "Smash" };
         private static readonly Enemy Shaman = new Enemy { Id = VisualId.EnemyShaman, Kind = EnemyKind.Shaman, Height = 1.7f, Robe = true, Action = "Cast" };
         private static readonly Enemy Boss = new Enemy { Id = VisualId.EnemyBoss, Kind = EnemyKind.Boss, Height = 2.3f, Robe = true,
-            Stride = 17f, MoveLength = 1.4f, Action = "Cleave" };
+            Move = "Run", Action = "Cleave" }; // run length and ground speed come from the mocap (PrepareWarlordRun)
 
         private static Enemy Behave(Enemy target, Enemy behaviour)
         {
@@ -555,7 +552,365 @@ namespace Lightbringer.EditorTools
             target.Pose = behaviour.Pose;
             target.RightAim = behaviour.RightAim;
             target.LeftAim = behaviour.LeftAim;
+            target.Hips = behaviour.Hips;
+            target.GroundSpeed = behaviour.GroundSpeed;
             return target;
+        }
+
+        // ---------- Warlord motion ----------
+
+        // The Warlord hunts the hero at its catalog speed (3.5 m/s), so it runs instead of walking. The run is
+        // retargeted from the RunFast mocap (Higgsfield animation library on a Meshy rig, Animations/Source):
+        // ankle paths, sole pitch and hips bob drive the leg IK, the spine, head and free left arm take the mocap
+        // rotations, and the greatsword arm keeps its carry pose. A bigger body steps slower (Froude scaling on
+        // the gameplay size), the stride is scaled so normal playback covers the catalog speed, and each planted
+        // foot is pinned to the ground moving back at that speed. Idle and the cleave plant both feet with the
+        // same IK, so the weight shows in the knees instead of a sliding stance.
+        private const string WarlordRunMocap = "Assets/Art/Characters/EnemyBoss/Animations/Source/EnemyBoss_Mocap_RunFast.glb";
+        private static readonly string[] WarlordMocapBones = { "Spine01", "Spine", "neck", "Head", "LeftShoulder", "LeftArm", "LeftForeArm", "LeftHand" };
+        private const int WarlordRunSamples = 60;
+
+        private static Leg leftLeg, rightLeg;
+        private static WarlordFrame[] warlordRun;
+
+        private struct WarlordFrame
+        {
+            public Vector3 Hips;               // hips offset from rest (y lift, z forward)
+            public Vector3 LeftFoot, RightFoot; // ankle (forward, raise) from its rest spot on the ground, sole pitch (toe down +)
+            public Vector3 Aim;                // greatsword aim in root space
+            public float Swing, Breath, Coil, Strike, Follow, Phase;
+            public Dictionary<string, Quaternion> Bones; // retargeted local rotations (run)
+            public string Role;
+        }
+
+        private static string cachedRole;
+        private static float cachedPhase = -1f;
+        private static WarlordFrame cached;
+
+        // Every bone of a frame reads the same pose; it is computed once per (role, phase).
+        private static WarlordFrame Warlord(string role, float p)
+        {
+            if (role == cachedRole && p == cachedPhase && leftLeg != null) return cached;
+            WarlordFrame f = role == "Run" ? WarlordRun(p) : role == "Cleave" ? WarlordCleave(p) : WarlordIdle(p);
+            f.Role = role; f.Phase = p;
+            cachedRole = role; cachedPhase = p; cached = f;
+            return f;
+        }
+
+        private static float Ease(float a, float b, float t) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b, t));
+
+        private static WarlordFrame WarlordRun(float p)
+        {
+            float x = Mathf.Repeat(p, 1f) * warlordRun.Length;
+            int i = Mathf.FloorToInt(x) % warlordRun.Length;
+            WarlordFrame a = warlordRun[i], b = warlordRun[(i + 1) % warlordRun.Length];
+            float t = x - Mathf.Floor(x);
+            return new WarlordFrame
+            {
+                Hips = Vector3.Lerp(a.Hips, b.Hips, t),
+                LeftFoot = Vector3.Lerp(a.LeftFoot, b.LeftFoot, t),
+                RightFoot = Vector3.Lerp(a.RightFoot, b.RightFoot, t),
+                Aim = Vector3.Lerp(a.Aim, b.Aim, t),
+                Swing = Mathf.Lerp(a.Swing, b.Swing, t),
+                Bones = a.Bones.ToDictionary(pair => pair.Key, pair => Quaternion.Slerp(pair.Value, b.Bones[pair.Key], t)),
+            };
+        }
+
+        // Samples the mocap cycle into run frames on this rig and sets the Warlord's run length and ground speed.
+        private static string PrepareWarlordRun()
+        {
+            MocapGait g = MocapGait.Load(WarlordRunMocap, WarlordMocapBones, WarlordRunSamples);
+            int n = g.Count;
+            float ratio = .5f * (leftLeg.RestDown + rightLeg.RestDown) / g.LegLength; // mocap metres -> rig units
+            float world = Boss.Height / H * TroopVisualScale;                          // rig units -> battle metres
+            float slow = Mathf.Sqrt(ratio * world);
+            float duration = g.Period * slow;
+            float want = EnemyCatalog.Speed(EnemyKind.Boss) / world;                   // rig units per second
+            float stride = Mathf.Min(1f, want * duration / (g.GroundSpeed * g.Period * ratio));
+            float ground = g.GroundSpeed * g.Period * ratio * stride / duration;
+            // The mocap is a sprint; at the Warlord's pace the feet lift less and the body leans less.
+            float calm = Mathf.Sqrt(stride);
+            float dt = duration / n;
+
+            Vector3[] Feet(MocapGait.Foot foot, Leg leg)
+            {
+                var mocap = new Vector3[n];
+                for (int i = 0; i < n; i++) mocap[i] = new Vector3(ratio * stride * foot.Forward[i], ratio * calm * foot.Rise[i], calm * foot.Pitch[i]);
+                var path = (Vector3[])mocap.Clone();
+                List<int[]> runs = MocapGait.Runs(foot.Planted);
+                // Planted: the flat-foot spot moves back at the ground speed; the heel rises about the toe.
+                foreach (int[] run in runs)
+                {
+                    float spot = mocap[run[0] % n].x;
+                    foreach (int k in run)
+                    {
+                        Vector3 m = mocap[k % n];
+                        Vector2 pivot = leg.ToePivot(Mathf.Max(0f, m.z));
+                        path[k % n] = new Vector3(spot - ground * (k - run[0]) * dt + pivot.x, pivot.y, m.z);
+                    }
+                }
+                // In the air: the mocap path, eased from where the last contact let go into the next landing.
+                for (int r = 0; r < runs.Count; r++)
+                {
+                    int[] run = runs[r], next = runs[(r + 1) % runs.Count];
+                    int from = run[run.Length - 1], to = next[0] + (r + 1 == runs.Count ? n : 0);
+                    if (to <= from) to += n;
+                    Vector3 leave = path[from % n] - mocap[from % n], land = path[to % n] - mocap[to % n];
+                    for (int k = from + 1; k < to; k++)
+                    {
+                        float u = (k - from) / (float)(to - from);
+                        Vector3 m = mocap[k % n] + Vector3.Lerp(leave, land, Mathf.SmoothStep(0f, 1f, u));
+                        // Heel and toe clear the ground within a few samples of the toe-off and until the landing.
+                        float clear = .04f * Mathf.Min(1f, Mathf.Min(k - from, to - k) / 3f);
+                        m.y = Mathf.Max(m.y, Mathf.Max(0f, leg.ToePivot(m.z).y) + clear);
+                        path[k % n] = m;
+                    }
+                }
+                return path;
+            }
+            Vector3[] left = Feet(g.Left, leftLeg), right = Feet(g.Right, rightLeg);
+            float reach = Enumerable.Range(0, n).Max(i => Mathf.Abs(right[i].x - left[i].x));
+
+            // The mocap hips sit high for this rig's legs: drop them where a foot would be out of reach (knee
+            // still a little bent), widened and smoothed so the body sinks into those moments instead of jerking.
+            Vector3[] hips = Enumerable.Range(0, n).Select(i => new Vector3(0f, ratio * g.HipsRise[i], ratio * stride * g.HipsSway[i])).ToArray();
+            float[] need = Enumerable.Range(0, n).Select(i => Mathf.Max(leftLeg.Overreach(hips[i], left[i], .975f), rightLeg.Overreach(hips[i], right[i], .975f))).ToArray();
+            float[] Spread(float[] v, Func<IEnumerable<float>, float> pick) =>
+                Enumerable.Range(0, n).Select(i => pick(Enumerable.Range(-3, 7).Select(o => v[(i + o + n) % n]))).ToArray();
+            float[] drop = Spread(Spread(need, w => w.Max()), w => w.Average());
+            for (int i = 0; i < n; i++) hips[i].y -= Mathf.Max(drop[i], need[i]);
+
+            // Spine, head and the free arm: the mocap world rotations from the bind, as local rotations on this
+            // rig (whose bones are at identity in the bind). The arm follows the mocap bone directions.
+            Transform Bone(string name) => rig.Find(name);
+            Vector3 upperArm = (Bone("LeftForeArm").position - Bone("LeftUpperArm").position).normalized;
+            Vector3 foreArm = (Bone("LeftHand").position - Bone("LeftForeArm").position).normalized;
+            Quaternion Aligned(Quaternion delta, Vector3 rest, Vector3 target) => Quaternion.FromToRotation(delta * rest, target) * delta;
+
+            warlordRun = new WarlordFrame[n];
+            for (int i = 0; i < n; i++)
+            {
+                Quaternion D(string b) => g.Delta[b][i];
+                Vector3 J(string b) => g.Joint[b][i];
+                Quaternion C(string b) => Quaternion.Slerp(Quaternion.identity, D(b), calm);
+                Quaternion spine = C("Spine01"), chest = C("Spine"), neck = C("neck"), head = C("Head");
+                Quaternion shoulder = chest * Quaternion.Inverse(D("Spine")) * D("LeftShoulder");
+                Quaternion upper = Aligned(D("LeftArm"), upperArm, J("LeftForeArm") - J("LeftArm"));
+                Quaternion fore = Aligned(D("LeftForeArm"), foreArm, J("LeftHand") - J("LeftForeArm"));
+                float swing = (right[i].x - left[i].x) / reach; // +1: right leg forward
+                warlordRun[i] = new WarlordFrame
+                {
+                    Hips = hips[i],
+                    LeftFoot = left[i], RightFoot = right[i],
+                    Aim = new Vector3(122f + 4f * swing, 0f, -34f),
+                    Swing = swing,
+                    Bones = new Dictionary<string, Quaternion>
+                    {
+                        ["Spine"] = spine,
+                        ["Chest"] = Quaternion.Inverse(spine) * chest,
+                        ["Neck"] = Quaternion.Inverse(chest) * neck,
+                        ["Head"] = Quaternion.Inverse(neck) * head,
+                        ["LeftShoulder"] = Quaternion.Inverse(chest) * shoulder,
+                        ["LeftUpperArm"] = Quaternion.Inverse(shoulder) * upper,
+                        ["LeftForeArm"] = Quaternion.Inverse(upper) * fore,
+                        ["LeftHand"] = Quaternion.Inverse(D("LeftForeArm")) * D("LeftHand"),
+                    },
+                };
+            }
+            Boss.MoveLength = duration;
+            Boss.GroundSpeed = ground;
+            return $"Run mocap: {Path.GetFileName(WarlordRunMocap)}, cycle {g.Period:0.000} s x{slow:0.00} -> {duration:0.000} s, "
+                + $"mocap ground speed {g.GroundSpeed:0.00} m/s, leg ratio {ratio:0.00}, stride x{stride:0.00}, lift and lean x{calm:0.00}, "
+                + $"planted {g.Left.Planted.Count(b => b)}/{n} left, {g.Right.Planted.Count(b => b)}/{n} right samples, "
+                + $"hips {ratio * g.HipsRise.Min():0.000}..{ratio * g.HipsRise.Max():0.000} -> {hips.Min(h => h.y):0.000}..{hips.Max(h => h.y):0.000} (rig units).";
+        }
+
+        private static WarlordFrame WarlordIdle(float p)
+        {
+            float breath = Mathf.Sin(p * Mathf.PI * 2f);
+            return new WarlordFrame
+            {
+                // Staggered stance, knees soft, sinking a little with each breath.
+                Hips = new Vector3(0f, -.03f - .006f * breath, 0f),
+                LeftFoot = new Vector3(.07f, 0f, 0f),
+                RightFoot = new Vector3(-.05f, 0f, 0f),
+                Aim = new Vector3(126f + 3f * breath, 0f, -22f),
+                Breath = breath,
+            };
+        }
+
+        // Fast raise, a held coil while the telegraph builds, a quick heavy drop onto the contact phase, a carry
+        // through and a slow recovery. Specials stretch the same clip over their longer wind-up.
+        private static WarlordFrame WarlordCleave(float p)
+        {
+            float c = Boss.Contact;
+            float raise = 1f - Mathf.Pow(1f - Mathf.InverseLerp(0f, .4f * c, p), 3f);
+            float creep = Mathf.InverseLerp(.4f * c, .88f * c, p);
+            float hit = Mathf.Pow(Mathf.InverseLerp(.88f * c, c, p), 2f);
+            float recover = Ease(c + .2f, 1f, p);
+            float coil = raise * (1f + .1f * creep) * (1f - hit);
+            float strike = hit * (1f - recover);
+            float follow = p > c ? Mathf.Sin(Mathf.PI * Mathf.InverseLerp(c, c + .22f, p)) : 0f;
+            // The lead foot draws back with the raise, stamps forward just before the blow lands and steps back
+            // during the recovery; it only travels while lifted.
+            float stamp = Ease(.8f * c, .97f * c, p);
+            float pull = Ease(0f, .4f * c, p) * (1f - stamp);
+            float plant = stamp * (1f - recover);
+            float lift = .03f * Mathf.Sin(Mathf.PI * Mathf.InverseLerp(0f, .4f * c, p))
+                + .05f * Mathf.Sin(Mathf.PI * Mathf.InverseLerp(.8f * c, c, p))
+                + (p > c + .2f ? .035f * Mathf.Sin(Mathf.PI * Mathf.InverseLerp(c + .2f, 1f, p)) : 0f);
+            return new WarlordFrame
+            {
+                Hips = new Vector3(0f, -.03f - .02f * coil - .055f * strike, -.04f * coil + .1f * strike),
+                LeftFoot = new Vector3(.07f - .04f * pull + .2f * plant, lift, -200f * lift),
+                RightFoot = new Vector3(-.05f, 0f, 0f),
+                Aim = new Vector3(126f - 161f * coil - 8f * strike + 6f * follow, 0f, -22f - 18f * coil + 57f * strike + 5f * follow),
+                Coil = coil, Strike = strike, Follow = follow,
+            };
+        }
+
+        private static Vector3 WarlordPose(string n, WarlordFrame f)
+        {
+            if (n.EndsWith("Thigh") || n.EndsWith("Shin") || n.EndsWith("Foot") || n.EndsWith("Skirt"))
+            {
+                bool right = n.StartsWith("Right");
+                Vector3 foot = right ? f.RightFoot : f.LeftFoot;
+                Vector3 leg = (right ? rightLeg : leftLeg).Solve(f.Hips, foot.x, foot.y, foot.z);
+                // The armoured skirt follows half the thigh swing.
+                float x = n.EndsWith("Thigh") ? leg.x : n.EndsWith("Shin") ? leg.y : n.EndsWith("Foot") ? leg.z : .5f * Mathf.Min(0f, leg.x) + .25f * Mathf.Max(0f, leg.x);
+                return new Vector3(x, 0f, 0f);
+            }
+            float sw = f.Swing, b = f.Breath, k = f.Coil, s = f.Strike, fo = f.Follow;
+            switch (f.Role)
+            {
+                case "Run":
+                    if (f.Bones.TryGetValue(n, out Quaternion mocap)) return mocap.eulerAngles;
+                    switch (n)
+                    {
+                        case "RightUpperArm": return new Vector3(-18f + 10f * sw, 0f, -28f);
+                        case "RightForeArm": return new Vector3(-36f, 0f, 0f);
+                    }
+                    return Vector3.zero;
+                case "Cleave":
+                    float spineY = 8f + 18f * k - 28f * s - 8f * fo, chestY = 14f * k - 18f * s - 6f * fo;
+                    switch (n)
+                    {
+                        case "Spine": return new Vector3(6f - 10f * k + 22f * s + 4f * fo, spineY, 0f);
+                        case "Chest": return new Vector3(2f - 6f * k + 12f * s, chestY, 0f);
+                        // The head stays on the target through the twist.
+                        case "Neck": return new Vector3(3f + 6f * k - 10f * s, -.5f * (spineY - 8f + chestY), 0f);
+                        case "Head": return new Vector3(0f, -.2f * (spineY - 8f + chestY), 0f);
+                        case "LeftUpperArm": return new Vector3(-10f - 55f * k + 35f * s, 0f, 20f + 10f * k + 15f * s);
+                        case "LeftForeArm": return new Vector3(-32f - 30f * k + 15f * s, 0f, 0f);
+                        case "RightUpperArm": return new Vector3(-20f - 125f * k - 25f * s, 0f, -22f + 28f * k - 6f * s);
+                        case "RightForeArm": return new Vector3(-38f - 35f * k + 30f * s, 0f, 0f);
+                    }
+                    return Vector3.zero;
+                default:
+                    switch (n)
+                    {
+                        // Bladed towards the lead foot, chest heaving, the head slowly scanning.
+                        case "Spine": return new Vector3(6f + .6f * b, 8f, 0f);
+                        case "Chest": return new Vector3(2f + 2.2f * b, 0f, 0f);
+                        case "Neck": return new Vector3(3f - b, -5f, 0f);
+                        case "Head": return new Vector3(0f, -2f + 4f * Mathf.Sin(f.Phase * Mathf.PI * 2f + 1.3f), 0f);
+                        case "LeftShoulder": return new Vector3(0f, 0f, -1.5f * b);
+                        case "RightShoulder": return new Vector3(0f, 0f, 1.5f * b);
+                        case "LeftUpperArm": return new Vector3(-10f - 2f * b, 0f, 20f);
+                        case "LeftForeArm": return new Vector3(-32f - 4f * b, 0f, 0f);
+                        case "RightUpperArm": return new Vector3(-20f, 0f, -22f);
+                        case "RightForeArm": return new Vector3(-38f - 2f * b, 0f, 0f);
+                    }
+                    return Vector3.zero;
+            }
+        }
+
+        // Two-bone leg in the side plane, measured from the rest skeleton (bones at identity rotation). Solve
+        // places the ankle relative to its rest spot and returns the Euler x of thigh, shin and foot (+x swings a
+        // bone backwards and tips the toe down), keeping the knee in front of the hip-ankle line.
+        private sealed class Leg
+        {
+            private readonly float upper, lower, upperRest, lowerRest, restForward;
+            private readonly Vector2 toe;                             // toe from the ankle (forward, up)
+            public readonly float RestDown;
+            public float Reach => upper + lower;
+
+            public Leg(Vector3[] line)
+            {
+                // (forward, down) from a to b
+                Vector2 Side(Vector3 a, Vector3 b) => new Vector2(b.z - a.z, a.y - b.y);
+                Vector2 thigh = Side(line[0], line[1]), shin = Side(line[1], line[2]), whole = Side(line[0], line[2]);
+                upper = thigh.magnitude; lower = shin.magnitude;
+                upperRest = Mathf.Atan2(thigh.x, thigh.y); lowerRest = Mathf.Atan2(shin.x, shin.y);
+                restForward = whole.x; RestDown = whole.y;
+                toe = new Vector2(line[3].z - line[2].z, line[3].y - line[2].y);
+            }
+
+            // Ankle offset (forward, raise) that keeps the toe where it was when the sole tips `pitch` degrees toe down.
+            // How far the hips must drop for the ankle (as in Solve) to sit within `slack` of the full reach.
+            public float Overreach(Vector3 hips, Vector3 foot, float slack)
+            {
+                float f = restForward + foot.x - hips.z, d = RestDown + hips.y - foot.y, l = slack * Reach;
+                return Mathf.Max(0f, f * f >= l * l ? d : d - Mathf.Sqrt(l * l - f * f));
+            }
+
+            public Vector2 ToePivot(float pitch)
+            {
+                float a = pitch * Mathf.Deg2Rad;
+                var turned = new Vector2(toe.y * Mathf.Sin(a) + toe.x * Mathf.Cos(a), toe.y * Mathf.Cos(a) - toe.x * Mathf.Sin(a));
+                return toe - turned;
+            }
+
+            public Vector3 Solve(Vector3 hips, float forward, float raise, float pitch)
+            {
+                float f = restForward + forward - hips.z, d = RestDown + hips.y - raise;
+                float l = Mathf.Clamp(Mathf.Sqrt(f * f + d * d), Mathf.Abs(upper - lower) + .001f, (upper + lower) * .9995f);
+                float line = Mathf.Atan2(f, d);
+                float atHip = Mathf.Acos(Mathf.Clamp((upper * upper + l * l - lower * lower) / (2f * upper * l), -1f, 1f));
+                float atAnkle = Mathf.Acos(Mathf.Clamp((lower * lower + l * l - upper * upper) / (2f * lower * l), -1f, 1f));
+                float thighX = (upperRest - (line + atHip)) * Mathf.Rad2Deg;
+                float shinX = (lowerRest - (line - atAnkle)) * Mathf.Rad2Deg - thighX;
+                return new Vector3(thighX, shinX, pitch - thighX - shinX);
+            }
+        }
+
+        // Foot contact of a generated clip: how far a sole sinks below the ground and how far a planted heel or toe
+        // slides along the ground (the ground moving back at `groundSpeed` under a running clip).
+        private static string FootContact(GameObject root, AnimationClip clip, float groundSpeed)
+        {
+            const float contact = .006f;
+            const int samples = 120;
+            float sink = 0f, slide = 0f; string worst = "";
+            var points = new List<(Transform foot, Vector3 local, float rest)>();
+            foreach (int sign in new[] { 1, -1 })
+            {
+                Vector3[] line = body.LegLine(sign);
+                Transform foot = rig.Find((sign == 1 ? "Right" : "Left") + "Foot");
+                points.Add((foot, Vector3.zero, line[2].y));
+                points.Add((foot, line[3] - line[2], line[3].y));
+            }
+            var start = new float?[points.Count];
+            for (int i = 0; i <= samples; i++)
+            {
+                float time = clip.length * i / samples;
+                clip.SampleAnimation(root, time);
+                for (int j = 0; j < points.Count; j++)
+                {
+                    Vector3 at = points[j].foot.TransformPoint(points[j].local);
+                    float height = at.y - points[j].rest;
+                    sink = Mathf.Max(sink, -height);
+                    float ground = at.z + groundSpeed * time;
+                    if (height > contact) { start[j] = null; continue; }
+                    if (start[j] == null) start[j] = ground;
+                    float drift = Mathf.Abs(ground - start[j].Value);
+                    if (drift > slide) { slide = drift; worst = $" ({(j < 2 ? "right" : "left")} {(j % 2 == 0 ? "ankle" : "toe")} at phase {(float)i / samples:0.00}, height {height:0.000})"; }
+                }
+            }
+            rig.ResetPose();
+            if (sink > .02f || slide > .03f)
+                throw new InvalidOperationException($"{clip.name}: feet do not stay planted (sink {sink:0.000} m, slide {slide:0.000} m{worst}).");
+            return $"{clip.name} feet: deepest sink {sink:0.000} m, planted slide {slide:0.000} m"
+                + (groundSpeed > 0f ? $" at {groundSpeed:0.00} m/s ground speed (rig units)." : ".");
         }
 
         // ---------- Weapons (grip at the origin, along +Y) ----------

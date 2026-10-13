@@ -172,11 +172,31 @@ namespace Lightbringer.Visuals
             // Troop arrowheads carry a little of the hero's light; enemy heads smoulder.
             Color tip = allied ? Color.Lerp(s.steel, s.lightGlow, 0.45f) : s.corruptGlow;
             Color fletch = allied ? s.royalBlue : s.corruptBody;
-            b.Add(SilhouetteFactory.Shape.Cube, shaft, new Vector3(0f, 0f, -0.36f), new Vector3(0.03f, 0.03f, 0.64f));
-            b.Cone(0f, tip, new Vector3(0f, 0f, -0.06f), new Vector3(0.07f, 0.14f, 0.07f), new Vector3(90f, 0f, 0f), 6,
-                emission: allied ? 0.45f : 0.8f, spec: allied ? 1f : 0f);
-            b.Add(SilhouetteFactory.Shape.Cube, fletch, new Vector3(0f, 0f, -0.62f), new Vector3(0.12f, 0.008f, 0.14f));
-            b.Add(SilhouetteFactory.Shape.Cube, fletch, new Vector3(0f, 0f, -0.62f), new Vector3(0.008f, 0.12f, 0.14f));
+            Vector3 along = new Vector3(90f, 0f, 0f);
+            float glow = allied ? 0.45f : 0.8f;
+            Color binding = Color.Lerp(shaft, fletch, 0.35f);
+            Color bone = Color.Lerp(shaft, Color.white, 0.55f);
+            // Fine tapered shaft (slightly stouter toward the head), cresting band and thread binding by the fletching.
+            b.Cone(0.8f, shaft, new Vector3(0f, 0f, -0.88f), new Vector3(0.015f, 0.86f, 0.015f), along, 8);
+            b.Cone(1f, bone, new Vector3(0f, 0f, -0.69f), new Vector3(0.0175f, 0.025f, 0.0175f), along, 8);
+            b.Cone(1f, binding, new Vector3(0f, 0f, -0.665f), new Vector3(0.0175f, 0.012f, 0.0175f), along, 8);
+            b.Cone(1f, binding, new Vector3(0f, 0f, -0.88f), new Vector3(0.0175f, 0.012f, 0.0175f), along, 8);
+            // Steel socket flaring into a flat, leaf-shaped blade with a keen point.
+            b.Cone(1.35f, tip, new Vector3(0f, 0f, -0.045f), new Vector3(0.017f, 0.05f, 0.017f), along, 8, emission: glow, spec: allied ? 1f : 0f);
+            b.Cone(0.15f, tip, new Vector3(0f, 0f, -0.002f), new Vector3(0.05f, 0.075f, 0.011f), along, 4, emission: glow, spec: allied ? 1f : 0f);
+            b.Cone(0f, tip, new Vector3(0f, 0f, 0.07f), new Vector3(0.05f, 0.09f, 0.011f), along, 4, emission: glow, spec: allied ? 1f : 0f);
+            // Three feathers 120 degrees apart, each a low leading edge swelling into a tall trailing edge and
+            // twisted a few degrees so the arrow reads as fletched, not a cross of flat plates.
+            for (int i = 0; i < 3; i++)
+            {
+                float a = i * 120f, rad = a * Mathf.Deg2Rad;
+                Vector3 radial = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
+                Vector3 roll = new Vector3(0f, 0f, a);
+                b.Add(SilhouetteFactory.Shape.Cube, fletch, radial * 0.016f + new Vector3(0f, 0f, -0.77f), new Vector3(0.022f, 0.003f, 0.1f), roll + new Vector3(0f, 0f, 4f));
+                b.Add(SilhouetteFactory.Shape.Cube, fletch, radial * 0.022f + new Vector3(0f, 0f, -0.835f), new Vector3(0.036f, 0.003f, 0.07f), roll + new Vector3(0f, 0f, 6f));
+            }
+            // Flared nock.
+            b.Cone(1.5f, shaft, new Vector3(0f, 0f, -0.9f), new Vector3(0.014f, 0.025f, 0.014f), new Vector3(-90f, 0f, 0f), 8);
             Mesh mesh = b.Bake(allied ? "LB Arrow" : "LB Enemy Arrow");
             meshes[key] = mesh;
             return mesh;

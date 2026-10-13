@@ -44,7 +44,7 @@ namespace Lightbringer.Combat
             shot.Faction = shooter.Faction;
             shot.Target = target;
             shot.start = origin;
-            shot.end = target.GetAimPoint(origin);
+            shot.end = shot.AimPoint(target);
             float distance = Vector3.Distance(origin, shot.end);
             shot.duration = Mathf.Clamp(distance / Mathf.Max(1f, speed), 0.08f, 1.5f);
             shot.arc = distance * Mathf.Max(0f, arcRatio);
@@ -75,13 +75,21 @@ namespace Lightbringer.Combat
             if (HasLanded || delta <= 0f) return;
             age += delta;
             // Follow a living target; once it falls, the shot finishes at its last known point.
-            if (Target != null && Target.IsAlive) end = Target.GetAimPoint(start);
+            if (Target != null && Target.IsAlive) end = AimPoint(Target);
             float t = Progress;
             Vector3 position = PointAt(t);
             transform.position = position;
             Vector3 heading = Heading(t);
             if (heading.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(heading);
             if (t >= 1f) Land();
+        }
+
+        // Arrows fly at chest height instead of the closest collider point (usually down at the feet).
+        private Vector3 AimPoint(Combatant target)
+        {
+            Vector3 point = target.GetAimPoint(start);
+            if (Kind == ProjectileKind.Arrow) point.y = Mathf.Max(point.y, target.transform.position.y + 1f);
+            return point;
         }
 
         private Vector3 PointAt(float t) => Vector3.Lerp(start, end, t) + Vector3.up * (arc * 4f * t * (1f - t));
