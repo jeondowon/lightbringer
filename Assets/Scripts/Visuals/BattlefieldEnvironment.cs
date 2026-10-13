@@ -15,7 +15,8 @@ namespace Lightbringer.Visuals
     public sealed class BattlefieldEnvironment : MonoBehaviour
     {
         // Flat playable rectangle (world XZ): all Paths, bases and the hero start lie inside it.
-        public const float PlayHalfWidth = 34f, PlayMinZ = -30f, PlayMaxZ = 48f;
+        public const float PlayHalfWidth = Core.BattlefieldLayout.HalfWidth,
+            PlayMinZ = Core.BattlefieldLayout.MinZ, PlayMaxZ = Core.BattlefieldLayout.MaxZ;
         private const float LaneClearance = 4.5f;
 
         private readonly List<Object> owned = new List<Object>();
@@ -36,6 +37,8 @@ namespace Lightbringer.Visuals
         private float seed;
         private ArtStyleLibrary style;
         private ForestEnvironmentProfile forest;
+        private ActTwoScenery actTwo;
+        private bool beaconClearing;
         private Material instanceSky, previousSky;
 
         public MeshCollider Terrain { get; private set; }
@@ -56,6 +59,7 @@ namespace Lightbringer.Visuals
         private void Generate(ArtStyleLibrary library, int stage, WaypointPath[] paths, Vector3 deploy, Vector3[] clearPoints, Light sun)
         {
             style = library;
+            actTwo = GetComponentInParent<ActTwoScenery>(true);
             BattlefieldBackdropProfile panorama = library.FindBackdrop(stage);
             // An explicit stage profile can refine a battlefield inside a larger backdrop region.
             forest = library.forestEnvironment != null && library.forestEnvironment.AppliesTo(stage)
@@ -78,17 +82,19 @@ namespace Lightbringer.Visuals
             foreach (Vector3 point in clearPoints) keepClear.Add(Local(point));
             if (clearPoints.Length > 0) alliedGate = Local(clearPoints[0]);
             if (clearPoints.Length > 1) enemyGate = Local(clearPoints[1]);
+            beaconClearing = stage == 1 && forest != null && forest.openingGlade;
             PublishLanes();
 
             BuildTerrain();
-            BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length,
-                forest != null && forest.openingGlade);
+            if (actTwo != null) actTwo.Dress(this, paths);
+            else BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length,
+                    beaconClearing);
             // Imported forest tufts replace the old solid-colour blade carpet.
             if (forest == null && style.grassMaterial != null) BuildGrass();
             Shapes near = new Shapes(), far = new Shapes();
             if (forest == null)
             {
-                ScatterTrees(near, far);
+                if (actTwo == null) ScatterTrees(near, far);
                 ScatterRocks(near);
             }
             else ForestEnvironmentDressing.Build(forest, this, stage);
@@ -211,6 +217,13 @@ namespace Lightbringer.Visuals
         private float PlazaMask(Vector2 flat)
         {
             float plaza = 0f;
+            if (beaconClearing)
+            {
+                float sanctuary = Vector2.Distance(flat, BeaconSanctuary.Centre);
+                Vector2 approach = new Vector2(Mathf.Clamp(flat.x, BeaconSanctuary.Centre.x, 0f), BeaconSanctuary.Centre.y);
+                plaza = Mathf.Max(1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(4f, 7f, sanctuary)),
+                    1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.2f, 2.5f, Vector2.Distance(flat, approach))));
+            }
             foreach (Vector2 clear in keepClear)
                 plaza = Mathf.Max(plaza, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 8.5f, Vector2.Distance(flat, clear))));
             return plaza;
@@ -230,7 +243,7 @@ namespace Lightbringer.Visuals
                     List<Color> colors = new List<Color>();
                     List<Vector2> uvs = new List<Vector2>();
                     List<int> triangles = new List<int>();
-                    for (int i = 0; i < 1500; i++)
+                    for (int i = 0; i < (actTwo != null ? 100 : 1500); i++)
                     {
                         float x = cx + Range(0f, chunk), z = cz + Range(0f, chunk);
                         float outside = OutsideDistance(x, z);
@@ -276,6 +289,7 @@ namespace Lightbringer.Visuals
             Vector3 side = new Vector3(Mathf.Cos(yaw), 0f, Mathf.Sin(yaw));
             Vector3 lean = new Vector3(Range(-1f, 1f), 0f, Range(-1f, 1f)) * 0.12f;
             float height = hills ? Range(0.4f, 0.75f) : Range(0.3f, 0.58f);
+            if (actTwo != null) height *= .6f;
             float width = Range(0.08f, 0.13f);
             int start = vertices.Count;
             vertices.Add(root - side * width * 0.5f);

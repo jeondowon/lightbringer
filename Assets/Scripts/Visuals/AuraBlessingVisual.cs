@@ -20,7 +20,7 @@ namespace Lightbringer.Visuals
         private const float MoteSpread = 0.4f;
         // Large bodies get a modestly larger blessing: footprints from SmallBody to LargeBody (body length in
         // metres; mounted Knight ~3, Dragon ~4.8) scale it from 1x up to MaxSizeFactor.
-        private const float SmallBody = 1.5f, LargeBody = 4.8f, MaxSizeFactor = 1.3f;
+        private const float SmallBody = 1.5f, LargeBody = 4.8f, MaxSizeFactor = 2f;
 
         private static readonly Dictionary<long, Material> markMaterials = new Dictionary<long, Material>();
 
@@ -130,8 +130,16 @@ namespace Lightbringer.Visuals
             float footprint = Mathf.Max(max.x - min.x, max.z - min.z);
             if (footprint <= SmallBody) return;
             // Only large bodies grow and re-centre under their middle; infantry stay as before.
-            sizeFactor = Mathf.Lerp(1f, MaxSizeFactor, Mathf.InverseLerp(SmallBody, LargeBody, footprint));
+            // Eased so the mounted Knight grows a little and the Dragon a lot.
+            sizeFactor = Mathf.Lerp(1f, MaxSizeFactor, Mathf.Pow(Mathf.InverseLerp(SmallBody, LargeBody, footprint), 1.5f));
             bodyCenter = new Vector3((min.x + max.x) * 0.5f, 0f, (min.z + max.z) * 0.5f);
+            // A long tail or neck skews the bounds centre toward one end; the vertex mean sits under the torso.
+            if (!bodyMesh.isReadable) return;
+            Vector3[] vertices = bodyMesh.vertices;
+            if (vertices.Length == 0) return;
+            Vector3 sum = Vector3.zero;
+            foreach (Vector3 vertex in vertices) sum += toUnit * (bodyTransform.TransformPoint(vertex) - transform.position);
+            bodyCenter = new Vector3(sum.x / vertices.Length, 0f, sum.z / vertices.Length);
         }
 
         private void UpdateMark()

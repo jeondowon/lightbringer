@@ -1,0 +1,20 @@
+Dry Trees 2.0 - Lightbringer URP integration
+
+Source: DigitalAntichrist, Dry Trees (Unity Asset Store product 86967)
+https://assetstore.unity.com/packages/3d/vegetation/trees/dry-trees-86967
+License: Standard Unity Asset Store EULA. These are third-party assets, not original Lightbringer artwork.
+
+Imported: the seven FBX models, seven LOD prefabs, bark textures and shared material.
+Excluded: the HDRP demo scene, lighting settings and HDRP volume assets.
+Original asset GUIDs are retained so prefab mesh and material references remain valid.
+
+Bark.mat is converted from HDRP/Lit to Universal Render Pipeline/Lit.
+Bark_URP_Mask.png packs metallic in R, occlusion in G and smoothness in A.
+The source HDRP metallic remap [0.02374169, 1] is baked into R; original tiling (1, 1.2) is retained.
+Color texture uses sRGB; normals and packed mask use linear sampling. No HDRP package is required.
+
+Rebuild/validate in Unity: Lightbringer > Art > Convert and Validate Dry Trees URP.
+Requires the source assets under Assets/Dry_Trees. Reimporting the store material requires rerunning this command.
+Validation and preview: Docs/Diagnostics/DryTreesUrpChecks.txt and DryTreesUrpPreview.png.
+Preview columns: Dry3333, Dry4195, Dry4910, Dry5818, Dry6524, Dry7509, Dry8872.
+Preview rows: LOD0 onward, top to bottom. Campaign scenes are not modified.

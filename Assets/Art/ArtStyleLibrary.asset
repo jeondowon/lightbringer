@@ -26,9 +26,13 @@ MonoBehaviour:
   vfxMaterial: {fileID: 2100000, guid: fd7cd9feb92cf2d40bb29dab415d9729, type: 2}
   auraBlessingMaterial: {fileID: 2100000, guid: e5a3898ac1352c44696898373f61ffcd, type: 2}
   forestEnvironment: {fileID: 11400000, guid: 362a33e416d3418eabb6b5c47f809c6c, type: 2}
+  actTwoEnvironment: {fileID: 11400000, guid: 806c55261b69a8041913bbb98a0868f9, type: 2}
   battlefieldProps: {fileID: 11400000, guid: 65f5ba2494d696d43a4e33c82a4fdeed, type: 2}
   backdrops:
   - {fileID: 11400000, guid: 3c414894b8a746fc81cfa1a8c0e85f75, type: 2}
+  - {fileID: 11400000, guid: a39d9536560f4acea7890a01051c2bca, type: 2}
+  - {fileID: 11400000, guid: 923b54a0a1ed462f938e0a4b92795d8f, type: 2}
+  - {fileID: 11400000, guid: 07f4db70519544959ee242324f7bd40c, type: 2}
   ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
   royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
   gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}
@@ -55,15 +59,15 @@ MonoBehaviour:
   foliage: {r: 0.4, g: 0.6, b: 0.34, a: 1}
   foliageDark: {r: 0.2, g: 0.38, b: 0.26, a: 1}
   mountain: {r: 0.5, g: 0.56, b: 0.66, a: 1}
-  sunEuler: {x: 38, y: -35, z: 0}
+  sunEuler: {x: 32, y: -35, z: 0}
   cloudShadowStrength: 0.35
   cloudScale: 0.018
   cloudDrift: {x: 0.9, y: 0.4}
-  sunColor: {r: 1, g: 0.9, b: 0.74, a: 1}
+  sunColor: {r: 1, g: 0.94, b: 0.84, a: 1}
   sunIntensity: 1.6
-  ambientSky: {r: 0.5, g: 0.6, b: 0.82, a: 1}
-  ambientEquator: {r: 0.42, g: 0.45, b: 0.5, a: 1}
-  ambientGround: {r: 0.22, g: 0.21, b: 0.18, a: 1}
+  ambientSky: {r: 0.42, g: 0.49, b: 0.58, a: 1}
+  ambientEquator: {r: 0.3, g: 0.33, b: 0.34, a: 1}
+  ambientGround: {r: 0.16, g: 0.15, b: 0.12, a: 1}
   fogColor: {r: 0.72, g: 0.76, b: 0.84, a: 1}
   fogStart: 80
   fogEnd: 260
@@ -174,61 +178,6 @@ MonoBehaviour:
       follow: 0
       castLean: 0
       gripFraction: 0.47
-  - id: 9
-    prefab: {fileID: 2023057982739453008, guid: 7562c9ae7b839d54aa1c8854fd807b78, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 1
-    idleClip: {fileID: 7400000, guid: de4e53a2ec70e744e9963616972a5c11, type: 2}
-    moveClip: {fileID: 7400000, guid: bd38dba9914483a41a4eef7dc73ade48, type: 2}
-    actionClip: {fileID: 7400000, guid: cbfcee69498085b4bb778ee1db61dba2, type: 2}
-    skillMotions: []
-    moveClipSpeed: 1.2838517
-    attachments: []
-  - id: 13
-    prefab: {fileID: 1947799789627990252, guid: 8c3861c237776c447a9755dcdf640e83, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 0.7058824
-    idleClip: {fileID: 7400000, guid: fc61489e458c1d84faa2cb0eb5e77e29, type: 2}
-    moveClip: {fileID: 7400000, guid: ef3db94b62781a04ba0d0ced09578043, type: 2}
-    actionClip: {fileID: 7400000, guid: 5367687733cf8004c85ebee4227bb07f, type: 2}
-    skillMotions: []
-    moveClipSpeed: 1.8314011
-    attachments: []
-  - id: 14
-    prefab: {fileID: 3428227580528550712, guid: f97ebe0f943b2a442aaf888c7bc20018, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 1.235294
-    idleClip: {fileID: 7400000, guid: c1c8dfe7c37a4f246bcf25d75cbdf708, type: 2}
-    moveClip: {fileID: 7400000, guid: 3bbc4c15b9646d7428e52eec51897440, type: 2}
-    actionClip: {fileID: 7400000, guid: d2a353ede2305bc4da2d0a220e1d10ef, type: 2}
-    skillMotions: []
-    moveClipSpeed: 1.0063494
-    attachments: []
-  - id: 15
-    prefab: {fileID: 5624127626006020860, guid: 90fec66cfc91b4c4d8af1b8f5eb8220e, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 1
-    idleClip: {fileID: 7400000, guid: eda0d6ed6a77fbd4b824519738d2a4fa, type: 2}
-    moveClip: {fileID: 7400000, guid: 8e2e1854a6ee3ab4a9fec6ce7024eb2a, type: 2}
-    actionClip: {fileID: 7400000, guid: 298a4b49aa013db48b4e44327a8b48fc, type: 2}
-    skillMotions: []
-    moveClipSpeed: 1.2838517
-    attachments: []
-  - id: 16
-    prefab: {fileID: 148063699075760495, guid: d65c2e57acc7bab4ab914d453700d124, type: 3}
-    localOffset: {x: 0, y: 0, z: 0}
-    localEuler: {x: 0, y: 0, z: 0}
-    scale: 1.3529412
-    idleClip: {fileID: 7400000, guid: 471cb35f8149ac141a80344d84bf6cb0, type: 2}
-    moveClip: {fileID: 7400000, guid: 02896b261ced6ca4d9c719899793dd2a, type: 2}
-    actionClip: {fileID: 7400000, guid: ad1fd769148b6764d95202ace21ee678, type: 2}
-    skillMotions: []
-    moveClipSpeed: 0.96833503
-    attachments: []
   - id: 3
     prefab: {fileID: 8453815972868209000, guid: c6e7a2b391bc3ba4b98ca6757540484f, type: 3}
     localOffset: {x: 0, y: 0, z: 0}
@@ -294,4 +243,59 @@ MonoBehaviour:
     actionClip: {fileID: 7400000, guid: f6b05bcc35c864f40a1d5c8970c8d847, type: 2}
     skillMotions: []
     moveClipSpeed: 4
+    attachments: []
+  - id: 9
+    prefab: {fileID: 2023057982739453008, guid: 7562c9ae7b839d54aa1c8854fd807b78, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: de4e53a2ec70e744e9963616972a5c11, type: 2}
+    moveClip: {fileID: 7400000, guid: bd38dba9914483a41a4eef7dc73ade48, type: 2}
+    actionClip: {fileID: 7400000, guid: cbfcee69498085b4bb778ee1db61dba2, type: 2}
+    skillMotions: []
+    moveClipSpeed: 1.2838517
+    attachments: []
+  - id: 13
+    prefab: {fileID: 1947799789627990252, guid: 8c3861c237776c447a9755dcdf640e83, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 0.7058824
+    idleClip: {fileID: 7400000, guid: fc61489e458c1d84faa2cb0eb5e77e29, type: 2}
+    moveClip: {fileID: 7400000, guid: ef3db94b62781a04ba0d0ced09578043, type: 2}
+    actionClip: {fileID: 7400000, guid: 5367687733cf8004c85ebee4227bb07f, type: 2}
+    skillMotions: []
+    moveClipSpeed: 1.8314011
+    attachments: []
+  - id: 14
+    prefab: {fileID: 3428227580528550712, guid: f97ebe0f943b2a442aaf888c7bc20018, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1.235294
+    idleClip: {fileID: 7400000, guid: c1c8dfe7c37a4f246bcf25d75cbdf708, type: 2}
+    moveClip: {fileID: 7400000, guid: 3bbc4c15b9646d7428e52eec51897440, type: 2}
+    actionClip: {fileID: 7400000, guid: d2a353ede2305bc4da2d0a220e1d10ef, type: 2}
+    skillMotions: []
+    moveClipSpeed: 1.0063494
+    attachments: []
+  - id: 15
+    prefab: {fileID: 5624127626006020860, guid: 90fec66cfc91b4c4d8af1b8f5eb8220e, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1
+    idleClip: {fileID: 7400000, guid: eda0d6ed6a77fbd4b824519738d2a4fa, type: 2}
+    moveClip: {fileID: 7400000, guid: 8e2e1854a6ee3ab4a9fec6ce7024eb2a, type: 2}
+    actionClip: {fileID: 7400000, guid: 298a4b49aa013db48b4e44327a8b48fc, type: 2}
+    skillMotions: []
+    moveClipSpeed: 1.2838517
+    attachments: []
+  - id: 16
+    prefab: {fileID: 148063699075760495, guid: d65c2e57acc7bab4ab914d453700d124, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    localEuler: {x: 0, y: 0, z: 0}
+    scale: 1.3529412
+    idleClip: {fileID: 7400000, guid: 471cb35f8149ac141a80344d84bf6cb0, type: 2}
+    moveClip: {fileID: 7400000, guid: 9dd02a582d2bbb64d99089694ee50495, type: 2}
+    actionClip: {fileID: 7400000, guid: ad1fd769148b6764d95202ace21ee678, type: 2}
+    skillMotions: []
+    moveClipSpeed: 3.5
     attachments: []

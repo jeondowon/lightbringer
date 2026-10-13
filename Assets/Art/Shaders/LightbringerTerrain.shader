@@ -28,6 +28,14 @@ Shader "Lightbringer/Terrain"
         _ForestTextureStrength ("Forest Texture Blend", Range(0, 1)) = 0
         _ForestTextureScale ("Forest Texture Repeats Per Metre", Float) = 0.25
         _Weathering ("Overgrown Ground and Worn Stone", Range(0, 1)) = 0
+        _BeaconLight ("Beacon Position and Radiance", Vector) = (0, 0, 0, 0)
+        _StoneTex ("Weathered Stone", 2D) = "white" {}
+        [Normal] _StoneNormal ("Stone Normal", 2D) = "bump" {}
+        _StoneMask ("Stone Mask (AO in G)", 2D) = "white" {}
+        _StoneTextureStrength ("Natural Stone Surface", Range(0, 1)) = 0
+        _StoneTextureScale ("Stone Repeats Per Metre", Float) = 0.38
+        _NaturalLight ("Natural Direct and Ambient Lighting", Range(0, 1)) = 0
+        _SoilBreakup ("Irregular Forest Floor", Range(0, 1)) = 0
     }
 
     SubShader
@@ -54,11 +62,19 @@ Shader "Lightbringer/Terrain"
             half _ForestNormalStrength;
             half4 _ForestGroundTint;
             half _Weathering;
+            float4 _BeaconLight;
+            half _StoneTextureStrength;
+            float _StoneTextureScale;
+            half _NaturalLight;
+            half _SoilBreakup;
         CBUFFER_END
         TEXTURE2D(_ForestGrassTex); SAMPLER(sampler_ForestGrassTex);
         TEXTURE2D(_ForestSoilTex); SAMPLER(sampler_ForestSoilTex);
         TEXTURE2D(_ForestGrassNormal); SAMPLER(sampler_ForestGrassNormal);
         TEXTURE2D(_ForestSoilNormal); SAMPLER(sampler_ForestSoilNormal);
+        TEXTURE2D(_StoneTex); SAMPLER(sampler_StoneTex);
+        TEXTURE2D(_StoneNormal); SAMPLER(sampler_StoneNormal);
+        TEXTURE2D(_StoneMask); SAMPLER(sampler_StoneMask);
         ENDHLSL
 
         Pass
@@ -186,15 +202,23 @@ Shader "Lightbringer/Terrain"
                 half broad = ValueNoise(p * 0.11);
                 half fine = ValueNoise(p * 0.55 + 7.3);
                 half3 albedo = input.color.rgb * (1.0h + (broad - 0.5h) * 2.0h * _PatchStrength) * lerp(0.96h, 1.04h, fine);
-                half soilMix = saturate(road + _Weathering * smoothstep(0.5h, 0.77h, broad) * 0.6h);
+                // Broad worn patches with smaller edges, rather than a uniform green plane.
+                half forestWear = smoothstep(0.42h, 0.72h, Fbm(p * 0.21 + 19.0));
+                half soilMix = saturate(road + max(_Weathering * smoothstep(0.5h, 0.77h, broad) * 0.6h,
+                    _SoilBreakup * forestWear * (0.45h + 0.35h * fine)));
                 half3 groundUnderStone = albedo;
                 if (_ForestTextureStrength > 0.001h)
                 {
                     float2 forestUV = p * _ForestTextureScale;
                     half3 forestGrass = SAMPLE_TEXTURE2D(_ForestGrassTex, sampler_ForestGrassTex, forestUV).rgb;
                     half3 forestSoil = SAMPLE_TEXTURE2D(_ForestSoilTex, sampler_ForestSoilTex, forestUV).rgb;
+                    // A second broad texture scale breaks up the visible tiled field at hero height.
+                    forestGrass = lerp(forestGrass, SAMPLE_TEXTURE2D(_ForestGrassTex, sampler_ForestGrassTex, forestUV * 0.37 + 11.7).rgb, 0.22h);
+                    forestSoil = lerp(forestSoil, SAMPLE_TEXTURE2D(_ForestSoilTex, sampler_ForestSoilTex, forestUV * 0.43 + 3.9).rgb, 0.18h);
                     half3 forestGround = lerp(forestGrass, forestSoil, soilMix) * _ForestGroundTint.rgb
                         * lerp(0.9h - _Weathering * 0.15h, 1.08h + _Weathering * 0.15h, broad);
+                    half damp = smoothstep(0.4h, 0.75h, ValueNoise(p * 0.16 + 63.0));
+                    forestGround *= lerp(half3(1.04h, 1.01h, 0.94h), half3(0.71h, 0.79h, 0.72h), damp * _SoilBreakup);
                     groundUnderStone = forestGround;
                     albedo = lerp(albedo, forestGround, _ForestTextureStrength * (1.0h - plaza * (1.0h - _Weathering)));
                 }
@@ -251,6 +275,21 @@ Shader "Lightbringer/Terrain"
                 // Slabs give way to grass at the plaza rim through noise.
                 half pave = smoothstep(0.35h, 0.65h, plaza + (Fbm(p * 0.6 + 2.0) - 0.5) * 0.5h);
                 pave *= 1.0h - _Weathering * step(0.89h, slabId) * (1.0h - smoothstep(0.65h, 1.0h, plaza));
+                // Natural rock has its own fissures and normals. Do not draw the old black brick grid over it.
+                half stoneAO = 1.0h;
+                if (_StoneTextureStrength > 0.001h)
+                {
+                    float2 stoneUV = p * _StoneTextureScale;
+                    half3 rock = SAMPLE_TEXTURE2D(_StoneTex, sampler_StoneTex, stoneUV).rgb;
+                    rock *= half3(1.7h, 1.66h, 1.54h) * lerp(0.9h, 1.08h, broad);
+                    stoneAO = lerp(0.72h, 1.0h, SAMPLE_TEXTURE2D(_StoneMask, sampler_StoneMask, stoneUV).g);
+                    half soilInStone = smoothstep(0.52h, 0.76h, Fbm(p * 0.8 + 24.0)) * 0.5h;
+                    half3 naturalStone = lerp(rock, groundUnderStone * 0.85h, soilInStone);
+                    paved = lerp(paved, naturalStone, _StoneTextureStrength);
+                    // An irregular, gradual soil rim instead of the hard circular sticker boundary.
+                    half weatheredPave = smoothstep(0.18h, 0.8h, plaza + (Fbm(p * 1.2) - 0.5h) * 0.65h);
+                    pave = lerp(pave, weatheredPave, _StoneTextureStrength);
+                }
                 albedo = lerp(albedo, paved, pave);
 
                 // Corruption: ashen purple soil with glowing veins that pulse, strongest by the enemy gate.
@@ -275,8 +314,9 @@ Shader "Lightbringer/Terrain"
                 if (forestSurface > 0.001h)
                 {
                     float2 uv = p * _ForestTextureScale;
-                    half3 grassNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestGrassNormal, sampler_ForestGrassNormal, uv), _ForestNormalStrength);
-                    half3 soilNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestSoilNormal, sampler_ForestSoilNormal, uv), _ForestNormalStrength);
+                    half normalStrength = _ForestNormalStrength * lerp(0.3h, 1.0h, detail);
+                    half3 grassNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestGrassNormal, sampler_ForestGrassNormal, uv), normalStrength);
+                    half3 soilNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_ForestSoilNormal, sampler_ForestSoilNormal, uv), normalStrength);
                     half3 mapped = normalize(lerp(grassNormal, soilNormal, soilMix));
                     // UVs are world XZ: +U is X and +V is Z, including on the hills.
                     float3 tangent = normalize(float3(geometricNormal.y, -geometricNormal.x, 0));
@@ -284,17 +324,39 @@ Shader "Lightbringer/Terrain"
                     float3 mappedWS = normalize(tangent * mapped.x + bitangent * mapped.y + geometricNormal * mapped.z);
                     normalWS = normalize(lerp(normalWS, mappedWS, forestSurface));
                 }
+                if (_StoneTextureStrength > 0.001h && pave > 0.001h)
+                {
+                    half3 stoneNormal = UnpackNormalScale(SAMPLE_TEXTURE2D(_StoneNormal, sampler_StoneNormal, p * _StoneTextureScale), 0.85h);
+                    float3 tangent = normalize(float3(geometricNormal.y, -geometricNormal.x, 0));
+                    float3 bitangent = normalize(cross(tangent, geometricNormal));
+                    float3 mappedWS = normalize(tangent * stoneNormal.x + bitangent * stoneNormal.y + geometricNormal * stoneNormal.z);
+                    normalWS = normalize(lerp(normalWS, mappedWS, pave * _StoneTextureStrength));
+                }
 
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half ndl = dot(normalWS, light.direction);
                 half lit = smoothstep(_RampThreshold - _RampSoftness, _RampThreshold + _RampSoftness, ndl);
                 // Retain the stylized palette while letting small ground relief catch the light.
-                lit = lerp(lit, saturate(ndl) * 0.8h + 0.2h, forestSurface * 0.65h);
+                half naturalSurface = saturate(forestSurface + pave * _StoneTextureStrength);
+                lit = lerp(lit, saturate(ndl) * 0.85h + 0.15h, naturalSurface);
                 lit *= lerp(1.0h, light.shadowAttenuation, 0.85h) * CloudShadow(input.positionWS);
                 AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(GetNormalizedScreenSpaceUV(input.positionCS));
                 half3 shade = lerp(_ShadowColor.rgb, half3(1, 1, 1), lit * ao.directAmbientOcclusion);
                 half3 color = albedo * (shade * light.color + SampleSH(normalWS) * 0.35h * ao.indirectAmbientOcclusion);
+                // Shadows remove direct sunlight; ambient sky still reveals the shaded ground.
+                // The previous tinted ramp multiplied even full shadow by the sun's intensity.
+                half visibility = light.shadowAttenuation * CloudShadow(input.positionWS);
+                half3 direct = light.color * saturate(ndl) * visibility * ao.directAmbientOcclusion;
+                half3 indirect = max(SampleSH(normalWS), 0.0h) * ao.indirectAmbientOcclusion;
+                half3 naturalColor = albedo * (direct + indirect * 0.85h);
+                color = lerp(color, naturalColor, _NaturalLight);
+                color *= lerp(1.0h, stoneAO, pave * _StoneTextureStrength);
+                float3 halfDirection = SafeNormalize(light.direction + GetWorldSpaceNormalizeViewDir(input.positionWS));
+                half roughHighlight = pow(saturate(dot(normalWS, halfDirection)), 24.0h) * 0.045h;
+                color += roughHighlight * light.color * saturate(ndl) * visibility * naturalSurface * ao.directAmbientOcclusion;
                 color += _CorruptGlow.rgb * vein * pulse;
+                float beaconFalloff = saturate(1.0 - distance(input.positionWS.xz, _BeaconLight.xz) / 18.0);
+                color += albedo * half3(1.0, 0.62, 0.22) * beaconFalloff * beaconFalloff * _BeaconLight.w;
                 return half4(MixFog(color, input.fogFactor), 1);
             }
             ENDHLSL

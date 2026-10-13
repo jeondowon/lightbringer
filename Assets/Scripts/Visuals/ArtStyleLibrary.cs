@@ -101,6 +101,7 @@ namespace Lightbringer.Visuals
 
         [Header("Stage environment overrides")]
         public ForestEnvironmentProfile forestEnvironment;
+        public ActTwoEnvironmentProfile actTwoEnvironment;
         public BattlefieldPropProfile battlefieldProps;
         [Tooltip("First matching stage range wins. Add a new profile for the next region.")]
         public BattlefieldBackdropProfile[] backdrops = new BattlefieldBackdropProfile[0];

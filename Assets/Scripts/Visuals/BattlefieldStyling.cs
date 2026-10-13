@@ -23,7 +23,7 @@ namespace Lightbringer.Visuals
                 sun.color = style.sunColor;
                 sun.intensity = style.sunIntensity;
                 sun.shadows = LightShadows.Soft;
-                sun.shadowStrength = 0.75f;
+                sun.shadowStrength = 0.9f;
             }
             // Drifting cloud shadows shared by the terrain, grass and toon shaders (strength 0 = off).
             Shader.SetGlobalVector("_LB_CloudParams", new Vector4(style.cloudShadowStrength, style.cloudScale, style.cloudDrift.x, style.cloudDrift.y));

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1192c41868bc02f4ea63048e0dfe39fe, type: 3}
+  m_Name: ActTwoEnvironment
+  m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Visuals.ActTwoEnvironmentProfile
+  trees:
+  - {fileID: 2726735944987882060, guid: 8710203a3da66244396e648a040ac075, type: 3}
+  - {fileID: 30093335815575393, guid: 5f0d8fb715f65d14d97f812c7fa7d28b, type: 3}
+  - {fileID: 961069693720195916, guid: aee2a9b8c9e82cc4eadfb6ee8a084874, type: 3}
+  - {fileID: 2754290448250026643, guid: 3644357e396b64f468981e839340bfd7, type: 3}
+  - {fileID: 8169888220231817137, guid: a7860e647d19cec49874278a3394b62a, type: 3}
+  - {fileID: 5177542239690502999, guid: dbcf994af0d9e2a49ad65e05ed2573cd, type: 3}
+  - {fileID: 55908322638786319, guid: e82ba4c01b84adf4d92fe33a6503f4d0, type: 3}
+  sanctuary: {fileID: 7672939885162425605, guid: 8b5beb36c49c37a4aa14c13dc6e0acf5, type: 3}
+  monument: {fileID: 307802249929712557, guid: f992bd1e311a8504d92377d8288d68e6, type: 3}
+  watchtower: {fileID: 3086969254179641449, guid: f280d014d4e55f145be9ef767c13e6bc, type: 3}
+  brokenWall: {fileID: 1950885017108448697, guid: 76d9fe63e5d175841aa14d9493df8ec4, type: 3}
+  terrain: {fileID: 2100000, guid: 0d53caabe6b7e3e45aa745b4616d7fd9, type: 2}

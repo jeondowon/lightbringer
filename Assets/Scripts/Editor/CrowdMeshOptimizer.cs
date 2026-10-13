@@ -94,7 +94,8 @@ namespace Lightbringer.EditorTools
         }
 
         // Also used for static environment props; Compact preserves only attributes present on the source.
-        internal static Mesh Simplify(Mesh source, Material[] materials, int budget, out Material[] merged)
+        internal static Mesh Simplify(Mesh source, Material[] materials, int budget, out Material[] merged,
+            bool distanceLods = true)
         {
             Mesh work = Object.Instantiate(source);
             try
@@ -134,13 +135,13 @@ namespace Lightbringer.EditorTools
                     for (int i = 0; i < count; i++) groups[key].Add(buffer[start + i] + sub.baseVertex);
                 }
                 merged = order.ToArray();
-                return Compact(source, groups, order.Count);
+                return Compact(source, groups, order.Count, distanceLods);
             }
             finally { Object.DestroyImmediate(work); }
         }
 
         // Copies only the referenced vertices, every attribute unchanged.
-        private static Mesh Compact(Mesh source, Dictionary<int, List<int>> groups, int subMeshes)
+        private static Mesh Compact(Mesh source, Dictionary<int, List<int>> groups, int subMeshes, bool distanceLods)
         {
             Dictionary<int, int> remap = new Dictionary<int, int>();
             List<int> kept = new List<int>();
@@ -174,7 +175,8 @@ namespace Lightbringer.EditorTools
             mesh.subMeshCount = subMeshes;
             for (int g = 0; g < subMeshes; g++) mesh.SetTriangles(indices[g], g, false);
             mesh.RecalculateBounds();
-            MeshLodUtility.GenerateMeshLods(mesh, 3);
+            // Re-simplifying an already small mesh collapses it, so low-budget props skip the distance chain.
+            if (distanceLods) MeshLodUtility.GenerateMeshLods(mesh, 3);
             mesh.UploadMeshData(false);
             return mesh;
         }

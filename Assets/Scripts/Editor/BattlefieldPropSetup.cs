@@ -21,7 +21,9 @@ namespace Lightbringer.EditorTools
         public const string ProfilePath = Folder + "/BattlefieldProps.asset";
         private const string Output = "Docs/ArtPass/Preview";
         private static readonly float[] Dimensions = { 4.8f, 3.3f, 1.2f, 1.1f, 3.6f, 4.6f, 2.8f, 4.2f, 4.8f };
-        private static readonly int[] TriangleBudgets = { 20000, 20000, 10000, 14000, 28000, 24000, 22000, 20000, 36000 };
+        // Triangles per prop, chosen from Docs/Diagnostics/PropLodLadder_*.png (lowest level that keeps the shape and
+        // texture seams); the normal maps keep the carved detail. Props are few, so they carry no distance LODs.
+        private static readonly int[] TriangleBudgets = { 7000, 7000, 5000, 10000, 7000, 7000, 7000, 5000, 7000 };
 
         static BattlefieldPropSetup()
         {
@@ -107,7 +109,7 @@ namespace Lightbringer.EditorTools
                     Mesh source = filter.sharedMesh;
                     sourceTriangles += (long)source.GetIndexCount(0) / 3;
                     Mesh optimized = CrowdMeshOptimizer.Simplify(source, filter.GetComponent<MeshRenderer>().sharedMaterials,
-                        TriangleBudgets[(int)kind], out Material[] merged);
+                        TriangleBudgets[(int)kind], out Material[] merged, false);
                     optimized.name = name + "_" + meshIndex + "_Optimized";
                     string meshPath = folder + "/" + optimized.name + ".asset";
                     Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
@@ -188,7 +190,10 @@ namespace Lightbringer.EditorTools
                             if (terrain.LaneDistance(placement.Point) < 4.5f + placement.Radius - 0.01f)
                                 throw new InvalidOperationException("Prop blocks a path: " + placement.Kind);
                             Bounds bounds = BoundsOf(placement.Instance);
-                            if (Mathf.Abs(bounds.min.y - terrain.SurfaceHeight(placement.Point.x, placement.Point.y)) > 0.06f)
+                            float gap = bounds.min.y - terrain.SurfaceHeight(placement.Point.x, placement.Point.y);
+                            // Ruins may be deliberately buried as broken stumps; nothing may float.
+                            bool ruin = placement.Kind == BattlefieldPropKind.RuinColumn || placement.Kind == BattlefieldPropKind.RuinArch;
+                            if (gap > 0.06f || (!ruin && gap < -0.06f))
                                 throw new InvalidOperationException("Floating prop: " + placement.Kind);
                         }
                         for (int a = 0; a < dressing.Placements.Count; a++)

@@ -41,10 +41,10 @@ namespace Lightbringer.Visuals
             // Staggered forest edges frame the front without covering the central camera corridor.
             foreach (int side in new[] { -1, 1 })
                 for (int row = 0; row < 3; row++)
-                    for (int i = 0; i < 11; i++)
+                    for (int i = 0; i < 15; i++)
                     {
                         Vector2 p = new Vector2(side * (23f + row * 18f + Range(-3f, 3f)),
-                            -34f + i * 12f + Range(-4f, 4f));
+                            -38f + i * 11f + Range(-4f, 4f));
                         if (openingGlade) p += new Vector2(Range(-5f, 5f), Range(-5f, 5f));
                         if (!terrain.ClearOfPlay(p, 12f, 18f) || !terrain.ClearOfProps(p, 11f)) continue;
                         Spawn(profile.tree, p, openingGlade ? Range(0.65f, 1.4f) : Range(0.8f, 1.35f), 1.5f);
@@ -53,7 +53,7 @@ namespace Lightbringer.Visuals
                     }
 
             // Rear and forward groves soften the join from real terrain to the panoramic forest.
-            foreach (float depth in new[] { -67f, 108f })
+            foreach (float depth in new[] { -67f, 125f })
                 for (int i = 0; i < 13; i++)
                 {
                     Vector2 p = new Vector2(-86f + i * 14f + Range(-4f, 4f), depth + Range(-7f, 7f));
@@ -63,16 +63,19 @@ namespace Lightbringer.Visuals
                     TreeCount++;
                 }
 
+            BuildWoodlandEdge(profile);
             // Low foliage and stones tie the canopy to the ground. Roads and deployment plazas stay bare.
             if (openingGlade) BuildGladeUnderstory(profile);
             else
             {
-                Scatter(profile.sapling, 30, 9f, 14f, 0.7f, 1.2f, false);
-                Scatter(profile.rock, 40, 7f, 13f, 0.7f, 1.7f, false);
-                Scatter(profile.stone, 70, 4.5f, 10f, 0.6f, 1.4f, false);
-                Scatter(profile.plant, 95, 4f, 10f, 0.7f, 1.2f, true);
+                Scatter(profile.sapling, 55, 9f, 14f, 0.7f, 1.2f, false);
+                Scatter(profile.rock, 55, 7f, 13f, 0.7f, 1.4f, false);
+                Scatter(profile.stone, 115, 4.5f, 10f, 0.4f, 1.1f, false);
+                Scatter(profile.plant, 210, 4f, 10f, 0.7f, 1.4f, true);
             }
             BuildGrassPatches(profile.grass);
+            // Last, so the hand-tuned field dressing above keeps its random sequence.
+            BuildHillsideForest(profile);
             if (profile.wind != null)
             {
                 GameObject wind = Instantiate(profile.wind, transform);
@@ -85,7 +88,7 @@ namespace Lightbringer.Visuals
         private void BuildGladeUnderstory(ForestEnvironmentProfile profile)
         {
             foreach (int side in new[] { -1, 1 })
-                foreach (float depth in new[] { -9f, 17f, 44f })
+                foreach (float depth in new[] { -9f, 17f, 44f, 69f, 91f })
                 {
                     Vector2 point = new Vector2(side * Range(29f, 34f), depth + Range(-3f, 3f));
                     if (!terrain.ClearOfPlay(point, 14f, 18f) || !terrain.ClearOfProps(point, 10f) || NearTrunk(point)) continue;
@@ -100,16 +103,18 @@ namespace Lightbringer.Visuals
                 new Vector2(-26f, 7f), new Vector2(21f, 2f),
                 new Vector2(-19f, 22f), new Vector2(28f, 29f),
                 new Vector2(-38f, 39f), new Vector2(41f, 48f),
-                new Vector2(-30f, 65f), new Vector2(24f, 76f)
+                new Vector2(-30f, 65f), new Vector2(24f, 76f),
+                new Vector2(-19f, 48f), new Vector2(18f, 53f),
+                new Vector2(-26f, 88f), new Vector2(28f, 96f)
             };
             foreach (Vector2 centre in islands)
             {
-                for (int i = 0; i < 22; i++)
+                for (int i = 0; i < 32; i++)
                 {
                     float angle = Range(0f, Mathf.PI * 2f);
                     float radius = i < 3 ? Range(0f, 2.8f) : Range(2.2f, 7.5f);
                     Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                    if (!terrain.ClearOfPlay(point, 6f, 12f) || NearTrunk(point)) continue;
+                    if (!terrain.ClearOfPlay(point, 6f, 12f) || !terrain.ClearOfProps(point, 2f) || NearTrunk(point)) continue;
                     GameObject prefab = i < 3 ? profile.rock : i < 8 ? profile.stone
                         : i < 12 ? profile.sapling : profile.plant;
                     float scale = i < 3 ? Range(0.5f, 0.95f) : i < 8 ? Range(0.5f, 1.1f)
@@ -121,20 +126,84 @@ namespace Lightbringer.Visuals
                 }
             }
             // Short plants and small pebbles soften the road edge while preserving its open centre.
-            Scatter(profile.stone, 65, 4.5f, 11f, 0.25f, 0.65f, false);
-            Scatter(profile.plant, 95, 4.5f, 11f, 0.9f, 1.6f, true);
+            Scatter(profile.stone, 110, 4.5f, 11f, 0.25f, 0.65f, false);
+            Scatter(profile.plant, 220, 4.5f, 11f, 0.9f, 1.6f, true);
+        }
+
+        private void BuildHillsideForest(ForestEnvironmentProfile profile)
+        {
+            // Dense woodland over the hills outside the field, so the ridgelines read as forest, not bare
+            // lawn. Rare noise clearings break up the canopy. Stays inside the terrain mesh so roots ground.
+            const float cell = 7.5f, minX = -106f, maxX = 106f, minZ = -91f, maxZ = 145f;
+            float noise = random.Next(1000);
+            for (float z = minZ; z <= maxZ; z += cell)
+                for (float x = minX; x <= maxX; x += cell)
+                {
+                    Vector2 p = new Vector2(Mathf.Clamp(x + Range(-2.8f, 2.8f), minX, maxX),
+                        Mathf.Clamp(z + Range(-2.8f, 2.8f), minZ, maxZ));
+                    // Behind the allied gate the gameplay camera sits close; keep that slope clearer.
+                    float outside = BattlefieldEnvironment.OutsideDistance(p.x, p.y);
+                    if (outside < (p.y < BattlefieldLayout.MinZ ? 16f : 6f)) continue;
+                    if (Mathf.PerlinNoise(p.x * 0.04f + noise, p.y * 0.04f) < 0.22f) continue;
+                    // Trunks may stand close to hill ruins so the canopy overgrows them instead of leaving lawn.
+                    if (NearTree(p, 6f) || !terrain.ClearOfProps(p, 3f)) continue;
+                    Spawn(profile.tree, p, Range(0.9f, 1.45f), 1.5f);
+                    trunks.Add(p);
+                    TreeCount++;
+                    // Saplings fill the gaps between nearer trunks; distant ones would vanish in the fog.
+                    if (outside > 45f || random.NextDouble() < 0.5) continue;
+                    Vector2 sapling = p + new Vector2(Range(-4f, 4f), Range(-4f, 4f));
+                    if (NearTrunk(sapling) || !terrain.ClearOfProps(sapling, 2f)
+                        || BattlefieldEnvironment.OutsideDistance(sapling.x, sapling.y) < 8f) continue;
+                    Spawn(profile.sapling, sapling, Range(0.9f, 1.5f));
+                }
+        }
+
+        private bool NearTree(Vector2 point, float radius)
+        {
+            foreach (Vector2 trunk in trunks)
+                if ((point - trunk).sqrMagnitude < radius * radius) return true;
+            return false;
+        }
+
+        private void BuildWoodlandEdge(ForestEnvironmentProfile profile)
+        {
+            // A visible woodland belt follows the playable boundary; irregular offsets hide the rectangle.
+            for (int side = -1; side <= 1; side += 2)
+                for (float z = BattlefieldLayout.MinZ; z <= BattlefieldLayout.MaxZ; z += 7f)
+                    EdgeCluster(new Vector2(side * (BattlefieldLayout.HalfWidth + Range(1f, 5f)), z + Range(-2f, 2f)), profile);
+            foreach (float z in new[] { BattlefieldLayout.MinZ - 4f, BattlefieldLayout.MaxZ + 4f })
+                for (float x = -30f; x <= 30f; x += 7f)
+                    EdgeCluster(new Vector2(x + Range(-2f, 2f), z + Range(-2f, 2f)), profile);
+        }
+
+        private void EdgeCluster(Vector2 centre, ForestEnvironmentProfile profile)
+        {
+            if (!NearTrunk(centre) && terrain.ClearOfPlay(centre, 10f, 12f) && terrain.ClearOfProps(centre, 8f))
+            {
+                Spawn(profile.tree, centre, Range(0.85f, 1.2f), 1.5f);
+                trunks.Add(centre);
+                TreeCount++;
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                Vector2 point = centre + new Vector2(Range(-4f, 4f), Range(-4f, 4f));
+                if (NearTrunk(point) || !terrain.ClearOfPlay(point, 6f, 11f) || !terrain.ClearOfProps(point, 2f)) continue;
+                GameObject prop = Spawn(i < 2 ? profile.sapling : profile.plant, point, Range(0.8f, 1.4f));
+                if (i >= 2) groundCover.Add(prop);
+            }
         }
 
         private void BuildGrassPatches(GameObject prefab)
         {
             // Cull whole patches, sharing the supplier mesh and instanced material between tufts.
             // Gaps between patches leave the ground texture visible instead of making a solid carpet.
-            for (int attempt = 0, placed = 0; attempt < 1400 && placed < 140; attempt++)
+            for (int attempt = 0, placed = 0; attempt < 3200 && placed < 260; attempt++)
             {
-                Vector2 centre = new Vector2(Range(-33f, 33f), Range(-27f, 62f));
+                Vector2 centre = new Vector2(Range(-35f, 35f), Range(BattlefieldLayout.MinZ + 3f, BattlefieldLayout.MaxZ + 3f));
                 if (openingGlade && attempt % 3 == 0)
-                    centre = new Vector2((attempt % 2 == 0 ? -1f : 1f) * Range(5f, 10f), Range(-16f, 29f));
-                if (!terrain.ClearOfPlay(centre, 5f, 11f)) continue;
+                    centre = new Vector2((attempt % 2 == 0 ? -1f : 1f) * Range(5f, 12f), Range(-16f, BattlefieldLayout.EnemyBaseZ - 10f));
+                if (!terrain.ClearOfPlay(centre, 5f, 11f) || (openingGlade && !terrain.ClearOfProps(centre, 1f))) continue;
                 bool overlaps = false;
                 foreach (Vector2 other in grassCentres)
                     if ((centre - other).sqrMagnitude < 16f) { overlaps = true; break; }
@@ -143,14 +212,15 @@ namespace Lightbringer.Visuals
                 patch.transform.SetParent(transform, false);
                 patch.transform.localPosition = new Vector3(centre.x, terrain.SurfaceHeight(centre.x, centre.y), centre.y);
                 float radius = Range(2.2f, 3.5f);
-                int count = random.Next(24, 37);
+                int count = random.Next(38, 55);
                 for (int i = 0; i < count; i++)
                 {
                     float angle = Range(0f, Mathf.PI * 2f);
                     float distance = Mathf.Sqrt(Range(0f, 1f)) * radius;
                     Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
                     // Test every tuft, including the patch edge, with room for the blade width.
-                    if (!terrain.ClearOfPlay(point, 4.8f, 10.5f) || NearTrunk(point)) continue;
+                    if (!terrain.ClearOfPlay(point, 4.8f, 10.5f)
+                        || (openingGlade && !terrain.ClearOfProps(point, 0.5f)) || NearTrunk(point)) continue;
                     float slope = Mathf.Abs(terrain.SurfaceHeight(point.x + 0.5f, point.y) - terrain.SurfaceHeight(point.x - 0.5f, point.y))
                         + Mathf.Abs(terrain.SurfaceHeight(point.x, point.y + 0.5f) - terrain.SurfaceHeight(point.x, point.y - 0.5f));
                     if (slope > 0.6f) continue;
@@ -165,14 +235,14 @@ namespace Lightbringer.Visuals
                             if (!grassMaterials.TryGetValue(source, out Material shared))
                             {
                                 shared = new Material(source) { name = "Forest Grass (Instance)", enableInstancing = true };
-                                // Match the warmer field palette without modifying the supplier asset.
-                                if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.3f, 0.38f, 0.14f));
-                                if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.95f, 1f, 0.72f));
+                                // Deep olive foliage; keep source materials shared and unchanged.
+                                if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.12f, 0.18f, 0.055f));
+                                if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.67f, 0.77f, 0.45f));
                                 if (shared.HasProperty("_RootMaskStrength")) shared.SetFloat("_RootMaskStrength", 0.1f);
                                 if (openingGlade)
                                 {
-                                    if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.12f, 0.19f, 0.065f));
-                                    if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.83f, 0.95f, 0.65f));
+                                    if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.075f, 0.13f, 0.035f));
+                                    if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.6f, 0.72f, 0.4f));
                                     if (shared.HasProperty("_NormalScale")) shared.SetFloat("_NormalScale", 0.65f);
                                     if (shared.HasProperty("_TransStrength")) shared.SetFloat("_TransStrength", 0.25f);
                                 }
@@ -207,8 +277,8 @@ namespace Lightbringer.Visuals
         {
             for (int attempt = 0, placed = 0; attempt < count * 6 && placed < count; attempt++)
             {
-                Vector2 p = new Vector2(Range(-43f, 43f), Range(-32f, 69f));
-                if (!terrain.ClearOfPlay(p, lane, bases)) continue;
+                Vector2 p = new Vector2(Range(-43f, 43f), Range(BattlefieldLayout.MinZ, BattlefieldLayout.MaxZ + 8f));
+                if (!terrain.ClearOfPlay(p, lane, bases) || (openingGlade && !terrain.ClearOfProps(p, 1f))) continue;
                 // Don't bury shrubs inside the large trunks.
                 if (NearTrunk(p)) continue;
                 GameObject instance = Spawn(prefab, p, Range(minScale, maxScale));
@@ -232,6 +302,8 @@ namespace Lightbringer.Visuals
             instance.transform.localPosition = new Vector3(point.x, ground - (rootRadius > 0f ? 0.15f : 0.04f), point.y);
             instance.transform.localRotation = Quaternion.Euler(0f, Range(0f, 360f), 0f);
             instance.transform.localScale = Vector3.one * scale;
+            ForestGroundContact contact = instance.GetComponent<ForestGroundContact>();
+            if (contact != null) contact.Ground(terrain);
             foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>())
             {
                 renderer.lightProbeUsage = LightProbeUsage.Off;
