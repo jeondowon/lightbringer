@@ -146,7 +146,6 @@ namespace Lightbringer.UI
         }
 
         // Shows the cards fully dealt, for previews captured outside the Play-mode clock.
-        public void SkipIntro() => shownAt = float.NegativeInfinity;
 
         // Marks a card; nothing is applied until Confirm.
         public void Select(int index)

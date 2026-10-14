@@ -1,1 +1,0 @@
-PASS | 2026-10-13T14:54:18.7550207Z | lord 153694 px, artwork bounds x 980-1531, y 241-655, margin 26 px

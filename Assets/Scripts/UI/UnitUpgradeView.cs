@@ -35,8 +35,6 @@ namespace Lightbringer.UI
 
         public bool IsOpen => !Root.ClassListContains("lb-hidden");
         public int Selected => selected;
-        public string UpgradeText => upgrade.text;
-        public string GoldText => gold.text;
 
         public UnitUpgradeView(VisualElement parent)
         {
@@ -127,8 +125,6 @@ namespace Lightbringer.UI
             Hud.Show(Root, false);
         }
 
-        public string TileNote(int unit) => tiles[unit].Rank.text;
-        public bool IsTileEnabled(int unit) => tiles[unit].Root.enabledSelf;
 
         public void Open(CampaignSession value)
         {

@@ -36,3 +36,15 @@
 
 ## 기존 저장 데이터 (version 2 → 3)
 `CampaignProgress.UpgradeSavedData`가 변환한다. 빛 광선·치유는 그대로 이어받고, 룬 지팡이와 반지는 레벨당 빛의 조각 40으로 환급한다.
+
+## 구현 요약 (2026-10-14 기준)
+- 구조: `SkillCatalog`(기술 5종·슬롯 3개·Lv10·빈 슬롯), `HeroAbilities`(시전·상태 이상 연결), `StatusEffects`(기절·빙결·밀려남, 일시정지 시 함께 정지).
+- 저장 버전은 4다. 이전 버전은 자동 변환되며 스테이지 수가 늘어도 진행 기록을 이어받는다.
+- 수치(임시값): 빛 광선 피해 18 · 치유 25 · 충격파 피해 20/기절 1.5초/밀어냄 3m/반경 4.5m · 얼음 피해 10/빙결 3초 · 메테오 피해 80/반경 8m/낙하 지연 1.8초/조준 거리 최대 15m(아군 무피해). 상수는 `HeroAbilities`와 `SkillCatalog`에 있다.
+- 모션: Thrust·Slam·Raise 클립은 `Lightbringer > Art > Build Hero Skill Motions`가 영웅 뼈대에서 계산해 `Assets/Art/Characters/FemaleHero/Animations/`에 만든다. 연결은 `VisualOverride.skillMotions` → `ModelAnimationDriver`. 모션을 바꾼 뒤에는 지팡이 머리가 위를 향하는지 확인한다.
+- 아이콘: `Assets/UI/Art/Skill_*.png`는 `Lightbringer > UI > Build Skill Icons`로 만든다. 원본은 `Docs/ArtReference/Skills/`, 프롬프트는 `Docs/ArtReference/Prompts.md`.
+
+## 남은 일
+- 빙결·기절의 시각 표시(얼음 색조, 머리 위 표시). 스타일 모델은 자체 팔레트를 쓰므로 `_BaseColor` 덮어쓰기가 먹히는지 먼저 확인한다.
+- 직접 플레이한 뒤 수치 조정. 기술 레벨로 커지는 것은 피해뿐이며, 기절·빙결 시간의 레벨당 증가 여부는 미정이다.
+- 메테오 효과음(`BattleAudio.Cast`가 아직 처리하지 않음)과 실제 플레이 확인.

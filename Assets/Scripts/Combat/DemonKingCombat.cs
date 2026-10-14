@@ -7,7 +7,7 @@ namespace Lightbringer.Combat
 {
     public enum DemonKingAttack { DarkLightning, AbyssRain }
 
-    // The Demon King's sky magic in the final battle (DemonKingFinalBattle.md, first candidates). Every strike is read
+    // The Demon King's sky magic in the final battle (FinalBattle.md, first candidates). Every strike is read
     // from its ground warning; nobody has to look up. Its health is the abyss core's. Big attacks alternate with the
     // Warlord's: it waits while he casts, charges or chains, and he waits while it casts (BossCombat.HoldSpecials).
     [DefaultExecutionOrder(-60)]

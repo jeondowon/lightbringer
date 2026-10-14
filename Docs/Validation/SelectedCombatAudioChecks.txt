@@ -1,9 +1,0 @@
-PASS | 2026-10-13T08:15:14.3549656Z
-ArrowHit: selected second hit, 0.775-1.110s relative to the leading-silence-trimmed source.
-HeroHurt: user-selected Classic Punch Impact 352711, original pitch/speed.
-ArrowHit: 0.335s, mono 44100Hz, peak 0.318
-ArrowRelease: 0.920s, mono 44100Hz, peak 0.435
-HeroHurt: 0.645s, mono 44100Hz, peak 0.408
-BossImpact: 4.957s, mono 44100Hz, peak 0.139
-TroopDeathFemale: 0.384s, mono 44100Hz, peak 0.208
-TroopDeathMale: 0.871s, mono 44100Hz, peak 0.293

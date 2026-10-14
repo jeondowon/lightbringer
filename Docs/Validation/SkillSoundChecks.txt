@@ -1,4 +1,0 @@
-PASS | 2026-10-13T08:15:15.8179447Z
-MeteorImpact: MeteorImpactUser.mp3 -> 3.200s, mono 44100Hz, original pitch/speed.
-IceMagic: IceMagicUser.mp3 -> 2.400s, mono 44100Hz, original pitch/speed.
-ShockwaveBoom: ShockwaveBoomUser.mp3 -> 3.000s, mono 44100Hz, original pitch/speed.

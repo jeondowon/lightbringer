@@ -1,5 +1,0 @@
-Generation mode: built-in image_gen
-Reference: Warlord_01_Design_v1.png
-Purpose: Standalone equipment reference. Archer equipment is for existing code reuse.
-
-Use case: precise-object-edit. Reference image is a character holding equipment. Extract and reconstruct ONLY the specified equipment as a standalone product render, faithfully preserve its exact design, silhouette, colors and materials from reference. Remove all character, hands, arms, clothing and other props. Entire object visible with generous margin on all sides, centered, flat LIGHT GRAY background #eeeeee, no cast shadow, no floor or stand. Orthographic-like front view showing broad readable surface, no perspective foreshortening. Premium Stylized Fantasy 3D sculpted game asset, clean sturdy forms, no text, no watermark, no collage, no extra views. Only the large GREATSWORD with broad straight double-edged charcoal steel blade, central bevel, angular aged bronze guard with central star medallion, dark violet wrapped long grip and metal pommel. Upright with tip up, grip down, broad flat blade face visible. Complete sword from tip to pommel. No character, no gauntlet. One complete greatsword.

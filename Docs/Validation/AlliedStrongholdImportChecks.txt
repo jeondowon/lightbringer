@@ -1,7 +1,0 @@
-PASS | 2026-10-11T15:19:13.7417282Z
-Prefab: Assets/Art/Buildings/AlliedStronghold/AlliedStronghold.prefab
-Size: (7.50, 4.47, 2.49)
-Source: user-supplied Tripo export, fantasy+castle+3d+model.zip.
-URP base color, normal and packed metallic/smoothness assigned. Original objective collider retained.
-Validated runtime UnitAppearance under the campaign's 6x4x4 objective transform: width 16.5 m, feet y=0, no troop motion.
-Rebuild: Lightbringer > Art > Set Up Allied/Enemy Stronghold Model. Restart Play to apply.

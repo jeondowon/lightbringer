@@ -25,7 +25,6 @@ namespace Lightbringer.Units
         private bool hasSteeringOverride;
         private Vector3 steeringDestination;
         private float steeringStopDistance;
-        private float flightHeight;
         private bool crowdAvoidance;
         private float separationTimer;
         private Vector3 separation;
@@ -33,7 +32,6 @@ namespace Lightbringer.Units
         private float movementAccumulator;
 
         public void ConfigureSpeed(float speed) => moveSpeed = Mathf.Max(0f, speed);
-        public void ConfigureFlight(float height) => flightHeight = Mathf.Max(0, height);
         public void ConfigureCrowdAvoidance(bool enabled)
         {
             crowdAvoidance = enabled;
@@ -89,11 +87,8 @@ namespace Lightbringer.Units
             }
             if (IsHeld)
             {
-                if (flightHeight <= 0f)
-                {
-                    verticalSpeed = controller.isGrounded ? -2f : verticalSpeed + gravity * deltaTime;
-                    controller.Move(Vector3.up * verticalSpeed * deltaTime);
-                }
+                verticalSpeed = controller.isGrounded ? -2f : verticalSpeed + gravity * deltaTime;
+                controller.Move(Vector3.up * verticalSpeed * deltaTime);
                 return;
             }
 
@@ -158,14 +153,6 @@ namespace Lightbringer.Units
                     separation = Vector3.ClampMagnitude(separation, 0.8f);
                 }
                 horizontal = Vector3.ClampMagnitude(horizontal + separation * moveSpeed * deltaTime, moveSpeed * deltaTime);
-            }
-            if (flightHeight > 0f)
-            {
-                float groundY = AssignedPath != null && AssignedPath.IsValid
-                    ? AssignedPath.GetPosition(Mathf.Min(waypointIndex, AssignedPath.Count - 1)).y : 0f;
-                float lift = Mathf.Clamp(groundY + flightHeight - transform.position.y, -moveSpeed * deltaTime, moveSpeed * deltaTime);
-                controller.Move(horizontal + Vector3.up * lift);
-                return;
             }
             if (controller.isGrounded && horizontal.sqrMagnitude < 0.000001f)
             {

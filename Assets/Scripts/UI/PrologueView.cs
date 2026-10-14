@@ -29,7 +29,6 @@ namespace Lightbringer.UI
         public int SlideIndex { get; private set; }
         public int CaptionIndex { get; private set; }
         public string CurrentId => sequence == null ? "" : sequence.slides[SlideIndex].id;
-        public string Caption => caption.text;
         public float MusicGain => !IsOpen ? 0f : closing ? Mathf.Clamp01(transition / FadeDuration) : 1f;
 
         public PrologueView(VisualElement parent, Action onFinished)

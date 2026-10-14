@@ -1,8 +1,0 @@
-PASS | Enemy Archer model setup | 2026-10-12 03:35
-Mesh: triangles 241,326 -> 20,866, vertices 139,686 -> 17,918, bones 24, bind poses 24, weights 17,918, distance LODs 4
-Shoot: 13 bones (no hips/legs), bow hand error 0.000 m, string hand error 0.000 m, string catch 0.000 bow units, full-draw error 0.000 m, draw 0.41 bow units, bow 0.56 m in front of the chest
-Clip idle: EnemyArcher_Anim_Idle, 4.03s, 220 curves
-Clip move: EnemyArcher_Anim_Walk, 4.20s, 220 curves
-Clip shoot: EnemyArcher_Shoot, 1.00s, 52 curves
-Override: scale 1, yaw 0, offset (0.00, 0.00, 0.00), move clip speed 1.5 m/s, clips assigned 2
-Props: bow on LeftHand (upright, 0.95 m before troop scale, BowString), quiver on Spine.

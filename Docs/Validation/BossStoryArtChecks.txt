@@ -1,7 +1,0 @@
-PASS | 2026-10-13T11:25:11.8443341Z
-PASS | Aftermath_v1.png | source/imported 1672x941
-PASS | Confrontation_v1.png | source/imported 1672x941
-PASS | HeroResolve_v1.png | source/imported 1672x941
-PASS | Retreat_v1.png | source/imported 1672x941
-PASS | WarlordClose_v1.png | source/imported 1672x941
-PASS | WarlordDefeated_v1.png | source/imported 1672x941

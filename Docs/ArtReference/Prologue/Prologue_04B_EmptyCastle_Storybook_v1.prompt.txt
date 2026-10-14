@@ -1,8 +1,0 @@
-Mode: built-in image_gen edit
-Edit target: Prologue_04_LastBattle_Storybook_v2.png
-Style master: Prologue_02_KnightOfLight_ColorManga_v3.png
-Output: Prologue_04B_EmptyCastle_Storybook_v1.png
-Placement: directly after 04 (Last Battle); the game cross-fades through a full white flash from 04 into this page.
-Caption: 빛이 걷혔을 때, 용사도 마왕도 흔적 없이 사라진 채 다시는 모습을 드러내지 않았다.
-
-Use case: precise-object-removal. IMAGE 1 is the EDIT TARGET. Keep EVERY background element exactly in place so the two pages align when cross-faded: ruined castle towers, gothic arches and bridges, ragged violet banners, the broad stone stairs and dais, foreground broken rocks and rubble, cloud shapes, framing and perspective. REMOVE completely: the knight and his sword, the Demon King, the giant golden light burst, all its radiating rays, golden shards and every light flare. Repaint the revealed areas as the same castle ruins, stairs and rubble that would naturally be behind them, in the same style. Aftermath mood: the light has just faded; the hall is silent and empty. Overall exposure returns to IMAGE 1's dark slate-blue level without any strong light source; at most a faint pale ash-grey haze and a few settling dust specks hang where the burst was, with a very subtle cool-ivory tint on the nearby stones, nothing glowing. The stairs and dais are empty; no bodies, no armor, no swords, no scorch marks, no crater. Match the rough matte hand-inked color-manga/gouache old-paper texture of IMAGE 1 and the style master. No new objects or characters. Single full-bleed 16:9 illustration, same framing as IMAGE 1. No text, borders, watermark. Not monochrome or sepia. No photorealism, 3D, bloom or digital particles.

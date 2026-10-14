@@ -1,5 +1,0 @@
-PASS | 2026-10-13T08:15:14.8349149Z
-ShamanWater: ShamanWaterUser.mp3 -> 1.400s, mono 44100Hz, max100ms RMS -20 dBFS, original pitch/speed.
-EnemyDeath: EnemyDeathUser.mp3 -> 0.414s, mono 44100Hz, max100ms RMS -20 dBFS, original pitch/speed.
-BossSummon: BossSummonUser.mp3 -> 2.501s, mono 44100Hz, max100ms RMS -20 dBFS, original pitch/speed.
-HeroHeal: HeroHealingUser.mp3 -> 2.373s, mono 44100Hz, max100ms RMS -20 dBFS, original pitch/speed.

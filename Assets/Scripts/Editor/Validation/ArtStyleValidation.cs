@@ -1,0 +1,213 @@
+using System.Linq;
+using Lightbringer.Aura;
+using Lightbringer.Combat;
+using Lightbringer.Core;
+using Lightbringer.Progression;
+using Lightbringer.Resources;
+using Lightbringer.Units;
+using Lightbringer.Visuals;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace Lightbringer.EditorTools
+{
+    public static partial class GreyboxValidation
+    {
+        private static void ValidateArtStyle()
+        {
+            ArtStyleLibrary configuredStyle = AssetDatabase.LoadAssetAtPath<ArtStyleLibrary>(ArtStyleSetup.LibraryPath);
+            BattlefieldBackdropProfile region = configuredStyle != null ? configuredStyle.FindBackdrop(1) : null;
+            Check(region != null && Enumerable.Range(1, 8).All(stage => configuredStyle.FindBackdrop(stage) == region)
+                && configuredStyle.FindBackdrop(9) != region,
+                "Forest panorama applies to stages 1-8 and does not leak into stage 9");
+            Check(region != null && region.panorama.width == region.panorama.height * 2
+                && region.fogEnd > region.fogStart && region.forest != null && region.forest.IsReady,
+                "Forest backdrop has a 2:1 panorama, valid haze distances and the imported forest");
+            Shader skyShader = Shader.Find(ArtStyleSetup.SkyShader);
+            Check(skyShader != null && skyShader.isSupported && !ShaderUtil.ShaderHasError(skyShader),
+                "Panoramic sky shader compiles for URP");
+            ForestEnvironmentProfile openingForest = configuredStyle != null ? configuredStyle.forestEnvironment : null;
+            Check(openingForest != null && openingForest.openingGlade && openingForest.AppliesTo(1)
+                && !openingForest.AppliesTo(2) && region != null && openingForest != region.forest
+                && openingForest.terrain != region.forest.terrain && !region.forest.openingGlade,
+                "Opening glade terrain and dressing are isolated to stage 1 within the shared forest region");
+            Shader terrainShader = Shader.Find(ArtStyleSetup.TerrainShader);
+            Check(terrainShader != null && terrainShader.isSupported && !ShaderUtil.ShaderHasError(terrainShader),
+                "Weathered ground shader compiles for URP");
+            Shader toon = Shader.Find(ArtStyleSetup.ToonShader);
+            Shader runes = Shader.Find(ArtStyleSetup.RuneShader);
+            Shader glow = Shader.Find(ArtStyleSetup.GlowShader);
+            Check(toon != null && toon.isSupported && runes != null && runes.isSupported && glow != null && glow.isSupported,
+                "Art Pass toon, aura rune and glow shaders compile for URP");
+            Check(FacesOutward(ProceduralMeshes.Box) && FacesOutward(ProceduralMeshes.Sphere) && FacesOutward(ProceduralMeshes.Frustum(0.5f))
+                && FacesOutward(ProceduralMeshes.Frustum(0f, 6))
+                && FacesOutward(ProceduralMeshes.Lumpy(0)) && FacesOutward(ProceduralMeshes.Faceted(0)),
+                "Procedural building blocks have outward-facing triangles for culling and outlines");
+
+            ArtStyleLibrary style = configuredStyle;
+            if (style == null) return;
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            GameObject host = new GameObject("Art style validation host");
+            LightingSnapshot lighting = LightingSnapshot.Capture();
+            try
+            {
+
+                CampaignSession session = host.AddComponent<CampaignSession>();
+                CampaignProgress profile = new CampaignProgress();
+                for (int stage = 1; stage < CampaignProgress.StageCount; stage++) profile.CompleteStage(stage);
+                session.InitializeForValidation(profile);
+                EditorAssets.ConfigureSession(session, material);
+                session.ConfigureArt(style);
+                session.SelectStage(8);
+                Check(session.StartBattle(), "Styled campaign battle starts with the Art Style Library");
+                PrototypeBattle battle = session.Battle;
+                Invoke(battle.Objective, "OnEnable");
+
+                Transform heroVisual = battle.Hero.transform.Find(UnitAppearance.StyledName);
+                Check(heroVisual != null && !battle.Hero.GetComponent<MeshRenderer>().enabled && !battle.Hero.UseTeamTint
+                    && battle.Hero.GetComponent<CharacterController>().height == 2f,
+                    "Hero capsule is replaced by the styled commander without changing its controller");
+                Check(battle.Hero.GetComponent<AuraRuneVisual>() != null && battle.Hero.GetComponent<AuraRangeVisual>() == null,
+                    "Styled battle uses the rune aura instead of the greybox ring");
+                AuraRuneVisual rune = battle.Hero.GetComponent<AuraRuneVisual>();
+                HeroAura aura = battle.Hero.GetComponent<HeroAura>();
+                Invoke(rune, "OnEnable");
+                Invoke(rune, "LateUpdate");
+                Vector4 sphere = Shader.GetGlobalVector("_LB_AuraSphere");
+                Check(rune.Disc != null && Mathf.Approximately(rune.Disc.transform.localScale.x, aura.Radius * 2f)
+                    && Mathf.Approximately(sphere.w, aura.Radius) && rune.Disc.transform.parent == battle.Root.transform,
+                    "Rune circle and ally glow match the gameplay buff radius");
+                aura.Configure(aura.Radius + 1.2f, aura.AttackBonus);
+                Invoke(rune, "LateUpdate");
+                Check(Mathf.Approximately(rune.Disc.transform.localScale.x, aura.Radius * 2f)
+                    && Mathf.Approximately(Shader.GetGlobalVector("_LB_AuraSphere").w, aura.Radius),
+                    "Aura Size growth enlarges the visible rune circle immediately");
+                Invoke(rune, "OnDisable");
+                Check(Shader.GetGlobalVector("_LB_AuraSphere").w == 0f, "Disabling the aura clears the ally glow");
+
+                Check(battle.Hero.GetComponent<HeroSpellVfx>() != null, "Styled hero turns offensive spells into lightning strikes");
+                LightningStrikeVfx strike = LightningStrikeVfx.Spawn(style, new Vector3(0f, 0f, 5f), 3f, 1.6f, battle.Root.transform);
+                Check(strike != null && strike.MainBolt.GetPosition(0).y > 10f
+                    && Vector3.Distance(strike.MainBolt.GetPosition(strike.MainBolt.positionCount - 1), new Vector3(0f, 0f, 5f)) < 0.01f
+                    && strike.BranchCount == 4 && strike.GetComponentsInChildren<Collider>(true).Length == 0,
+                    "Area spell strike falls from the sky onto the impact point with branches and no colliders");
+                strike.Tick(2f);
+                Check(strike == null, "Lightning strike removes itself after its short life");
+                Combatant stronghold = battle.Objective.EnemyBase;
+                Transform fortress = stronghold.transform.Find(UnitAppearance.StyledName);
+                BoxCollider surface = stronghold.GetComponent<BoxCollider>();
+                Check(fortress != null && Vector3.Distance(fortress.lossyScale, Vector3.one) < 0.001f
+                    && surface.enabled && !stronghold.GetComponent<MeshRenderer>().enabled
+                    && fortress.GetComponentsInChildren<Collider>(true).Length == 0,
+                    "Enemy stronghold gets a world-scale fortress while keeping its attack surface");
+
+                BattlefieldEnvironment environment = battle.Root.GetComponentInChildren<BattlefieldEnvironment>(true);
+                Check(environment != null && environment.Terrain != null && !battle.Root.transform.Find("Ground").gameObject.activeSelf,
+                    "Styled battle replaces the greybox plane with the environment terrain");
+                Transform foothills = environment.transform.Find("Distant Foothills");
+                Check(environment.transform.Find("Backdrop") == null && foothills != null
+                    && foothills.GetComponent<Collider>() == null
+                    && foothills.GetComponent<MeshFilter>().sharedMesh.normals.All(normal => normal.y > 0f),
+                    "Old cone mountains are replaced by upward-facing distant terrain without gameplay colliders");
+                bool flat = true;
+                foreach (Lightbringer.Pathing.WaypointPath lane in battle.Paths)
+                    for (int w = 0; w < lane.Count; w++)
+                    {
+                        Vector3 point = lane.GetPosition(w);
+                        if (point.z > 36f) continue; // final waypoint sits inside the enemy stronghold
+                        flat &= environment.Terrain.Raycast(new Ray(point + Vector3.up * 5f, Vector3.down), out RaycastHit hit, 10f)
+                            && Mathf.Abs(hit.point.y - point.y) < 0.01f;
+                    }
+                Check(flat, "Terrain stays flat at ground level along every Path, so movement is unchanged");
+                Mesh props = environment.transform.Find("Props (Near)").GetComponent<MeshFilter>().sharedMesh;
+                Check(props.vertices.Where(v => v.y < 2.5f).All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 2.5f),
+                    "Trees, rocks and ruins keep the lanes clear");
+                bool importedForest = environment.GetComponentInChildren<ForestEnvironmentDressing>() != null;
+                bool grassOffRoads = importedForest ? environment.GrassChunks == 0 : environment.GrassChunks > 20;
+                foreach (MeshFilter chunk in environment.GetComponentsInChildren<MeshFilter>())
+                    if (chunk.name.StartsWith("Grass "))
+                        grassOffRoads &= chunk.sharedMesh.vertices.Where(v => Mathf.Abs(v.y) < 0.01f)
+                            .All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 1.8f);
+                Check(grassOffRoads, "Ground cover uses forest tufts or fallback grass chunks and leaves dirt roads bare");
+                FoodResource food = battle.Hero.GetComponent<FoodResource>();
+                CharacterController template = battle.Root.GetComponentsInChildren<CharacterController>(true).First(c => c.name == "Unit Template");
+                Combatant spawned = null;
+                battle.Summoner.Summoned += unit => spawned = unit;
+                for (int i = 0; i < UnitCatalog.Count; i++)
+                {
+                    Invoke(food, "GenerateFood", 100f);
+                    Physics.SyncTransforms();
+                    Check(battle.Summoner.TrySelectUnit(i) && battle.Summoner.TrySummon(), "Styled " + UnitCatalog.Names[i] + " can be deployed");
+                    Transform visual = spawned.transform.Find(UnitAppearance.StyledName);
+                    CharacterController body = spawned.GetComponent<CharacterController>();
+                    Check(visual != null && spawned.transform.Find(UnitAppearance.GreyboxName) == null
+                        && visual.GetComponentsInChildren<Collider>(true).Length == 0 && !spawned.UseTeamTint
+                        && body.height == template.height && body.radius == template.radius,
+                        UnitCatalog.Names[i] + " shows its styled model without changing collision");
+                    spawned.transform.position = new Vector3(-35 + i * 4, 0.85f, -25);
+                    Physics.SyncTransforms();
+                }
+
+                Physics.SyncTransforms();
+                battle.Waves.Tick(0.1f);
+                Combatant[] enemies = battle.Root.GetComponentsInChildren<Combatant>()
+                    .Where(x => x.Faction == Faction.Enemy && x != stronghold).ToArray();
+                Check(enemies.Length > 0 && enemies.All(e => e.transform.Find(UnitAppearance.StyledName) != null),
+                    "Enemy waves spawn with styled models");
+                Check(enemies.Any(e => e.name == EnemyCatalog.Names[(int)EnemyKind.Archer]), "Late-stage waves include the distinct enemy archer");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(material);
+                Shader.SetGlobalVector("_LB_AuraSphere", Vector4.zero);
+                lighting.Restore();
+                Physics.SyncTransforms();
+            }
+        }
+
+        private static bool FacesOutward(Mesh mesh)
+        {
+            Vector3[] vertices = mesh.vertices, normals = mesh.normals;
+            int[] triangles = mesh.triangles;
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                Vector3 a = vertices[triangles[i]], b = vertices[triangles[i + 1]], c = vertices[triangles[i + 2]];
+                Vector3 face = Vector3.Cross(b - a, c - a);
+                if (face.sqrMagnitude < 1e-10f) continue;
+                Vector3 normal = normals[triangles[i]] + normals[triangles[i + 1]] + normals[triangles[i + 2]];
+                if (Vector3.Dot(face, normal) <= 0f) return false;
+            }
+            return true;
+        }
+
+        // Styled battles change scene lighting; validation must leave the open scene untouched.
+        private struct LightingSnapshot
+        {
+            private AmbientMode ambientMode;
+            private Color sky, equator, ground, ambientLight, fogColor;
+            private bool fog;
+            private FogMode fogMode;
+            private float fogStart, fogEnd, fogDensity;
+
+            public static LightingSnapshot Capture() => new LightingSnapshot
+            {
+                ambientMode = RenderSettings.ambientMode, sky = RenderSettings.ambientSkyColor,
+                equator = RenderSettings.ambientEquatorColor, ground = RenderSettings.ambientGroundColor,
+                ambientLight = RenderSettings.ambientLight, fog = RenderSettings.fog, fogMode = RenderSettings.fogMode,
+                fogColor = RenderSettings.fogColor, fogStart = RenderSettings.fogStartDistance,
+                fogEnd = RenderSettings.fogEndDistance, fogDensity = RenderSettings.fogDensity
+            };
+
+            public void Restore()
+            {
+                RenderSettings.ambientMode = ambientMode; RenderSettings.ambientSkyColor = sky;
+                RenderSettings.ambientEquatorColor = equator; RenderSettings.ambientGroundColor = ground;
+                RenderSettings.ambientLight = ambientLight; RenderSettings.fog = fog; RenderSettings.fogMode = fogMode;
+                RenderSettings.fogColor = fogColor; RenderSettings.fogStartDistance = fogStart;
+                RenderSettings.fogEndDistance = fogEnd; RenderSettings.fogDensity = fogDensity;
+            }
+        }
+    }
+}

@@ -23,6 +23,7 @@ Before implementing gameplay systems, read:
 
 - `Docs/GameDesign/3D_Paladog_Project_Handoff_v0.3.docx`
 - `Docs/ArtReference/Characters/CharacterSheet_FemaleHero_v1.png`
+- `Docs/README.md` (documentation index and current status)
 
 Treat the GameDesign document as the primary source of truth for gameplay decisions.
 
