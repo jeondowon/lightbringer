@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Lightbringer.Visuals.BattlefieldBackdropProfile
   firstStage: 17
   lastStage: 23
-  panorama: {fileID: 2800000, guid: 47717b0425a7f75469e1b4159375dffa, type: 3}
+  panorama: {fileID: 2800000, guid: 57d3228571e86cd4dba7ae75d56e7342, type: 3}
   rotation: 325
   exposure: 1
   horizonOffset: 0.08
