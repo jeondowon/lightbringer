@@ -197,6 +197,7 @@ namespace Lightbringer.UI
                 VisualElement orb = Hud.Box(socket, "lb-orb");
                 HudDial dial = new HudDial(socket, "lb-orb-dial", CooldownShade);
                 Hud.Box(socket, "lb-orb-ring");
+                Hud.Text(socket, "?", "lb-orb-seal");
                 Label timer = Hud.Text(socket, "", "lb-orb-timer");
                 Key(socket, SlotKeys[i]).AddToClassList("lb-orb-key");
                 VisualElement caption = Hud.Box(slot, "lb-slot-caption");
@@ -228,8 +229,8 @@ namespace Lightbringer.UI
         {
             if (battle == null || session == null) return;
             Hud.Set(stage, StageSealText(session.SelectedStage));
-            Hud.Set(waves, battle.Encounter != null && battle.Waves.AssaultCleared ? battle.Encounter.ObjectiveText
-                : $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}");
+            Hud.Set(waves, !battle.Waves.AssaultCleared ? $"공세 {battle.Waves.WavesSpawned}/{battle.Waves.TotalWaves}"
+                : battle.Encounter != null ? battle.Encounter.ObjectiveText : "적 본진을 파괴하세요");
             if (session.Progress != null) Hud.Set(level, session.Progress.level.ToString());
             RefreshFronts();
             RefreshBases();
@@ -295,7 +296,10 @@ namespace Lightbringer.UI
             Hud.Show(demonBoss, coreAlive);
             // With the Warlord down, the Demon King's bar takes his place.
             demonBoss.EnableInClassList("lb-boss--second", bossAlive);
-            if (coreAlive) demonBar.Set(core.CurrentHealth, core.MaximumHealth, $"{core.CurrentHealth:0} / {core.MaximumHealth:0}");
+            bool warded = coreAlive && battle.Encounter.IsCoreWarded;
+            if (coreAlive) demonBar.Set(core.CurrentHealth, core.MaximumHealth,
+                warded ? "군주의 수호 · 어둠의 군주를 먼저 쓰러뜨리세요" : $"{core.CurrentHealth:0} / {core.MaximumHealth:0}");
+            demonBar.Root.EnableInClassList("lb-bar--shielded", warded);
         }
 
         private VisualElement BossPanel(string title, out HudBar bar)
@@ -324,7 +328,10 @@ namespace Lightbringer.UI
                     if (valid) slot.Orb.AddToClassList("lb-orb--" + id);
                     slot.Shown = id;
                 }
-                Hud.Set(slot.Name, valid ? SkillCatalog.Names[id] : "비어 있음");
+                // A fixed slot whose skill is not learned yet is sealed rather than empty.
+                bool sealedSlot = !valid && SkillCatalog.IsFixedSlot(i);
+                Hud.Set(slot.Name, valid ? SkillCatalog.Names[id] : sealedSlot ? "???" : "비어 있음");
+                slot.Root.EnableInClassList("lb-slot--sealed", sealedSlot);
                 Hud.Set(slot.Cost, active ? SkillCatalog.Cost(id).ToString("0") + " MP" : "");
                 float remaining = battle.Abilities.CooldownRemaining(i);
                 bool cooling = active && remaining > 0f;

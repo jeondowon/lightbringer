@@ -6,7 +6,7 @@ Shader "Lightbringer/Aura Runes"
         [NoScaleOffset] _SigilTex ("Sigil mask (runes / gold / filigree)", 2D) = "black" {}
         [HDR] _Color ("Moonlight", Color) = (0.65, 1.05, 2.4, 1)
         [HDR] _GoldColor ("Warm Gold", Color) = (2.7, 1.65, 0.65, 1)
-        _Intensity ("Light Intensity", Range(0, 5)) = 1.5
+        _Intensity ("Light Intensity", Range(0, 5)) = 1
         _FillAlpha ("Ground Mist", Range(0, 1)) = 0.04
         _RotationSpeed ("Rune Rotation (radians/sec)", Float) = 0.28
         _LineWidth ("Ring Width", Range(0.0005, 0.02)) = 0.0025

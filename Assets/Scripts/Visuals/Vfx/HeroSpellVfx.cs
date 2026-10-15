@@ -19,6 +19,7 @@ namespace Lightbringer.Visuals
 
         [SerializeField] private ArtStyleLibrary style;
         private HeroAbilities abilities;
+        private Renderer staff;
         private readonly List<(float start, float delay, Vector3 point)> meteors = new List<(float, float, Vector3)>();
         private readonly List<(float time, Vector3 point, float radius, float strength)> pending =
             new List<(float, Vector3, float, float)>();
@@ -28,27 +29,63 @@ namespace Lightbringer.Visuals
         private void OnEnable()
         {
             abilities = GetComponent<HeroAbilities>();
+            abilities.Casted += OnCasted;
             abilities.SpellLanded += OnSpellLanded;
             abilities.SpellTargeted += OnSpellTargeted;
+            abilities.BoltLaunched += OnBoltLaunched;
         }
 
         private void OnDisable()
         {
             if (abilities != null)
             {
+                abilities.Casted -= OnCasted;
                 abilities.SpellLanded -= OnSpellLanded;
                 abilities.SpellTargeted -= OnSpellTargeted;
+                abilities.BoltLaunched -= OnBoltLaunched;
             }
             pending.Clear();
             meteors.Clear();
+        }
+
+        private void OnCasted(int slot)
+        {
+            if (abilities.Equipped(slot) != (int)SkillKind.Heal || !Application.isPlaying) return;
+            Vector3 ground = GroundBelow(transform.position);
+            float radius = abilities.AuraRadius;
+            HeroShockwaveVfx.Spawn(ground, radius, transform.parent, healing: true);
+            CombatEffects.HeroHeal(style, ground, radius);
         }
 
         // Meteor: a warning mark on the ground now, the fireball falling in over the delay.
         private void OnSpellTargeted(int equipment, Vector3 point, float radius, float delay)
         {
             if (equipment != (int)SkillKind.Meteor) return;
+            if (MeteorStrikeVfx.Spawn(style, point, radius, delay, transform.parent) != null) return;
+            // Without the Meteor material: the plain rune mark and particle fireball.
             CombatEffects.Warning(style, point, MeteorFire, radius, delay);
             meteors.Add((Time.time, delay, point));
+        }
+
+        // Ice: the frost bolt leaves the staff head and flies for exactly the gameplay travel time.
+        private void OnBoltLaunched(int equipment, Combatant target, float travel)
+        {
+            if (equipment != (int)SkillKind.Ice || !Application.isPlaying) return;
+            IceBoltVfx.Spawn(style, StaffHead(), target, travel, transform.parent);
+        }
+
+        // The top of the hero's staff model, or a point above the hero's casting hand without one.
+        private Vector3 StaffHead()
+        {
+            if (staff == null)
+                foreach (Transform child in GetComponentsInChildren<Transform>())
+                    if (child.name.Contains("Staff") && child.TryGetComponent(out Renderer _)) { staff = child.GetComponent<Renderer>(); break; }
+            if (staff != null && staff.enabled)
+            {
+                Bounds bounds = staff.bounds;
+                return new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+            }
+            return transform.position + Vector3.up * 1.7f + transform.forward * 0.6f;
         }
 
         private void OnSpellLanded(int equipment, Vector3 impact, float radius)
@@ -69,6 +106,7 @@ namespace Lightbringer.Visuals
                 CombatEffects.Smoke(impact, radius * 0.7f, 28);
                 CameraSystem.ThirdPersonCamera.Shake(impact, 1f);
                 Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.MeteorImpact, impact);
+                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.HeavyImpact, impact);
                 return;
             }
             if (equipment == (int)SkillKind.LightBeam)
@@ -79,12 +117,16 @@ namespace Lightbringer.Visuals
             }
             if (equipment == (int)SkillKind.Shockwave)
             {
-                // The staff has just struck the ground: a golden shock ring, flare and a skirt of dust.
+                // The staff has just struck the ground: a golden wave out to the aura edge, a flare at the staff
+                // and dust thrown up along the edge.
                 Vector3 ground = GroundBelow(impact);
-                CombatEffects.Burst(style, ground + Vector3.up * 0.3f, CombatEffects.HolyGold, radius * 0.5f);
-                CombatEffects.Ring(ground, CombatEffects.HolyGold, radius);
-                CombatEffects.DustRing(ground, radius * 0.7f, 24);
+                if (HeroShockwaveVfx.Spawn(ground, radius, transform.parent) == null)
+                    CombatEffects.Ring(ground, CombatEffects.HolyGold, radius);
+                CombatEffects.Burst(style, ground + Vector3.up * 0.3f, CombatEffects.HolyGold, Mathf.Min(radius * 0.5f, 2f));
+                CombatEffects.DustRing(ground, radius * 0.9f, Mathf.RoundToInt(Mathf.Clamp(radius * 6f, 12f, 48f)));
+                CameraSystem.ThirdPersonCamera.Shake(ground, Mathf.Lerp(0.35f, 0.7f, radius / 8f));
                 Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.ShockwaveBoom, ground);
+                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.HeavyImpact, ground);
                 return;
             }
             if (equipment == (int)SkillKind.Ice)

@@ -1,6 +1,7 @@
 using Lightbringer.Combat;
 using Lightbringer.Core;
 using Lightbringer.Player;
+using Lightbringer.Progression;
 using Lightbringer.Resources;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace Lightbringer.EditorTools
             FoodResource food = heroObject.AddComponent<FoodResource>();
             HeroAbilities abilities = heroObject.AddComponent<HeroAbilities>();
             abilities.ApplyProgression(new int[8]);
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, (int)SkillKind.Heal, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, (int)SkillKind.Heal, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
                 "Learned skills can be loadout with an empty slot");
             Invoke(food, "GenerateFood", 1f);
             Check(food.CurrentFood == 5f, "Food production is the base rate now that rings are gone");
@@ -53,18 +54,29 @@ namespace Lightbringer.EditorTools
             wall.SetActive(false);
             hero.TakeDamage(50);
             Physics.SyncTransforms();
-            Check(abilities.TryCast(1, null) && hero.CurrentHealth == 95 && mana.Current == 67,
-                "Healing Staff spends Mana and heals nearby allied health");
+            // Heal reaches as far as the hero aura, so allies inside it are mended and allies outside are not.
+            Combatant inAura = CreateCombatUnit(origin + new Vector3(abilities.AuraRadius - 0.6f, 0, 0), Faction.Allied);
+            inAura.Configure(Faction.Allied, 100);
+            inAura.TakeDamage(50);
+            Combatant outsideAura = CreateCombatUnit(origin + new Vector3(0, 0, -(abilities.AuraRadius + 2f)), Faction.Allied);
+            outsideAura.Configure(Faction.Allied, 100);
+            outsideAura.TakeDamage(50);
+            Physics.SyncTransforms();
+            Check(abilities.TryCast(1, null) && hero.CurrentHealth == 95 && inAura.CurrentHealth == 75 && outsideAura.CurrentHealth == 50
+                && mana.Current == 67,
+                "Heal spends Mana and mends the hero and allies inside the aura only");
             Check(!hero.Heal(float.NaN) && !hero.Heal(-1) && hero.Heal(100) && hero.CurrentHealth == 120,
                 "Healing rejects invalid input and clamps to maximum health");
-            Check(!abilities.ConfigureLoadout(new[] { 0, 0, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 })
-                && !abilities.ConfigureLoadout(new[] { 0, 1, 2 }, new[] { 1, 1, 0, 0, 0 })
-                && !abilities.ConfigureLoadout(new[] { 0, 1 }, new[] { 1, 1, 0, 0, 0 }),
-                "Loadout enforces three slots of distinct learned skills");
-            Check(abilities.ConfigureLoadout(new[] { 0, SkillCatalog.Empty, 2 }, new[] { 2, 1, 1, 0, 0 })
+            Object.DestroyImmediate(inAura.gameObject);
+            Object.DestroyImmediate(outsideAura.gameObject);
+            Check(!abilities.ConfigureLoadout(new[] { 0, 0, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1, 2, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
+                "Loadout enforces four slots of distinct learned skills");
+            Check(abilities.ConfigureLoadout(new[] { 0, SkillCatalog.Empty, 2, SkillCatalog.Empty }, new[] { 2, 1, 1, 0, 0 })
                 && !abilities.TryCast(1, enemy),
                 "Upgraded skills and empty slots can be loadout, and an empty slot casts nothing");
-            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout can return to Light Beam and Healing");
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout can return to Light Beam and Healing");
             abilities.ApplyProgression(new int[8]);
             Check(hero.MaximumHealth == 120, "Maximum hero health is the base value without growth");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
@@ -85,9 +97,14 @@ namespace Lightbringer.EditorTools
                 "Mana regeneration is capped and invalid costs are rejected");
 
             // Shockwave: no target needed, lands at the slam's contact, stuns and pushes; the Boss (StatusImmune) only takes damage.
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Shockwave, (int)SkillKind.Ice, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 0 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Shockwave, (int)SkillKind.Ice, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 0 }),
                 "Shockwave and Ice can be loadout");
             abilities.Tick(20);
+            // Shockwave reaches as far as the level's aura: about 4m at level 12.
+            abilities.ApplyProgression(new int[8], 12);
+            float shockRadius = abilities.AuraRadius;
+            Check(Mathf.Approximately(shockRadius, GrowthCatalog.AuraRadiusAt(12)) && shockRadius > 3.5f && shockRadius < 4.5f,
+                "Shockwave radius follows the hero aura radius");
             Combatant near = CreateCombatUnit(origin + new Vector3(2, 0, 0), Faction.Enemy);
             near.Configure(Faction.Enemy, 100);
             Combatant bossLike = CreateCombatUnit(origin + new Vector3(-2, 0, 0), Faction.Enemy);
@@ -105,23 +122,58 @@ namespace Lightbringer.EditorTools
             StatusEffects bossStatus = bossLike.GetComponent<StatusEffects>();
             Check(nearStatus != null && nearStatus.IsStunned && (bossStatus == null || !bossStatus.IsStunned),
                 "Shockwave stuns ordinary enemies and skips status-immune ones");
+            Vector3 beforePush = near.transform.position;
             nearStatus.Tick(HeroAbilities.ShockwaveStun + 0.1f);
             Check(!nearStatus.IsStunned, "A stun wears off");
+            float pushed = Vector3.ProjectOnPlane(near.transform.position - beforePush, Vector3.up).magnitude;
+            Check(Mathf.Abs(pushed - shockRadius * HeroAbilities.ShockwavePushRatio) < 0.15f
+                && near.transform.position.x > beforePush.x,
+                "Shockwave pushes enemies away by half the aura radius");
+            Check(Vector3.Distance(bossLike.transform.position, origin + new Vector3(-2, 0, 0)) < 0.01f,
+                "Status-immune enemies are not pushed");
+            abilities.ApplyProgression(new int[8]);
+            Combatant iceNearby = CreateCombatUnit(distant.transform.position + Vector3.right * 2f, Faction.Enemy);
+            iceNearby.Configure(Faction.Enemy, 100);
+            iceNearby.gameObject.AddComponent<BoxCollider>(); // Multiple colliders must still receive one hit.
+            Combatant iceOutside = CreateCombatUnit(distant.transform.position + Vector3.right * 4f, Faction.Enemy);
+            iceOutside.Configure(Faction.Enemy, 100);
+            Combatant iceAlly = CreateCombatUnit(distant.transform.position + Vector3.forward, Faction.Allied);
+            iceAlly.Configure(Faction.Allied, 100);
+            Combatant iceProtected = CreateCombatUnit(distant.transform.position + Vector3.back, Faction.Enemy);
+            iceProtected.Configure(Faction.Enemy, 100);
+            iceProtected.Invulnerable = true;
+            Physics.SyncTransforms();
             Check(abilities.TryCast(1, distant) && distant.CurrentHealth == 100,
                 "Ice needs an aimed enemy and waits for the thrust's contact before it lands");
             abilities.Tick(HeroAbilities.IceImpactDelay + 0.01f);
+            float iceTravel = abilities.IceTravelTime(distant);
+            Check(distant.CurrentHealth == 100 && iceTravel > 0.2f,
+                "The frost bolt leaves at the thrust's contact and is still in flight");
+            abilities.Tick(iceTravel + 0.01f);
             StatusEffects frozen = distant.GetComponent<StatusEffects>();
             Check(distant.CurrentHealth == 90 && frozen != null && frozen.IsFrozen && frozen.IsStunned,
                 "Ice damages the target and freezes it in place");
+            Check(iceNearby.CurrentHealth == 90 && iceNearby.GetComponent<StatusEffects>() != null
+                && iceNearby.GetComponent<StatusEffects>().IsFrozen,
+                "Ice splash damages and freezes nearby enemies once even with multiple colliders");
+            Check(iceOutside.CurrentHealth == 100 && iceAlly.CurrentHealth == 100 && iceProtected.CurrentHealth == 100
+                && iceOutside.GetComponent<StatusEffects>() == null && iceAlly.GetComponent<StatusEffects>() == null
+                && iceProtected.GetComponent<StatusEffects>() == null,
+                "Ice splash spares enemies outside 3m, allies and invulnerable enemies");
+            Object.DestroyImmediate(iceNearby.gameObject);
+            Object.DestroyImmediate(iceOutside.gameObject);
+            Object.DestroyImmediate(iceAlly.gameObject);
+            Object.DestroyImmediate(iceProtected.gameObject);
             frozen.Tick(HeroAbilities.IceFreeze + 0.1f);
             Check(!frozen.IsFrozen && !frozen.IsStunned, "A freeze wears off");
             abilities.Tick(20);
             Check(abilities.TryCast(1, bossLike), "Ice can be cast at the Boss");
             abilities.Tick(HeroAbilities.IceImpactDelay + 0.01f);
+            abilities.Tick(abilities.IceTravelTime(bossLike) + 0.01f);
             StatusEffects bossAfterIce = bossLike.GetComponent<StatusEffects>();
             Check(bossLike.CurrentHealth == 70 && (bossAfterIce == null || !bossAfterIce.IsFrozen),
                 "The Boss takes Ice damage but is never frozen");
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Meteor, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Meteor, SkillCatalog.Empty, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 }),
                 "Meteor can be loadout");
             abilities.Tick(20);
             mana.Tick(100);
@@ -154,7 +206,7 @@ namespace Lightbringer.EditorTools
                 "Meteor aimed beyond its range is pulled in rather than refused");
             abilities.Tick(HeroAbilities.MeteorDelay + 0.01f);
             Check(far.CurrentHealth == 200, "An aim point beyond 15m lands at 15m, out of reach of distant enemies");
-            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
             abilities.Tick(20);
             mana.Tick(100);
 

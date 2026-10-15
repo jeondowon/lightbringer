@@ -18,25 +18,28 @@ namespace Lightbringer.Player
         public const float LightStaffImpactDelay = LightStaffWindup + LightStaffDescent;
         // Shockwave and Ice land when the staff reaches its contact pose in the Slam and Thrust clips.
         public const float ShockwaveImpactDelay = 0.46f;
-        public const float ShockwaveRadius = 4.5f;
+        // Shockwave reaches as far as the hero aura (it grows with the level) and pushes enemies half that far.
+        public const float ShockwavePushRatio = 0.5f;
         public const float ShockwaveDamage = 20f;
         public const float ShockwaveStun = 1.5f;
-        public const float ShockwavePush = 3f;
+        // Ice: a frost bolt bursts on arrival, damaging and freezing enemies within 3m of the impact.
         public const float IceImpactDelay = 0.3f;
+        public const float IceBoltSpeed = 24f;
         public const float IceDamage = 10f;
+        public const float IceRadius = 3f;
         public const float IceFreeze = 3f;
         // Meteor falls on the ground point under the aim after a warning delay, hitting enemies only.
         public const float MeteorRange = 15f;
         public const float MeteorRadius = 8f;
         public const float MeteorDamage = 80f;
         public const float MeteorDelay = 1.8f;
-        private struct Delayed { public SkillKind Skill; public Combatant Target; public Vector3 Point; public float Power, Remaining; }
+        private struct Delayed { public SkillKind Skill; public Combatant Target; public Vector3 Point; public float Power, Remaining; public bool Launched; }
         private readonly List<Delayed> delayed = new List<Delayed>();
         private readonly List<(Combatant target, float damage, float remaining)> pendingLightHits =
             new List<(Combatant, float, float)>();
         [SerializeField] private UnityEngine.Camera aimCamera;
-        [SerializeField] private int[] equipment = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty };
-        [SerializeField] private int[] levels = { 1, 0, 0, 0, 0 };
+        [SerializeField] private int[] equipment = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty, (int)SkillKind.Shockwave };
+        [SerializeField] private int[] levels = { 1, 0, 0, 1, 0 };
         private readonly float[] cooldowns = new float[SkillCatalog.Slots];
         private readonly HashSet<Combatant> hits = new HashSet<Combatant>();
         private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
@@ -55,8 +58,13 @@ namespace Lightbringer.Player
         public event System.Action<int, Vector3, float> SpellLanded;
         // Raised when a ground-targeted spell is aimed: skill, warning point, area radius and seconds until it lands.
         public event System.Action<int, Vector3, float, float> SpellTargeted;
+        // Raised when a bolt spell leaves the staff: skill, target and seconds until it arrives.
+        public event System.Action<int, Combatant, float> BoltLaunched;
         public int Equipped(int slot) => slot >= 0 && slot < equipment.Length ? equipment[slot] : -1;
         public float CooldownRemaining(int slot) => cooldowns[slot];
+        // The aura's current radius, or the level's aura radius when the hero has no aura component. Shockwave and Heal
+        // both reach this far.
+        public float AuraRadius =>TryGetComponent(out HeroAura aura) ? aura.Radius : GrowthCatalog.AuraRadiusAt(heroLevel);
         public void ConfigureCamera(UnityEngine.Camera camera) => aimCamera = camera;
 
         private void Awake()
@@ -124,9 +132,11 @@ namespace Lightbringer.Player
             Tick(Time.deltaTime);
             if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || Time.timeScale <= 0 || Time.frameCount == inputEnabledFrame)
                 return;
+            // Slots follow SkillCatalog.SlotKeys: left click, Q, E, right click.
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) TryCast(0, FindAimedTarget());
-            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) TryCast(1, FindAimedTarget());
-            if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(2, FindAimedTarget());
+            if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(1, FindAimedTarget());
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) TryCast(2, FindAimedTarget());
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) TryCast(3, FindAimedTarget());
         }
 
         public void Tick(float delta)
@@ -168,16 +178,17 @@ namespace Lightbringer.Player
             if (pending.Skill == SkillKind.Shockwave)
             {
                 Vector3 centre = transform.position;
-                SpellLanded?.Invoke(id, centre, ShockwaveRadius);
+                float radius = AuraRadius;
+                SpellLanded?.Invoke(id, centre, radius);
                 // Collect reuses one buffer, so copy the enemies before damaging any of them.
                 var struck = new List<Combatant>();
-                foreach (Combatant unit in Collect(centre, ShockwaveRadius))
+                foreach (Combatant unit in Collect(centre, radius))
                     if (unit != null && unit.IsAlive && !unit.Invulnerable && unit.Faction != self.Faction) struck.Add(unit);
                 foreach (Combatant unit in struck)
                 {
                     if (unit == null || !unit.IsAlive) continue;
                     StatusEffects.Stun(unit, ShockwaveStun);
-                    StatusEffects.Push(unit, centre, ShockwavePush);
+                    StatusEffects.Push(unit, centre, radius * ShockwavePushRatio);
                     unit.TakeDamage(ShockwaveDamage * pending.Power, self);
                     if (!isActiveAndEnabled) return;
                 }
@@ -199,11 +210,34 @@ namespace Lightbringer.Player
             {
                 Combatant target = pending.Target;
                 if (target == null || !target.IsAlive || target.Faction == self.Faction || target.gameObject.scene != gameObject.scene) return;
-                SpellLanded?.Invoke(id, target.GetAimPoint(transform.position), 1.2f);
-                StatusEffects.Stun(target, IceFreeze, freeze: true);
-                target.TakeDamage(IceDamage * pending.Power, self);
+                if (!pending.Launched)
+                {
+                    float travel = IceTravelTime(target);
+                    pending.Launched = true;
+                    pending.Remaining = travel;
+                    delayed.Add(pending);
+                    BoltLaunched?.Invoke(id, target, travel);
+                    return;
+                }
+                Vector3 centre = target.GetAimPoint(transform.position);
+                SpellLanded?.Invoke(id, centre, IceRadius);
+                // Snapshot the deduplicated overlap before damage callbacks can reuse the query buffer.
+                var struck = new List<Combatant>();
+                foreach (Combatant unit in Collect(centre, IceRadius))
+                    if (unit != null && unit.IsAlive && !unit.Invulnerable && unit.Faction != self.Faction) struck.Add(unit);
+                foreach (Combatant unit in struck)
+                {
+                    if (unit == null || !unit.IsAlive) continue;
+                    StatusEffects.Stun(unit, IceFreeze, freeze: true);
+                    unit.TakeDamage(IceDamage * pending.Power, self);
+                    if (!isActiveAndEnabled) return;
+                }
             }
         }
+
+        // Seconds the frost bolt needs from the staff to the target's aim point.
+        public float IceTravelTime(Combatant target) =>
+            target == null ? 0f : Vector3.Distance(transform.position, target.GetAimPoint(transform.position)) / IceBoltSpeed;
 
         private void OnDisable()
         {
@@ -234,7 +268,7 @@ namespace Lightbringer.Player
             }
             else if (id == (int)SkillKind.Heal)
             {
-                foreach (Combatant unit in Collect(transform.position, 6f))
+                foreach (Combatant unit in Collect(transform.position, AuraRadius))
                     if (unit.IsAlive && unit.Faction == self.Faction) unit.Heal(25f * power);
             }
             else if (id == (int)SkillKind.Shockwave)

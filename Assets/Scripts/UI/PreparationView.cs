@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Lightbringer.UI
 {
-    // Destination briefing and the three-slot skill loadout. Inspecting a skill never mutates the saved loadout.
+    // Destination briefing and the four-slot skill loadout. Inspecting a skill never mutates the saved loadout.
     // Two columns: the mission briefing at left, the hero's skill equipment at right.
     public sealed class PreparationView
     {
@@ -67,7 +67,7 @@ namespace Lightbringer.UI
             rewards = Hud.Text(rewardText, "", "lb-brief-item-name");
             rewardNote = Hud.Text(rewardText, "", "lb-brief-muted");
 
-            // Hero equipment: level, the three equipped skills, then the skill library with its inspector.
+            // Hero equipment: level, the four equipped skills, then the skill library with its inspector.
             ScrollView armory = Scroll(body, "lb-brief-armory");
             VisualElement identity = Hud.Box(armory.contentContainer, "lb-brief-identity");
             VisualElement badge = Hud.Box(identity, "lb-brief-level");
@@ -88,6 +88,8 @@ namespace Lightbringer.UI
                 VisualElement socket = Hud.Box(button, "lb-brief-socket");
                 VisualElement icon = Hud.Box(socket, "lb-icon");
                 Hud.Box(socket, "lb-brief-socket-ring");
+                // A fixed slot whose skill is not learned yet shows a sealed socket marked "?".
+                Hud.Text(socket, "?", "lb-brief-socket-seal");
                 VisualElement text = Hud.Box(button, "lb-brief-copy");
                 Hud.Text(text, SlotKeys[i], "lb-brief-key");
                 slots[i] = new Tile { Root = button, Icon = icon,
@@ -155,7 +157,7 @@ namespace Lightbringer.UI
             Hud.Show(growthPanel, false); Hud.Show(Root, false);
         }
 
-        public int ActiveSlot { get; private set; }
+        public int ActiveSlot { get; private set; } = SkillCatalog.FirstFreeSlot;
         public int SelectedItem => selectedItem;
         public bool Visible => !Root.ClassListContains("lb-hidden");
         public string StartText => start.text;
@@ -247,17 +249,24 @@ namespace Lightbringer.UI
             for (int i = 0; i < slots.Length; i++)
             {
                 int id = profile.loadout[i]; Icon(slots[i].Icon, id);
-                Hud.Set(slots[i].Main, SkillCatalog.IsSkill(id) ? SkillCatalog.Names[id] : "비어 있음");
-                Hud.Set(slots[i].Note, SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP" : "배운 기술을 넣으세요");
+                bool fixedSlot = SkillCatalog.IsFixedSlot(i), sealedSlot = fixedSlot && !SkillCatalog.IsSkill(id);
+                Hud.Set(slots[i].Main, SkillCatalog.IsSkill(id) ? SkillCatalog.Names[id] : sealedSlot ? "???" : "비어 있음");
+                Hud.Set(slots[i].Note, sealedSlot ? "미습득 기술" : fixedSlot ? $"고정 · Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP"
+                    : SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP" : "배운 기술을 넣으세요");
+                slots[i].Root.SetEnabled(!fixedSlot);
                 slots[i].Root.EnableInClassList("lb-brief-slot--active", i == ActiveSlot);
                 slots[i].Root.EnableInClassList("lb-brief-slot--empty", !SkillCatalog.IsSkill(id));
+                slots[i].Root.EnableInClassList("lb-brief-slot--sealed", sealedSlot);
             }
             for (int id = 0; id < items.Length; id++)
             {
                 int owner = System.Array.IndexOf(profile.loadout, id);
                 bool owned = profile.skillLevels[id] > 0;
-                Hud.Set(items[id].Note, !owned ? "미습득" : owner >= 0 ? $"Lv {profile.skillLevels[id]} · {SlotKeys[owner]} 장착 중" : $"Lv {profile.skillLevels[id]} · 장착 가능");
-                items[id].Root.SetEnabled(owned && (owner < 0 || owner == ActiveSlot));
+                bool fixedSkill = SkillCatalog.IsFixedSkill(id);
+                Hud.Set(items[id].Note, !owned ? "미습득" : fixedSkill ? $"Lv {profile.skillLevels[id]} · {SlotKeys[SkillCatalog.FixedSlotOf(id)]} 고정"
+                    : owner >= 0 ? $"Lv {profile.skillLevels[id]} · {SlotKeys[owner]} 장착 중" : $"Lv {profile.skillLevels[id]} · 장착 가능");
+                // Fixed skills stay inspectable so they can be upgraded, though they never move slots.
+                items[id].Root.SetEnabled(owned && (fixedSkill || owner < 0 || owner == ActiveSlot));
                 items[id].Root.EnableInClassList("lb-brief-item--selected", id == selectedItem);
                 items[id].Root.EnableInClassList("lb-brief-item--equipped", owner >= 0);
             }
@@ -282,8 +291,10 @@ namespace Lightbringer.UI
             Hud.Set(itemStats, $"소모 {SkillCatalog.Cost(id):0} MP   ·   재사용 {SkillCatalog.Cooldown(id):0.#}초   ·   위력 ×{SkillCatalog.Power(level):0.0#}");
             Hud.Set(shardsLabel, $"보유 빛의 조각  {profile.gold:N0}");
             int owner = System.Array.IndexOf(profile.loadout, id);
-            Hud.Set(equip, owner == ActiveSlot ? "슬롯 비우기" : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
-            equip.SetEnabled(level > 0 && (owner < 0 || owner == ActiveSlot));
+            bool fixedSkill = SkillCatalog.IsFixedSkill(id);
+            Hud.Set(equip, fixedSkill ? SlotKeys[SkillCatalog.FixedSlotOf(id)] + " 고정" : owner == ActiveSlot ? "슬롯 비우기"
+                : owner >= 0 ? SlotKeys[owner] + " 장착 중" : SlotKeys[ActiveSlot] + " 슬롯에 장착");
+            equip.SetEnabled(!fixedSkill && level > 0 && (owner < 0 || owner == ActiveSlot));
             bool maxed = level >= SkillCatalog.MaxLevel;
             Hud.Set(upgradeSkill, level <= 0 ? "미습득" : maxed ? "최대 레벨"
                 : profile.CanUpgradeSkill(id) ? $"강화  {SkillCatalog.UpgradeCost(id, level):N0}" : $"빛의 조각 부족  {SkillCatalog.UpgradeCost(id, level):N0}");
@@ -304,7 +315,7 @@ namespace Lightbringer.UI
         }
         public void SelectSlot(int slot)
         {
-            if (slot < 0 || slot >= slots.Length) return;
+            if (slot < 0 || slot >= slots.Length || SkillCatalog.IsFixedSlot(slot)) return;
             ActiveSlot = slot;
             selectedItem = session?.Progress != null ? DefaultSelection(session.Progress, slot) : -1;
             Hud.Set(feedback, ""); if (session != null) Refresh(session);

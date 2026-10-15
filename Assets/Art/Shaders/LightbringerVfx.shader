@@ -2,7 +2,7 @@
 // textures are needed. Premultiplied blend: _Additive = 1 glows (adds light), 0 is an alpha-blended puff
 // (dust, smoke) that can darken. Vertex colour tints and fades (alpha = strength).
 //   0 Soft dot     1 Star flare     2 Shock ring     3 Slash crescent
-//   4 Rune ring    5 Flame tongue   6 Soft puff (dust/smoke)
+//   4 Rune ring    5 Flame tongue   6 Soft puff (dust/smoke)    7 Healing plus
 Shader "Lightbringer/VFX Shape"
 {
     Properties
@@ -134,6 +134,14 @@ Shader "Lightbringer/VFX Shape"
                     // Soft puff: lumpy round cloud for dust and smoke.
                     float n = Noise(p * 2.5 + 3.7) * 0.6 + Noise(p * 5.0 + 1.3) * 0.4;
                     return saturate(pow(saturate(1.0 - r), _Softness) * (0.55 + n * 0.9));
+                }
+                if (shape == 7)
+                {
+                    // Two equal bars with antialiased edges; no halo or animated rotation.
+                    float2 q = abs(p);
+                    float d = min(max(q.x - 0.045, q.y - 0.8), max(q.x - 0.8, q.y - 0.045));
+                    float aa = max(fwidth(d), 0.015);
+                    return 1.0 - smoothstep(-aa, aa, d);
                 }
                 return pow(saturate(1.0 - r), _Softness);
             }

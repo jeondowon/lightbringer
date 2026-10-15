@@ -5,28 +5,39 @@ namespace Lightbringer.Player
     public enum SkillKind { LightBeam, Heal, Ice, Shockwave, Meteor }
 
     // The hero carries one staff and learns skills. A skill is learned as a first-clear reward, levelled with light
-    // shards and equipped to one of the three slots (left click, right click, Q) before a battle.
+    // shards and equipped to one of the four slots (left click, Q, E, right click) before a battle.
     public static class SkillCatalog
     {
         public const int Count = 5;
-        public const int Slots = 3;
+        public const int Slots = 4;
         public const int MaxLevel = 10;
         // A loadout slot with no skill in it.
         public const int Empty = -1;
         public static readonly string[] Names = { "빛 광선", "치유", "얼음 마법", "충격파", "메테오" };
-        public static readonly string[] SlotKeys = { "LMB", "RMB", "Q" };
+        // Slot order is the on-screen order, left to right.
+        public static readonly string[] SlotKeys = { "LMB", "Q", "E", "RMB" };
+        // Left click always holds Light Beam and right click Shockwave, the hero's melee slam; they are never
+        // re-equipped, and a fixed slot stays empty until its skill is learned. Q and E take any other learned skill.
+        private static readonly int[] FixedSkills = { (int)SkillKind.LightBeam, Empty, Empty, (int)SkillKind.Shockwave };
+        public const int FirstFreeSlot = 1;
         public static readonly string[] Descriptions =
         {
             "조준한 적에게 빛줄기를 내려 단일 대상을 공격합니다.",
-            "영웅 주변 6m 안의 아군을 회복합니다.",
-            "조준한 적을 얼려 잠시 움직이지 못하게 합니다.",
-            "지팡이를 내려쳐 주변 적에게 피해를 주고 밀어냅니다.",
+            "영웅의 오라 안에 있는 아군을 회복합니다.",
+            "조준한 적에게 얼음탄을 발사해 적중 지점 반경 3m의 적에게 피해를 주고 3초간 얼립니다.",
+            "지팡이를 내려쳐 오라 범위의 적에게 피해를 주고 밀어냅니다.",
             "조준한 땅(최대 15m)에 운석을 떨어뜨립니다. 1.8초 뒤 반경 8m의 적에게 큰 피해를 줍니다.",
         };
-        private static readonly float[] Costs = { 8f, 25f, 20f, 25f, 50f };
-        private static readonly float[] Cooldowns = { 0.5f, 5f, 6f, 8f, 15f };
+        private static readonly float[] Costs = { 8f, 25f, 20f, 5f, 50f };
+        private static readonly float[] Cooldowns = { 0.5f, 5f, 6f, 10f, 15f };
 
         public static bool IsSkill(int id) => id >= 0 && id < Count;
+        // The skill a fixed slot always holds, or Empty for a free slot (Q, E).
+        public static int FixedSkillOf(int slot) => slot >= 0 && slot < Slots ? FixedSkills[slot] : Empty;
+        public static bool IsFixedSlot(int slot) => FixedSkillOf(slot) != Empty;
+        // The fixed slot that holds this skill, or -1 when the skill goes in Q or E.
+        public static int FixedSlotOf(int id) => IsSkill(id) ? System.Array.IndexOf(FixedSkills, id) : -1;
+        public static bool IsFixedSkill(int id) => FixedSlotOf(id) >= 0;
         // Skills cast at the enemy under the aim; the others act around the hero (or, for Meteor, at a ground point).
         public static bool NeedsTarget(int id) => id == (int)SkillKind.LightBeam || id == (int)SkillKind.Ice;
         public static float Cost(int id) => IsSkill(id) ? Costs[id] : 0f;
@@ -39,14 +50,14 @@ namespace Lightbringer.Player
         public static int UpgradeCost(int id, int level) =>
             Mathf.RoundToInt((50 + 25 * id) * (1f + 0.5f * (Mathf.Max(level, 1) - 1)));
 
-        // The skill a stage teaches on its first clear, or Empty (that stage only pays light shards). Act 1 (stages 1-8)
-        // teaches Heal and Shockwave, Act 2 (9-16) Ice and, as the reward for beating the Act 2 boss, Meteor.
+        // The skill a stage teaches on its first clear, or Empty (that stage only pays light shards). Shockwave is known
+        // from the start; Act 1 (stages 1-8) teaches Heal, Act 2 (9-16) Ice and, as the reward for beating the Act 2
+        // boss, Meteor.
         public static int RewardFor(int stage)
         {
             switch (stage)
             {
                 case 2: return (int)SkillKind.Heal;
-                case 7: return (int)SkillKind.Shockwave;
                 case 15: return (int)SkillKind.Ice;
                 case 16: return (int)SkillKind.Meteor;
                 default: return Empty;
