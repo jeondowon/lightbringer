@@ -73,9 +73,6 @@ namespace Lightbringer.Visuals
         private void EnemyCamp(Vector2 keep)
         {
             Transform group = Group("Enemy Ritual Grounds");
-            Place(group, BattlefieldPropKind.EnemyCrystal, keep + new Vector2(-14f, -4f), 25f);
-            Place(group, BattlefieldPropKind.EnemyCrystal, keep + new Vector2(15f, -2f), -45f, 0.85f);
-            Place(group, BattlefieldPropKind.EnemyCrystal, keep + new Vector2(20f, 4f), 75f, 0.65f);
             Place(group, BattlefieldPropKind.EnemyAltar, keep + new Vector2(-17f, 4f), 180f);
             // Short side palisades, never a wall across the attack approach.
             foreach (int side in new[] { -1, 1 })

@@ -25,9 +25,6 @@ MonoBehaviour:
   - kind: 3
     prefab: {fileID: 7673470641934631106, guid: b5c086d189fc2a14db2ea89458c9ada1, type: 3}
     size: {x: 1.4234219, y: 1.0999999, z: 1.2941662}
-  - kind: 4
-    prefab: {fileID: 5135995807138727723, guid: b75b1443e93cfa440ad355c40b96c920, type: 3}
-    size: {x: 3.5696497, y: 3.6000001, z: 3.0484974}
   - kind: 5
     prefab: {fileID: 2204528137534953512, guid: 838afbcd27f5d594fb1c94e5a25abe0e, type: 3}
     size: {x: 4.6, y: 2.3942473, z: 1.1904224}

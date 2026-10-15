@@ -20,10 +20,10 @@ namespace Lightbringer.EditorTools
         public const string Folder = "Assets/Art/Environment/Props";
         public const string ProfilePath = Folder + "/BattlefieldProps.asset";
         private const string Output = "Docs/Art/Preview";
-        private static readonly float[] Dimensions = { 4.8f, 3.3f, 1.2f, 1.1f, 3.6f, 4.6f, 2.8f, 4.2f, 4.8f };
+        private static readonly float[] Dimensions = { 4.8f, 3.3f, 1.2f, 1.1f, 0f, 4.6f, 2.8f, 4.2f, 4.8f };
         // Triangles per prop, chosen from Docs/Diagnostics/PropLodLadder_*.png (lowest level that keeps the shape and
         // texture seams); the normal maps keep the carved detail. Props are few, so they carry no distance LODs.
-        private static readonly int[] TriangleBudgets = { 7000, 7000, 5000, 10000, 7000, 7000, 7000, 5000, 7000 };
+        private static readonly int[] TriangleBudgets = { 7000, 7000, 5000, 10000, 0, 7000, 7000, 5000, 7000 };
 
         static BattlefieldPropSetup()
         {
@@ -152,8 +152,8 @@ namespace Lightbringer.EditorTools
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play before previewing props.");
             ArtStyleLibrary library = ArtStyleSetup.EnsureLibrary();
-            if (library.battlefieldProps == null || library.battlefieldProps.assets.Length != 9)
-                throw new InvalidOperationException("Set up all nine props first.");
+            if (library.battlefieldProps == null || library.battlefieldProps.assets.Length != Enum.GetValues(typeof(BattlefieldPropKind)).Length)
+                throw new InvalidOperationException("Set up all battlefield props first.");
             Scene original = SceneManager.GetActiveScene();
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             bool asyncCompile = ShaderUtil.allowAsyncCompilation;
@@ -204,7 +204,7 @@ namespace Lightbringer.EditorTools
                                     throw new InvalidOperationException("Overlapping prop footprints.");
                             }
                         long triangles = dressing.GetComponentsInChildren<MeshFilter>().Sum(f => (long)f.sharedMesh.GetIndexCount(0) / 3);
-                        report.AppendLine($"PASS stage {stage}: {dressing.Placements.Count} placements, all 9 kinds, 4.5 m lane margins, grounded, no overlaps/colliders; {triangles} triangles.");
+                        report.AppendLine($"PASS stage {stage}: {dressing.Placements.Count} placements, all 8 kinds, 4.5 m lane margins, grounded, no overlaps/colliders; {triangles} triangles.");
                         foreach (var placement in dressing.Placements)
                             report.AppendLine($"  {placement.Kind}: {placement.Point}, radius={placement.Radius:0.00}");
                         if (stage == 1)

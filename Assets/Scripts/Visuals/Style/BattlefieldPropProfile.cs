@@ -6,7 +6,8 @@ namespace Lightbringer.Visuals
     public enum BattlefieldPropKind
     {
         AlliedBeacon, AlliedMonument, AlliedBarrel, AlliedChest,
-        EnemyCrystal, EnemyBoneFence, EnemyAltar, RuinColumn, RuinArch
+        // Value 4 is retired; keep existing serialized prop IDs stable.
+        EnemyBoneFence = 5, EnemyAltar = 6, RuinColumn = 7, RuinArch = 8
     }
 
     [Serializable]
