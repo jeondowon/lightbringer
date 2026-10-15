@@ -15,12 +15,19 @@ namespace Lightbringer.Core
     // Each session starts from a tier detected from the hardware and steps down automatically if battles
     // run slow. F9 cycles the tier by hand; that pick is remembered per machine (PlayerPrefs) and stops
     // auto adjustment. F10 shows a frame-time readout.
+    //
+    // Frames the display never shows only heat the machine (loud laptop fans), so the frame rate is capped:
+    // 60 by default, the monitor's refresh rate, or unlimited (pause menu, remembered per machine). The cap
+    // uses Application.targetFrameRate rather than vSync: no added input latency, and the quality levels,
+    // which the Editor shares with Play mode, stay untouched.
     public static class GraphicsQuality
     {
         public enum Tier { Low, Medium, High }
+        public enum FrameLimit { Fps60, Display, Unlimited }
 
         private const string TierKey = "Lightbringer.Graphics.Tier";
         private const string ManualKey = "Lightbringer.Graphics.Manual";
+        private const string FrameLimitKey = "Lightbringer.Graphics.FrameLimit";
         // Internal render pixels per tier: 1600x900, 1920x1080, 2560x1440.
         private static readonly float[] PixelBudget = { 1600f * 900f, 1920f * 1080f, 2560f * 1440f };
         // Grass chunks beyond this distance from the camera are not drawn (0 = no limit).
@@ -28,6 +35,7 @@ namespace Lightbringer.Core
 
         public static Tier Current { get; private set; } = Tier.High;
         public static bool IsManual { get; private set; }
+        public static FrameLimit Limit { get; private set; } = FrameLimit.Fps60;
         public static float RenderScale { get; private set; } = 1f;
         public static float GrassDistance => GrassRange[(int)Current];
         // Lets the benchmark measure a fixed tier without auto adjustment interfering.
@@ -55,7 +63,19 @@ namespace Lightbringer.Core
             originalLevel = QualitySettings.GetQualityLevel();
             Application.quitting += Restore;
             IsManual = PlayerPrefs.GetInt(ManualKey, 0) == 1 && PlayerPrefs.HasKey(TierKey);
+            SetFrameLimit((FrameLimit)Mathf.Clamp(PlayerPrefs.GetInt(FrameLimitKey, 0), 0, 2), false);
             Apply(IsManual ? (Tier)Mathf.Clamp(PlayerPrefs.GetInt(TierKey), 0, 2) : Detect(), false, false);
+        }
+
+        // remember = false keeps the choice for this session only (validation and the benchmark run unlimited).
+        public static void SetFrameLimit(FrameLimit limit, bool remember = true)
+        {
+            Initialize();
+            Limit = limit;
+            if (remember) PlayerPrefs.SetInt(FrameLimitKey, (int)limit);
+            int display = Mathf.RoundToInt((float)Screen.currentResolution.refreshRateRatio.value);
+            Application.targetFrameRate = limit == FrameLimit.Fps60 ? 60 : limit == FrameLimit.Display ? Mathf.Max(30, display) : -1;
+            Changed?.Invoke();
         }
 
         // Rough first guess from the GPU name; auto adjustment corrects it after a few seconds of battle.
@@ -120,6 +140,7 @@ namespace Lightbringer.Core
 #if UNITY_EDITOR
             if (originalLevel >= 0 && originalLevel != QualitySettings.GetQualityLevel())
                 QualitySettings.SetQualityLevel(originalLevel, true);
+            Application.targetFrameRate = -1;
 #endif
             Application.quitting -= Restore;
             initialized = false;
@@ -177,7 +198,7 @@ namespace Lightbringer.Core
             {
                 statsTimer = 0.25f;
                 statsText = $"{smoothedMs:0.0} ms  ({1000f / Mathf.Max(0.01f, smoothedMs):0} fps)\n"
-                    + $"{GraphicsQuality.Current}{(GraphicsQuality.IsManual ? "" : " (auto)")}  scale {GraphicsQuality.RenderScale:0.00}  [F9 tier]";
+                    + $"{GraphicsQuality.Current}{(GraphicsQuality.IsManual ? "" : " (auto)")}  scale {GraphicsQuality.RenderScale:0.00}  limit {GraphicsQuality.Limit}  [F9 tier]";
             }
             Watch(delta);
         }

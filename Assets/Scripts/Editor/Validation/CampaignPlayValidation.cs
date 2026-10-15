@@ -165,6 +165,7 @@ namespace Lightbringer.EditorTools
             results.Clear(); frames.Clear(); runtimeError = null; finishing = false; storyShotCaptured = false;
             Application.logMessageReceived += CaptureError;
             Application.runInBackground = true;
+            GraphicsQuality.SetFrameLimit(GraphicsQuality.FrameLimit.Unlimited, false);
             started = EditorApplication.timeSinceStartup;
             GameObject host = new GameObject("Isolated Campaign Probe"); host.SetActive(false);
             session = host.AddComponent<CampaignSession>();

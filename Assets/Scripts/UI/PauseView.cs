@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace Lightbringer.UI
 {
     // Player pause: resume or confirm leaving the current battle while keeping permanent progress.
-    // Sound settings at left, the control reference at right, actions along the bottom.
+    // Sound and frame-limit settings at left, the control reference at right, actions along the bottom.
     public sealed class PauseView
     {
         private static readonly (string key, string action)[] Controls = {
@@ -12,6 +12,8 @@ namespace Lightbringer.UI
             ("1–8", "병력 소환"), ("F", "재소환"), ("Tab", "소환 진로 변경"),
             ("LMB · Q · E · RMB", "기술 사용"), ("Esc · P", "일시정지"),
         };
+        // Order matches GraphicsQuality.FrameLimit.
+        private static readonly string[] FrameLimits = { "60", "모니터 주사율", "제한 없음" };
 
         public readonly VisualElement Root;
         private CampaignSession session;
@@ -19,6 +21,7 @@ namespace Lightbringer.UI
         private readonly Label volumeValue;
         private readonly Slider effectsVolume;
         private readonly Label effectsValue;
+        private readonly Button[] frameLimits = new Button[FrameLimits.Length];
         private readonly VisualElement menu, endConfirmation;
 
         public PauseView(VisualElement parent)
@@ -50,6 +53,17 @@ namespace Lightbringer.UI
             credits.AddToClassList("lb-pause-credits");
             Hud.Text(credits, BattleMusic.Credit, "lb-flow-muted");
             sound.Add(credits);
+
+            Hud.Text(sound, "화면", "lb-pause-heading", "lb-pause-heading--next");
+            Hud.Text(sound, "프레임 제한", "lb-pause-volume-name");
+            VisualElement limits = Hud.Box(sound, "lb-pause-options");
+            for (int i = 0; i < FrameLimits.Length; i++)
+            {
+                GraphicsQuality.FrameLimit limit = (GraphicsQuality.FrameLimit)i;
+                frameLimits[i] = Hud.Button(limits, FrameLimits[i], () => { GraphicsQuality.SetFrameLimit(limit); ShowFrameLimit(); },
+                    "lb-button", "lb-button--small", "lb-pause-option");
+            }
+            Hud.Text(sound, "60이면 발열과 팬 소음이 줄어듭니다.", "lb-flow-muted", "lb-pause-note");
 
             VisualElement keys = Hud.Box(columns, "lb-pause-section", "lb-pause-section--keys");
             Hud.Text(keys, "조작", "lb-pause-heading");
@@ -90,6 +104,12 @@ namespace Lightbringer.UI
             return slider;
         }
 
+        private void ShowFrameLimit()
+        {
+            for (int i = 0; i < frameLimits.Length; i++)
+                frameLimits[i].EnableInClassList("lb-pause-option--active", (int)GraphicsQuality.Limit == i);
+        }
+
         public bool Visible => !Root.ClassListContains("lb-hidden");
         public bool IsConfirmingEnd => !endConfirmation.ClassListContains("lb-hidden");
 
@@ -104,6 +124,7 @@ namespace Lightbringer.UI
                 Hud.Set(volumeValue, UnityEngine.Mathf.RoundToInt(BattleMusic.Volume * 100) + "%");
                 effectsVolume.SetValueWithoutNotify(Audio.SoundEffects.Volume);
                 Hud.Set(effectsValue, UnityEngine.Mathf.RoundToInt(Audio.SoundEffects.Volume * 100) + "%");
+                ShowFrameLimit();
             }
             Hud.Show(Root, visible);
         }

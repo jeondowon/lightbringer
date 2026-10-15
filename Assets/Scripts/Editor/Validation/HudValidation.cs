@@ -168,6 +168,9 @@ namespace Lightbringer.EditorTools
                 Time.timeScale = 0.75f;
                 Check(session.SetPaused(true), "Battle exit menu opens from a running battle");
                 pause.Refresh(session);
+                Check(pause.Root.Query<Button>(className: "lb-pause-option").ToList().Count == 3
+                    && pause.Root.Query<Button>(className: "lb-pause-option--active").ToList().Count == 1,
+                    "Pause menu offers the three frame limits with the current one selected");
                 Check(pause.Visible && pause.RequestEnd() && pause.IsConfirmingEnd && Time.timeScale == 0f,
                     "Exit confirmation keeps the battlefield frozen");
                 pause.CancelEnd();

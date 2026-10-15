@@ -149,7 +149,7 @@ namespace Lightbringer.EditorTools
             level = 0; crowd = 0; originalLevel = QualitySettings.GetQualityLevel();
             Application.logMessageReceived += CaptureError;
             Application.runInBackground = true;
-            Application.targetFrameRate = -1;
+            GraphicsQuality.SetFrameLimit(GraphicsQuality.FrameLimit.Unlimited, false);
             QualitySettings.vSyncCount = 0;
             started = EditorApplication.timeSinceStartup;
             GameObject host = new GameObject("Performance Benchmark Session"); host.SetActive(false);
