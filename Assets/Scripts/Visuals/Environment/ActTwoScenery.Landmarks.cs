@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using Lightbringer.Pathing;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Shapes = Lightbringer.Visuals.PropShapes.Shapes;
 using Shape = Lightbringer.Visuals.PropShapes.Shape;
 using Surface = Lightbringer.Visuals.PropShapes.Surface;
@@ -49,14 +51,11 @@ namespace Lightbringer.Visuals
                     Landmark("Citadel Western Outwork", new Vector2(-27, 53), 5, Watchtower);
                     Landmark("Citadel Eastern Outwork", new Vector2(27, 53), 5, Watchtower);
                     Landmark("Broken Siege Wall", new Vector2(0, 36), 5, BrokenWall);
-                    CitadelBackdrop();
                     break;
                 default:
                     BuildActThreeLandmarks(paths);
                     break;
             }
-            // The river basin links the whole inland region; never an ocean rim or alpine wall.
-            if (!HasRiverCrossing) RiverBank();
         }
 
         private void Landmark(string label, Vector2 desired, float radius, Action<Shapes, Vector3> draw)
@@ -83,8 +82,16 @@ namespace Lightbringer.Visuals
                 else
                 {
                     Shapes shapes = new Shapes { Pattern = Surface.Masonry };
+                    // Act 2 builders that have a photographic version fill `structure` instead of the toon shapes.
+                    structure = UsesPhotoscans && HasStructures ? new TexturedShapes(LayerCount) : null;
                     draw(shapes, Ground(point.x, point.y));
-                    MeshGroup(label, shapes);
+                    if (structure != null && !structure.IsEmpty)
+                    {
+                        Transform built = StructureGroup(label, structure);
+                        if (!shapes.IsEmpty) MeshGroup(label + " Detail", shapes).SetParent(built, true);
+                    }
+                    else MeshGroup(label, shapes);
+                    structure = null;
                 }
                 terrain.ReserveProp(point, radius);
                 Landmarks++;
@@ -180,14 +187,17 @@ namespace Lightbringer.Visuals
 
         private void Depot(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoDepot(p); return; }
             Palisade(shapes, p);
+            ScanGoods(p + Vector3.back * 2, 3.2f, 5);
             shapes.Pattern = Surface.Masonry;
             Block(shapes, p + new Vector3(-1.8f, 1.1f, .5f), new Vector3(.55f, 2.2f, 3));
             Block(shapes, p + new Vector3(1.8f, .55f, .5f), new Vector3(.55f, 1.1f, 3));
             shapes.Pattern = Surface.Planks;
             Block(shapes, p + new Vector3(-.6f, 2.35f, .5f), new Vector3(2.4f, .22f, 3.5f), palette.bark,
                 new Vector3(0, 0, -16));
-            for (int i = 0; i < 4; i++)
+            // Photoscanned goods (ScanGoods) replace the painted allied barrels and chests in Act 2.
+            for (int i = 0; i < (UsesPhotoscans ? 0 : 4); i++)
             {
                 Vector3 position = p + new Vector3(-2.4f + i * 1.3f, 0, -2);
                 if (!SupplyProp(position, i % 2 == 0 ? BattlefieldPropKind.AlliedBarrel : BattlefieldPropKind.AlliedChest))
@@ -199,8 +209,10 @@ namespace Lightbringer.Visuals
 
         private void TimberYard(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoTimberYard(p); return; }
             Palisade(shapes, p + Vector3.forward * 1.7f);
-            SupplyProp(p + new Vector3(0, 0, -1.4f), BattlefieldPropKind.AlliedChest);
+            ScanGoods(p, 4, 4);
+            if (!UsesPhotoscans) SupplyProp(p + new Vector3(0, 0, -1.4f), BattlefieldPropKind.AlliedChest);
             for (int stack = -1; stack <= 1; stack += 2)
                 for (int i = 0; i < 6; i++)
                 {
@@ -225,7 +237,11 @@ namespace Lightbringer.Visuals
 
         private void WagonYard(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoWagonYard(p); return; }
             Palisade(shapes, p);
+            ScanGoods(p, 4, 6);
+            ActTwoScatterAsset[] pit = ScanSet(ActTwoScatterKind.FirePit);
+            if (!IsActThree && pit.Length > 0) PlaceScan(pit[0], new Vector2(p.x, p.z) + new Vector2(0, -3.4f), 1.3f, 0);
             for (int wagon = -1; wagon <= 1; wagon += 2)
             {
                 Vector3 c = p + new Vector3(wagon * 2, 0, -.4f);
@@ -243,6 +259,8 @@ namespace Lightbringer.Visuals
 
         private void PilgrimageRoad(WaypointPath[] paths)
         {
+            // The scanned ground shows the worn road itself; flat toon slabs would float over it.
+            if (UsesPhotoscans) return;
             Shapes paving = new Shapes { Pattern = Surface.Masonry };
             foreach (WaypointPath path in paths)
                 for (int segment = 0; segment < path.Count - 2; segment++)
@@ -263,9 +281,9 @@ namespace Lightbringer.Visuals
 
         private void RiverCrossing(WaypointPath[] paths)
         {
-            Shapes water = new Shapes(), bridges = new Shapes { Pattern = Surface.Masonry };
-            // Shallow river crossing: the greybox keeps the same collision floor so the hero can wade.
-            Block(water, new Vector3(0, .012f, 40), new Vector3(67, .02f, 6), new Color(.18f, .29f, .33f));
+            Shapes bridges = new Shapes { Pattern = Surface.Masonry };
+            TexturedShapes photoBridges = UsesPhotoscans && HasStructures ? new TexturedShapes(LayerCount) : null;
+            var crossings = new List<Vector3>();
             foreach (WaypointPath path in paths)
                 for (int i = 0; i < path.Count - 1; i++)
                 {
@@ -274,44 +292,203 @@ namespace Lightbringer.Visuals
                     if (a.z > 40 || b.z <= 40) continue;
                     Vector3 p = Vector3.Lerp(a, b, (40 - a.z) / (b.z - a.z));
                     float yaw = Quaternion.LookRotation(b - a).eulerAngles.y;
-                    Block(bridges, p + Vector3.up * .055f, new Vector3(10, .08f, 10), rotation: new Vector3(0, yaw, 0));
-                    for (int side = -1; side <= 1; side += 2)
-                        Block(bridges, p + Quaternion.Euler(0, yaw, 0) * new Vector3(side * 5, .5f, 0),
-                            new Vector3(.55f, 1, 8), rotation: new Vector3(0, yaw, 0));
+                    if (photoBridges != null) PhotoBridge(photoBridges, p, yaw);
+                    else
+                    {
+                        Block(bridges, p + Vector3.up * .055f, new Vector3(10, .08f, 10), rotation: new Vector3(0, yaw, 0));
+                        for (int side = -1; side <= 1; side += 2)
+                            Block(bridges, p + Quaternion.Euler(0, yaw, 0) * new Vector3(side * 5, .5f, 0),
+                                new Vector3(.55f, 1, 8), rotation: new Vector3(0, yaw, 0));
+                    }
+                    crossings.Add(p);
                     Bridges++;
                 }
-            for (int x = -33; x <= 33; x += 3) terrain.ReserveProp(new Vector2(x, 40), 4.5f);
-            MeshGroup("Slate River Shallow Crossing", water, false);
-            MeshGroup("Guarded Stone Bridges", bridges);
-        }
-
-        private void RiverBank()
-        {
-            // A narrow inland tributary on the flat western margin, not an ocean surrounding the region.
-            Shapes water = new Shapes();
-            for (int i = 0; i < 12; i++)
+            // Shallow river crossing: the greybox keeps the same collision floor so the hero can wade.
+            float extent = RiverExtent();
+            if (palette.waterMaterial != null) BuildRiverWater(extent);
+            else
             {
-                float z = -5 + i * 5;
-                float x = -32 + Mathf.Sin(i * .5f) * .6f;
-                Block(water, new Vector3(x, .012f, z), new Vector3(2.2f, .02f, 5.4f), new Color(.19f, .29f, .32f));
-                terrain.ReserveProp(new Vector2(x, z), 2);
+                Shapes water = new Shapes();
+                Block(water, new Vector3(0, .012f, 40), new Vector3(67, .02f, 6), IsActThree ? new Color(.18f, .29f, .33f) : MurkyWater);
+                MeshGroup("Slate River Shallow Crossing", water, false);
             }
-            MeshGroup("Inland River Margin", water, false);
+            for (float x = -extent; x <= extent; x += 3) terrain.ReserveProp(new Vector2(x, RiverCentre(x)), 4.5f);
+            BuildRiverBanks(crossings, extent - 2);
+            if (photoBridges != null) StructureGroup("Guarded Stone Bridges", photoBridges);
+            else MeshGroup("Guarded Stone Bridges", bridges);
         }
 
-        private void CitadelBackdrop()
+        // Low, flat stone bridge flush with the walkable floor: paved deck, water-stained edge beams and a dry-stone
+        // parapet of uneven blocks on both sides, a few of them fallen.
+        private void PhotoBridge(TexturedShapes s, Vector3 p, float yaw)
         {
-            Shapes fortress = new Shapes { Pattern = Surface.Masonry };
+            Quaternion turn = Quaternion.Euler(0, yaw, 0);
+            Vector3 P(float x, float y, float z) => p + turn * new Vector3(x, y, z);
+            Vector3 Turn(float pitch = 0, float twist = 0, float roll = 0) => new Vector3(pitch, yaw + twist, roll);
+            // Paved in courses of uneven slabs: each block takes its own patch of the stone texture, so the deck never
+            // shows one tile repeating.
+            for (float z = -5.1f; z < 5.05f;)
+            {
+                float course = Mathf.Min(Range(.7f, 1.1f), 5.1f - z);
+                for (float x = -4.6f; x < 4.55f;)
+                {
+                    float slab = Mathf.Min(Range(.8f, 1.6f), 4.6f - x);
+                    s.Layer = StoneLayer;
+                    s.Box(P(x + slab * .5f, -.06f + Range(-.012f, .012f), z + course * .5f), new Vector3(slab - .03f, .32f, course - .03f),
+                        Turn(Range(-.4f, .4f), 0, Range(-.4f, .4f)));
+                    x += slab;
+                }
+                z += course;
+            }
+            s.Layer = GapLayer;
+            s.Box(P(0, -.1f, 0), new Vector3(9.2f, .32f, 10.2f), Turn());
+            s.Layer = GrimeLayer;
             for (int side = -1; side <= 1; side += 2)
             {
-                Vector3 foot = Ground(side * 19, 97);
-                Block(fortress, foot + Vector3.up * 8, new Vector3(8, 16, 8), palette.rock * .8f);
-                for (int merlon = -1; merlon <= 1; merlon++)
-                    Block(fortress, foot + new Vector3(merlon * 2.8f, 16.7f, -3.5f), new Vector3(1.5f, 1.6f, 1.5f));
-                Block(fortress, Ground(side * 10, 100) + Vector3.up * 5, new Vector3(12, 10, 3), palette.rock * .8f);
+                s.Box(P(side * 4.85f, -.1f, 0), new Vector3(.6f, .5f, 10.6f), Turn());
+                float z = -4.6f;
+                while (z < 4.6f)
+                {
+                    float length = Mathf.Min(Range(.9f, 1.5f), 4.6f - z);
+                    float height = Range(.62f, .9f);
+                    // Gaps where blocks have fallen; the loose block lies in the river beside the bridge.
+                    if (Mathf.Abs(z) > 1.5f && random.Next(9) == 0)
+                    {
+                        s.Layer = StoneLayer;
+                        s.Box(P(side * Range(5.6f, 6.4f), .05f, z + length * .5f), new Vector3(.5f, height * .7f, length * .9f),
+                            Turn(Range(-20, 20), Range(-40, 40), Range(-15, 15)));
+                    }
+                    else
+                    {
+                        s.Layer = StoneLayer;
+                        s.Box(P(side * 4.85f, .1f + height * .5f, z + length * .5f), new Vector3(.52f, height, length - .04f),
+                            Turn(0, Range(-1.5f, 1.5f), Range(-2, 2)));
+                        s.Layer = GrimeLayer;
+                        s.Box(P(side * 4.85f, .1f + height + .06f, z + length * .5f), new Vector3(.62f, .12f, length + .02f), Turn());
+                    }
+                    z += length;
+                }
+                // Heavier end posts mark the four corners of the crossing.
+                for (int end = -1; end <= 1; end += 2)
+                {
+                    s.Layer = StoneLayer;
+                    s.Box(P(side * 4.85f, .65f, end * 4.85f), new Vector3(.8f, 1.3f, .8f), Turn());
+                    s.Layer = GrimeLayer;
+                    s.Box(P(side * 4.85f, 1.36f, end * 4.85f), new Vector3(.92f, .14f, .92f), Turn());
+                }
             }
-            MeshGroup("Standing Warlord Citadel Beyond the Gate", fortress);
-            Landmarks++;
+        }
+
+        // The channel meanders gently around z = 40 and stays inside the 10 m bridge decks.
+        private float RiverCentre(float x) => 40 + .6f * Mathf.Sin(x * .11f + Stage);
+        private float RiverHalfWidth(float x) => 3.1f + .5f * Mathf.Sin(x * .23f + Stage * 1.7f) + .3f * Mathf.Sin(x * .61f + .8f);
+        private const float RiverMud = 1.2f;
+
+        // How far the flat valley floor runs either side of the centre line before the slopes rise.
+        private float RiverExtent()
+        {
+            float extent = 33;
+            while (extent < 60 && terrain.SurfaceHeight(-extent - 1, 40) < .05f && terrain.SurfaceHeight(extent + 1, 40) < .05f) extent++;
+            return extent;
+        }
+
+        // A transparent strip across the flat valley floor: wet mud banks, murky water and a soft sky sheen
+        // (Lightbringer/River Water). It ends with a fade where the valley sides begin to rise.
+        private void BuildRiverWater(float extent)
+        {
+            var vertices = new List<Vector3>();
+            var colors = new List<Color>();
+            var uv = new List<Vector2>();
+            var indices = new List<int>();
+            float[] across = { 0, .1f, .2f, .35f, .5f, .65f, .8f, .9f, 1 };
+            int columns = Mathf.CeilToInt(extent * 2) + 1;
+            for (int c = 0; c < columns; c++)
+            {
+                float x = Mathf.Lerp(-extent, extent, c / (columns - 1f));
+                float half = RiverHalfWidth(x) + RiverMud, centre = RiverCentre(x);
+                float fade = Mathf.SmoothStep(0, 1, (extent - Mathf.Abs(x)) / 5f);
+                for (int r = 0; r < across.Length; r++)
+                {
+                    float z = centre + (across[r] * 2 - 1) * half;
+                    vertices.Add(new Vector3(x, terrain.SurfaceHeight(x, z) + .03f, z));
+                    uv.Add(new Vector2(across[r], x));
+                    colors.Add(new Color(1, 1, 1, fade));
+                    if (c == 0 || r == 0) continue;
+                    int i = c * across.Length + r, left = i - across.Length;
+                    indices.AddRange(new[] { left - 1, i, i - 1, left - 1, left, i });
+                }
+            }
+            Mesh mesh = new Mesh { name = "River Water", hideFlags = HideFlags.DontSave };
+            mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetColors(colors); mesh.SetTriangles(indices, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            owned.Add(mesh);
+
+            Material water = Copy(palette.waterMaterial);
+            if (palette.skyMaterial != null)
+            {
+                water.SetColor("_HorizonColor", palette.skyMaterial.GetColor("_HorizonColor"));
+                water.SetColor("_ZenithColor", palette.skyMaterial.GetColor("_ZenithColor"));
+            }
+            water.SetColor("_DeepColor", IsActThree ? new Color(.10f, .12f, .13f) : new Color(.15f, .16f, .14f));
+            water.SetColor("_ShallowColor", IsActThree ? new Color(.18f, .18f, .18f) : new Color(.27f, .25f, .19f));
+            water.SetColor("_MudColor", IsActThree ? new Color(.09f, .09f, .09f) : palette.dirt * .42f);
+            water.SetFloat("_MudWidth", RiverMud / (3.1f + RiverMud));
+
+            GameObject item = new GameObject("Slate River Shallow Crossing");
+            item.transform.SetParent(terrain.transform, false);
+            item.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer = item.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = water;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+        }
+
+        // Irregular clusters of half-sunk stones on both banks and (Act 2 only) dry brush, clear of the bridge approaches.
+        // Photoscanned rocks where the scan set is imported; dark faceted stones otherwise.
+        private void BuildRiverBanks(List<Vector3> crossings, float extent)
+        {
+            Shapes banks = new Shapes();
+            ActTwoScatterAsset[] rocks = UsesPhotoscans ? ScanSet(ActTwoScatterKind.Boulder) : new ActTwoScatterAsset[0];
+            ActTwoScatterAsset[] brush = UsesPhotoscans && !IsActThree ? ScanSet(ActTwoScatterKind.Brush) : new ActTwoScatterAsset[0];
+            for (int side = -1; side <= 1; side += 2)
+                for (float x = -extent + Range(0, 4); x <= extent; x += Range(4.5f, 9))
+                {
+                    bool nearBridge = false;
+                    foreach (Vector3 crossing in crossings) nearBridge |= Mathf.Abs(crossing.x - x) < 7f;
+                    if (nearBridge) continue;
+                    int stones = random.Next(1, 4);
+                    for (int i = 0; i < stones; i++)
+                    {
+                        float sx = x + Range(-1.4f, 1.4f);
+                        // Waterline stones: some sit in the shallows, most on the wet mud.
+                        float sz = RiverCentre(sx) + side * (RiverHalfWidth(sx) + Range(-.5f, 1f));
+                        float radius = i == 0 ? Range(.45f, .8f) : Range(.2f, .45f);
+                        if (rocks.Length > 0)
+                        {
+                            ActTwoScatterAsset asset = rocks[random.Next(rocks.Length)];
+                            PlaceScan(asset, new Vector2(sx, sz), radius / Mathf.Max(.1f, asset.radius), Range(0, 360), Range(-12, 12), .3f);
+                        }
+                        else
+                            banks.Piece(ProceduralMeshes.Faceted(random.Next(6)), palette.rock * Range(.55f, .75f),
+                                Ground(sx, sz) + Vector3.up * radius * .15f, new Vector3(radius * Range(1.6f, 2.4f), radius * .8f, radius * 1.6f),
+                                new Vector3(Range(-10, 10), Range(0, 360), Range(-10, 10)));
+                    }
+                    if (IsActThree || random.Next(3) != 0) continue;
+                    float bx = x + Range(-2, 2), bz = RiverCentre(bx) + side * (RiverHalfWidth(bx) + RiverMud + Range(.2f, 1.2f));
+                    if (brush.Length > 0)
+                    {
+                        ActTwoScatterAsset asset = brush[random.Next(brush.Length)];
+                        PlaceScan(asset, new Vector2(bx, bz), Range(.7f, 1.1f) / Mathf.Max(.1f, asset.radius), Range(0, 360));
+                    }
+                    else
+                    {
+                        Color reed = Color.Lerp(new Color(.30f, .27f, .20f), new Color(.22f, .20f, .15f), Range(0, 1));
+                        for (int blade = 0; blade < 9; blade++)
+                            banks.Cone(.1f, reed, Ground(bx, bz) + new Vector3(Range(-.4f, .4f), 0, Range(-.4f, .4f)),
+                                new Vector3(.05f, Range(.5f, 1.1f), .05f), new Vector3(Range(-16, 16), 0, Range(-16, 16)), segments: 4);
+                    }
+                }
+            if (!banks.IsEmpty) MeshGroup("River Bank Stones and Reeds", banks, false);
         }
     }
 }

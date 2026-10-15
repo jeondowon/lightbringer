@@ -364,7 +364,7 @@ Tripo FBX는 위쪽 축이 +Z로 나온다. 먼저 X축 −90° 회전으로 세
 
 ## 본진 장식과 폐허 에셋
 
-사용자가 다운로드한 Tripo FBX 9종을 `Assets/Art/Environment/Props/`에 가져왔다. 다운로드 원본은 보존한다. 모델의 축·크기·바닥 중심점을 맞춘 프리팹과 URP Lit 재질을 사용하며, `ArtStyleLibrary.battlefieldProps`가 배포용 에셋 참조를 가진다.
+사용자가 다운로드한 Tripo FBX 8종을 `Assets/Art/Environment/Props/`에 가져왔다. 다운로드 원본은 보존한다. 모델의 축·크기·바닥 중심점을 맞춘 프리팹과 URP Lit 재질을 사용하며, `ArtStyleLibrary.battlefieldProps`가 배포용 에셋 참조를 가진다.
 
 | 프리팹 | 원본 ZIP | 배치 용도 |
 |---|---|---|
@@ -372,7 +372,6 @@ Tripo FBX는 위쪽 축이 +Z로 나온다. 먼저 X축 −90° 회전으로 세
 | AlliedMonument | 아군ornate+monument+3d+model.zip | 아군 본진 옆 기념비 |
 | AlliedBarrel | 아군barrel.zip | 아군 보급품 군집 |
 | AlliedChest | 아군treasure+chest+3d+model.zip | 보급품 옆 보물상자 |
-| EnemyCrystal | 적군crystal+rock+formation+3d+model.zip | 적군 본진 양옆의 수정 바위 |
 | EnemyBoneFence | 적군spikedbonefence.zip | 적군 진지 측면의 짧은 울타리 |
 | EnemyAltar | 적군stone+skull+altar+3d+model.zip | 적군 본진 측면 제단 |
 | RuinColumn | ancient+column+3d+model.zip | 전장 양옆 유적의 기둥 |
@@ -407,9 +406,9 @@ Tripo FBX는 위쪽 축이 +Z로 나온다. 먼저 X축 −90° 회전으로 세
 
 ### 적용 파일과 배치 검증
 
-- 추가: `BattlefieldPropProfile.cs`, `BattlefieldPropDressing.cs`, `BattlefieldPropSetup.cs`, 9종 에셋 폴더와 `BattlefieldProps.asset`.
+- 추가: `BattlefieldPropProfile.cs`, `BattlefieldPropDressing.cs`, `BattlefieldPropSetup.cs`, 8종 에셋 폴더와 `BattlefieldProps.asset`.
 - 수정: `BattlefieldEnvironment.cs`, `ForestEnvironmentDressing.cs`, `ArtStyleLibrary.cs` 및 라이브러리 에셋, `CrowdMeshOptimizer.cs`, `.gitattributes`.
-- 1·4 스테이지는 각각 21개, 8 스테이지는 20개를 배치하며 모두 9종을 포함한다. 지면 접지, 진격로 여유, 장식 간 겹침 및 불필요한 콜라이더가 없는지 검사했다.
+- 검붉은 수정 바위는 아트 방향에 맞지 않아 모델·재질·텍스처·배치·레퍼런스에서 제거했다. 최종 보스 핵은 기존 회색상자 모델을 사용한다. 배치 수는 현재 스테이지 구성에 따라 달라진다.
 - 전선 수에 따라 유적의 좌우 위치를 조정한다. 초반에는 중심에서 14m, 중반에는 23m, 후반에는 32m 떨어진 곳에 배치한다.
 - 개별 에셋과 본진·유적·전체 전장의 캡처를 확인했다. 메시 통계는 추가 LOD의 저장 인덱스를 포함하므로 프레임당 실제 렌더링 삼각형 수와는 다르다.
 - 2026-10-12: 기본 검증 315개 항목 및 실제 Play 모드 캠페인 검증을 통과했다. 소환·이동·전투·승패·3개 전선·100/300 유닛 전투를 확인했다. `CampaignPlayValidation.cs`의 드래곤 이름 검사를 한글화된 `UnitCatalog` 이름과 일치하도록 수정했다.

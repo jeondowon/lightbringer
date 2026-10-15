@@ -96,6 +96,7 @@ namespace Lightbringer.Visuals
                 s.skyMaterial.SetColor("_SunColor", new Color(.62f, .66f, .69f));
                 s.skyMaterial.SetFloat("_SunStrength", .08f);
             }
+            scenery.ApplyRealism();
             if (scenery.IsActThree) scenery.DarkenForActThree();
             return s;
         }
@@ -113,9 +114,13 @@ namespace Lightbringer.Visuals
             terrain = environment;
             random = new System.Random(Stage * 4919);
             BuildLandmarks(paths);
+            if (!IsActThree) BuildEnemyRearCover();
+            if (!IsActThree && UsesPhotoscans) BuildHillBoulders();
             BuildDeadWood();
             if (IsActThree) BuildFissures(); else BuildFields();
-            BuildRiverMist();
+            BuildPhotoscans();
+            if (!IsActThree) BuildSlopeCover();
+            if (HasRiverCrossing) BuildRiverMist();
             if (IsActThree) BuildValleyDarkness();
         }
 
@@ -124,18 +129,25 @@ namespace Lightbringer.Visuals
 
         private void BuildDeadWood()
         {
+            const float treeSize = 1.6f;
+            const float crownRadius = 3f * treeSize;
             Shapes wood = new Shapes(), surviving = new Shapes();
             int count = Stage == 20 ? 380 : IsActThree ? 300 : 260;
             for (int i = 0; i < count; i++)
             {
                 float x = Range(-85, 85), z = Range(-55, 125);
                 Vector2 point = new Vector2(x, z);
-                if (!terrain.ClearOfPlay(point, 6.5f, 14) || !terrain.ClearOfProps(point, 3)) continue;
+                if (!terrain.ClearOfPlay(point, 3.5f + crownRadius, 11f + crownRadius)
+                    || !terrain.ClearOfProps(point, crownRadius)) continue;
                 Vector3 foot = Ground(x, z);
                 float height = Range(3.5f, 7.5f), yaw = Range(0, 360);
                 if (i % (IsActThree ? 3 : 4) == 0)
                 {
-                    wood.Cone(.7f, palette.bark, foot, new Vector3(.65f, Range(.35f, .9f), .65f), segments: 7);
+                    ActTwoScatterAsset[] scannedStumps = UsesPhotoscans ? ScanSet(ActTwoScatterKind.Stump) : null;
+                    if (scannedStumps != null && scannedStumps.Length > 0)
+                        PlaceScan(scannedStumps[0], point, Range(.9f, 1.4f), yaw);
+                    else
+                        wood.Cone(.7f, palette.bark, foot, new Vector3(.65f, Range(.35f, .9f), .65f), segments: 7);
                     Stumps++;
                     continue;
                 }
@@ -155,24 +167,27 @@ namespace Lightbringer.Visuals
                         else bounds.Encapsulate(renderer.bounds);
                     }
                     float crown = new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
-                    float scale = Mathf.Min(height, 3f / Mathf.Max(.01f, crown));
+                    // Apply after the old crown cap so even wide varieties grow by the full treeSize factor.
+                    float scale = Mathf.Min(height, 3f / Mathf.Max(.01f, crown)) * treeSize;
                     tree.transform.localScale = Vector3.one * scale;
                     terrain.ReserveProp(point, Mathf.Max(.6f, crown * scale));
                     ImportedTrees++;
                     DeadTrees++;
                     continue;
                 }
-                wood.Cone(.28f, palette.bark, foot, new Vector3(.45f, height, .45f), new Vector3(4, yaw, 3), segments: 7);
+                height *= treeSize;
+                wood.Cone(.28f, palette.bark, foot, new Vector3(.45f * treeSize, height, .45f * treeSize), new Vector3(4, yaw, 3), segments: 7);
                 for (int branch = 0; branch < 4; branch++)
                 {
                     float angle = yaw + branch * 100;
                     wood.Cone(.12f, palette.bark * 1.08f, foot + Vector3.up * height * (.32f + branch * .13f),
-                        new Vector3(.19f, height * .42f, .19f), new Vector3(0, angle, 48), segments: 5);
+                        new Vector3(.19f * treeSize, height * .42f, .19f * treeSize), new Vector3(0, angle, 48), segments: 5);
                 }
                 // A little olive-grey life remains in Act 2; Act 3 is fully devastated past its first forest edge.
                 if (i % 7 == 0 && (!IsActThree || (Stage == 17 && z < 20)))
                     surviving.Piece(ProceduralMeshes.Lumpy(i % 6), palette.foliage,
-                        foot + Vector3.up * height * .77f, new Vector3(2.1f, .7f, 1.7f), new Vector3(0, yaw, 0));
+                        foot + Vector3.up * height * .77f, new Vector3(2.1f, .7f, 1.7f) * treeSize, new Vector3(0, yaw, 0));
+                terrain.ReserveProp(point, crownRadius);
                 DeadTrees++;
             }
             MeshGroup("Sparse Bare Trees and Shattered Stumps", wood);
@@ -182,7 +197,9 @@ namespace Lightbringer.Visuals
         private void BuildFields()
         {
             Shapes fields = new Shapes();
-            for (int i = 0; i < 38; i++)
+            // Photoscanned Act 2 ground already carries the burned soil; the flat toon ash patches would read as boards.
+            int patches = UsesPhotoscans ? 0 : 38;
+            for (int i = 0; i < patches; i++)
             {
                 float x = Range(-31, 31), z = Range(-5, 68);
                 Vector2 point = new Vector2(x, z);
@@ -220,25 +237,27 @@ namespace Lightbringer.Visuals
             mist.SetFloat("_Additive", 0);
             mist.SetFloat("_Softness", 1.4f);
             // This premultiplied shader uses vertex alpha for both RGB and coverage.
-            mist.SetColor("_Color", IsActThree ? new Color(.30f, .33f, .37f, 1) : new Color(.52f, .59f, .64f, 1));
+            mist.SetColor("_Color", IsActThree ? new Color(.30f, .33f, .37f, 1) : (UsesPhotoscans ? new Color(.34f, .37f, .40f, 1) : new Color(.52f, .59f, .64f, 1)));
             var vertices = new List<Vector3>();
             var colors = new List<Color>();
             var uv = new List<Vector2>();
             var indices = new List<int>();
             for (int i = 0; i < 10; i++)
             {
-                Vector3 centre = HasRiverCrossing ? new Vector3(-30 + i * 6, .8f, 40)
-                    : new Vector3(-31, .8f, -3 + i * 6);
+                // Along the shallow crossing at z = 40 (stages 15 and 18 only), in uneven drifting banks.
+                Vector3 centre = new Vector3(-30 + i * 6 + Range(-2, 2), .8f, 40 + Range(-1.5f, 1.5f));
+                if (random.Next(3) == 0) continue;
                 // Low horizontal haze plus a shallow vertical wisp, both softened by the existing puff shader.
+                // Kept faint: a dense band reads as a glossy highlight running down the river.
                 for (int plane = 0; plane < 2; plane++)
                 {
-                    Vector3 right = HasRiverCrossing ? Vector3.right * 9 : Vector3.forward * 9;
-                    Vector3 up = plane == 0 ? (HasRiverCrossing ? Vector3.forward : Vector3.right) * 3 : Vector3.up * 1.2f;
+                    Vector3 right = Vector3.right * Range(5, 9);
+                    Vector3 up = plane == 0 ? Vector3.forward * Range(2, 3.5f) : Vector3.up * 1.2f;
                     int start = vertices.Count;
                     vertices.Add(centre - right - up); vertices.Add(centre + right - up);
                     vertices.Add(centre + right + up); vertices.Add(centre - right + up);
                     uv.Add(Vector2.zero); uv.Add(Vector2.right); uv.Add(Vector2.one); uv.Add(Vector2.up);
-                    for (int c = 0; c < 4; c++) colors.Add(new Color(1, 1, 1, .14f));
+                    for (int c = 0; c < 4; c++) colors.Add(new Color(1, 1, 1, plane == 0 ? .05f : .08f));
                     indices.AddRange(new[] { start, start + 2, start + 1, start, start + 3, start + 2 });
                 }
             }

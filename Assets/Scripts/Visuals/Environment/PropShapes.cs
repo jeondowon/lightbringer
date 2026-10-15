@@ -29,6 +29,7 @@ namespace Lightbringer.Visuals
 
             // Surface pattern stamped on every piece added while it is set.
             public Surface Pattern { get; set; }
+            public bool IsEmpty => vertices.Count == 0;
             private readonly List<int> triangles = new List<int>();
 
             public void Add(Shape kind, Color color, Vector3 position, Vector3 scale, Vector3 euler = default,

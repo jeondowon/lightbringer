@@ -62,10 +62,11 @@ namespace Lightbringer.EditorTools
                     profile = ScriptableObject.CreateInstance<ActTwoEnvironmentProfile>();
                     AssetDatabase.CreateAsset(profile, profilePath);
                 }
-                profile.trees = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Dry_Trees/Prefab" })
-                    .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p)
-                    .Select(p => Single(p, Path.GetFileNameWithoutExtension(p), true)).ToArray();
-                if (profile.trees.Length != 7) throw new InvalidOperationException("Expected seven converted Dry Trees prefabs.");
+                string[] treeSources = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Dry_Trees/Prefab" })
+                    .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p).ToArray();
+                // Check before assigning: a failed rebuild must never wipe the existing tree wrappers.
+                if (treeSources.Length != 7) throw new InvalidOperationException("Expected seven converted Dry Trees prefabs.");
+                profile.trees = treeSources.Select(p => Single(p, Path.GetFileNameWithoutExtension(p), true)).ToArray();
                 profile.watchtower = Single(Root + "/Sources/RuinedTower/Tower_B.prefab", "RuinedWatchtower", false);
                 profile.brokenWall = Composite("BrokenBoundaryWall", root =>
                 {

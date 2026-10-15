@@ -76,7 +76,7 @@ namespace Lightbringer.EditorTools
             Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             string[] expected = { "Roofless Pilgrim Sanctuary", "Broken Hero Monument", "Collapsed Watchtower",
                 "Occupied Supply Depot", "Timber Storeyard", "Fortified Wagon Yard", "Guarded Stone Bridges",
-                "Standing Warlord Citadel Beyond the Gate" };
+                "Broken Siege Wall" };
             try
             {
                 for (int stage = 9; stage <= 16; stage++)
@@ -93,8 +93,15 @@ namespace Lightbringer.EditorTools
                             $"Atlas stage {stage} builds its defining landmark: {expected[stage - 9]}");
                         Check(scenery.DeadTrees > 30 && scenery.Stumps > 10 && scenery.Landmarks >= 2
                             && terrain.transform.Find("Scorched Earth and Abandoned Fields") != null
-                            && terrain.transform.Find("Low Cold River Mist") != null,
-                            $"Atlas stage {stage} has physical devastation, sparse woodland and river mist [trees={scenery.DeadTrees}, stumps={scenery.Stumps}, landmarks={scenery.Landmarks}]");
+                            && (terrain.transform.Find("Low Cold River Mist") != null) == (stage == 15)
+                            && terrain.transform.Find("Inland River Margin") == null,
+                            $"Atlas stage {stage} has physical devastation and sparse woodland; only the stage 15 crossing has water and mist [trees={scenery.DeadTrees}, stumps={scenery.Stumps}, landmarks={scenery.Landmarks}]");
+                        if (stage == 16)
+                            Check(terrain.transform.Find("Standing Warlord Citadel Beyond the Gate") == null,
+                                "Stage 16 shows no second citadel behind the enemy stronghold");
+                        if (art.actTwoEnvironment != null && art.actTwoEnvironment.HasStructureMaterials && stage >= 12 && stage <= 14)
+                            Check(scenery.PhotoStructures >= 2,
+                                $"Atlas stage {stage} builds its depots from photographic stone, timber and bark [structures={scenery.PhotoStructures}]");
                         Check(scenery.Palette != art && scenery.Palette.terrainMaterial != art.terrainMaterial
                             && scenery.Palette.terrainMaterial.GetFloat("_FlowerAmount") == 0
                             && scenery.Palette.terrainMaterial.GetColor("_CorruptGlow") == Color.black,
@@ -132,13 +139,14 @@ namespace Lightbringer.EditorTools
             Physics.SyncTransforms();
             battle.Objective.EnemyBase.TakeDamage(100000, battle.Hero);
             battle.Encounter.Tick(.01f);
+            Check(battle.Encounter.Phase == BossEncounterPhase.Rupture, "Second arrival opens with the rupture shockwave");
+            battle.Encounter.Tick(BossEncounter.WaveSeconds);
             battle.Encounter.Tick(BossEncounter.ArrivalSeconds);
-            Check(ally.IsAlive && battle.Encounter.FallenAllies == 0 && battle.Encounter.IsRematch
+            Check(!ally.IsAlive && battle.Encounter.FallenAllies == 1 && battle.Encounter.IsRematch
                 && battle.Encounter.Phase == BossEncounterPhase.Dialogue
-                && battle.Encounter.CurrentLines[1].Contains("옛 빛의 용사"),
-                "Second arrival preserves the army and reveals the Warlord's old identity");
-            Check(Vector3.Distance(ally.transform.position, battle.Waves.Boss.transform.position) > 1.1f,
-                "Rematch boss chooses a free arrival slot when a surviving soldier occupies the gate");
+                && battle.Encounter.CurrentLines.SequenceEqual(BossEncounter.RematchLines)
+                && !battle.Encounter.CurrentLines.Any(said => said.Contains("용사")),
+                "Second arrival wipes the army; the Warlord stays unnamed in Act 2");
             FinishBossDialogue(battle);
             while (session.IsChoosing) session.ChooseGrowth(0);
             BossCombat combat = battle.Waves.Boss.GetComponent<BossCombat>();
@@ -153,7 +161,10 @@ namespace Lightbringer.EditorTools
                 "Rematch links crescent into charge with a full dodge warning");
             battle.Waves.Boss.TakeDamage(100000, battle.Hero);
             Check(!battle.Objective.HasEnded && !session.Progress.cleared[15], "Second defeat waits for retreat before rewards");
-            for (int i = 0; i < 3; i++) { battle.Encounter.Tick(.8f); battle.Encounter.AdvanceDialogue(); }
+            Check(battle.Encounter.CurrentLines.SequenceEqual(BossEncounter.RematchRetreatLines)
+                && battle.Encounter.CurrentPictures.Contains(StoryCatalog.SwordCloseUp) && battle.Encounter.EscapeLine == 4,
+                "Second retreat shows the sword her teacher carried before the Warlord leaves without an answer");
+            for (int i = 0; i < BossEncounter.RematchRetreatLines.Length; i++) { battle.Encounter.Tick(.8f); battle.Encounter.AdvanceDialogue(); }
             battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds);
             Check(battle.Objective.HasWon && !session.Progress.IsComplete && session.Progress.unlockedStage == 17
                 && session.Progress.IsLearned((int)SkillKind.Meteor) && session.LastResult.Contains("2막 완료"),

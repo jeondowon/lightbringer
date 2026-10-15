@@ -25,31 +25,31 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _ForestGrassNormal:
-        m_Texture: {fileID: 2800000, guid: 3e03e0041d7a4d141be3137e83f8422b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 72fcd028f736b1a498436568ccde6e4a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ForestGrassTex:
-        m_Texture: {fileID: 2800000, guid: c22d51a617356f44d993a444d2390e92, type: 3}
+        m_Texture: {fileID: 2800000, guid: f71ea48d735c21549b79fe954881c958, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ForestSoilNormal:
-        m_Texture: {fileID: 2800000, guid: 3e03e0041d7a4d141be3137e83f8422b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 37297457a94c59a43ae34f3dce3a4b75, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ForestSoilTex:
-        m_Texture: {fileID: 2800000, guid: c22d51a617356f44d993a444d2390e92, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6b59275ad7fca9948867c95ee8d1baf7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StoneMask:
-        m_Texture: {fileID: 2800000, guid: f63874eabc8dbc94e9885bc2ec6a3234, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StoneNormal:
-        m_Texture: {fileID: 2800000, guid: dd1be20a83f4841418dfc18b1c2adf9c, type: 3}
+        m_Texture: {fileID: 2800000, guid: d5ecddd44524f3b44b52a0c9c2ba934a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StoneTex:
-        m_Texture: {fileID: 2800000, guid: 6215fb4979f46844d8db84a394b8a10d, type: 3}
+        m_Texture: {fileID: 2800000, guid: f762000208e5bfe428606af76ee1792d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -58,11 +58,11 @@ Material:
     - _BumpStrength: 0.1
     - _EmissionStrength: 2.5
     - _FlowerAmount: 0
-    - _ForestNormalStrength: 0.65
-    - _ForestTextureScale: 0.48
-    - _ForestTextureStrength: 0.55
+    - _ForestNormalStrength: 1.1
+    - _ForestTextureScale: 0.42
+    - _ForestTextureStrength: 0.95
     - _GravelAmount: 0.2
-    - _NaturalLight: 0.65
+    - _NaturalLight: 1
     - _OutlineWidth: 0
     - _PatchStrength: 0.12
     - _RampSoftness: 0.35
@@ -73,7 +73,7 @@ Material:
     - _SoilBreakup: 0.85
     - _Specular: 0
     - _StoneSize: 1.1
-    - _StoneTextureScale: 0.38
+    - _StoneTextureScale: 0.3
     - _StoneTextureStrength: 1
     - _StrokeStrength: 0.025
     - _UseVertexColor: 1

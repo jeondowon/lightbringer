@@ -27,27 +27,25 @@ namespace Lightbringer.Visuals
             s.foliage = new Color(.22f, .26f, .20f);
             s.foliageDark = new Color(.14f, .16f, .13f);
             s.corruptStone = new Color(.13f, .12f, .14f);
-            s.sunColor = new Color(.78f, .77f, .82f);
-            s.sunIntensity = finale ? .75f : .9f;
-            s.ambientSky = new Color(.30f, .31f, .38f);
-            s.ambientEquator = new Color(.26f, .26f, .29f);
-            s.ambientGround = new Color(.13f, .13f, .14f);
+            // Keep the per-stage overcast lighting and grade from ApplyRealism; darken the terrain, not unit readability.
+            s.ambientGround = new Color(.16f, .16f, .17f);
             s.fogColor = finale ? new Color(.19f, .18f, .22f) : new Color(.25f, .26f, .30f);
             s.fogStart = 60;
             // The finale keeps the sky readable far enough to see the Demon King over the citadel.
             s.fogEnd = finale ? 230 : 190;
-            s.cloudShadowStrength = .58f;
+            s.cloudShadowStrength = .24f;
             if (s.terrainMaterial != null)
             {
                 s.terrainMaterial.SetFloat("_Weathering", .62f);
                 s.terrainMaterial.SetColor("_CorruptSoil", s.corruptStone);
+                s.terrainMaterial.SetColor("_ForestGroundTint", new Color(.64f, .64f, .62f));
             }
             if (s.propsMaterial != null) s.propsMaterial.SetColor("_ShadowColor", new Color(.50f, .52f, .56f));
             if (s.skyMaterial != null)
             {
                 s.skyMaterial.SetColor("_ZenithColor", finale ? new Color(.07f, .07f, .10f) : new Color(.11f, .12f, .16f));
                 s.skyMaterial.SetColor("_HorizonColor", s.fogColor);
-                s.skyMaterial.SetFloat("_SunStrength", .03f);
+                s.skyMaterial.SetFloat("_SunStrength", 0);
             }
         }
 
@@ -101,6 +99,7 @@ namespace Lightbringer.Visuals
 
         private void RuinedHouse(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoRuinedHouse(p); return; }
             // Roofless stone walls with a doorway gap and a fallen beam; the village is long abandoned.
             Block(shapes, p + Vector3.up * .05f, new Vector3(6, .1f, 5));
             Block(shapes, p + new Vector3(0, 1.4f, 2.3f), new Vector3(6, 2.8f, .5f));
@@ -118,6 +117,7 @@ namespace Lightbringer.Visuals
 
         private void GateTower(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoGateTower(p); return; }
             Color stone = palette.rock * 1.15f;
             Block(shapes, p + Vector3.up * 4.5f, new Vector3(3.6f, 9, 3.6f), stone);
             for (int x = -1; x <= 1; x += 2)
@@ -130,6 +130,7 @@ namespace Lightbringer.Visuals
 
         private void DarkOutpost(Shapes shapes, Vector3 p)
         {
+            if (structure != null) { PhotoDarkOutpost(p); return; }
             // An outer strongpoint of the citadel: charred palisade, a squat stone keep and the enemy's own markers.
             Palisade(shapes, p);
             shapes.Pattern = Surface.Masonry;
@@ -158,6 +159,23 @@ namespace Lightbringer.Visuals
         // Weathered charcoal crags flank the canyon outside the playable field; never a wall across it.
         private void RockSpires()
         {
+            ActTwoScatterAsset[] cliffs = UsesPhotoscans ? ScanSet(ActTwoScatterKind.Cliff) : new ActTwoScatterAsset[0];
+            if (cliffs.Length > 0)
+            {
+                GameObject group = new GameObject("Charcoal Canyon Crags");
+                group.transform.SetParent(terrain.transform, false);
+                for (int i = 0; i < 18; i++)
+                {
+                    ActTwoScatterAsset asset = cliffs[i % cliffs.Length];
+                    float scale = Mathf.Min(2.4f, 8f / Mathf.Max(.1f, asset.radius));
+                    Vector2 point = new Vector2((i % 2 == 0 ? -1 : 1) * Range(44, 54), -18 + (i / 2) * 14);
+                    if (!terrain.ClearOfProps(point, asset.radius * scale)) continue;
+                    GameObject cliff = PlaceScan(asset, point, scale, Range(0, 360), 0, .45f);
+                    cliff.transform.SetParent(group.transform, false);
+                }
+                Landmarks++;
+                return;
+            }
             Shapes rocks = new Shapes();
             for (int i = 0; i < 26; i++)
             {
@@ -175,6 +193,8 @@ namespace Lightbringer.Visuals
         // a high central keep (Act 3 atlas, upper right). `scale` < 1 shows it far off from the last approach.
         private void GothicCitadel(float z, float scale)
         {
+            string label = scale < 1 ? "Distant Final Citadel" : "Final Citadel of the Demon King";
+            if (HasStructures) { PhotoCitadel(z, scale, label); return; }
             Shapes fortress = new Shapes { Pattern = Surface.Masonry };
             Color dark = palette.rock * .75f, roof = palette.corruptStone * 1.3f;
             Vector3 Foot(float x, float depth) => Ground(x * scale, z + depth * scale);
@@ -205,7 +225,7 @@ namespace Lightbringer.Visuals
                 fortress.Cone(.85f, dark, Foot(side * 15, 13) + Vector3.up * 22 * scale, S(5, 14, 5), segments: 10);
                 fortress.Cone(0, roof, Foot(side * 15, 13) + Vector3.up * 36 * scale, S(4.6f, 11, 4.6f), segments: 10);
             }
-            MeshGroup(scale < 1 ? "Distant Final Citadel" : "Final Citadel of the Demon King", fortress);
+            MeshGroup(label, fortress);
             Landmarks++;
         }
 

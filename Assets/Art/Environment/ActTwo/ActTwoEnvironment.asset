@@ -25,3 +25,90 @@ MonoBehaviour:
   watchtower: {fileID: 3086969254179641449, guid: f280d014d4e55f145be9ef767c13e6bc, type: 3}
   brokenWall: {fileID: 1950885017108448697, guid: 76d9fe63e5d175841aa14d9493df8ec4, type: 3}
   terrain: {fileID: 2100000, guid: 0d53caabe6b7e3e45aa745b4616d7fd9, type: 2}
+  scatter:
+  - kind: 0
+    prefab: {fileID: 5341221776494319122, guid: d105bf3565ec89d458c2338faec21efa, type: 3}
+    radius: 1.4084698
+    length: 0
+  - kind: 1
+    prefab: {fileID: 1728878925262854514, guid: 9b66a62db53ce084d9a711ca28a416df, type: 3}
+    radius: 1.1145012
+    length: 0
+  - kind: 1
+    prefab: {fileID: 7916275004886289239, guid: 7d609a9a10911c6448e7833f4735ff92, type: 3}
+    radius: 5.299977
+    length: 0
+  - kind: 2
+    prefab: {fileID: 1703275769052541053, guid: bf6d5e0491c5c2943971fc3e476cdf53, type: 3}
+    radius: 1.5318056
+    length: 0
+  - kind: 3
+    prefab: {fileID: 7813911499968052717, guid: 8a0c61aaeffc741489885325f8fad1c7, type: 3}
+    radius: 1.0678593
+    length: 0
+  - kind: 4
+    prefab: {fileID: 5112280195402746405, guid: 09892c133a8cc2047af02b8ef598e40f, type: 3}
+    radius: 0.83819884
+    length: 0
+  - kind: 5
+    prefab: {fileID: 301001539074027932, guid: 0a66e06ed6dd86d4f94c94dbc3791418, type: 3}
+    radius: 0.46052104
+    length: 0
+  - kind: 5
+    prefab: {fileID: 5628570531459789708, guid: d459fd77303873d41b8fe43b8470891d, type: 3}
+    radius: 0.64036393
+    length: 0
+  - kind: 6
+    prefab: {fileID: 8789708948770137732, guid: 9fcc71ed53ddf1d4cbba9dac479de7b6, type: 3}
+    radius: 2.7795396
+    length: 0
+  - kind: 7
+    prefab: {fileID: 2173196800125759423, guid: 3d9320731231ad34a8b26db434028932, type: 3}
+    radius: 0.2508899
+    length: 0
+  - kind: 8
+    prefab: {fileID: 3430796250159873731, guid: c449a5bca6443b1408b77a1639c276c9, type: 3}
+    radius: 0.27985463
+    length: 0
+  - kind: 9
+    prefab: {fileID: 5684658926320982499, guid: 5c83fb73e8ddfa64ab5996608ef06156, type: 3}
+    radius: 1.01886
+    length: 0
+  - kind: 10
+    prefab: {fileID: 1322811478321632826, guid: 902498934f21c804dbd20040c29c8f54, type: 3}
+    radius: 1.0202289
+    length: 0
+  - kind: 11
+    prefab: {fileID: 866039130811484886, guid: eb78d0f22f4483f49ad03bd5ec642eb4, type: 3}
+    radius: 1.0756671
+    length: 0
+  relics:
+  - kind: 12
+    prefab: {fileID: 4102957240146385697, guid: ed2bb140f705e984db10c144b7e1319d, type: 3}
+    radius: 0.09635489
+    length: 0.925
+  - kind: 13
+    prefab: {fileID: 3575769952809561708, guid: 6eb61296ea5332048a9be519ab1178cf, type: 3}
+    radius: 0.12263147
+    length: 2.47
+  - kind: 14
+    prefab: {fileID: 87350854935842795, guid: 44fa997ce5b2da54bb5bdf70034e5ffe, type: 3}
+    radius: 0.18384774
+    length: 0.92
+  - kind: 8
+    prefab: {fileID: 2728223579038237808, guid: ea2989091fa0ca441b1483bc98945efd, type: 3}
+    radius: 0.2776801
+    length: 0.75
+  - kind: 8
+    prefab: {fileID: 7786337563806022470, guid: 8633739dd2be5c84e8abe184c33ac64f, type: 3}
+    radius: 0.41292402
+    length: 1.4200001
+  - kind: 8
+    prefab: {fileID: 3209511143226176125, guid: 877ac316a98681f45ab22285d341a6fe, type: 3}
+    radius: 0.28868842
+    length: 0.57
+  castleStone: {fileID: 2100000, guid: 9fb7dfc34242adb4a99fa099f8439ca0, type: 2}
+  roofSlate: {fileID: 2100000, guid: 4f64d859a043af640afdaf6efa2e1ed8, type: 2}
+  timber: {fileID: 2100000, guid: a103a45caab05e744b796f60b41ea46d, type: 2}
+  bark: {fileID: 2100000, guid: ebd2b6496c96a354b8d4c5fad496e67b, type: 2}
+  windowGlow: {fileID: 2100000, guid: 4f7c4d9834627174db076fe35f1c915a, type: 2}

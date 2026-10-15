@@ -75,7 +75,7 @@ namespace Lightbringer.EditorTools
         {
             PrototypeBattle battle = session.Battle;
             BossEncounter encounter = battle.Encounter;
-            Check(encounter != null && encounter.IsFinale && !encounter.IsIllustrated && encounter.KeepsArmy,
+            Check(encounter != null && encounter.IsFinale && !encounter.IsIllustrated,
                 "Stage 24 runs the final encounter over the live battlefield");
             Invoke(battle.Hero.GetComponent<FoodResource>(), "GenerateFood", 100f);
             Combatant ally = null;
@@ -87,12 +87,14 @@ namespace Lightbringer.EditorTools
             Physics.SyncTransforms();
             battle.Objective.EnemyBase.TakeDamage(100000, battle.Hero);
             encounter.Tick(.01f);
+            Check(encounter.Phase == BossEncounterPhase.Rupture, "The final arrival opens with the rupture shockwave");
+            encounter.Tick(BossEncounter.WaveSeconds);
             encounter.Tick(BossEncounter.ArrivalSeconds);
             Combatant warlord = battle.Waves.Boss, core = encounter.DemonCore;
-            Check(ally.IsAlive && encounter.FallenAllies == 0 && warlord != null && core != null
+            Check(!ally.IsAlive && encounter.FallenAllies == 1 && warlord != null && core != null
                 && encounter.Phase == BossEncounterPhase.Dialogue && encounter.CurrentLines.SequenceEqual(BossEncounter.FinaleLines)
                 && encounter.CurrentSpeakers.Length == encounter.CurrentLines.Length,
-                $"Final arrival keeps the army, raises the Warlord and the abyss core, then speaks [allyAlive={ally.IsAlive}, fallen={encounter.FallenAllies}, warlord={warlord != null}, core={core != null}, phase={encounter.Phase}]");
+                $"Final arrival wipes the army, raises the Warlord and the abyss core, then speaks [allyAlive={ally.IsAlive}, fallen={encounter.FallenAllies}, warlord={warlord != null}, core={core != null}, phase={encounter.Phase}]");
             Check(core.Faction == Faction.Enemy && core.IsHeavy && core.StatusImmune && core.Invulnerable
                 && core.MaximumHealth == EnemyCatalog.DemonCoreHealth(24) && battle.Waves.ExperienceFor(core) == 60
                 && GroundGap(core.transform.position, battle.Objective.EnemyBase != null ? battle.Objective.EnemyBase.transform.position : core.transform.position) < .1f,
@@ -104,9 +106,9 @@ namespace Lightbringer.EditorTools
             while (session.IsChoosing) session.ChooseGrowth(0);
             DemonKingCombat demonKing = encounter.DemonKing;
             BossCombat lord = warlord.GetComponent<BossCombat>();
-            Check(encounter.Phase == BossEncounterPhase.Fight && !core.Invulnerable && demonKing.enabled && lord.enabled
+            Check(encounter.Phase == BossEncounterPhase.Fight && core.Invulnerable && encounter.IsCoreWarded && demonKing.enabled && lord.enabled
                 && encounter.ObjectiveText.Contains("군주") && encounter.ObjectiveText.Contains("마왕"),
-                "The fight starts with both bosses active and both named in the objective");
+                "The fight starts with both bosses active and the core warded while the Warlord stands");
 
             battle.Hero.SetMaximumHealth(5000); battle.Hero.Heal(5000);
             // The Warlord stands within reach of every special; only BossCombat.Tick runs, so nothing else strikes.
@@ -127,6 +129,14 @@ namespace Lightbringer.EditorTools
             lord.Tick(.01f);
             Check(!lord.IsAttacking, "A short gap follows each sky attack before the Warlord may cast");
             demonKing.Tick(DemonKingCombat.Gap + .01f);
+            // The first army was wiped by the arrival, so a fresh troop stands at the front for the rain.
+            Invoke(battle.Hero.GetComponent<FoodResource>(), "GenerateFood", 100f);
+            Combatant fallenAlly = ally;
+            Check(battle.Summoner.TrySummon() && ally != null && ally != fallenAlly,
+                $"A new troop can be summoned during the final fight [feedback={battle.Summoner.LastFeedback}]");
+            // Like the pre-arrival troop, this edit-mode clone needs the health initialization normally done by Awake.
+            ally.Configure(Faction.Allied, ally.MaximumHealth);
+            Check(ally.IsAlive, "The newly summoned troop is active and alive for the abyss rain check");
             ally.transform.position = new Vector3(0, .85f, 40);
             Physics.SyncTransforms();
             demonKing.Tick(6f);
@@ -136,14 +146,21 @@ namespace Lightbringer.EditorTools
             demonKing.Tick(DemonKingCombat.RainWindup + DemonKingCombat.RainStagger * 4);
             Check(!demonKing.IsAttacking && ally.CurrentHealth < allyBefore, "Abyss rain lands in turn and presses the front");
 
-            float gold = session.Progress.gold;
             core.TakeDamage(core.MaximumHealth * 10, battle.Hero);
-            Check(!battle.Objective.HasEnded && lord.Bereaved && encounter.Phase == BossEncounterPhase.Fight
-                && session.Progress.gold > gold && encounter.ObjectiveText.Contains("군주"),
-                "Destroying the core first strengthens the Warlord without ending the battle");
-            if (encounter.Sky != null) Check(encounter.Sky.Dissipating, "The sky darkness disperses when its core falls");
+            Check(core.IsAlive && encounter.Phase == BossEncounterPhase.Fight, "The warded core cannot fall before the Warlord");
+            float gold = session.Progress.gold;
             warlord = battle.Waves.Boss;
             warlord.TakeDamage(warlord.MaximumHealth * 10, battle.Hero);
+            Check(!battle.Objective.HasEnded && encounter.IsInterlude && encounter.IsIllustrated && encounter.IsCinematic
+                && encounter.CurrentLines.SequenceEqual(BossEncounter.InterludeLines) && demonKing.Bereaved && session.Progress.gold > gold,
+                "The Warlord falls first and his remaining light speaks before the Demon King is fought alone");
+            for (int i = 0; i < BossEncounter.InterludeLines.Length; i++)
+            { encounter.Tick(.8f); Check(encounter.AdvanceDialogue(), "Interlude line advances once"); }
+            Check(encounter.Phase == BossEncounterPhase.Fight && !core.Invulnerable && !encounter.IsCoreWarded && !battle.Hero.Invulnerable
+                && encounter.ObjectiveText.Contains("마왕"),
+                "After the interlude the core is open to attack");
+            core.TakeDamage(core.MaximumHealth * 10, battle.Hero);
+            if (encounter.Sky != null) Check(encounter.Sky.Dissipating, "The sky darkness disperses when its core falls");
             Check(!battle.Objective.HasEnded && encounter.IsRetreating && encounter.CurrentLines.SequenceEqual(BossEncounter.FinaleEndLines)
                 && !session.Progress.cleared[23],
                 "With both darknesses down the ending plays before any reward");
@@ -152,6 +169,7 @@ namespace Lightbringer.EditorTools
             Check(battle.Objective.HasWon && session.Progress.IsComplete && session.Progress.unlockedStage == 24
                 && session.LastResult.Contains("캠페인 완료"),
                 "The final victory completes the 24-stage campaign");
+            Check(session.PendingStory == StoryCatalog.Epilogue, "The first final victory earns the epilogue");
         }
 
         private static float GroundGap(Vector3 a, Vector3 b) { a.y = b.y; return Vector3.Distance(a, b); }
@@ -190,10 +208,27 @@ namespace Lightbringer.EditorTools
                             $"Act 3 stage {stage} owns a darker ash palette without neon ground cracks");
                         Check(terrain.GetComponentsInChildren<Collider>(true).Length == 1 && terrain.Terrain != null,
                             $"Act 3 stage {stage} dressing preserves the single terrain collision surface");
+                        Check(scenery.Palette.postProcessing != null && scenery.Palette.postProcessing != art.postProcessing
+                            && scenery.Palette.terrainMaterial.GetFloat("_NaturalLight") == 1
+                            && scenery.Palette.propsMaterial.GetFloat("_OutlineWidth") == 0,
+                            $"Act 3 stage {stage} uses natural terrain lighting and its own filmic grade");
+                        if (art.actTwoEnvironment != null && art.actTwoEnvironment.Find(Lightbringer.Visuals.ActTwoScatterKind.Stump).Length > 0)
+                            Check(scenery.UsesPhotoscans && scenery.ScannedProps > 10,
+                                $"Act 3 stage {stage} reuses detailed rocks, deadwood and battlefield debris");
+                        if (art.actTwoEnvironment != null && art.actTwoEnvironment.HasStructureMaterials
+                            && scenery.UsesPhotoscans && stage != 19 && stage != 20)
+                            Check(scenery.PhotoStructures > 0,
+                                $"Act 3 stage {stage} builds textured architecture");
                         if (stage == 18) Check(scenery.Bridges == battle.Paths.Length,
                             "Every assigned stage 18 route has a stone bridge across the shallow river");
                         if (stage == 24)
                         {
+                            Transform citadel = terrain.transform.Find("Final Citadel of the Demon King");
+                            if (art.actTwoEnvironment != null && art.actTwoEnvironment.HasStructureMaterials)
+                                Check(citadel != null && citadel.GetComponent<MeshRenderer>().sharedMaterials.Length >= 6
+                                    && citadel.GetComponent<MeshFilter>().sharedMesh.vertexCount > 10000
+                                    && citadel.GetComponentsInChildren<Collider>(true).Length == 0,
+                                    "The final citadel is built from photographic stone and slate without colliders");
                             var sky = battle.Root.GetComponentInChildren<Lightbringer.Visuals.DemonKingSky>(true);
                             Check(sky != null && !sky.Revealed && sky.Presence > 0 && sky.EyeOpening == 0
                                 && sky.GetComponentsInChildren<Renderer>().Length >= 8 && sky.GetComponentsInChildren<Collider>(true).Length == 0,

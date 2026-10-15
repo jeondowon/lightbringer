@@ -24,3 +24,6 @@ Assets/Art/Characters/*/ShadowHood/*.asset filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Environment/Props/**/*_Optimized.asset filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Characters/*/Mounted/*.asset filter=lfs diff=lfs merge=lfs -text
 Assets/Art/Buildings/*/*_Optimized.asset filter=lfs diff=lfs merge=lfs -text
+Assets/Art/Environment/ActTwo/Photo/**/*.bin filter=lfs diff=lfs merge=lfs -text
+Assets/Art/Environment/ActTwo/Photo/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+Assets/Art/Environment/ActTwo/Photo/Meshes/*.asset filter=lfs diff=lfs merge=lfs -text
