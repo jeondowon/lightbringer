@@ -266,23 +266,6 @@ namespace Lightbringer.EditorTools
 
         public const string FemaleHeroPropsFolder = FemaleHeroFolder + "/Props";
 
-        [MenuItem("Lightbringer/Art/Assign Female Hero Staff")]
-        private static void AssignFemaleHeroStaff()
-        {
-            ArtStyleLibrary library = AssetDatabase.LoadAssetAtPath<ArtStyleLibrary>(ArtStyleSetup.LibraryPath);
-            VisualOverride hero = library != null ? library.FindOverride(VisualId.Hero) : null;
-            string staff = FindModel(FemaleHeroPropsFolder);
-            if (hero == null || staff == null)
-            {
-                EditorUtility.DisplayDialog("Female Hero Staff", hero == null
-                    ? "Run Assign Female Hero Model first."
-                    : "No staff model found in " + FemaleHeroPropsFolder + ".", "OK");
-                return;
-            }
-            if (!AttachProp(library, hero, staff, "RightHand", 2.0f)) return;
-            Debug.Log("Staff attached to the hero's right hand from " + staff + ".");
-        }
-
         // Places a long prop upright in the bone's bind pose: gripped `gripFraction` up its length, a little past
         // the wrist, and sized to `gameLength` metres in play. Stored as bone-local values so it follows animation.
         public static bool AttachProp(ArtStyleLibrary library, VisualOverride owner, string propPath, string boneName, float gameLength,

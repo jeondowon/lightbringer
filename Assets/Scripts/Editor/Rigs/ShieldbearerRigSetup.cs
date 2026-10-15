@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Lightbringer.Visuals;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using static Lightbringer.EditorTools.RigBuildUtility;
 
@@ -46,7 +44,7 @@ namespace Lightbringer.EditorTools
         private static GeneratedRig rig => body.Rig;
         private static float cx => body.Cx;
 
-        public static VisualOverride Build(GameObject source, Matrix4x4 toUnit, ArtStyleLibrary library)
+        public static VisualOverride Build(GameObject source, Matrix4x4 toUnit)
         {
             if (!AssetDatabase.IsValidFolder(RigFolder)) AssetDatabase.CreateFolder(Folder, "Rigged");
             Scene scene = EditorSceneManager.NewPreviewScene();

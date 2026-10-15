@@ -25,7 +25,7 @@ namespace Lightbringer.EditorTools
                 Require(data != null && data.IsReady && data.slides.Length == expected.Length,
                     expected.Length + " complete slides are available in the player resource", report);
                 Require(captionCount == PrologueSetup.Entries.Sum(entry => entry.Captions.Length),
-                    "Every caption is shown, including those of planned pages awaiting artwork", report);
+                    "Every caption is shown", report);
                 for (int i = 0; i < expected.Length; i++)
                 {
                     Require(data.slides[i].id == expected[i].Id, "Order " + i + ": " + expected[i].Id, report);

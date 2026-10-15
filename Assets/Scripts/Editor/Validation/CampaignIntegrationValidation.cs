@@ -4,7 +4,6 @@ using Lightbringer.Core;
 using Lightbringer.Progression;
 using Lightbringer.Resources;
 using Lightbringer.Units;
-using UnityEditor;
 using UnityEngine;
 
 namespace Lightbringer.EditorTools

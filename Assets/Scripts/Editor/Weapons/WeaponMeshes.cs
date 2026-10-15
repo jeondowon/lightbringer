@@ -406,7 +406,6 @@ namespace Lightbringer.EditorTools
                 Triangle(a, c, d, inside);
             }
 
-            public int VertexCount => vertices.Count;
             public void Append(FacetedMesh other) => vertices.AddRange(other.vertices);
 
             public void Scale(float factor, Vector3 about)

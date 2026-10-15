@@ -58,7 +58,6 @@ namespace Lightbringer.Core
         public Combatant DemonCore => demonKing != null ? demonKing.Core : null;
         public DemonKingCombat DemonKing => demonKing;
         public DemonKingSky Sky => sky;
-        public string ChapterTitle => IsFinale ? "두 어둠" : "어둠의 군주";
         private Vector3 RevealPoint => centre + (IsFinale ? Vector3.back * 7 : RevealOffset);
         private float CinematicFov => IsFinale ? 60 : 48;
         public static readonly string[] Speakers = { "어둠의 군주", "빛의 지휘관", "어둠의 군주", "빛의 지휘관" };
@@ -166,7 +165,7 @@ namespace Lightbringer.Core
             battle.Waves.Spawned += OnEnemySpawned;
             if (battle.Summoner != null) battle.Summoner.Summoned += OnAllySummoned;
             // The storm bank already looms over the final citadel; its eyes open when the stronghold falls.
-            if (IsFinale) sky = DemonKingSky.Build(art, battle.Root.transform);
+            if (IsFinale) sky = DemonKingSky.Build(battle.Root.transform);
         }
 
         private void OnAssaultEnded()

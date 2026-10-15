@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Lightbringer.Pathing;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -118,7 +117,7 @@ namespace Lightbringer.Visuals
         }
 
         // Called after the shared camps and shrine ruins, before the forest, so the forest grows around these.
-        internal void Dress(BattlefieldEnvironment environment, WaypointPath[] paths)
+        internal void Dress(BattlefieldEnvironment environment)
         {
             terrain = environment;
             random = new System.Random(Stage * 6151);

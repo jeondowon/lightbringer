@@ -187,10 +187,6 @@ Forest: 해당 구간에서 사용할 기존 3D 숲 설정. 비우면 원래 스
 범위가 겹치면 목록에서 먼저 일치하는 설정이 적용된다. 일치하는 항목이 없으면 기존 그라데이션 하늘을 사용한다.
 이미지 교체는 먼 풍경만 바꾼다. 설원·사막 등의 새 지역에는 별도 지면 재질/식생도 준비해야 한다.
 
-검증 및 미리보기:
-Lightbringer/Art/Capture Forest Ground Preview: 1스테이지
-Lightbringer/Art/Capture Battlefield Preview: 8스테이지
-Docs/ArtPass/Preview의 Hero, HorizonForward, HorizonRear, HorizonSeam 이미지를 확인한다.
 원경은 카메라 이동 시 먼 거리로 유지되고, 주변 지형과 숲은 실제 3D로 움직인다.
 구름만 매우 느리게 움직이며 산맥과 성채는 회전하지 않는다.
 기존 전투 경로, 이동 가능한 평지, 충돌 판정은 유지한다.
@@ -335,8 +331,6 @@ Unity에서 확인
 2. 숲 경사면의 나무 밑동, 아군 성문 앞 지면, 봉화 성역의 바닥을 확인한다.
 3. 별도 Inspector 연결은 필요 없다.
 4. 재설정: Lightbringer/Art/Improve Forest Surfaces and Root Contact
-5. 미리보기와 검사: Lightbringer/Art/Capture Forest Ground Preview
-   출력 폴더: Docs/ArtPass/Preview
    ForestGround_Hero.png / ForestGround_RootContact.png / ForestGround_StoneCloseup.png
 
 추가 파일 (스크립트별 Unity meta 포함)
@@ -437,8 +431,6 @@ Unity 확인
 2. CampaignPrototype에서 스테이지 1에 진입한다. 수동 Inspector 연결은 필요 없다.
 3. 출발 지점에서 왼편 봉화가 보이는지, 성역 접근과 중앙 전투에 방해가 없는지 확인한다.
 4. 적 본진 격파 후 봉화 점화 → 필요 시 성장 선택 → 결과창 순서를 확인한다.
-5. Lightbringer/Art/Capture Forest Ground Preview로 스테이지 1 정적 미리보기와 봉화 검사를 실행한다.
-6. Docs/ArtPass/Preview/Beacon_Checks.txt, Beacon_Dormant.png, Beacon_Ignition.png를 확인한다.
 
 추가 파일
 Assets/Scripts/Visuals/Environment/BeaconSanctuary.cs (+ Unity meta)
@@ -486,8 +478,6 @@ Unity 확인
 1. Play 중이면 종료한 뒤 스크립트 컴파일을 기다린다.
 2. CampaignPrototype에서 Play → 스테이지 1 전투 진입.
 3. 별도 오브젝트 배치나 Inspector 연결은 필요하지 않다.
-4. Lightbringer/Art/Capture Forest Ground Preview 메뉴로 고정 카메라 비교 가능.
-5. Docs/ArtPass/Preview/ForestGround_Hero.png 및 ForestGround_Checks.txt 확인.
 
 추가 파일 (Unity 메타 파일 포함)
 Assets/Art/Environment/Forest/StageOneGlade.asset

@@ -132,7 +132,6 @@ namespace Lightbringer.Visuals
         private float travel, age, seed, moteTimer;
         private Transform crystal, orbit;
         private MeshRenderer crystalRenderer, glowRenderer;
-        private TrailRenderer trail;
         private Light glow;
 
         public static IceBoltVfx Spawn(ArtStyleLibrary style, Vector3 start, Combatant target, float travel, Transform parent)
@@ -164,7 +163,7 @@ namespace Lightbringer.Visuals
             FrostVfx.Apply(glowRenderer, FrostVfx.GlowMode, 0f, 0.65f, seed);
             FrostVfx.Face(crystal);
             FrostVfx.Face(glowRenderer.transform);
-            trail = FrostVfx.Trail(transform, 0.28f, 0.42f);
+            FrostVfx.Trail(transform, 0.28f, 0.42f);
             orbit = new GameObject("Orbit").transform;
             orbit.SetParent(transform, false);
             for (int i = 0; i < 2; i++)

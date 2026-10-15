@@ -126,12 +126,6 @@ namespace Lightbringer.EditorTools
             return ((float)Math.Sqrt(nx * nx + ny * ny) - 1f) * Math.Min(rx, ry);
         }
 
-        public static float RotatedEllipse(float x, float y, float cx, float cy, float rx, float ry, float angle)
-        {
-            float dx = x - cx, dy = y - cy, cos = (float)Math.Cos(angle), sin = (float)Math.Sin(angle);
-            return Ellipse(cx + dx * cos + dy * sin, cy - dx * sin + dy * cos, cx, cy, rx, ry);
-        }
-
         public static float Segment(float x, float y, float ax, float ay, float bx, float by, float halfWidth)
         {
             float px = x - ax, py = y - ay, vx = bx - ax, vy = by - ay;

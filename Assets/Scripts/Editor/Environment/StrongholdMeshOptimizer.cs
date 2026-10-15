@@ -41,7 +41,7 @@ namespace Lightbringer.EditorTools
                         if (source == null || renderer == null) continue;
                         if (source.name.EndsWith(Suffix))
                         {
-                            report.AppendLine($"{name}: already optimized ({Triangles(source):N0} triangles), skipped");
+                            report.AppendLine($"{name}: already optimized ({RigBuildUtility.Triangles(source):N0} triangles), skipped");
                             continue;
                         }
                         Mesh optimized = CrowdMeshOptimizer.Simplify(source, renderer.sharedMaterials, TriangleBudget, out Material[] merged);
@@ -51,7 +51,7 @@ namespace Lightbringer.EditorTools
                         filter.sharedMesh = optimized;
                         renderer.sharedMaterials = merged;
                         changed = true;
-                        report.AppendLine($"{name}: triangles {Triangles(source):N0} -> {Triangles(optimized):N0}, vertices {source.vertexCount:N0} -> {optimized.vertexCount:N0}, "
+                        report.AppendLine($"{name}: triangles {RigBuildUtility.Triangles(source):N0} -> {RigBuildUtility.Triangles(optimized):N0}, vertices {source.vertexCount:N0} -> {optimized.vertexCount:N0}, "
                             + $"distance LODs {optimized.lodCount} | {meshPath}");
                     }
                     if (changed) PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
@@ -62,13 +62,6 @@ namespace Lightbringer.EditorTools
             Directory.CreateDirectory(Folder);
             File.WriteAllText(Path.Combine(Folder, "StrongholdMeshes.txt"), report.ToString());
             Debug.Log("Stronghold meshes optimized; see Docs/Diagnostics/StrongholdMeshes.txt");
-        }
-
-        private static int Triangles(Mesh mesh)
-        {
-            int count = 0;
-            for (int i = 0; i < mesh.subMeshCount; i++) count += (int)mesh.GetIndexCount(i) / 3;
-            return count;
         }
     }
 }

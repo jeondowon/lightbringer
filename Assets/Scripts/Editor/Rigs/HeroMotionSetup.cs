@@ -38,10 +38,9 @@ namespace Lightbringer.EditorTools
         {
             public float Twist, Bend, Pitch;
             public Vector3 Right;
-            public Vector3? Left;
             // 0..1: how far the right hand's height is replaced by the height that puts the staff butt on the ground.
             public float Plant;
-            // The left hand grips the staff shaft above the right hand (two-handed blows) instead of following `Left`.
+            // The left hand grips the staff shaft above the right hand (two-handed blows).
             public bool LeftOnStaff;
         }
 
@@ -253,12 +252,9 @@ namespace Lightbringer.EditorTools
                 Vector3 staffDir = Quaternion.AngleAxis(frame.Pitch, pitchAxis) * up;
                 hand.rotation = Quaternion.FromToRotation(hand.rotation * staffInHand, staffDir) * hand.rotation;
 
-                // The left arm follows its own target, or grips the shaft a hand's width above the right hand.
+                // Two-handed blows: the left hand grips the shaft a hand's width above the right hand.
                 if (frame.LeftOnStaff)
                     SolveArm(lArm, lFore, lHand, hand.position + staffDir * (.34f * reach), lUpper, lLower, -up * .8f - right * .6f - forward * .3f);
-                else if (frame.Left.HasValue)
-                    SolveArm(lArm, lFore, lHand, lArm.position + World(frame.Left.Value, forward, up, -right) * reach, lUpper, lLower,
-                        -up * .8f - right * .6f - forward * .3f);
 
                 foreach (string name in keyed)
                     rotations[name][f] = Quaternion.Slerp(idlePose[name], bones[name].localRotation, envelope);

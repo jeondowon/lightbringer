@@ -6,8 +6,7 @@ using UnityEngine;
 namespace Lightbringer.EditorTools
 {
     // Builds the female hero's staff from code (see WeaponMeshes.HeroStaff) as a prefab and attaches it to the
-    // hero's right hand. The Tripo/Higgsfield HeroStaff.glb stays untouched: "Lightbringer/Art/Assign Female Hero
-    // Staff" attaches that one again. Request file: Docs/Validation/HeroStaff.request.
+    // hero's right hand. Request file: Docs/Validation/HeroStaff.request.
     internal static class HeroStaffSetup
     {
         private const string Folder = ArtModelImport.FemaleHeroPropsFolder + "/Code";

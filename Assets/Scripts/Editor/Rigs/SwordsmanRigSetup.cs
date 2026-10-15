@@ -241,9 +241,6 @@ namespace Lightbringer.EditorTools
             return part;
         }
 
-        private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
-            => RigBuildUtility.MakeMaterial(RigFolder, name, color, metallic, smoothness);
-
         private static AnimationClip MakeClip(Transform root, string role, float duration)
         {
             var clip = new AnimationClip { name = "Swordsman_" + role, legacy = true, frameRate = 30,

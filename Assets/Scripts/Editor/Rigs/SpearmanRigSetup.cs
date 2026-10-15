@@ -32,7 +32,7 @@ namespace Lightbringer.EditorTools
         private static int[] palmVertices = new int[0];
 
         // `toUnit` maps the FBX root into unit space (the static override placement).
-        public static VisualOverride Build(GameObject source, Matrix4x4 toUnit, ArtStyleLibrary library)
+        public static VisualOverride Build(GameObject source, Matrix4x4 toUnit)
         {
             if (!AssetDatabase.IsValidFolder(RigFolder)) AssetDatabase.CreateFolder(Folder, "Rigged");
             Scene scene = EditorSceneManager.NewPreviewScene();

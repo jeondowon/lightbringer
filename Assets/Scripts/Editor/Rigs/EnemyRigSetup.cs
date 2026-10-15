@@ -74,7 +74,7 @@ namespace Lightbringer.EditorTools
                 ?? throw new InvalidOperationException("Art style library is missing.");
             var report = new StringBuilder();
             bool pass = true;
-            foreach (Enemy enemy in Roster(library))
+            foreach (Enemy enemy in Roster())
             {
                 try { report.Append(Build(enemy, library)); }
                 catch (Exception error)
@@ -424,7 +424,7 @@ namespace Lightbringer.EditorTools
 
         // ---------- Roster ----------
 
-        private static IEnumerable<Enemy> Roster(ArtStyleLibrary library)
+        private static IEnumerable<Enemy> Roster()
         {
             // Raider: sword and round shield, guard up; a diagonal slash over the shield.
             yield return Behave(Raider, new Enemy
@@ -1074,13 +1074,6 @@ namespace Lightbringer.EditorTools
                 lines.AppendLine(line + ".");
             }
             rig.ResetPose();
-        }
-
-        private static int Triangles(Mesh mesh)
-        {
-            int count = 0;
-            for (int i = 0; i < mesh.subMeshCount; i++) count += (int)mesh.GetIndexCount(i) / 3;
-            return count;
         }
     }
 }

@@ -44,7 +44,6 @@ namespace Lightbringer.CameraSystem
         private const float ShakeRange = 28f;
         private float trauma;
         private float shakeSeed;
-        public float Trauma => trauma;
 
         // `strength` 0-1; falls off with distance from the followed hero so far-away fronts stay calm.
         public static void Shake(Vector3 source, float strength)

@@ -35,11 +35,8 @@ namespace Lightbringer.UI
         public bool IsOpen => stage != Stage.Closed;
         public string SceneId { get; private set; }
         public int PageIndex { get; private set; }
-        public int PageCount => beats.Count;
         public string LineText => caption.text;
         public Texture StoryImage => picture.image;
-        public bool CaptionVisible => IsOpen && PageIndex < beats.Count && !beats[PageIndex].IsSilent && pageTime >= beats[PageIndex].LineDelay;
-        public float WhiteoutOpacity => whiteout.resolvedStyle.opacity;
 
         public StoryView(VisualElement parent, Action onFinished)
         {
@@ -56,10 +53,10 @@ namespace Lightbringer.UI
             effects = new StoryEffects();
             canvas.Add(effects);
             frame.RegisterCallback<ClickEvent>(evt => { if (evt.button == 0) Advance(); });
-            Root.RegisterCallback<GeometryChangedEvent>(_ => Fit());
+            Root.RegisterCallback<GeometryChangedEvent>(_ => Hud.FitWidescreen(Root, frame));
             VisualElement top = Hud.Box(Root, "lb-prologue-top");
             Hud.Text(top, "LIGHTBRINGER", "lb-atlas-brand");
-            AddButton(top, "건너뛰기", Skip);
+            Hud.StoryButton(top, "건너뛰기", Skip);
             // Captions use the boss dialogue panel (BossDialogueView), set inside the frame below the moving canvas.
             captionPanel = Hud.Box(frame, "lb-boss-dialogue", "lb-boss-story-caption");
             speaker = Hud.Text(captionPanel, "", "lb-boss-speaker");
@@ -79,13 +76,6 @@ namespace Lightbringer.UI
             whiteout.style.opacity = 0f;
             Root.Add(whiteout);
             Hud.Show(Root, false);
-        }
-
-        private static Button AddButton(VisualElement parent, string text, Action action)
-        {
-            Button button = Hud.Button(parent, text, action, "lb-prologue-button");
-            button.focusable = false;
-            return button;
         }
 
         // Resolves the scene against the artwork on disk: planned pages borrow their fallback, missing pages drop out.
@@ -117,7 +107,7 @@ namespace Lightbringer.UI
             whiteout.style.opacity = 0f;
             ShowPage(0, false);
             SetStage(Stage.Opening);
-            Fit();
+            Hud.FitWidescreen(Root, frame);
             return true;
         }
 
@@ -257,16 +247,6 @@ namespace Lightbringer.UI
         {
             canvas.style.opacity = value;
             captionPanel.style.opacity = value;
-        }
-
-        private void Fit()
-        {
-            float width = Root.contentRect.width, height = Root.contentRect.height;
-            float unit = Mathf.Min(width / 16f, height / 9f);
-            frame.style.width = unit * 16f;
-            frame.style.height = unit * 9f;
-            frame.style.left = (width - unit * 16f) * .5f;
-            frame.style.top = (height - unit * 9f) * .5f;
         }
 
         private void Close()

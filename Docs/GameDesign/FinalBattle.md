@@ -7,7 +7,7 @@
 ## 사용자 지정 방향
 
 - 마지막 전투에서 마왕과 싸운다.
-- 마왕은 **3막 지도에 있는 최종 성 위**에 나타난다. 위치와 성의 외형 기준은 `Assets/UI/Art/CampaignAtlas_Act3_v1.png` 오른쪽 위 성채다.
+- 마왕은 **3막 지도에 있는 최종 성 위**에 나타난다. 위치와 성의 외형 기준은 `Assets/UI/Art/CampaignAtlas_Act3_v2.png` 오른쪽 위 성채다.
 - 마왕은 인물 형태로 만들지 않는다. 하늘에 넓게 퍼진 거대한 어둠으로 존재한다.
 - 어둠 속에서 빨갛게 빛나는 눈으로 전장을 내려다본다.
 - 구름뿐 아니라 프롤로그에서 사용하는 **먹물처럼 길게 흐르는 어둠의 선**도 함께 표현한다. 구름 사이로 검은 흐름이 모이고 갈라지며 마왕의 존재를 드러낸다.
@@ -158,17 +158,17 @@ URP의 파티클·Bloom 지원 참고: [Unity 공식 렌더 파이프라인 기�
 ### 등장 영상용 레퍼런스
 
 - [레퍼런스 v4](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v4.png): v3의 구도를 바탕으로 군주·여성 영웅 시트의 3D 표현을 참고한 최신 검토용 시안. 실제 Unity 렌더나 3D 모델은 아니며, 생성 이미지로 스타일 방향을 검토한다.
-- [v4 생성 프롬프트](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v4.prompt.txt): 편집 대상, 캐릭터 스타일 레퍼런스와 전체 프롬프트 기록.
+- [v4 생성 프롬프트](../ArtReference/Enemies/Prompts.md): 편집 대상, 캐릭터 스타일 레퍼런스와 전체 프롬프트 기록.
 - [레퍼런스 v3](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v3.png): v2의 성과 눈 배치를 유지하고 프롤로그의 어둠의 선을 추가한 시안. 사용자가 흐름 방향을 수용했으며 이후 3D 스타일로 수정하도록 요청했다.
-- [v3 생성 프롬프트](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v3.prompt.txt): 편집 대상, 프롤로그 참고 이미지와 전체 프롬프트 기록.
+- [v3 생성 프롬프트](../ArtReference/Enemies/Prompts.md): 편집 대상, 프롤로그 참고 이미지와 전체 프롬프트 기록.
 - [레퍼런스 v2](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v2.png): 3막 지도 성채를 기준으로 만든 등장 장면 시안. 현재 위치·건축 참고는 v1보다 v2를 우선한다.
-- [v2 생성 프롬프트](../ArtReference/Enemies/DemonKing/DemonKing_SkyReveal_Reference_v2.prompt.txt): 입력 지도, 제작 의도와 전체 프롬프트 기록.
+- [v2 생성 프롬프트](../ArtReference/Enemies/Prompts.md): 입력 지도, 제작 의도와 전체 프롬프트 기록.
 - v1은 초기 분위기 탐색용으로 보관한다. v2도 원근을 바꾼 콘셉트 이미지이며 정확한 3D 복원이나 최종 승인된 외형은 아니다.
 - 2026-10-13 사용자 요청으로 비용을 줄인 사실적 영상 시험 1개를 생성했다. 지도 원본과 게임 UI는 변경하지 않았다.
 
 ### 최소 비용 영상 시험 v1
 
-- [시험 영상 MP4](../ArtReference/Enemies/DemonKing/DemonKing_SkyMotion_Test_v1.mp4), [설정·프롬프트·작업 기록](../ArtReference/Enemies/DemonKing/DemonKing_SkyMotion_Test_v1.prompt.txt).
+- [시험 영상 MP4](../ArtReference/Enemies/DemonKing/DemonKing_SkyMotion_Test_v1.mp4), [설정·프롬프트·작업 기록](../ArtReference/Enemies/Prompts.md).
 - Higgsfield / Seedance 2.0 Mini, 4초·480p·16:9·무음·1개. 사전 견적 2크레딧, 생성 전후 조회 잔액 110.56 → 108.56크레딧.
 - v4 이미지를 시작 프레임으로 사용해 구름·어둠의 선의 움직임과 눈빛 변화를 요청했다. 시작 이미지에서 이미 눈이 보이므로 아래의 12초 전체 등장 구성과 구분한다.
 - 서비스의 생성 완료 상태와 로컬 MP4 저장을 확인했다. 실제 재생에 따른 성 변형·연무 움직임·사실성 평가는 별도로 진행한다. 게임 내 영상 재생은 연결하지 않았다.

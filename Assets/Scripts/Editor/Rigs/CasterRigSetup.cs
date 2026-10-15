@@ -147,7 +147,7 @@ namespace Lightbringer.EditorTools
             Material leather = WeaponMeshes.PebbledLeather(folder, "PriestStaffGripLeather", new Color(.45f, .28f, .17f));
             Material holy = MakeGlowMaterial(folder, "HolyOrb", new Color(1f, .86f, .55f), 2.5f);
             var staff = new GameObject("Staff").transform;
-            WeaponMeshes.PriestStaff("Priest", Priest.ButtY, Priest.HeadY, out Mesh shaft, out Mesh grip, out Mesh trim, out Mesh orb);
+            WeaponMeshes.PriestStaff("Priest", Priest.ButtY, out Mesh shaft, out Mesh grip, out Mesh trim, out Mesh orb);
             AddMesh(staff, "Shaft", shaft, ivory, folder);
             AddMesh(staff, "Grip", grip, leather, folder);
             AddMesh(staff, "Gold", trim, gold, folder);

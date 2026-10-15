@@ -193,33 +193,6 @@ namespace Lightbringer.EditorTools
             return profile;
         }
 
-        private static VolumeProfile LoadOrCreateProfile(string path)
-        {
-            VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
-            if (profile != null) return profile;
-            profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, path);
-            Bloom bloom = profile.Add<Bloom>();
-            bloom.threshold.Override(1f);
-            bloom.intensity.Override(0.8f);
-            bloom.scatter.Override(0.65f);
-            Tonemapping tonemapping = profile.Add<Tonemapping>();
-            tonemapping.mode.Override(TonemappingMode.Neutral);
-            ColorAdjustments grading = profile.Add<ColorAdjustments>();
-            grading.postExposure.Override(0.1f);
-            grading.contrast.Override(6f);
-            grading.saturation.Override(8f);
-            Vignette vignette = profile.Add<Vignette>();
-            vignette.intensity.Override(0.18f);
-            foreach (VolumeComponent component in profile.components)
-            {
-                component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
-                AssetDatabase.AddObjectToAsset(component, profile);
-            }
-            EditorUtility.SetDirty(profile);
-            return profile;
-        }
-
         // Sets the style on every CampaignSession in the campaign scene and saves it.
         public static bool AssignToCampaignScene(ArtStyleLibrary library)
         {

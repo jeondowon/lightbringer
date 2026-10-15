@@ -59,7 +59,7 @@ namespace Lightbringer.EditorTools
 
         private static void Queue(string assetPath)
         {
-            string url = "file:///" + Path.GetFullPath(assetPath).Replace('\\', '/');
+            string url = new System.Uri(Path.GetFullPath(assetPath)).AbsoluteUri;
             UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.MPEG);
             var handler = (DownloadHandlerAudioClip)request.downloadHandler;
             handler.streamAudio = false;

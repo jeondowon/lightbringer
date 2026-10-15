@@ -36,23 +36,9 @@ namespace Lightbringer.Visuals
                 float emission = 0f, float spec = 0f)
                 => Append(kind == Shape.Cube ? ProceduralMeshes.Box : ProceduralMeshes.Sphere, color, position, euler, scale, emission, spec);
 
-            public void Pair(Shape kind, Color color, Vector3 position, Vector3 scale, Vector3 euler = default,
-                float emission = 0f, float spec = 0f)
-            {
-                Add(kind, color, position, scale, euler, emission, spec);
-                Add(kind, color, Mirror(position), scale, MirrorEuler(euler), emission, spec);
-            }
-
             public void Cone(float topRatio, Color color, Vector3 basePosition, Vector3 scale, Vector3 euler = default,
                 int segments = 12, float emission = 0f, float spec = 0f)
                 => Append(ProceduralMeshes.Frustum(topRatio, segments), color, basePosition, euler, scale, emission, spec);
-
-            public void PairCone(float topRatio, Color color, Vector3 basePosition, Vector3 scale, Vector3 euler = default,
-                int segments = 12, float emission = 0f, float spec = 0f)
-            {
-                Cone(topRatio, color, basePosition, scale, euler, segments, emission, spec);
-                Cone(topRatio, color, Mirror(basePosition), scale, MirrorEuler(euler), segments, emission, spec);
-            }
 
             // Free-form piece for organic props. `sway` (0..1) marks how much the wind moves the top of the piece
             // (stored in uv1.y for the toon shader); `softCenter` bends normals toward a sphere around that point
@@ -62,8 +48,6 @@ namespace Lightbringer.Visuals
                 float sway = 0f, Vector3? softCenter = null, float softBlend = 0.7f, Color? top = null, float spec = 0f, float? groundY = null)
                 => Append(source, color, position, euler, scale, 0f, spec, sway, softCenter, softBlend, top, groundY);
 
-            private static Vector3 Mirror(Vector3 value) => new Vector3(-value.x, value.y, value.z);
-            private static Vector3 MirrorEuler(Vector3 euler) => new Vector3(euler.x, -euler.y, -euler.z);
 
             private void Append(UnityEngine.Mesh source, Color color, Vector3 position, Vector3 euler, Vector3 scale,
                 float emission, float spec, float sway = 0f, Vector3? softCenter = null, float softBlend = 0.7f, Color? top = null, float? groundY = null)

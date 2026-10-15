@@ -218,7 +218,7 @@
 
 ### 구현 파일
 
-- 대화 삽화: `Assets/UI/Resources/BossStory/Confrontation_v1.png`, `Retreat_v1.png`. 내장 imagegen 도구로 제작했으며 전체 프롬프트는 `Docs/ArtReference/BossStoryPrompts.md`에 기록했다.
+- 대화 삽화: `Assets/UI/Resources/BossStory/Confrontation_v1.png`, `Retreat_v1.png`. 내장 imagegen 도구로 제작했으며 전체 프롬프트는 `Docs/ArtReference/Prompts.md`에 기록했다.
 - 전환/목표: `BossEncounter.cs`, `StageObjective.cs`, `EnemyWaveSpawner.cs`, `PrototypeBattleBuilder.cs`
 - 공격: `BossCombat.cs`, `DarkCrescent.cs`, `ModelAnimationDriver.cs`
 - 연출: `BossVfx.cs`, `BossArrivalVfx.cs`, `BossShockwaveVfx.cs`, `Assets/Resources/BossRift.shader`, `BossArrival.shader`, `BossShockwave.shader`

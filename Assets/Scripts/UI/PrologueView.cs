@@ -49,19 +49,19 @@ namespace Lightbringer.UI
             whiteout.style.opacity = 0f;
             frame.Add(whiteout);
             frame.RegisterCallback<ClickEvent>(evt => { if (evt.button == 0) Advance(); });
-            Root.RegisterCallback<GeometryChangedEvent>(_ => Fit());
+            Root.RegisterCallback<GeometryChangedEvent>(_ => Hud.FitWidescreen(Root, frame));
             VisualElement top = Hud.Box(Root, "lb-prologue-top");
             Hud.Text(top, "LIGHTBRINGER", "lb-atlas-brand");
-            AddButton(top, "건너뛰기", Skip);
+            Hud.StoryButton(top, "건너뛰기", Skip);
             captionPanel = Hud.Box(Root, "lb-prologue-caption-panel");
             caption = Hud.Text(captionPanel, "", "lb-prologue-caption");
             VisualElement controls = Hud.Box(captionPanel, "lb-prologue-controls");
-            previous = AddButton(controls, "이전", Previous);
+            previous = Hud.StoryButton(controls, "이전", Previous);
             progress = Hud.Text(controls, "", "lb-prologue-progress");
             progress.pickingMode = PickingMode.Ignore;
-            next = AddButton(controls, "다음", Advance);
+            next = Hud.StoryButton(controls, "다음", Advance);
             VisualElement music = Hud.Box(Root, "lb-prologue-music");
-            AddButton(music, "음악 정보", () => Hud.Show(credits, credits.ClassListContains("lb-hidden")));
+            Hud.StoryButton(music, "음악 정보", () => Hud.Show(credits, credits.ClassListContains("lb-hidden")));
             credits = Hud.Box(music, "lb-prologue-credits");
             Hud.Text(credits, PrologueSequence.MusicCredit);
             Slider volume = new Slider("음악 음량", 0f, 1f) { value = BattleMusic.Volume };
@@ -69,13 +69,6 @@ namespace Lightbringer.UI
             credits.Add(volume);
             Hud.Show(credits, false);
             Hud.Show(Root, false);
-        }
-
-        private static Button AddButton(VisualElement parent, string text, Action action)
-        {
-            Button button = Hud.Button(parent, text, action, "lb-prologue-button");
-            button.focusable = false;
-            return button;
         }
 
         public bool Open(PrologueSequence value, int startSlide = 0, int startCaption = 0)
@@ -95,7 +88,7 @@ namespace Lightbringer.UI
             whiteout.style.opacity = 0f;
             duration = transition = startSlide == 0 && startCaption == 0 ? OpeningFade : FadeDuration;
             SetContentOpacity(0);
-            Fit();
+            Hud.FitWidescreen(Root, frame);
             return true;
         }
 
@@ -213,16 +206,6 @@ namespace Lightbringer.UI
             picture.style.opacity = value;
             effects.style.opacity = value;
             caption.style.opacity = value;
-        }
-
-        private void Fit()
-        {
-            float width = Root.contentRect.width, height = Root.contentRect.height;
-            float unit = Mathf.Min(width / 16f, height / 9f);
-            frame.style.width = unit * 16f;
-            frame.style.height = unit * 9f;
-            frame.style.left = (width - unit * 16f) * .5f;
-            frame.style.top = (height - unit * 9f) * .5f;
         }
 
         private void Close()

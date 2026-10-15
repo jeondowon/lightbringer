@@ -189,6 +189,8 @@ namespace Lightbringer.EditorTools
             return img;
         }
 
+        public const int ButtonPrimary = 0, ButtonSecondary = 1, ButtonDanger = 2;
+
         // Banner-strip button at its USS height: umber (primary), night ink (secondary) or crimson ink (danger),
         // matte paper, a ruled border and small stars at both ends. No metal or gloss.
         public static UiImage StoryButton(int w, int h, int style)

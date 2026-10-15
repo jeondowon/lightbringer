@@ -35,7 +35,7 @@ namespace Lightbringer.Visuals
         private void Start()
         {
             ModelAnimationDriver driver = GetComponentInParent<ModelAnimationDriver>();
-            hand = FindDeep(driver != null ? driver.transform : transform.root, "RightHand");
+            hand = UnitAppearance.FindDeep(driver != null ? driver.transform : transform.root, "RightHand");
             foreArm = hand != null ? hand.parent : null;
             combat = GetComponentInParent<UnitCombat>();
             if (combat != null) combat.Attacked += Release;
@@ -91,17 +91,6 @@ namespace Lightbringer.Visuals
             segment.localPosition = (from + to) * 0.5f;
             segment.localRotation = Quaternion.FromToRotation(Vector3.up, to - from);
             segment.localScale = new Vector3(0.005f, (to - from).magnitude * 0.5f, 0.005f);
-        }
-
-        private static Transform FindDeep(Transform root, string name)
-        {
-            if (root.name == name) return root;
-            foreach (Transform child in root)
-            {
-                Transform found = FindDeep(child, name);
-                if (found != null) return found;
-            }
-            return null;
         }
     }
 }

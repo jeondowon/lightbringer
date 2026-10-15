@@ -350,7 +350,6 @@ namespace Lightbringer.UI
             return upgraded;
         }
         public bool Start() => session != null && session.StartBattle();
-        public UnitUpgradeView Upgrade => upgradeView;
         public bool OpenUpgrade()
         {
             if (session?.Progress == null || !Visible || growthOpen) return false;

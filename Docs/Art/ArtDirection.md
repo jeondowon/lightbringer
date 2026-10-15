@@ -45,7 +45,7 @@ Lightbringer의 그림체는 **프롤로그와 타이틀 화면의 그림책 그
 ## 3. 기준 그림체에서 가져올 것
 
 기준 이미지:
-- `Docs/ArtReference/Environment/Title_LastLight_Storybook_v2.png`
+- `Assets/Art/UI/MainMenu/Title_LastLight_Storybook_v2.png`
 - `Docs/ArtReference/Prologue/*_Storybook_*.png`
 - `Assets/Art/UI/MainMenu/Lightbringer_Storybook_Logo_v1.png`
 

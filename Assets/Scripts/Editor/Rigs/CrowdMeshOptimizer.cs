@@ -67,7 +67,7 @@ namespace Lightbringer.EditorTools
             string label = $"{id}/{skin.name}";
             if (source == null) return false;
             string sourcePath = AssetDatabase.GetAssetPath(source);
-            if (source.name.EndsWith(Suffix)) { report.AppendLine($"{label}: already optimized ({Triangles(source):N0} triangles), skipped"); return false; }
+            if (source.name.EndsWith(Suffix)) { report.AppendLine($"{label}: already optimized ({RigBuildUtility.Triangles(source):N0} triangles), skipped"); return false; }
             if (string.IsNullOrEmpty(sourcePath) || !sourcePath.EndsWith(".asset"))
             {
                 report.AppendLine($"{label}: mesh is not a standalone .asset ({sourcePath}), skipped");
@@ -81,16 +81,9 @@ namespace Lightbringer.EditorTools
             crowd = RigBuildUtility.SaveAsset(crowd, crowdPath);
             skin.sharedMesh = crowd;
             skin.sharedMaterials = merged;
-            report.AppendLine($"{label}: triangles {Triangles(source):N0} -> {Triangles(crowd):N0}, vertices {source.vertexCount:N0} -> {crowd.vertexCount:N0}, "
+            report.AppendLine($"{label}: triangles {RigBuildUtility.Triangles(source):N0} -> {RigBuildUtility.Triangles(crowd):N0}, vertices {source.vertexCount:N0} -> {crowd.vertexCount:N0}, "
                 + $"draw calls {source.subMeshCount} -> {crowd.subMeshCount}, distance LODs {crowd.lodCount} | {crowdPath}");
             return true;
-        }
-
-        private static int Triangles(Mesh mesh)
-        {
-            int count = 0;
-            for (int i = 0; i < mesh.subMeshCount; i++) count += (int)mesh.GetIndexCount(i) / 3;
-            return count;
         }
 
         // Also used for static environment props; Compact preserves only attributes present on the source.
@@ -101,7 +94,7 @@ namespace Lightbringer.EditorTools
             try
             {
                 MeshLodUtility.GenerateMeshLods(work, -1);
-                float ratio = Mathf.Min(1f, budget / (float)Mathf.Max(1, Triangles(source)));
+                float ratio = Mathf.Min(1f, budget / (float)Mathf.Max(1, RigBuildUtility.Triangles(source)));
                 int[] buffer;
                 using (Mesh.MeshDataArray data = Mesh.AcquireReadOnlyMeshData(work))
                     buffer = data[0].indexFormat == IndexFormat.UInt16

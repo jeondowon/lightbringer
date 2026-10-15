@@ -64,7 +64,7 @@ namespace Lightbringer.Visuals
             public bool Lit;
         }
 
-        public static DemonKingSky Build(ArtStyleLibrary art, Transform root)
+        public static DemonKingSky Build(Transform root)
         {
             Shader shader = UnityEngine.Resources.Load<Shader>("DemonSmoke");
             if (shader == null) return null;

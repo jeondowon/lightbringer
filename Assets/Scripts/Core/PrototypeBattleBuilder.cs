@@ -130,7 +130,7 @@ namespace Lightbringer.Core
                 // The environment's flat play area replaces the greybox plane (same height, so nothing moves).
                 Vector3 enemyGate = objective.transform.position + Vector3.back * 5f;
                 BattlefieldEnvironment environment = BattlefieldEnvironment.Build(environmentArt, stage, root, battle.Paths,
-                    battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate }, light);
+                    battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate });
                 if (environment != null) ground.SetActive(false);
                 if (environment != null)
                 {

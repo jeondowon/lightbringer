@@ -3,7 +3,6 @@ using Lightbringer.Pathing;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Shapes = Lightbringer.Visuals.PropShapes.Shapes;
-using Shape = Lightbringer.Visuals.PropShapes.Shape;
 using Surface = Lightbringer.Visuals.PropShapes.Surface;
 
 namespace Lightbringer.Visuals
@@ -50,17 +49,17 @@ namespace Lightbringer.Visuals
         public float LaneDistance(Vector2 point) => DistanceToLanes(point);
 
         public static BattlefieldEnvironment Build(ArtStyleLibrary library, int stage, Transform root,
-            WaypointPath[] paths, Vector3 deployPoint, Vector3[] clearPoints, Light sun)
+            WaypointPath[] paths, Vector3 deployPoint, Vector3[] clearPoints)
         {
             if (library == null || library.terrainMaterial == null || library.propsMaterial == null) return null;
             GameObject item = new GameObject("Battlefield Environment");
             item.transform.SetParent(root, false);
             BattlefieldEnvironment environment = item.AddComponent<BattlefieldEnvironment>();
-            environment.Generate(library, stage, paths, deployPoint, clearPoints, sun);
+            environment.Generate(library, stage, paths, deployPoint, clearPoints);
             return environment;
         }
 
-        private void Generate(ArtStyleLibrary library, int stage, WaypointPath[] paths, Vector3 deploy, Vector3[] clearPoints, Light sun)
+        private void Generate(ArtStyleLibrary library, int stage, WaypointPath[] paths, Vector3 deploy, Vector3[] clearPoints)
         {
             style = library;
             actTwo = GetComponentInParent<ActTwoScenery>(true);
@@ -98,7 +97,7 @@ namespace Lightbringer.Visuals
             else
             {
                 BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length, beaconClearing);
-                if (actOne != null) actOne.Dress(this, paths);
+                if (actOne != null) actOne.Dress(this);
             }
             // Imported forest tufts replace the old solid-colour blade carpet.
             if (forest == null && style.grassMaterial != null) BuildGrass();

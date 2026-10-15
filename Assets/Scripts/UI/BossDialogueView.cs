@@ -46,7 +46,7 @@ namespace Lightbringer.UI
             frame.Add(effects);
             portalEscape = new BossPortalEscape();
             frame.Add(portalEscape);
-            Root.RegisterCallback<GeometryChangedEvent>(_ => Fit());
+            Root.RegisterCallback<GeometryChangedEvent>(_ => Hud.FitWidescreen(Root, frame));
             panel = Hud.Box(frame, "lb-boss-dialogue", "lb-boss-story-caption");
             speaker = Hud.Text(panel, "", "lb-boss-speaker");
             line = Hud.Text(panel, "", "lb-boss-line");
@@ -93,7 +93,7 @@ namespace Lightbringer.UI
                 pageTime = 0;
                 effects.Show(page != null ? page.Effect : null);
                 pictureFade = 0;
-                Fit();
+                Hud.FitWidescreen(Root, frame);
             }
             wasStoryVisible = true;
             pageTime += delta;
@@ -119,7 +119,7 @@ namespace Lightbringer.UI
             previousPicture.image = null;
             picture.image = null;
             effects.Show(null);
-            if (!wasStoryVisible) { pictureFade = 0; Fit(); }
+            if (!wasStoryVisible) { pictureFade = 0; Hud.FitWidescreen(Root, frame); }
             wasStoryVisible = true;
             pictureFade = Mathf.MoveTowards(pictureFade, 1, Time.unscaledDeltaTime / .35f);
             panel.style.opacity = pictureFade * encounter.StoryOpacity;
@@ -162,16 +162,6 @@ namespace Lightbringer.UI
             if (art == null) Debug.LogError("Missing boss story illustration: " + path);
             pictures[path] = art;
             return art;
-        }
-
-        private void Fit()
-        {
-            float width = Root.contentRect.width, height = Root.contentRect.height;
-            float unit = Mathf.Min(width / 16f, height / 9f);
-            frame.style.width = unit * 16f;
-            frame.style.height = unit * 9f;
-            frame.style.left = (width - unit * 16f) * .5f;
-            frame.style.top = (height - unit * 9f) * .5f;
         }
     }
 }

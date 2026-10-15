@@ -38,7 +38,7 @@ namespace Lightbringer.Visuals
         private ArtStyleLibrary style;
         private System.Random random;
         private Kind kind;
-        private float age, lifetime, ground, front, ringFront;
+        private float age, lifetime, front, ringFront;
         private float partAge;
         private bool holdsDepth, burst, parted;
         private Shader shader;
@@ -62,7 +62,6 @@ namespace Lightbringer.Visuals
             vfx.style = style;
             vfx.kind = kind;
             vfx.shader = shader;
-            vfx.ground = groundPoint.y;
             vfx.random = new System.Random(root.GetInstanceID());
             vfx.holdsDepth = AcquireDepth(viewer);
             vfx.Build();

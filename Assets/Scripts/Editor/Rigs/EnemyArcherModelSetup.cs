@@ -133,7 +133,7 @@ namespace Lightbringer.EditorTools
             skin.sharedMaterials = merged;
             skin.quality = SkinQuality.Bone4;
             skin.updateWhenOffscreen = false;
-            Transform hips = FindDeep(root, "Hips");
+            Transform hips = UnitAppearance.FindDeep(root, "Hips");
             if (hips != null) skin.rootBone = hips;
             Transform anchor = skin.rootBone != null ? skin.rootBone : skin.transform;
             float unit = Mathf.Max(anchor.lossyScale.x, 1e-4f);
@@ -146,7 +146,7 @@ namespace Lightbringer.EditorTools
         // Greybox quiver on the upper back, parented to the top spine bone so it follows the torso.
         private static void BuildQuiver(Transform root, SkinnedMeshRenderer skin, Vector3 forward)
         {
-            Transform chest = FindDeep(root, "Spine") ?? throw new InvalidOperationException("Bone Spine not found.");
+            Transform chest = UnitAppearance.FindDeep(root, "Spine") ?? throw new InvalidOperationException("Bone Spine not found.");
             Material leather = MakeMaterial(RigFolder, "EnemyQuiverLeather", new Color(.15f, .09f, .1f), 0f, .25f);
             Material trim = MakeMaterial(RigFolder, "EnemyQuiverTrim", new Color(.8f, .75f, .64f), 0f, .35f);
             Material shaft = MakeMaterial(RigFolder, "EnemyArrowShaft", new Color(.3f, .22f, .18f), 0f, .3f);
@@ -226,7 +226,7 @@ namespace Lightbringer.EditorTools
         private static AnimationClip BuildShootClip(Transform root, VisualOverride entry, Vector3 forward, StringBuilder report, out bool pass)
         {
             Dictionary<string, Transform> bone = ShootBones.ToDictionary(n => n,
-                n => FindDeep(root, n) ?? throw new InvalidOperationException("Bone " + n + " not found."));
+                n => UnitAppearance.FindDeep(root, n) ?? throw new InvalidOperationException("Bone " + n + " not found."));
             Dictionary<string, Quaternion> bind = ShootBones.ToDictionary(n => n, n => bone[n].localRotation);
             Vector3 up = Vector3.up, right = Vector3.Cross(up, forward);
             Vector3 nockOffset = MeasureNockOffset(entry, out float bowUnit);
@@ -432,24 +432,6 @@ namespace Lightbringer.EditorTools
             report.AppendLine("Props: bow on LeftHand (upright, " + BowLength + " m before troop scale, BowString), quiver on Spine.");
             foreach (string failure in failures) report.AppendLine("FAIL: " + failure);
             return failures.Count == 0;
-        }
-
-        private static int Triangles(Mesh mesh)
-        {
-            int count = 0;
-            for (int i = 0; i < mesh.subMeshCount; i++) count += (int)mesh.GetIndexCount(i) / 3;
-            return count;
-        }
-
-        private static Transform FindDeep(Transform root, string name)
-        {
-            if (root.name == name) return root;
-            foreach (Transform child in root)
-            {
-                Transform found = FindDeep(child, name);
-                if (found != null) return found;
-            }
-            return null;
         }
     }
 }

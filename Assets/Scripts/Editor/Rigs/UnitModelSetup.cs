@@ -58,12 +58,12 @@ namespace Lightbringer.EditorTools
 
             GameObject shield = PrepareSource("Shieldbearer");
             Placement shieldPlace = PlaceHumanoid(UprightPoints(shield), ShieldbearerHeight);
-            SetOverride(library, ShieldbearerRigSetup.Build(shield, shieldPlace.ToUnit, library));
+            SetOverride(library, ShieldbearerRigSetup.Build(shield, shieldPlace.ToUnit));
             report.AppendLine($"Shieldbearer: {Describe(shieldPlace)}; rigged with a tower shield and mace (see ShieldbearerRigChecks.txt)");
 
             GameObject spear = PrepareSource("Spearman");
             Placement spearPlace = PlaceHumanoid(UprightPoints(spear), SpearmanHeight);
-            SetOverride(library, SpearmanRigSetup.Build(spear, spearPlace.ToUnit, library));
+            SetOverride(library, SpearmanRigSetup.Build(spear, spearPlace.ToUnit));
             report.AppendLine($"Spearman: {Describe(spearPlace)}; rigged with a hand-held spear (see SpearmanRigChecks.txt)");
 
             GameObject mage = PrepareSource("Mage");
@@ -78,13 +78,13 @@ namespace Lightbringer.EditorTools
 
             GameObject dragon = PrepareSource("Dragon");
             Placement dragonPlace = PlaceQuadruped(UprightPoints(dragon), DragonLength, true, out string dragonNote);
-            SetOverride(library, DragonRigSetup.Build(dragon, dragonPlace.ToUnit, library));
+            SetOverride(library, DragonRigSetup.Build(dragon, dragonPlace.ToUnit));
             report.AppendLine($"Dragon: {Describe(dragonPlace)}; {dragonNote}; rigged (see DragonRigChecks.txt)");
 
             GameObject horse = PrepareSource("KnightHorse");
             GameObject rider = PrepareSource("Knight");
             GameObject mounted = BuildMounted(horse, rider, report);
-            SetOverride(library, KnightRigSetup.Build(mounted, library));
+            SetOverride(library, KnightRigSetup.Build(mounted));
             report.AppendLine("Knight: horse and rider rigged with a lance and kite shield (see KnightRigChecks.txt)");
 
             EditorUtility.SetDirty(library);

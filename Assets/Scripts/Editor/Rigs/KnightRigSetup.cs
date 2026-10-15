@@ -33,7 +33,7 @@ namespace Lightbringer.EditorTools
         private static float hcx, rcx, riderWristY;
         private static readonly Dictionary<string, int[]> palms = new Dictionary<string, int[]>();
 
-        public static VisualOverride Build(GameObject mounted, ArtStyleLibrary library)
+        public static VisualOverride Build(GameObject mounted)
         {
             if (!AssetDatabase.IsValidFolder(RigFolder)) AssetDatabase.CreateFolder(Folder, "Rigged");
             Scene scene = EditorSceneManager.NewPreviewScene();

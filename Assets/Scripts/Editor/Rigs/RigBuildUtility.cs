@@ -9,6 +9,13 @@ namespace Lightbringer.EditorTools
     // Helpers shared by the generated prototype rigs (Swordsman, Archer, Spearman, Dragon).
     internal static class RigBuildUtility
     {
+        public static int Triangles(Mesh mesh)
+        {
+            int count = 0;
+            for (int i = 0; i < mesh.subMeshCount; i++) count += (int)mesh.GetIndexCount(i) / 3;
+            return count;
+        }
+
         // Creates the asset, or overwrites an existing one in place so references to it stay valid.
         public static T SaveAsset<T>(T value, string path) where T : UnityEngine.Object
         {

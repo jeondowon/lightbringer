@@ -48,13 +48,6 @@ namespace Lightbringer.EditorTools
             }
         }
 
-        private static void Fan(FacetedMesh mesh, Vector2[] outline, float z, float insideZ)
-        {
-            Vector3 P(int i) => new Vector3(outline[i].x, outline[i].y, z);
-            var inside = new Vector3(outline[0].x, outline[0].y, insideZ);
-            for (int k = 1; k < outline.Length - 1; k++) mesh.Triangle(P(0), P(k), P(k + 1), inside);
-        }
-
         // Thin faceted rod from a to b, thicker at the start.
         private static FacetedMesh Rod(Vector3 a, Vector3 b, float radiusA, float radiusB, int sides = 6)
         {
@@ -369,19 +362,6 @@ namespace Lightbringer.EditorTools
             gold = trim.BuildSmooth(prefix + "Gold", GoldTiling, 50f);
         }
 
-        // Wrapped leather grip, gold grip collars and one gold nock cap (pointing +Y at the origin) for the archer's bow.
-        public static void BowFittings(string prefix, out Mesh grip, out Mesh gold, out Mesh tip)
-        {
-            grip = WrappedGrip(prefix + "Grip", -.075f, .075f, .0215f, .003f, .026f);
-            var trim = new FacetedMesh();
-            trim.Lathe(new[] { .075f, .082f, .1f, .108f }, new[] { .022f, .03f, .03f, .022f }, 8);
-            trim.Lathe(new[] { -.108f, -.1f, -.082f, -.075f }, new[] { .022f, .03f, .03f, .022f }, 8);
-            gold = trim.BuildSmooth(prefix + "Gold", GoldTiling, 50f);
-            var cap = new FacetedMesh();
-            cap.Lathe(new[] { -.012f, 0f, .03f, .045f }, new[] { .012f, .02f, .017f, 0f }, 8);
-            tip = cap.Build(prefix + "Tip", IronTiling);
-        }
-
         // ---------- Caster staffs ----------
 
         // Mage staff: gnarled wood shaft, gold ferrule and three claws holding a floating rune crystal.
@@ -421,7 +401,7 @@ namespace Lightbringer.EditorTools
 
         // Priest staff: a pale wood shepherd's crook with a holy lantern hanging from the hook. The silhouette is
         // deliberately nothing like the hero's star-crowned staff: asymmetric, hooked, and lit from a hanging flame.
-        public static void PriestStaff(string prefix, float buttY, float headY, out Mesh ivory, out Mesh grip, out Mesh gold, out Mesh orb)
+        public static void PriestStaff(string prefix, float buttY, out Mesh ivory, out Mesh grip, out Mesh gold, out Mesh orb)
         {
             const float hookRadius = .15f, top = .9f, lanternY = .43f;
             var hook = new Vector3(hookRadius, top, 0f);

@@ -18,8 +18,6 @@ namespace Lightbringer.Visuals
         [Tooltip("Ground contact relative to the unit pivot (CharacterController bottom).")]
         [SerializeField] private float feetOffset = -0.8f;
 
-        public ArtStyleLibrary Style => style;
-
         public void Configure(ArtStyleLibrary library, float feet)
         {
             style = library;
@@ -126,7 +124,7 @@ namespace Lightbringer.Visuals
             }
         }
 
-        private static Transform FindDeep(Transform root, string name)
+        public static Transform FindDeep(Transform root, string name)
         {
             if (root.name == name) return root;
             foreach (Transform child in root)

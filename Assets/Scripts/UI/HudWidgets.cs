@@ -54,6 +54,25 @@ namespace Lightbringer.UI
             root.pickingMode = PickingMode.Ignore;
             foreach (VisualElement child in root.Children()) IgnorePicking(child);
         }
+
+        // Centres `frame` in `root` at the largest 16:9 size that fits (letterboxed story pictures).
+        public static void FitWidescreen(VisualElement root, VisualElement frame)
+        {
+            float width = root.contentRect.width, height = root.contentRect.height;
+            float unit = Mathf.Min(width / 16f, height / 9f);
+            frame.style.width = unit * 16f;
+            frame.style.height = unit * 9f;
+            frame.style.left = (width - unit * 16f) * .5f;
+            frame.style.top = (height - unit * 9f) * .5f;
+        }
+
+        // Story page buttons never take focus: the keyboard drives the pages instead.
+        public static Button StoryButton(VisualElement parent, string text, System.Action click)
+        {
+            Button button = Button(parent, text, click, "lb-prologue-button");
+            button.focusable = false;
+            return button;
+        }
     }
 
     // Horizontal fill bar with centred text, e.g. HP 120/170.

@@ -264,7 +264,7 @@ Constraints: one continuous edge-to-edge finished landscape background. NO text,
 
 ## 군주 대화 일러스트
 
-현재는 등장 3장·퇴각 3장으로 확장했다. 추가 4장의 파일·배치·프롬프트는 [BossStorySequencePrompts.md](BossStorySequencePrompts.md)를 참고한다. 아래는 유지한 최초 2장의 제작 기록이다.
+현재는 등장 3장·퇴각 3장으로 확장했다. 추가 4장의 파일·배치·프롬프트는 아래 "군주 이야기 — 장면 확장"을 참고한다. 아래는 유지한 최초 2장의 제작 기록이다.
 
 2026-10-13. `imagegen` 스킬의 기본 내장 도구로 생성. 프롤로그의 정지 일러스트 연출을 요청받아 제작했다. 생성 결과를 프로젝트로 복사했고 원본은 유지했다.
 
@@ -284,7 +284,7 @@ Use case: illustration-story. Asset: full-screen 16:9 narrative illustration for
 
 ## 군주 이야기 — 장면 확장
 
-2026-10-13 후속 수정: `HeroResolve_v1.png`의 얼굴을 캐릭터 시트의 동아시아 여성 외형으로, `WarlordDefeated_v1.png`의 자세를 한쪽 무릎과 검으로 몸을 지탱하는 형태로 교체했다. 편집 프롬프트와 이전 이미지 위치는 [BossStoryCharacterCorrections.md](BossStoryCharacterCorrections.md) 참고. 아래 최초 생성 프롬프트는 제작 이력이다.
+2026-10-13 후속 수정: `HeroResolve_v1.png`의 얼굴을 캐릭터 시트의 동아시아 여성 외형으로, `WarlordDefeated_v1.png`의 자세를 한쪽 무릎과 검으로 몸을 지탱하는 형태로 교체했다. 편집 프롬프트는 아래 "군주 이야기 — 영웅 얼굴·군주 자세 수정" 참고. 아래 최초 생성 프롬프트는 제작 이력이다.
 
 2026-10-13, 내장 imagegen 도구 사용. 기존 대면/퇴각 그림을 참조해 4장을 추가했다. 원본 2장은 유지한다. 저장 위치: `Assets/UI/Resources/BossStory/`.
 
@@ -318,7 +318,7 @@ Use case: illustration-story. Create ONE new full-screen 16:9 landscape narrativ
 
 ## 군주 이야기 — 영웅 얼굴·군주 자세 수정
 
-후속 지팡이 교정 및 퇴각 장면 수정: [BossStoryStaffAndRetreatCorrections.md](BossStoryStaffAndRetreatCorrections.md).
+후속 지팡이 교정 및 퇴각 장면 수정: 아래 "영웅 지팡이와 군주 퇴각 장면 수정".
 
 2026-10-13. 사용자 요청: 영웅은 아시아인이며 캐릭터 시트의 얼굴을 따라야 한다. 군주의 격퇴 자세는 부상과 체중 지지가 분명해야 한다.
 
@@ -390,7 +390,7 @@ Unity 공식 설정 설명: https://docs.unity.com/en-us/engine/6000.3/script-re
 군주와 검을 제거한 포탈/계단 배경. 실제 UI에서는 군주 주변 패치에만 사용.
 여성 영웅과 지팡이는 원본 이미지 그대로 표시.
 현재 연출 (2026-10-14): 이 plate와 원본의 차이로 군주 컷아웃(Retreat_Lord_v1.png)을 굽고
-(Lightbringer > Boss Story > Bake Retreat Lord Cutout), 컷아웃을 변형해 포탈로 끌고 들어간다.
+컷아웃을 변형해 포탈로 끌고 들어간다.
 plate는 군주 영역(BossPortalEscape.LordRect)에만 패치로 쓰인다.
 
 Final prompt:

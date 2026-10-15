@@ -127,7 +127,7 @@ MonoBehaviour:
     - "\uBC14\uB85C \uADF8\uB54C, \uB545 \uC704\uB85C \uBE5B\uC774 \uC3DF\uC544\uC838
       \uC5B4\uB460\uC758 \uAD70\uC138\uB97C \uBB3C\uB9AC\uCCE4\uB2E4."
   - id: 08
-    image: {fileID: 2800000, guid: 8a3904b77d834614cbf285a8f7f40be8, type: 3}
+    image: {fileID: 2800000, guid: 31a7789ebe7160149b395fa0c402e211, type: 3}
     captions:
     - "\uADF8 \uBE5B \uC18D\uC5D0\uC11C, \uB204\uAD70\uAC00\uAC00 \uBC1C\uAC78\uC74C\uC744
       \uB0B4\uB514\uB3A0\uB2E4."
@@ -137,7 +137,7 @@ MonoBehaviour:
     - "\uBAA8\uB450\uAC00 \uB5A0\uB09C \uC790\uB9AC,\n\uADF8\uB140\uB294 \uAEBC\uC838
       \uBC84\uB9B0 \uBD09\uD654\uC758 \uBE5B\uC744 \uB418\uC0B4\uB838\uB2E4."
   - id: 09
-    image: {fileID: 2800000, guid: a97a6ea498cbab14ab604f48849bf3e0, type: 3}
+    image: {fileID: 2800000, guid: 830b2d1d661ca5548b8661c64dd323f4, type: 3}
     captions:
     - "\uADF8\uB9AC\uACE0 \uADF8 \uB108\uBA38\uC5D0\uB294,\n\uC544\uC9C1 \uBC1D\uD600\uC57C
       \uD560 \uC218\uB9CE\uC740 \uBD09\uD654\uAC00 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC5C8\uB2E4."

@@ -209,20 +209,6 @@ namespace Lightbringer.Visuals
                 Color.Lerp(color, Color.white, Random.value * 0.4f), Random.Range(0.06f, 0.12f), Random.Range(0.25f, 0.45f));
         }
 
-        // A troop stepping into the hero aura: a rune mark flashes at its feet with a short rise of light.
-        public static void Blessing(ArtStyleLibrary style, Vector3 feet, Color color)
-        {
-            if (!Ready(style)) return;
-            Emit(runes, feet + Vector3.up * 0.05f, Vector3.zero, color, 2.4f, 0.55f, Random.Range(0f, 360f));
-            Emit(flares, feet + Vector3.up * 1.1f, Vector3.zero, Color.Lerp(color, Color.white, 0.5f), 1.3f, 0.2f, Random.Range(0f, 90f));
-            for (int i = 0; i < 8; i++)
-            {
-                Vector3 around = Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward * 0.45f;
-                Emit(motes, feet + around + Vector3.up * 0.1f, Vector3.up * Random.Range(1.6f, 2.6f),
-                    Color.Lerp(color, Color.white, 0.3f), Random.Range(0.08f, 0.13f), Random.Range(0.5f, 0.8f));
-            }
-        }
-
         // One rising light mote around an empowered troop (trickled while it stays in the aura).
         public static void AuraMote(ArtStyleLibrary style, Vector3 feet, Color color, float spread)
         {
