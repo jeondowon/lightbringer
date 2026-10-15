@@ -11,7 +11,7 @@ namespace Lightbringer.Progression
     {
         public const int StageCount = Core.CampaignStages.Count;
         public const int GrowthCount = 8;
-        public const int Version = 5;
+        public const int Version = 7;
         public const int MaxLevel = 30;
         // EXP from level n to n + 1 (index n - 1). Tuned so stage bosses 8 / 16 / 24 expect Lv 15 / 25 / 30 with
         // replays: first clears of stages 1-7 give ~6,000 EXP (Lv 12) and a few stage 6-7 replays reach Lv 15.
@@ -30,9 +30,12 @@ namespace Lightbringer.Progression
         public int[] choices = new int[0];
         public int[] ranks = new int[GrowthCount];
         // Level of each learned skill (SkillKind order); 0 = not learned yet.
-        public int[] skillLevels = { 1, 0, 0, 0, 0 };
-        // Skill in each slot (left click, right click, Q), SkillCatalog.Empty when the slot is empty.
-        public int[] loadout = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty };
+        public int[] skillLevels = { 1, 0, 0, 1, 0 };
+        // Skill in each slot (left click, Q, E, right click), SkillCatalog.Empty when the slot is empty. Left click is
+        // always Light Beam and right click Shockwave once learned (SkillCatalog.FixedSkillOf).
+        public int[] loadout = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty, (int)SkillKind.Shockwave };
+        // Slot order of versions 2-6: left click, right click, Q.
+        private const int LegacySlots = 3, LegacyRightClick = 1;
         // Versions 1 and 2 kept staffs and rings here; read only to migrate (UpgradeSavedData).
         public int[] equipmentLevels = new int[0];
         // Light shards, the one currency (the field keeps its old name so saves stay readable).
@@ -59,7 +62,10 @@ namespace Lightbringer.Progression
             for (int i = 0; i < unitRanks.Length; i++) if (unitRanks[i] < 0 || unitRanks[i] > Units.UnitCatalog.MaxRank || (i >= UnlockedUnits && unitRanks[i] > 0)) return false;
             for (int i = 0; i < loadout.Length; i++)
             {
-                int id = loadout[i];
+                int id = loadout[i], fixedSkill = SkillCatalog.FixedSkillOf(i);
+                // A fixed slot holds its skill once learned and stays empty before; free slots never hold a fixed skill.
+                if (fixedSkill != SkillCatalog.Empty ? id != (IsLearned(fixedSkill) ? fixedSkill : SkillCatalog.Empty)
+                    : SkillCatalog.IsFixedSkill(id)) return false;
                 if (id == SkillCatalog.Empty) continue;
                 if (!SkillCatalog.IsSkill(id) || skillLevels[id] <= 0) return false;
                 for (int j = 0; j < i; j++) if (loadout[j] == id) return false;
@@ -114,6 +120,47 @@ namespace Lightbringer.Progression
             if (version == 2) UpgradeFromVersion2();
             if (version == 3) ExtendStages(8);
             if (version == 4) ExtendStages(16);
+            if (version == 5) UpgradeFromVersion5();
+            if (version == 6) UpgradeFromVersion6();
+        }
+
+        // Version 5 learned Shockwave at stage 7 and let any slot hold it. Now it is known from the start and fixed to
+        // right click; a skill that sat in the right click slot moves to an empty slot (or back to the library).
+        private void UpgradeFromVersion5()
+        {
+            version = 6;
+            int shockwave = (int)SkillKind.Shockwave;
+            if (skillLevels == null || skillLevels.Length != SkillCatalog.Count
+                || loadout == null || loadout.Length != LegacySlots) return;
+            skillLevels[shockwave] = Mathf.Max(skillLevels[shockwave], 1);
+            int displaced = loadout[LegacyRightClick];
+            for (int i = 0; i < loadout.Length; i++) if (loadout[i] == shockwave) loadout[i] = SkillCatalog.Empty;
+            loadout[LegacyRightClick] = shockwave;
+            int free = Array.IndexOf(loadout, SkillCatalog.Empty);
+            if (displaced != shockwave && SkillCatalog.IsSkill(displaced) && free >= 0) loadout[free] = displaced;
+        }
+
+        // Version 6 had three slots (left click, right click = Shockwave, Q). Now there are four (left click = Light
+        // Beam, Q, E, right click = Shockwave): the other skills worn at left click and Q move to Q and E in that order.
+        private void UpgradeFromVersion6()
+        {
+            version = Version;
+            if (skillLevels == null || skillLevels.Length != SkillCatalog.Count
+                || loadout == null || loadout.Length != LegacySlots) return;
+            int[] slots = new int[SkillCatalog.Slots];
+            for (int i = 0; i < slots.Length; i++)
+            {
+                int fixedSkill = SkillCatalog.FixedSkillOf(i);
+                slots[i] = fixedSkill != SkillCatalog.Empty && IsLearned(fixedSkill) ? fixedSkill : SkillCatalog.Empty;
+            }
+            int next = SkillCatalog.FirstFreeSlot;
+            foreach (int id in loadout)
+            {
+                if (!IsLearned(id) || SkillCatalog.IsFixedSkill(id) || Array.IndexOf(slots, id) >= 0) continue;
+                while (next < slots.Length && SkillCatalog.IsFixedSlot(next)) next++;
+                if (next < slots.Length) slots[next++] = id;
+            }
+            loadout = slots;
         }
 
         // Version 3 saved 8 stages and version 4 saved 16. A finished act opens the next one; the rest is kept.
@@ -126,7 +173,7 @@ namespace Lightbringer.Progression
             bool finishedAct = cleared[savedStages - 1];
             Array.Resize(ref cleared, StageCount);
             if (finishedAct) unlockedStage = savedStages + 1;
-            version = Version;
+            version = 5;
         }
 
         // Version 2 kept staffs and rings in equipmentLevels (Light, Healing, Rune, Food, Mana, Vitality). Rings and the
@@ -140,7 +187,8 @@ namespace Lightbringer.Progression
             int[] learned = new int[SkillCatalog.Count];
             for (int i = 0; i < 2 && i < old.Length; i++) learned[i] = Mathf.Clamp(old[i], 0, SkillCatalog.MaxLevel);
             learned[(int)SkillKind.LightBeam] = Mathf.Max(learned[(int)SkillKind.LightBeam], 1);
-            int[] slots = { SkillCatalog.Empty, SkillCatalog.Empty, SkillCatalog.Empty };
+            int[] slots = new int[LegacySlots];
+            for (int i = 0; i < slots.Length; i++) slots[i] = SkillCatalog.Empty;
             if (loadout != null)
                 for (int i = 0; i < slots.Length && i < loadout.Length; i++)
                     if (loadout[i] >= 0 && loadout[i] < 2 && learned[loadout[i]] > 0) slots[i] = loadout[i];
@@ -231,10 +279,10 @@ namespace Lightbringer.Progression
 
         public bool IsLearned(int id) => SkillCatalog.IsSkill(id) && skillLevels[id] > 0;
 
-        // Puts a learned skill into a slot (a skill sits in one slot only); SkillCatalog.Empty clears the slot.
+        // Puts a learned skill into Q or E (a skill sits in one slot only); SkillCatalog.Empty clears the slot.
         public bool TryEquip(int slot, int id)
         {
-            if (slot < 0 || slot >= loadout.Length) return false;
+            if (slot < 0 || slot >= loadout.Length || SkillCatalog.IsFixedSlot(slot) || SkillCatalog.IsFixedSkill(id)) return false;
             if (id != SkillCatalog.Empty)
             {
                 if (!IsLearned(id)) return false;
@@ -246,7 +294,8 @@ namespace Lightbringer.Progression
 
         public bool CompleteStage(int stage) => CompleteStage(stage, out _);
 
-        // `learned` is the skill this first clear taught, or SkillCatalog.Empty. A new skill goes into the first empty slot.
+        // `learned` is the skill this first clear taught, or SkillCatalog.Empty. A new skill goes into its fixed slot, or
+        // else the first empty one of Q and E.
         public bool CompleteStage(int stage, out int learned)
         {
             learned = SkillCatalog.Empty;
@@ -258,8 +307,10 @@ namespace Lightbringer.Progression
             {
                 skillLevels[reward] = 1;
                 learned = reward;
-                int free = Array.IndexOf(loadout, SkillCatalog.Empty);
-                if (free >= 0) loadout[free] = reward;
+                int slot = SkillCatalog.FixedSlotOf(reward);
+                for (int i = 0; slot < 0 && i < loadout.Length; i++)
+                    if (!SkillCatalog.IsFixedSlot(i) && loadout[i] == SkillCatalog.Empty) slot = i;
+                if (slot >= 0) loadout[slot] = reward;
             }
             return true;
         }

@@ -85,7 +85,7 @@ namespace Lightbringer.UI
             session = value;
             PrototypeBattle battle = session != null ? session.Battle : null;
             bool visible = battle != null && battle.Objective.HasEnded && !session.IsChoosing
-                && (battle.Beacon == null || !battle.Beacon.IsPresenting);
+                && (battle.Beacon == null || !battle.Beacon.IsPresenting) && !session.HoldsResult;
             Hud.Show(Root, visible);
             if (visible && shownFor == battle) Animate();
             if (!visible || shownFor == battle) return;

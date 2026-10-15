@@ -24,9 +24,9 @@ namespace Lightbringer.EditorTools
                 Check(!session.SelectStage(2) && session.StartBattle() && !session.StartBattle(),
                     "Campaign starts an unlocked stage once and rejects locked or duplicate starts");
                 PrototypeBattle battle = session.Battle;
-                Check(Mathf.Abs(Vector3.Distance(battle.AlliedBase.transform.position, battle.Objective.EnemyBase.transform.position) - 100f) < 0.01f
+                Check(Mathf.Abs(Vector3.Distance(battle.AlliedBase.transform.position, battle.Objective.EnemyBase.transform.position) - (Lightbringer.Core.BattlefieldLayout.EnemyBaseCentreZ - Lightbringer.Core.BattlefieldLayout.AlliedBaseCentreZ)) < 0.01f
                     && battle.Hero.GetComponent<Lightbringer.Player.BattlefieldBoundary>() != null,
-                    "Campaign strongholds are 100m apart and the hero has a battlefield boundary");
+                    "Campaign strongholds match the battlefield layout and the hero has a battlefield boundary");
                 Invoke(battle.Objective, "OnEnable");
                 Check(battle.Paths.Length == 1 && battle.Summoner.UnlockedUnitCount == 1,
                     "First campaign stage begins with one Path and only the first troop");
@@ -52,6 +52,8 @@ namespace Lightbringer.EditorTools
                 int chosen = profile.choices[0];
                 Check(session.ChooseGrowth(0) && profile.ranks[chosen] == 1 && !session.IsBattlePaused && battle.Summoner.enabled,
                     "Picking growth applies a permanent rank and resumes the same battle");
+                // Skip the assault: the gate is shielded until every wave falls.
+                battle.Objective.EnemyBase.Invulnerable = false;
                 battle.Objective.EnemyBase.TakeDamage(10000, battle.Hero);
                 Check(battle.Objective.HasWon && profile.unlockedStage == 2 && profile.cleared[0],
                     "Real objective death drives campaign completion and first-clear rewards");

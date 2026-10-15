@@ -10,7 +10,7 @@ namespace Lightbringer.UI
         private static readonly (string key, string action)[] Controls = {
             ("WASD", "이동"), ("마우스", "시점"), ("휠", "확대 · 축소"),
             ("1–8", "병력 소환"), ("F", "재소환"), ("Tab", "소환 진로 변경"),
-            ("LMB · RMB · Q", "기술 사용"), ("Esc · P", "일시정지"),
+            ("LMB · Q · E · RMB", "기술 사용"), ("Esc · P", "일시정지"),
         };
 
         public readonly VisualElement Root;

@@ -20,7 +20,7 @@ namespace Lightbringer.UI
         // reaching the fortress. The atlas should read as reclaiming a region, not a diagonal shortcut.
         private static readonly Vector2[][] ActSites = {
             new[] {
-                new Vector2(.19f, .72f), new Vector2(.28f, .39f),
+                new Vector2(.19f, .64f), new Vector2(.28f, .39f),
                 new Vector2(.30f, .19f), new Vector2(.59f, .18f),
                 new Vector2(.43f, .56f), new Vector2(.83f, .55f),
                 new Vector2(.75f, .33f), new Vector2(.883f, .135f)
@@ -28,13 +28,13 @@ namespace Lightbringer.UI
             new[] {
                 new Vector2(.15f, .60f), new Vector2(.23f, .43f),
                 new Vector2(.35f, .12f), new Vector2(.61f, .18f),
-                new Vector2(.52f, .385f), new Vector2(.55f, .71f),
+                new Vector2(.52f, .385f), new Vector2(.55f, .64f),
                 new Vector2(.82f, .52f), new Vector2(.93f, .085f)
             },
             new[] {
-                new Vector2(.17f, .70f), new Vector2(.24f, .36f),
+                new Vector2(.17f, .64f), new Vector2(.24f, .36f),
                 new Vector2(.38f, .17f), new Vector2(.59f, .20f),
-                new Vector2(.47f, .49f), new Vector2(.70f, .70f),
+                new Vector2(.47f, .49f), new Vector2(.70f, .64f),
                 new Vector2(.85f, .39f), new Vector2(.84f, .15f)
             }
         };
@@ -195,7 +195,7 @@ namespace Lightbringer.UI
                 bool implemented = i < available;
                 bool lit = implemented && profile.cleared[index], unlocked = implemented && index < profile.unlockedStage;
                 if (lit) count++;
-                Hud.Set(names[i], index >= 8 && implemented ? CampaignStages.Name(index + 1) : $"봉화 {index + 1:00}");
+                Hud.Set(names[i], implemented ? CampaignStages.Name(index + 1) : $"봉화 {index + 1:00}");
                 beacons[i].SetEnabled(unlocked);
                 beacons[i].EnableInClassList("lb-beacon--lit", lit);
                 beacons[i].EnableInClassList("lb-beacon--ready", unlocked && !lit);

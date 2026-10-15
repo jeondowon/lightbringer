@@ -26,6 +26,7 @@ namespace Lightbringer.UI
         private float titleMusicGain;
         private bool checkedPrologue;
         public PrologueView Prologue { get; private set; }
+        public StoryView Story { get; private set; }
         public CampaignMapView Map { get; private set; }
         public TitleView Title { get; private set; }
 
@@ -83,6 +84,7 @@ namespace Lightbringer.UI
             Pause = new PauseView(campaignRoot);
             BossDialogue = new BossDialogueView(campaignRoot);
             Prologue = new PrologueView(root, FinishPrologue);
+            Story = new StoryView(root, FinishStory);
             checkedPrologue = false;
             shownBattle = null;
             BattleView.Bind(null);
@@ -97,6 +99,7 @@ namespace Lightbringer.UI
         private void OnDisable()
         {
             if (session != null) session.IsPrologueActive = false;
+            if (session != null) session.IsStoryActive = false;
             if (prologueMusic != null) prologueMusic.Stop();
             RefreshTitleMusic(false);
             if (panelObject != null)
@@ -107,6 +110,7 @@ namespace Lightbringer.UI
             prologueMusic = null;
             titleMusic = null;
             Prologue = null;
+            Story = null;
             campaignRoot = null;
             Preparation = null; Map = null; Title = null; BattleView = null; LevelUp = null; Result = null; Pause = null;
             BossDialogue = null;
@@ -126,9 +130,18 @@ namespace Lightbringer.UI
                 Prologue.Tick(Time.unscaledDeltaTime);
                 if (prologueMusic != null)
                     prologueMusic.volume = Mathf.MoveTowards(prologueMusic.volume,
-                        BattleMusic.Volume * Prologue.MusicGain, Time.unscaledDeltaTime);
+                        BattleMusic.Output(BattleMusic.PrologueTrim) * Prologue.MusicGain, Time.unscaledDeltaTime);
                 return;
             }
+            if (Story != null && Story.IsOpen)
+            {
+                Story.Tick(Time.unscaledDeltaTime);
+                return;
+            }
+            if (OpenEarnedStory()) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (DebugStoryShortcuts()) return;
+#endif
             if (showingTitle && session.Battle == null)
             {
                 Preparation.Refresh(session, false);
@@ -184,7 +197,7 @@ namespace Lightbringer.UI
                 titleMusic.Play();
             }
             titleMusicGain = Mathf.MoveTowards(titleMusicGain, 1f, Time.unscaledDeltaTime / 1.2f);
-            titleMusic.volume = BattleMusic.Volume * titleMusicGain;
+            titleMusic.volume = BattleMusic.Output(BattleMusic.BattleTrim) * titleMusicGain;
         }
 
         private void StartGame()
@@ -205,9 +218,44 @@ namespace Lightbringer.UI
 #endif
         }
 
+        // A first clear can earn a storybook scene; it plays once the level-ups and the beacon presentation are done,
+        // before the result screen.
+        private bool OpenEarnedStory()
+        {
+            PrototypeBattle battle = session.Battle;
+            if (session.PendingStory == null || battle == null || !battle.Objective.HasEnded || session.IsChoosing
+                || (battle.Beacon != null && battle.Beacon.IsPresenting)) return false;
+            return PlayStory(session.ClaimStory());
+        }
+
+        public bool PlayStory(string scene)
+        {
+            if (session == null || Story == null || Story.IsOpen || session.IsPrologueActive || !Story.Open(scene)) return false;
+            session.IsStoryActive = true;
+            return true;
+        }
+
+        private void FinishStory()
+        {
+            if (session != null) session.IsStoryActive = false;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Debug: F9 / F12 replay the Act 1 memory / the epilogue from the map or preparation screen
+        // (F10 / F11 jump into the Act 2 sword scene / the Act 3 Warlord's fall: CampaignSession).
+        private bool DebugStoryShortcuts()
+        {
+            UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard == null || session.Battle != null || showingTitle) return false;
+            string scene = keyboard.f9Key.wasPressedThisFrame ? StoryCatalog.ActOneFlashback
+                : keyboard.f12Key.wasPressedThisFrame ? StoryCatalog.Epilogue : null;
+            return scene != null && PlayStory(scene);
+        }
+#endif
+
         public bool PlayPrologue()
         {
-            if (session == null || session.Battle != null || session.IsChoosing || Prologue == null) return false;
+            if (session == null || session.Battle != null || session.IsChoosing || session.IsStoryActive || Prologue == null) return false;
             if (prologueSequence == null)
                 prologueSequence = UnityEngine.Resources.Load<PrologueSequence>(PrologueSequence.ResourcePath);
             if (!Prologue.Open(prologueSequence)) return false;

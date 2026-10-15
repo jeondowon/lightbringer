@@ -268,6 +268,8 @@ namespace Lightbringer.EditorTools
                         "Food and movement remain frozen while growth choices are displayed");
                     Assert(session.ChooseGrowth(0) && session.Progress.ranks[chosenRank] == 1 && battle.Summoner.enabled,
                         "Choosing permanent growth resumes enabled runtime components");
+                    // Skip the assault: the gate is shielded until every wave falls.
+                    battle.Objective.EnemyBase.Invulnerable = false;
                     battle.Objective.EnemyBase.TakeDamage(10000, battle.Hero);
                     Advance(); break;
                 case 5:
@@ -294,7 +296,7 @@ namespace Lightbringer.EditorTools
                     if (elapsed < 1.3f) return;
                     AudioSource pausedMusic = battle.Root.GetComponent<AudioSource>();
                     Assert(Time.timeScale == 0f && pausedMusic.isPlaying
-                        && Mathf.Abs(pausedMusic.volume - BattleMusic.Volume * 0.35f) < 0.01f,
+                        && Mathf.Abs(pausedMusic.volume - BattleMusic.Output(BattleMusic.BattleTrim) * 0.35f) < 0.01f,
                         "Pause keeps music playing and ducks volume using unscaled time");
                     Assert(session.SetPaused(false), "Music pause probe resumes the battle");
                     battle.Hero.TakeDamage(10000);
@@ -389,7 +391,7 @@ namespace Lightbringer.EditorTools
                 case 21:
                     if (elapsed < 1.2f) return;
                     Assert(battle.Root.GetComponentsInChildren<Lightbringer.Visuals.BossArrivalVfx>().Length > 0,
-                        "Runtime rupture creates the citadel collapse dust wave and rubble");
+                        "Runtime rupture creates the citadel collapse dust wave");
                     Screenshot("BossRupture.png");
                     phase = 22; phaseTime = Time.realtimeSinceStartup; break;
                 case 22:
@@ -536,8 +538,8 @@ namespace Lightbringer.EditorTools
                     if (!battle.Encounter.IsDialogue) return;
                     if (elapsed < .5f) return;
                     if (battle.Encounter.DialogueIndex == 0)
-                        Assert(soldier != null && soldier.IsAlive && battle.Encounter.FallenAllies == 0,
-                            "Runtime second Warlord arrival preserves the existing army");
+                        Assert((soldier == null || !soldier.IsAlive) && battle.Encounter.FallenAllies >= 1,
+                            "Runtime second Warlord arrival wipes the existing army");
                     battle.Encounter.AdvanceDialogue();
                     phaseTime = Time.realtimeSinceStartup;
                     if (battle.Encounter.Phase == BossEncounterPhase.Fight) phase = 37;
@@ -570,9 +572,9 @@ namespace Lightbringer.EditorTools
                     var finaleView = session.GetComponent<Lightbringer.UI.CampaignHUD>().BossDialogue;
                     if (battle.Encounter.DialogueIndex == 0 && !storyShotCaptured)
                     {
-                        Assert(soldier != null && soldier.IsAlive && battle.Encounter.FallenAllies == 0
+                        Assert((soldier == null || !soldier.IsAlive) && battle.Encounter.FallenAllies >= 1
                             && battle.Encounter.DemonCore != null && battle.Encounter.DemonCore.Invulnerable && battle.Waves.Boss != null,
-                            "Runtime finale keeps the army and raises the Warlord and the abyss core together");
+                            "Runtime finale wipes the army and raises the Warlord and the abyss core together");
                         Assert(battle.Encounter.Sky != null && battle.Encounter.Sky.Revealed && finaleView.StoryVisible
                             && finaleView.StoryImage == null && finaleView.LineText == BossEncounter.FinaleLines[0],
                             "Runtime finale dialogue plays over the live sky with the Demon King's eyes open");
@@ -592,9 +594,9 @@ namespace Lightbringer.EditorTools
                     if (!finaleCast)
                     {
                         Assert(battle.Waves.Boss.GetComponent<BossCombat>().enabled && demonKing.enabled
-                            && !battle.Encounter.DemonCore.Invulnerable && battle.Summoner.enabled
+                            && battle.Encounter.DemonCore.Invulnerable && battle.Encounter.IsCoreWarded && battle.Summoner.enabled
                             && session.GetComponent<Lightbringer.UI.CampaignHUD>().BattleView.DemonKingVisible,
-                            "Runtime finale resumes both bosses, shows the Demon King's health and keeps deployment");
+                            "Runtime finale resumes both bosses, wards the core behind the Warlord and keeps deployment");
                         if (!demonKing.IsAttacking && elapsed < 15f) return;
                         Assert(demonKing.IsAttacking && !battle.Waves.Boss.GetComponent<BossCombat>().IsAttacking,
                             "Runtime Demon King casts a sky attack while the Warlord holds his specials");
@@ -603,13 +605,35 @@ namespace Lightbringer.EditorTools
                         phaseTime = Time.realtimeSinceStartup;
                         return;
                     }
-                    battle.Encounter.DemonCore.TakeDamage(1000000, battle.Hero);
-                    Assert(!battle.Objective.HasEnded && battle.Waves.Boss.GetComponent<BossCombat>().Bereaved
-                        && battle.Encounter.Sky.Dissipating,
-                        "Runtime core destruction disperses the sky but the battle waits for the Warlord");
                     battle.Waves.Boss.TakeDamage(1000000, battle.Hero);
-                    Assert(!battle.Objective.HasEnded && battle.Encounter.IsRetreating,
-                        "Runtime finale victory waits for its closing dialogue");
+                    Assert(!battle.Objective.HasEnded && battle.Encounter.IsInterlude && demonKing.Bereaved,
+                        "Runtime Warlord falls first; the battle halts for the light he leaves behind");
+                    storyShotCaptured = false;
+                    phase = 42; phaseTime = Time.realtimeSinceStartup; break;
+                case 42:
+                    if (battle.Encounter.IsInterlude)
+                    {
+                        if (elapsed < 1f) return;
+                        if (battle.Encounter.DialogueIndex == 0 && !storyShotCaptured)
+                        {
+                            Lightbringer.UI.BossDialogueView fall = session.GetComponent<Lightbringer.UI.CampaignHUD>().BossDialogue;
+                            Assert(fall.StoryVisible && fall.StoryImage != null && fall.LineText == BossEncounter.InterludeLines[0],
+                                "Runtime Warlord's fall is a storybook page with the teacher's voice");
+                            Screenshot("ActThreeWarlordFall.png");
+                            storyShotCaptured = true;
+                            return;
+                        }
+                        storyShotCaptured = false;
+                        battle.Encounter.AdvanceDialogue();
+                        phaseTime = Time.realtimeSinceStartup;
+                        return;
+                    }
+                    Assert(battle.Encounter.Phase == BossEncounterPhase.Fight && !battle.Encounter.DemonCore.Invulnerable,
+                        "Runtime fight resumes against the unwarded Demon King");
+                    battle.Encounter.DemonCore.TakeDamage(1000000, battle.Hero);
+                    Assert(!battle.Objective.HasEnded && battle.Encounter.IsRetreating && battle.Encounter.Sky.Dissipating,
+                        "Runtime finale victory disperses the sky and waits for its closing dialogue");
+                    storyShotCaptured = false;
                     phase = 41; phaseTime = Time.realtimeSinceStartup; break;
                 case 41:
                     if (battle.Encounter.IsDialogue && elapsed >= 1f)

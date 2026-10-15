@@ -239,7 +239,7 @@ namespace Lightbringer.EditorTools
                     "Reopening the atlas restores the current act and its eight beacons");
                 PreparationView view = new PreparationView(new VisualElement());
                 view.Refresh(session);
-                Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == "봉화 03" && view.TroopCount == 3,
+                Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == CampaignStages.Name(3) && view.TroopCount == 3,
                     "Briefing shows the selected beacon and all unlocked troops");
                 Check(session.SelectStage(2) && RefreshAndSelected(view, session, 2), "Selecting a stage highlights it and retargets START");
                 view.Refresh(session, false);
@@ -248,19 +248,38 @@ namespace Lightbringer.EditorTools
                     "Returning to the map hides preparation and preserves the selected destination");
                 view.Refresh(session);
 
-                Check(view.ActiveSlot == 0 && !view.IsItemEnabled(1) && view.ItemNote(1).Contains("RMB 장착 중")
-                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "미습득" && view.IsItemEnabled(0),
-                    "Skills worn in another slot or not yet learned cannot be equipped");
-                Check(view.SelectItem(0) && view.SelectedItem == 0 && profile.loadout[0] == 0,
+                int beam = (int)SkillKind.LightBeam, shockwave = (int)SkillKind.Shockwave;
+                Check(view.ActiveSlot == 1 && view.ItemNote(1).Contains("Q 장착 중")
+                    && view.IsItemEnabled(0) && view.ItemNote(0).Contains("LMB 고정") && view.IsItemEnabled(3) && view.ItemNote(3).Contains("RMB 고정")
+                    && !view.IsItemEnabled(4) && view.ItemNote(4) == "미습득",
+                    "Preparation opens on Q; fixed skills stay inspectable and unlearned skills cannot be chosen");
+                Check(view.SelectItem(0) && view.SelectedItem == 0 && profile.loadout[0] == beam && profile.loadout[1] == 1,
                     "Inspecting a skill does not change the saved loadout");
-                Check(!view.SelectItem(4) && !view.SelectItem(1) && view.SelectedItem == 0,
-                    "Unlearned and already-used skills cannot replace the inspected skill");
+                view.SelectSlot(0);
+                view.SelectSlot(3);
+                Check(view.ActiveSlot == 1 && !view.Equip(beam) && !view.Equip(shockwave)
+                    && profile.loadout[0] == beam && profile.loadout[3] == shockwave
+                    && view.SlotText(0) == SkillCatalog.Names[beam] && view.SlotText(3) == SkillCatalog.Names[shockwave],
+                    "Left click (Light Beam) and right click (Shockwave) are fixed and cannot be selected or changed");
+                view.SelectSlot(2);
+                Check(view.ActiveSlot == 2 && view.SlotText(2) == "비어 있음" && !view.IsItemEnabled(1)
+                    && !view.SelectItem(4) && !view.SelectItem(1),
+                    "Unlearned skills and skills worn in another slot cannot be chosen for E");
                 view.SelectSlot(1);
                 Check(view.ActiveSlot == 1 && view.EquipSelected() && profile.loadout[1] == SkillCatalog.Empty && view.SlotText(1) == "비어 있음",
                     "The equip button empties a slot that already holds the inspected skill");
                 view.SelectSlot(2);
-                Check(view.ActiveSlot == 2 && view.Equip(1) && profile.loadout[2] == 1 && view.SlotText(2) == SkillCatalog.Names[1],
+                Check(view.Equip(1) && profile.loadout[2] == 1 && view.SlotText(2) == SkillCatalog.Names[1],
                     "Choosing another slot redirects the next equip");
+                int shockwaveLevel = profile.skillLevels[shockwave];
+                profile.skillLevels[shockwave] = 0;
+                profile.loadout[3] = SkillCatalog.Empty;
+                view.Refresh(session);
+                Check(view.SlotText(3) == "???" && view.ItemNote(3) == "미습득",
+                    "Right click shows a sealed ??? slot while Shockwave is not learned");
+                profile.skillLevels[shockwave] = shockwaveLevel;
+                profile.loadout[3] = shockwave;
+                view.Refresh(session);
 
                 Check(view.Start() && session.Battle != null && session.SelectedStage == 2, "START launches the selected stage");
                 view.Refresh(session);
@@ -277,7 +296,7 @@ namespace Lightbringer.EditorTools
         private static bool RefreshAndSelected(PreparationView view, CampaignSession session, int stage)
         {
             view.Refresh(session);
-            return view.DestinationText == $"봉화 {stage:00}" && view.StartText.Contains($"봉화 {stage:00}");
+            return view.DestinationText == CampaignStages.Name(stage) && view.StartText.Contains($"봉화 {stage:00}");
         }
 
         private static string RefreshAndRead(BattleHudView view, CampaignSession session)

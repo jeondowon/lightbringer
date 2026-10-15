@@ -22,21 +22,35 @@ namespace Lightbringer.EditorTools
             int picked = choices[1];
             Check(!progress.ChooseGrowth(3) && progress.ChooseGrowth(1) && progress.ranks[picked] == 1
                 && progress.pendingLevels == 1, "Choosing a valid growth applies exactly one permanent rank");
-            int heal = (int)SkillKind.Heal;
-            Check(progress.CompleteStage(1, out int learned) && learned == SkillCatalog.Empty && progress.unlockedStage == 2
-                && progress.UnlockedUnits == 2 && progress.skillLevels.SequenceEqual(new[] { 1, 0, 0, 0, 0 })
-                && progress.loadout.SequenceEqual(new[] { 0, SkillCatalog.Empty, SkillCatalog.Empty }),
+            int heal = (int)SkillKind.Heal, beam = (int)SkillKind.LightBeam, shockwave = (int)SkillKind.Shockwave;
+            int empty = SkillCatalog.Empty;
+            Check(SkillCatalog.Slots == 4 && SkillCatalog.SlotKeys.SequenceEqual(new[] { "LMB", "Q", "E", "RMB" })
+                && SkillCatalog.FixedSkillOf(0) == beam && SkillCatalog.FixedSkillOf(3) == shockwave
+                && !SkillCatalog.IsFixedSlot(1) && !SkillCatalog.IsFixedSlot(2),
+                "Four slots in screen order: left click fixed to Light Beam, Q and E free, right click fixed to Shockwave");
+            Check(progress.CompleteStage(1, out int learned) && learned == empty && progress.unlockedStage == 2
+                && progress.UnlockedUnits == 2 && progress.skillLevels.SequenceEqual(new[] { 1, 0, 0, 1, 0 })
+                && progress.loadout.SequenceEqual(new[] { beam, empty, empty, shockwave }),
                 "A first clear without a skill reward unlocks a stage and a troop and teaches nothing");
             Check(!progress.CompleteStage(1) && progress.unlockedStage == 2, "Repeated first-clear requests cannot duplicate campaign rewards");
             Check(progress.CompleteStage(2, out learned) && learned == heal && progress.unlockedStage == 3
                 && progress.skillLevels[heal] == 1 && progress.loadout[1] == heal,
-                "The stage 2 first clear teaches Heal into the first empty slot");
-            Check(!progress.CompleteStage(2, out learned) && learned == SkillCatalog.Empty && progress.skillLevels[heal] == 1,
+                "The stage 2 first clear teaches Heal into Q, the first empty free slot");
+            Check(!progress.CompleteStage(2, out learned) && learned == empty && progress.skillLevels[heal] == 1,
                 "A repeated skill reward cannot be learned twice");
-            Check(!progress.TryEquip(0, (int)SkillKind.Meteor) && !progress.TryEquip(2, (int)SkillKind.LightBeam)
-                && !progress.TryEquip(2, heal) && progress.TryEquip(1, SkillCatalog.Empty) && progress.TryEquip(2, heal)
-                && progress.loadout.SequenceEqual(new[] { (int)SkillKind.LightBeam, SkillCatalog.Empty, heal }),
+            Check(!progress.TryEquip(2, (int)SkillKind.Meteor) && !progress.TryEquip(2, heal)
+                && progress.TryEquip(1, empty) && progress.TryEquip(2, heal)
+                && progress.loadout.SequenceEqual(new[] { beam, empty, heal, shockwave }) && progress.IsValid(),
                 "Skill loadout rejects unlearned and duplicate skills, accepts learned ones and allows empty slots");
+            Check(!progress.TryEquip(0, heal) && !progress.TryEquip(0, empty) && !progress.TryEquip(3, heal) && !progress.TryEquip(3, empty)
+                && !progress.TryEquip(1, beam) && !progress.TryEquip(1, shockwave)
+                && progress.loadout.SequenceEqual(new[] { beam, empty, heal, shockwave }),
+                "Left and right click are fixed: they cannot be replaced, emptied or their skills worn elsewhere");
+            CampaignProgress sealedShockwave = new CampaignProgress { skillLevels = new[] { 1, 0, 0, 0, 0 }, loadout = new[] { beam, empty, empty, empty } };
+            Check(sealedShockwave.IsValid() && !new CampaignProgress { skillLevels = new[] { 1, 0, 0, 0, 0 } }.IsValid()
+                && !new CampaignProgress { loadout = new[] { beam, empty, empty, empty } }.IsValid()
+                && !new CampaignProgress { loadout = new[] { beam, shockwave, empty, empty } }.IsValid(),
+                "A fixed slot holds its skill once learned, stays empty before, and a fixed skill never sits in Q or E");
             int lightCost = SkillCatalog.UpgradeCost((int)SkillKind.LightBeam, 1);
             Check(!progress.TryUpgradeSkill((int)SkillKind.LightBeam), "Skills cannot be upgraded without enough light shards");
             progress.GainGold(lightCost);
@@ -81,10 +95,10 @@ namespace Lightbringer.EditorTools
                 Check(progress.CompleteStage(stage), "Campaign stage " + stage + " can be unlocked and cleared sequentially");
             Check(progress.skillLevels[(int)SkillKind.Shockwave] == 1 && progress.skillLevels[(int)SkillKind.Ice] == 1
                 && progress.skillLevels[(int)SkillKind.Meteor] == 1 && progress.IsValid(),
-                "Acts 1 and 2 teach Heal, Shockwave, Ice and Meteor through first clears");
-            Check(SkillCatalog.RewardFor(7) == (int)SkillKind.Shockwave && SkillCatalog.RewardFor(15) == (int)SkillKind.Ice
+                "Acts 1 and 2 teach Heal, Ice and Meteor through first clears; Shockwave is known from the start");
+            Check(SkillCatalog.RewardFor(7) == SkillCatalog.Empty && SkillCatalog.RewardFor(15) == (int)SkillKind.Ice
                 && SkillCatalog.RewardFor(16) == (int)SkillKind.Meteor && SkillCatalog.RewardFor(8) == SkillCatalog.Empty,
-                "The skill reward table: Shockwave at stage 7, Ice at 15, Meteor at 16");
+                "The skill reward table: Heal at 2, Ice at 15, Meteor at 16 and none for Shockwave");
             Check(progress.UnlockedUnits == 8 && progress.IsComplete && progress.IsValid(),
                 "Late campaign unlocks Dragon and all earlier troops remain available");
 
@@ -121,9 +135,28 @@ namespace Lightbringer.EditorTools
 
             CampaignProgress v2 = new CampaignProgress { version = 2, cleared = new bool[8], equipmentLevels = new[] { 3, 2, 1, 2, 0, 1 }, loadout = new[] { 0, 2, 3 } };
             v2.UpgradeSavedData();
-            Check(v2.IsValid() && v2.version == CampaignProgress.Version && v2.skillLevels.SequenceEqual(new[] { 3, 2, 0, 0, 0 })
-                && v2.loadout.SequenceEqual(new[] { 0, SkillCatalog.Empty, SkillCatalog.Empty }) && v2.gold == 4 * 40 && v2.equipmentLevels.Length == 0,
+            Check(v2.IsValid() && v2.version == CampaignProgress.Version && v2.skillLevels.SequenceEqual(new[] { 3, 2, 0, 1, 0 })
+                && v2.loadout.SequenceEqual(new[] { beam, empty, empty, shockwave }) && v2.gold == 4 * 40 && v2.equipmentLevels.Length == 0,
                 "Version 2 saves keep Light and Healing as skills and refund retired staff and ring levels as light shards");
+
+            CampaignProgress v5 = new CampaignProgress { version = 5, skillLevels = new[] { 2, 1, 0, 3, 0 }, loadout = new[] { shockwave, heal, empty } };
+            v5.UpgradeSavedData();
+            Check(v5.IsValid() && v5.version == CampaignProgress.Version && v5.skillLevels.SequenceEqual(new[] { 2, 1, 0, 3, 0 })
+                && v5.loadout.SequenceEqual(new[] { beam, heal, empty, shockwave }),
+                "Version 5 saves fix Light Beam and Shockwave, keep their levels and move the displaced skill to Q");
+            CampaignProgress unlearned = new CampaignProgress { version = 5, skillLevels = new[] { 1, 0, 0, 0, 0 }, loadout = new[] { beam, empty, empty } };
+            unlearned.UpgradeSavedData();
+            Check(unlearned.IsValid() && unlearned.skillLevels[shockwave] == 1 && unlearned.loadout[3] == shockwave,
+                "Version 5 saves that never reached stage 7 still gain Shockwave at level 1");
+            CampaignProgress v6 = new CampaignProgress { version = 6, skillLevels = new[] { 1, 2, 1, 1, 1 }, loadout = new[] { heal, shockwave, (int)SkillKind.Ice } };
+            v6.UpgradeSavedData();
+            Check(v6.IsValid() && v6.version == CampaignProgress.Version && v6.skillLevels.SequenceEqual(new[] { 1, 2, 1, 1, 1 })
+                && v6.loadout.SequenceEqual(new[] { beam, heal, (int)SkillKind.Ice, shockwave }),
+                "Version 6 saves move to four slots: Light Beam at left click, the other worn skills to Q and E, Shockwave at right click");
+            CampaignProgress v6Basic = new CampaignProgress { version = 6, loadout = new[] { beam, shockwave, empty } };
+            v6Basic.UpgradeSavedData();
+            Check(v6Basic.IsValid() && v6Basic.loadout.SequenceEqual(new[] { beam, empty, empty, shockwave }),
+                "A version 6 save with only the starting skills keeps Q and E empty");
         }
     }
 }

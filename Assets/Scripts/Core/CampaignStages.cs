@@ -6,8 +6,7 @@ namespace Lightbringer.Core
     public static class CampaignStages
     {
         public const int Count = 24;
-        // Stages 1-8 keep the original procedural layout; 9 onward are authored below.
-        private const int FirstDefined = 9;
+        // Every stage authors its name, briefing, wave count and Paths (1-3, see the design handoff).
         private sealed class Definition
         {
             public readonly string Name, Brief;
@@ -22,6 +21,25 @@ namespace Lightbringer.Core
             new Vector3(gate, 0, 64), new Vector3(0, 0, BattlefieldLayout.EnemyBaseZ) };
 
         private static readonly Definition[] Defined = {
+            // Act 1 (CampaignAtlas_Act1): the extinguished frontier -> toward the black citadel. Waves keep the
+            // original 3 + stage / 2 curve; stage 1 keeps the straight lane its authored glade is built around.
+            new Definition("첫 봉화의 빈터", "숲속 빈터의 오래된 봉화가 꺼져 있습니다. 한 길로 밀려오는 약탈자를 막고 첫 봉화에 빛을 되살리세요.", 3,
+                Route(0, 0, 0, 0)),
+            new Definition("해안 감시탑 언덕", "바닷바람이 부는 언덕의 옛 감시탑 아래로 약탈자가 모여듭니다. 굽은 길을 따라 전진해 언덕의 봉화를 되찾으세요.", 4,
+                Route(0, -5, 4, 0)),
+            new Definition("어둠이 고인 숲길", "빽빽한 숲 사이 두 오솔길에 적 궁병이 모습을 드러냈습니다. 병력을 두 길에 나누어 보내고 숲속 봉화를 밝히세요.", 4,
+                Route(-11, -15, -8, -9), Route(11, 8, 15, 9)),
+            new Definition("무너진 국경 성벽", "변경을 지키던 옛 성벽이 무너져 두 틈만 남았습니다. 성벽 틈으로 밀고 나오는 약탈자와 궁병을 막고 국경을 되찾으세요.", 5,
+                Route(-12, -10, -10, -9), Route(12, 10, 10, 9)),
+            new Definition("버려진 기사단 야영지", "빛의 기사단이 남긴 야영지에 보급품이 흩어져 있습니다. 군집병이 몰려드는 두 길을 뚫고 야영지를 되찾으세요.", 5,
+                Route(-13, -19, -17, -10), Route(13, 19, 17, 10)),
+            new Definition("타락한 제단 고개", "군주의 제단이 바위 고개를 물들이기 시작했습니다. 세 갈래 길에 병력을 나누어 제단을 지키는 군세를 몰아내세요.", 6,
+                Route(-22, -25, -21, -12), Route(0, 4, -4, 0), Route(22, 25, 21, 12)),
+            new Definition("검은 성채 진입로", "성채로 향하는 마지막 길목을 군주의 감시탑이 지키고 있습니다. 세 길을 돌파해 성채까지의 진입로를 확보하세요.", 6,
+                Route(-22, -18, -14, -10), Route(0, -3, 3, 0), Route(22, 18, 14, 10)),
+            new Definition("검은 성채", "어둠의 군주가 머무는 성채입니다. 공세를 모두 막고 성채를 무너뜨린 뒤 모습을 드러내는 적에 대비하세요.", 7,
+                Route(-22, -22, -20, -11), Route(0, 0, 0, 0), Route(22, 22, 20, 11)),
+            // Act 2 (CampaignAtlas_Act2): inland sacred ruins -> occupied supply roads -> the Warlord's citadel.
             new Definition("잿빛 순례길", "지붕을 잃은 성소와 부서진 돌길에 옛 용사의 흔적이 남아 있습니다. 강변의 두 순례길을 따라 봉화를 되찾으세요.", 6,
                 Route(-11, -22, -15, -9), Route(11, 15, 23, 9)),
             new Definition("무너진 용사의 뜰", "부러진 용사 기념비와 성소의 뜰을 군세가 점령했습니다. 낡은 포장길에서 방패병으로 화살을 막고 전진하세요.", 6,
@@ -57,21 +75,13 @@ namespace Lightbringer.Core
                 Route(-22, -26, -20, -12), Route(0, -3, 3, 0), Route(22, 26, 20, 12)),
         };
 
-        private static bool IsDefined(int stage) => stage >= FirstDefined && stage <= Count;
+        private static Definition Find(int stage) => Defined[Mathf.Clamp(stage, 1, Count) - 1];
         public static int ActOf(int stage) => Mathf.Clamp((stage - 1) / 8 + 1, 1, 3);
-        public static string Name(int stage) => IsDefined(stage) ? Defined[stage - FirstDefined].Name : $"봉화 {stage:00}";
-        public static string Brief(int stage) => IsDefined(stage) ? Defined[stage - FirstDefined].Brief
-            : "전장을 돌파하고 봉화에 다시 빛을 밝혀주세요.";
-        public static int PathCount(int stage) => IsDefined(stage) ? Defined[stage - FirstDefined].Routes.Length
-            : stage <= 2 ? 1 : stage <= 5 ? 2 : 3;
-        public static int WaveCount(int stage) => IsDefined(stage) ? Defined[stage - FirstDefined].Waves : 3 + stage / 2;
-        public static Vector3[] RoutePoints(int stage, int lane)
-        {
-            if (IsDefined(stage)) return (Vector3[])Defined[stage - FirstDefined].Routes[lane].Clone();
-            float x = (lane - (PathCount(stage) - 1) * .5f) * 22f;
-            return new[] { new Vector3(x, 0, -5), new Vector3(x, 0, 34),
-                new Vector3(x * .5f, 0, 64), new Vector3(0, 0, BattlefieldLayout.EnemyBaseZ) };
-        }
+        public static string Name(int stage) => Find(stage).Name;
+        public static string Brief(int stage) => Find(stage).Brief;
+        public static int PathCount(int stage) => Find(stage).Routes.Length;
+        public static int WaveCount(int stage) => Find(stage).Waves;
+        public static Vector3[] RoutePoints(int stage, int lane) => (Vector3[])Find(stage).Routes[lane].Clone();
         public static Vector3[] EnemyRoutePoints(int stage, int lane)
         {
             Vector3[] forward = RoutePoints(stage, lane), reverse = new Vector3[forward.Length];

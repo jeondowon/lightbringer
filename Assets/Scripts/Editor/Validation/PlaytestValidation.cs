@@ -55,6 +55,8 @@ namespace Lightbringer.EditorTools
                 enemy.TakeDamage(1000, battle.Hero);
                 Check(recorder.Current.enemiesDefeated == 1, "Playtest record counts allied kills");
 
+                // Skip the assault: the gate is shielded until every wave falls.
+                battle.Objective.EnemyBase.Invulnerable = false;
                 battle.Objective.EnemyBase.TakeDamage(10000, battle.Hero);
                 recorder.Finish("victory");
                 recorder.SetFeedback(4, "Validation note");

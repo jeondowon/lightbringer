@@ -68,6 +68,9 @@
 .lb-prologue-music { position: absolute; left: 4%; top: 9%; }
 .lb-prologue-credits { background-color: rgba(7, 11, 17, 0.96); padding: 18px; color: rgb(216, 211, 192); font-size: 14px; }
 
+/* Storybook scenes (StoryView): the Act 1 memory and the epilogue reuse the prologue frame and the boss dialogue panel. */
+.lb-story-canvas { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+
 
 /* ---------- Shared ---------- */
 
@@ -356,6 +359,11 @@
 .lb-slot--cooling .lb-name { color: rgba(238, 232, 219, 0.55); }
 .lb-slot--nomana .lb-orb { -unity-background-image-tint-color: rgb(140, 146, 186); }
 .lb-slot--nomana .lb-cost { color: rgb(255, 118, 118); }
+/* A fixed slot whose skill is not learned yet: a dimmed, sealed socket marked "?". */
+.lb-orb-seal { display: none; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: 0; padding: 0; -unity-text-align: middle-center; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 30px; color: var(--gold-dim); }
+.lb-slot--sealed .lb-orb-seal { display: flex; }
+.lb-slot--sealed .lb-orb-ring { opacity: 0.55; }
+.lb-slot--sealed .lb-name { color: var(--muted); }
 
 /* Troop roster (right edge). The portrait shade drains from the top as Food builds up. */
 .lb-troops { position: absolute; right: 22px; top: 186px; bottom: 150px; justify-content: center; align-items: flex-end; }
@@ -657,6 +665,10 @@
 .lb-brief-socket-ring { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("Art/Chrome/Ui_Socket.png"); -unity-background-scale-mode: scale-to-fit; }
 .lb-brief-key { align-self: flex-start; margin: 0 0 4px 0; padding: 1px 7px 2px 7px; font-size: 13px; -unity-font-style: bold; color: var(--gold-bright); background-color: rgb(30, 30, 36); border-width: 1px 1px 2px 1px; border-color: var(--gold-dim); border-radius: 3px; }
 .lb-brief-slot .lb-brief-item-name { white-space: nowrap; }
+.lb-brief-socket-seal { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; margin: 0; padding: 0; -unity-text-align: middle-center; -unity-font-definition: url("Fonts/Cinzel.ttf"); font-size: 26px; color: var(--gold-dim); }
+.lb-brief-slot--sealed .lb-brief-socket-seal { display: flex; }
+.lb-brief-slot--sealed .lb-brief-socket-ring { opacity: 0.55; }
+.lb-brief-slot--sealed .lb-brief-item-name { color: var(--muted); }
 
 .lb-brief-inventory-hint { font-size: 13px; color: var(--muted); margin: -4px 0 12px 0; padding: 0; }
 .lb-brief-library { flex-direction: row; align-items: flex-start; }
@@ -739,7 +751,8 @@
 .lb-upg-art--4 { background-image: url("Art/Unit_Priest.png"); }
 .lb-upg-art--5 { background-image: url("Art/Unit_Mage.png"); }
 .lb-upg-art--6 { background-image: url("Art/Unit_Knight.png"); }
-.lb-upg-art--7 { background-image: url("Art/Unit_Dragon.png"); }
+/* Keep the dragon's head in view when the wide artwork is cropped to a tall card. */
+.lb-upg-art--7 { background-image: url("Art/Unit_Dragon.png"); background-position-x: 85%; }
 .lb-upg-panel {
     flex-grow: 1;
     flex-basis: 0;

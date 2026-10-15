@@ -44,6 +44,11 @@ namespace Lightbringer.Core
         public string PlaytestStatus { get; private set; } = "";
         public bool IsPersistentSession => store != null;
         public bool IsPrologueActive { get; set; }
+        // A storybook scene (StoryCatalog) earned by this battle's first clear; the HUD plays it before the result screen.
+        public string PendingStory { get; private set; }
+        public bool IsStoryActive { get; set; }
+        public bool HoldsResult => PendingStory != null || IsStoryActive;
+        public string ClaimStory() { string scene = PendingStory; PendingStory = null; return scene; }
 
         public void Configure(InputActionAsset actions, Material material, Shader ring)
         { inputActions = actions; prototypeMaterial = material; auraShader = ring; }
@@ -78,7 +83,7 @@ namespace Lightbringer.Core
 
         public bool SelectStage(int stage)
         {
-            if (Progress == null || Battle != null || IsPrologueActive || stage < 1 || stage > Progress.unlockedStage) return false;
+            if (Progress == null || Battle != null || IsPrologueActive || IsStoryActive || stage < 1 || stage > Progress.unlockedStage) return false;
             SelectedStage = stage;
             return true;
         }
@@ -97,7 +102,7 @@ namespace Lightbringer.Core
 
         public bool StartBattle()
         {
-            if (Progress == null || Battle != null || IsPrologueActive || IsChoosing || inputActions == null || prototypeMaterial == null || auraShader == null)
+            if (Progress == null || Battle != null || IsPrologueActive || IsStoryActive || IsChoosing || inputActions == null || prototypeMaterial == null || auraShader == null)
                 return false;
             Battle = PrototypeBattleBuilder.Build(SelectedStage, Progress, inputActions, prototypeMaterial, auraShader, transform, artStyle);
             Battle.Objective.Completed += OnCompleted;
@@ -112,6 +117,7 @@ namespace Lightbringer.Core
             }
             LastResult = "";
             BattleGold = 0;
+            PendingStory = null;
             playtest.Begin(Battle, SelectedStage, Progress);
             return true;
         }
@@ -152,6 +158,7 @@ namespace Lightbringer.Core
             if (victory && SelectedStage == Lightbringer.Units.EnemyCatalog.FinalStage)
                 LastResult = "어둠의 군주와 마왕을 쓰러뜨렸습니다. 하늘의 어둠이 걷히고 모든 봉화에 빛이 돌아옵니다.\n"
                     + (rewarded ? "캠페인 완료 · 빛을 되찾은 전장에 언제든 다시 도전할 수 있습니다." : "최초 승리 보상은 이미 획득했습니다.");
+            if (rewarded) PendingStory = StoryCatalog.SceneAfter(SelectedStage);
             dirty = true;
             Flush();
         }
@@ -194,6 +201,7 @@ namespace Lightbringer.Core
             simulation.Resume(true);
             Battle.Root.SetActive(false);
             if (Application.isPlaying) Destroy(Battle.Root); else DestroyImmediate(Battle.Root);
+            PendingStory = null;
             Battle = null;
             if (preparationCamera != null) preparationCamera.SetActive(true);
             SelectedStage = Progress.unlockedStage;
@@ -221,11 +229,82 @@ namespace Lightbringer.Core
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && Battle != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame))
                 TogglePause();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (keyboard != null) DebugBossShortcuts(keyboard);
+            if (keyboard != null) DebugStoryJump(keyboard);
+#endif
             UpdatePause();
             playtest.Tick(Time.deltaTime, Battle == null || IsChoosing || IsBossCinematic || simulation.IsPaused);
             saveTimer += Time.unscaledDeltaTime;
             if (saveTimer >= 2f) { saveTimer = 0; Flush(); }
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Debug: F6 / F7 / F8 jump straight to the stage 8 / 16 / 24 boss fight, from the preparation screen or mid-battle.
+        // Locked stages never reward progress (CompleteStage requires the stage to be unlocked), so saves stay clean.
+        private void DebugBossShortcuts(Keyboard keyboard)
+        {
+            int stage = keyboard.f6Key.wasPressedThisFrame ? 8 : keyboard.f7Key.wasPressedThisFrame ? 16
+                : keyboard.f8Key.wasPressedThisFrame ? Lightbringer.Units.EnemyCatalog.FinalStage : 0;
+            if (stage == 0 || IsPrologueActive || IsStoryActive || IsBossCinematic) return;
+            if (Battle != null && (Battle.Stage != stage || Battle.Objective.HasEnded)) return;
+            if (Battle == null)
+            {
+                SelectedStage = stage;
+                if (!StartBattle()) return;
+            }
+            DebugBreakStronghold();
+        }
+
+        private void DebugBreakStronghold()
+        {
+            BossEncounter encounter = Battle.Encounter;
+            if (encounter == null || encounter.Phase == BossEncounterPhase.Fight) return;
+            Battle.Waves.DebugSkipAssault();
+            Combatant stronghold = Battle.Objective.EnemyBase;
+            if (stronghold != null && stronghold.IsAlive)
+            {
+                stronghold.Invulnerable = false;
+                stronghold.TakeDamage(stronghold.MaximumHealth * 10);
+            }
+        }
+
+        // Debug: F10 / F11 jump to the story after the stage 16 / 24 Warlord falls (Act 2 sword scene / Act 3 last words).
+        // The boss battle is fast-forwarded through the arrival and its dialogue, then the Warlord is struck down.
+        // (F9 / F12 replay the Act 1 memory / the epilogue from the map: CampaignHUD.)
+        private int storyJump;
+
+        private void DebugStoryJump(Keyboard keyboard)
+        {
+            int stage = keyboard.f10Key.wasPressedThisFrame ? 16 : keyboard.f11Key.wasPressedThisFrame ? Lightbringer.Units.EnemyCatalog.FinalStage : 0;
+            if (stage != 0 && storyJump == 0 && !IsPrologueActive && !IsStoryActive
+                && (Battle == null || Battle.Stage == stage && !Battle.Objective.HasEnded))
+            {
+                if (Battle == null) { SelectedStage = stage; if (!StartBattle()) return; }
+                if (Battle.Encounter == null) return;
+                DebugBreakStronghold();
+                storyJump = stage;
+            }
+            if (storyJump == 0) return;
+            BossEncounter encounter = Battle != null && Battle.Stage == storyJump && !Battle.Objective.HasEnded ? Battle.Encounter : null;
+            if (encounter == null) { storyJump = 0; return; }
+            switch (encounter.Phase)
+            {
+                case BossEncounterPhase.Rupture: encounter.Tick(BossEncounter.WaveSeconds); break;
+                case BossEncounterPhase.Arrival: encounter.Tick(BossEncounter.ArrivalSeconds); break;
+                case BossEncounterPhase.Dialogue: encounter.Tick(1f); encounter.AdvanceDialogue(); break;
+                case BossEncounterPhase.Fight:
+                    Combatant warlord = Battle.Waves.Boss;
+                    if (warlord != null && warlord.IsAlive) warlord.TakeDamage(warlord.MaximumHealth * 10, Battle.Hero);
+                    storyJump = 0;
+                    break;
+                case BossEncounterPhase.Assault:
+                case BossEncounterPhase.Stronghold:
+                    break;
+                default: storyJump = 0; break;
+            }
+        }
+#endif
 
         public void UpdatePause()
         {
