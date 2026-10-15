@@ -1,12 +1,13 @@
 // Boss special-attack impacts (BossStrikeVfx). HDR additive by default so bloom picks up the violet/crimson
-// energy; the scorch mode is drawn by a second, alpha-blended material instance to darken the ground under it.
+// energy; the scorch mode is drawn by a second, alpha-blended material instance to darken the ground under it,
+// and the thorn mode by an opaque, depth-writing instance for the obsidian spikes that erupt from the ground.
 // Lives in Resources so standalone builds retain it.
 Shader "Lightbringer/Boss Strike"
 {
     Properties
     {
         _Age ("Age", Float) = 0
-        _Mode ("0 Sigil, 1 Pillar, 2 Slash, 3 Wall, 4 Scorch", Float) = 0
+        _Mode ("0 Sigil, 1 Pillar, 2 Slash, 3 Wall, 4 Scorch, 5 Thorn", Float) = 0
         _Arc ("Half Arc (radians)", Float) = 3.1416
         _Life ("Lifetime", Float) = 1
         _Descent ("Pillar Descent", Float) = 0.08
@@ -15,6 +16,7 @@ Shader "Lightbringer/Boss Strike"
         _Opacity ("Opacity", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 1
+        _ZWrite ("Z Write", Float) = 0
     }
     SubShader
     {
@@ -23,7 +25,7 @@ Shader "Lightbringer/Boss Strike"
         {
             Tags { "LightMode"="UniversalForward" }
             Blend [_SrcBlend] [_DstBlend]
-            ZWrite Off
+            ZWrite [_ZWrite]
             Cull Off
             HLSLPROGRAM
             #pragma target 3.0
@@ -31,7 +33,7 @@ Shader "Lightbringer/Boss Strike"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             CBUFFER_START(UnityPerMaterial)
-                float _Age, _Mode, _Arc, _Life, _Descent, _Sweep, _Seed, _Opacity, _SrcBlend, _DstBlend;
+                float _Age, _Mode, _Arc, _Life, _Descent, _Sweep, _Seed, _Opacity, _SrcBlend, _DstBlend, _ZWrite;
             CBUFFER_END
 
             #define TAU 6.2831853
@@ -39,13 +41,14 @@ Shader "Lightbringer/Boss Strike"
             static const float3 Crimson = float3(1.9, 0.2, 0.5);
             static const float3 Core = float3(2.6, 1.45, 3.0);
 
-            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float3 radialWS : TEXCOORD2;
+                float3 normalWS : TEXCOORD3;
             };
 
             Varyings Vert(Attributes v)
@@ -55,6 +58,7 @@ Shader "Lightbringer/Boss Strike"
                 o.uv = v.uv;
                 o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
                 o.radialWS = TransformObjectToWorldDir(float3(v.positionOS.x, 0, v.positionOS.z));
+                o.normalWS = TransformObjectToWorldNormal(v.normalOS + 1e-5);
                 return o;
             }
 
@@ -166,7 +170,7 @@ Shader "Lightbringer/Boss Strike"
                     rgb = (tint * wisps * 1.2 + Core * exp(-y * 12) * 1.3) * body * fade;
                     rgb *= smoothstep(0, 0.3, Facing(i));
                 }
-                else
+                else if (_Mode < 4.5)
                 {
                     // Scorch (alpha blended): ragged burnt ground with fissures that cool from crimson to black.
                     float2 p = (i.uv - 0.5) * 2;
@@ -180,6 +184,22 @@ Shader "Lightbringer/Boss Strike"
                     float cracks = Cracks(p * 1.4, _Seed) * (1 - smoothstep(0.55, 0.9, r));
                     rgb = lerp(float3(0.02, 0.006, 0.03), Crimson * 0.7, cracks * heat);
                     alpha = saturate(mask * 0.78 + cracks * heat * 0.4) * Cone(p, _Arc) * appear * fade;
+                }
+                else
+                {
+                    // Thorn (opaque): faceted obsidian lit from above, a violet rim and crimson veins that cool
+                    // from a white-hot base as the spike stands.
+                    float3 n = normalize(i.normalWS);
+                    float3 view = GetWorldSpaceNormalizeViewDir(i.positionWS);
+                    float lambert = saturate(dot(n, normalize(float3(0.3, 0.9, 0.25))));
+                    float rim = pow(1 - saturate(abs(dot(n, view))), 3);
+                    float heat = 1 - smoothstep(0.1, _Life * 0.8, t);
+                    float veins = Cracks(i.uv * float2(2.2, 3.6), _Seed);
+                    float root = exp(-i.uv.y * 5);
+                    rgb = float3(0.03, 0.018, 0.05) * (0.35 + lambert * 1.4) + Violet * rim * 0.55
+                        + Crimson * veins * (0.2 + heat * 1.1) + lerp(Crimson, Core, heat * 0.5) * root * heat * 0.9
+                        + Violet * pow(saturate(i.uv.y), 6) * 0.6;
+                    alpha = 1;
                 }
                 bool additive = _DstBlend > 0.5 && _DstBlend < 1.5;
                 return additive ? half4(rgb * _Opacity, 1) : half4(rgb, saturate(alpha * _Opacity));

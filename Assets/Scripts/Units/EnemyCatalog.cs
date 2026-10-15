@@ -12,8 +12,13 @@ namespace Lightbringer.Units
         public const int Count = 6;
         public const int BossStage = 8;
         public static readonly string[] Names = { "약탈자", "적 궁병", "군집병", "파괴자", "주술사", "군주" };
-        // First stage in which each kind can appear.
-        private static readonly int[] FirstStage = { 1, 2, 3, 4, 5, BossStage };
+        // First stage in which each kind can appear. Act 1 alternates a new tool for the hero with a new threat: each
+        // role arrives on a stage where no new troop or skill does, a stage or so before its answer (Brute at 7, the
+        // Spearman at 8; Shaman at 10 once ranged troops and the Priest are near).
+        private static readonly int[] FirstStage = { 1, 3, 5, 7, 10, BossStage };
+        // Swarmlings stay in packs of at most this many until the Mage (stage 13) can sweep larger ones.
+        public const int SmallSwarm = 4;
+        public const int LargeSwarmStage = 13;
         // Value at stage 0 plus growth per stage.
         private static readonly float[] BaseHealth = { 25, 18, 8, 90, 20, 800 };
         private static readonly float[] HealthGrowth = { 5, 4, 2, 18, 4, 100 };
@@ -64,17 +69,17 @@ namespace Lightbringer.Units
         private static readonly EnemyKind[][][] Squads =
         {
             new[] { new[] { R, R } },
-            new[] { new[] { R, R }, new[] { R, A } },
-            new[] { new[] { R, R, A }, new[] { S, S, S, R } },
-            new[] { new[] { B, R, A }, new[] { S, S, S, R, R }, new[] { R, R, A, A } },
-            new[] { new[] { B, R, H }, new[] { S, S, S, S, A }, new[] { R, R, A, H } },
-            new[] { new[] { B, R, R, H }, new[] { S, S, S, S, S, A }, new[] { B, A, A, H } },
-            new[] { new[] { B, B, R, H }, new[] { S, S, S, S, S, R, A }, new[] { B, R, A, A, H } },
-            new[] { new[] { B, B, R, A, H }, new[] { S, S, S, S, S, S, B }, new[] { B, R, R, A, A, H } },
-            new[] { new[] { R, R, A, A, H }, new[] { B, R, R, A }, new[] { S, S, S, S, A } },
+            new[] { new[] { R, R }, new[] { R, R, R } },
+            new[] { new[] { R, R, A }, new[] { R, R, R } },
+            new[] { new[] { R, R, A }, new[] { R, R, R, A }, new[] { R, R, A, A } },
+            new[] { new[] { R, R, A }, new[] { S, S, S, R }, new[] { R, R, A, A } },
+            new[] { new[] { R, R, R, A }, new[] { S, S, S, S, A }, new[] { R, R, A, A } },
+            new[] { new[] { B, R, A }, new[] { S, S, S, S, R }, new[] { R, R, A, A } },
+            new[] { new[] { B, R, R, A }, new[] { S, S, S, S, R, A }, new[] { B, R, A, A } },
+            new[] { new[] { R, R, A, A, A }, new[] { B, R, R, A }, new[] { S, S, S, S, A } },
             new[] { new[] { R, R, A, A, A }, new[] { B, R, A, H }, new[] { S, S, R, A, A } },
             new[] { new[] { B, B, R, H }, new[] { B, A, A, H }, new[] { R, R, A, H, H } },
-            new[] { new[] { B, R, A, H }, new[] { S, S, S, S, S, A }, new[] { B, R, R, A, A } },
+            new[] { new[] { B, R, A, H }, new[] { S, S, S, S, R, A }, new[] { B, R, R, A, A } },
             new[] { new[] { S, S, S, S, S, S, A }, new[] { R, R, A, A, H }, new[] { B, R, S, S, S, H } },
             new[] { new[] { B, B, R, H }, new[] { S, S, S, S, S, A, A }, new[] { B, R, A, A, H } },
             new[] { new[] { B, B, A, H }, new[] { B, R, A, H, H }, new[] { S, S, S, S, R, A, A } },

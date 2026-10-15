@@ -14,12 +14,14 @@ namespace Lightbringer.EditorTools
             ValidateEnemyCatalog();
             ValidateEnemyRoles();
             ValidateEnemyWaves();
+            ValidateImmediateNextWave();
+            ValidateShieldedGateReinforcements();
             ValidateBossStage();
         }
 
         private static void ValidateEnemyCatalog()
         {
-            bool squadsValid = true;
+            bool squadsValid = true, smallSwarms = true, largeSwarms = false;
             bool[,] seen = new bool[CampaignProgress.StageCount + 1, EnemyCatalog.Count];
             for (int stage = 1; stage <= CampaignProgress.StageCount; stage++)
                 for (int wave = 0; wave < 3 + stage / 2; wave++)
@@ -33,11 +35,17 @@ namespace Lightbringer.EditorTools
                             squadsValid &= kind != EnemyKind.Boss && EnemyCatalog.IntroStage(kind) <= stage;
                             seen[stage, (int)kind] = true;
                         }
+                        int swarm = squad.Count(member => member == EnemyKind.Swarm);
+                        if (stage < EnemyCatalog.LargeSwarmStage) smallSwarms &= swarm <= EnemyCatalog.SmallSwarm;
+                        else largeSwarms |= swarm > EnemyCatalog.SmallSwarm;
                     }
             Check(squadsValid, "Enemy squads fit a route's spawn slots and only use roles introduced by that stage");
-            Check(seen[2, (int)EnemyKind.Archer] && seen[3, (int)EnemyKind.Swarm] && seen[4, (int)EnemyKind.Brute]
-                && seen[5, (int)EnemyKind.Shaman] && !seen[1, (int)EnemyKind.Archer],
-                "Each enemy role first appears at its intro stage (Archer 2, Swarm 3, Brute 4, Shaman 5)");
+            Check(seen[3, (int)EnemyKind.Archer] && seen[5, (int)EnemyKind.Swarm] && seen[7, (int)EnemyKind.Brute]
+                && seen[10, (int)EnemyKind.Shaman] && !seen[2, (int)EnemyKind.Archer] && !seen[4, (int)EnemyKind.Swarm]
+                && !seen[6, (int)EnemyKind.Brute] && !seen[9, (int)EnemyKind.Shaman],
+                "Each enemy role first appears at its intro stage (Archer 3, Swarm 5, Brute 7, Shaman 10)");
+            Check(smallSwarms && largeSwarms,
+                "Swarm packs stay at four or fewer until the Mage arrives at stage 13, then grow");
             Check(EnemyCatalog.IsHeavy(EnemyKind.Brute) && EnemyCatalog.IsHeavy(EnemyKind.Boss) && !EnemyCatalog.IsHeavy(EnemyKind.Raider)
                 && UnitCatalog.HeavyBonus(UnitKind.Spearman) == 2f && UnitCatalog.HeavyBonus(UnitKind.Swordsman) == 1f,
                 "Brute and Boss are Heavy; only the Spearman carries the anti-Heavy bonus");
@@ -111,19 +119,23 @@ namespace Lightbringer.EditorTools
             GameObject host = null;
             try
             {
-                PrototypeBattle battle = StartValidationStage(4, material, out host).Battle;
+                const int stage = 7;
+                PrototypeBattle battle = StartValidationStage(stage, material, out host).Battle;
                 EnemyWaveSpawner waves = battle.Waves;
+                int lanes = battle.Paths.Length;
                 Physics.SyncTransforms();
                 waves.Tick(0.1f);
                 Combatant[] enemies = LiveEnemies(battle);
+                int firstWave = 0;
+                for (int lane = 0; lane < lanes; lane++) firstWave += EnemyCatalog.Squad(stage, 0, lane).Length;
                 Combatant brute = enemies.FirstOrDefault(x => x.name == EnemyCatalog.Names[(int)EnemyKind.Brute]);
                 Combatant swarmling = enemies.FirstOrDefault(x => x.name == EnemyCatalog.Names[(int)EnemyKind.Swarm]);
-                Check(enemies.Length == 8 && brute != null && swarmling != null
-                    && enemies.Count(x => x.name == swarmling.name) == 3,
-                    "Stage 4 first wave sends a Brute squad and a Swarm squad down different fronts");
-                Check(brute.IsHeavy && brute.MaximumHealth == EnemyCatalog.MaxHealth(EnemyKind.Brute, 4)
+                Check(lanes == 3 && enemies.Length == firstWave && brute != null && swarmling != null
+                    && enemies.Count(x => x.name == swarmling.name) == 4,
+                    "Stage 7 first wave sends a Brute squad and a Swarm squad down different fronts");
+                Check(brute.IsHeavy && brute.MaximumHealth == EnemyCatalog.MaxHealth(EnemyKind.Brute, stage)
                     && brute.GetComponent<CharacterController>().radius == EnemyCatalog.Radius(EnemyKind.Brute)
-                    && !swarmling.IsHeavy && swarmling.MaximumHealth == EnemyCatalog.MaxHealth(EnemyKind.Swarm, 4),
+                    && !swarmling.IsHeavy && swarmling.MaximumHealth == EnemyCatalog.MaxHealth(EnemyKind.Swarm, stage),
                     "Spawned enemies take health, size and Heavy role from the catalog");
                 Check(waves.TryGetKind(brute, out EnemyKind kind) && kind == EnemyKind.Brute
                     && waves.ExperienceFor(brute) > waves.ExperienceFor(enemies.First(x => x.name == EnemyCatalog.Names[0]))
@@ -135,7 +147,7 @@ namespace Lightbringer.EditorTools
                 for (int wave = 1; wave < 3; wave++)
                 {
                     waves.Tick(10f);
-                    for (int lane = 0; lane < 2; lane++) queued += EnemyCatalog.Squad(4, wave, lane).Length;
+                    for (int lane = 0; lane < lanes; lane++) queued += EnemyCatalog.Squad(stage, wave, lane).Length;
                 }
                 int spawned = LiveEnemies(battle).Length;
                 Check(waves.PendingCount > 0 && spawned + waves.PendingCount == queued,
@@ -152,6 +164,138 @@ namespace Lightbringer.EditorTools
                 Object.DestroyImmediate(material);
                 Physics.SyncTransforms();
             }
+        }
+
+        private static void ValidateImmediateNextWave()
+        {
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            GameObject host = null;
+            try
+            {
+                PrototypeBattle battle = StartValidationStage(1, material, out host).Battle;
+                EnemyWaveSpawner waves = battle.Waves;
+                GameObject obstruction = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                obstruction.transform.SetParent(battle.Root.transform);
+                obstruction.transform.position = CampaignStages.EnemyRoutePoints(1, 0)[0] + new Vector3(0, 1, 1.3f);
+                obstruction.transform.localScale = new Vector3(8, 4, 8);
+                Physics.SyncTransforms();
+                waves.Tick(0.01f);
+                Check(waves.WavesSpawned == 1 && waves.PendingCount > 0 && LiveEnemies(battle).Length == 0,
+                    "Blocked deployment retains the first wave in the spawn queue");
+                waves.Tick(0.01f);
+                Check(waves.WavesSpawned == 1, "Pending enemies prevent early advancement even on an empty battlefield");
+                obstruction.SetActive(false);
+                Physics.SyncTransforms();
+                waves.Tick(0.6f);
+                Combatant[] first = LiveEnemies(battle);
+                Check(first.Length > 1 && waves.PendingCount == 0, "Unblocked first wave deploys before the interval expires");
+                foreach (Combatant enemy in first.Skip(1)) enemy.TakeDamage(enemy.MaximumHealth);
+                waves.Tick(0.01f);
+                Check(waves.WavesSpawned == 1, "One surviving enemy preserves the normal wave interval");
+                first[0].TakeDamage(first[0].MaximumHealth);
+                waves.Tick(0f);
+                waves.enabled = false;
+                waves.Tick(1f);
+                Check(waves.WavesSpawned == 1, "Paused or disabled spawners cannot advance a cleared wave");
+                waves.enabled = true;
+                for (int expected = 2; expected <= waves.TotalWaves; expected++)
+                {
+                    Physics.SyncTransforms();
+                    waves.Tick(0.01f);
+                    Check(waves.WavesSpawned == expected && LiveEnemies(battle).Length > 0
+                        && battle.Objective.EnemyBase.Invulnerable,
+                        "Clearing a wave immediately deploys the next wave while retaining the base shield");
+                    foreach (Combatant enemy in LiveEnemies(battle)) enemy.TakeDamage(enemy.MaximumHealth);
+                }
+                Check(waves.AssaultCleared && !battle.Objective.EnemyBase.Invulnerable,
+                    "Clearing the final immediate wave releases the stronghold shield");
+                waves.Tick(10f);
+                Check(waves.WavesSpawned == waves.TotalWaves && LiveEnemies(battle).Length == 0,
+                    "The final wave never creates an extra assault");
+            }
+            finally
+            {
+                if (host != null) Object.DestroyImmediate(host);
+                Object.DestroyImmediate(material);
+                Physics.SyncTransforms();
+            }
+        }
+
+        private static void ValidateShieldedGateReinforcements()
+        {
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            try
+            {
+                foreach (int stage in new[] { 1, 3, 7 })
+                {
+                    GameObject host = null;
+                    try
+                    {
+                        PrototypeBattle battle = StartValidationStage(stage, material, out host).Battle;
+                        Physics.SyncTransforms();
+                        battle.Waves.Tick(0.1f);
+                        foreach (Combatant enemy in LiveEnemies(battle)) enemy.TakeDamage(enemy.MaximumHealth);
+                        CharacterController template = battle.Root.transform.Find("Unit Template").GetComponent<CharacterController>();
+                        UnitPathFollower[] allies = new UnitPathFollower[battle.Paths.Length];
+                        for (int lane = 0; lane < allies.Length; lane++)
+                        {
+                            // Reproduce survivors already pressed against the protected wall.
+                            CharacterController unit = Object.Instantiate(template,
+                                new Vector3((lane - (allies.Length - 1) * 0.5f) * 2f, 0.85f, 75.5f),
+                                Quaternion.identity, battle.Root.transform);
+                            unit.GetComponent<Combatant>().Configure(Faction.Allied, 1000f);
+                            allies[lane] = unit.GetComponent<UnitPathFollower>();
+                            allies[lane].TryAssignPath(battle.Paths[lane]);
+                            unit.gameObject.SetActive(true);
+                        }
+                        for (int step = 0; step < 200; step++)
+                        {
+                            Physics.SyncTransforms();
+                            foreach (UnitPathFollower ally in allies) ally.Tick(0.05f);
+                        }
+                        foreach (UnitPathFollower ally in allies)
+                        {
+                            Vector3 deployment = ally.AssignedPath.GetPosition(ally.AssignedPath.Count - 2);
+                            Check(ally.transform.position.z < deployment.z && !ally.HasReachedEnd,
+                                "Shielded gate survivors return to their lane's approach in stage " + stage);
+                            // Manual edit-mode controller moves can leave the overlap-query shape at its
+                            // old position until a physics step. Re-register it before testing acquisition.
+                            CharacterController controller = ally.GetComponent<CharacterController>();
+                            controller.enabled = false;
+                            controller.enabled = true;
+                        }
+                        Physics.SyncTransforms();
+                        battle.Waves.Tick(10f);
+                        foreach (UnitPathFollower ally in allies)
+                        {
+                            UnitCombat combat = ally.GetComponent<UnitCombat>();
+                            combat.Tick(0.2f);
+                            Check(combat.Target != null && combat.Target != battle.Objective.EnemyBase,
+                                "Waiting allies detect the next assault in stage " + stage);
+                        }
+                        Combatant[] reinforcements = LiveEnemies(battle);
+                        foreach (Combatant enemy in reinforcements) enemy.GetComponent<UnitCombat>().Tick(0.2f);
+                        Check(reinforcements.Any(enemy => enemy.GetComponent<UnitCombat>().Target != null),
+                            "Reinforcements detect waiting allies instead of walking past in stage " + stage);
+                        foreach (Combatant enemy in reinforcements) enemy.TakeDamage(enemy.MaximumHealth);
+                        battle.Objective.EnemyBase.Invulnerable = false;
+                        foreach (UnitPathFollower ally in allies)
+                        {
+                            ally.ClearSteeringOverride();
+                            float before = ally.transform.position.z;
+                            ally.Tick(0.1f);
+                            Check(ally.transform.position.z > before,
+                                "Shield removal resumes the original lane's advance in stage " + stage);
+                        }
+                    }
+                    finally
+                    {
+                        if (host != null) Object.DestroyImmediate(host);
+                        Physics.SyncTransforms();
+                    }
+                }
+            }
+            finally { Object.DestroyImmediate(material); }
         }
 
         private static void ValidateBossStage()

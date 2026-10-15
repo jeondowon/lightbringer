@@ -138,8 +138,12 @@ namespace Lightbringer.Combat
                 : attack == BossAttack.Charge ? 18 : attack == BossAttack.Crescent ? 35 : 6;
             Vector3 point = attack == BossAttack.Lightning ? aim : origin;
             point.y = battle.Root.transform.position.y + 0.08f;
-            warning = BossVfx.Spawn(battle.Root.transform, point, shape, radius, -1);
-            if (warning != null) warning.transform.rotation = Quaternion.LookRotation(direction);
+            warning = BossVfx.Spawn(battle.Root.transform, point, shape, radius, -1, art);
+            if (warning != null)
+            {
+                warning.transform.rotation = Quaternion.LookRotation(direction);
+                if (attack == BossAttack.Lightning) warning.AddSkyLance(18, .45f);
+            }
             foreach (ModelAnimationDriver driver in GetComponentsInChildren<ModelAnimationDriver>())
                 driver.PlayAction(Windup / Mathf.Max(0.1f, EnemyCatalog.StrikePhase(EnemyKind.Boss)));
         }
@@ -148,9 +152,9 @@ namespace Lightbringer.Combat
         {
             ClearWarning();
             SpecialsResolved++;
-            if (CurrentAttack != BossAttack.Summon)
-                Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.BossImpact,
-                    CurrentAttack == BossAttack.Lightning ? aim : origin);
+            // The summon is also a sword slammed into the ground, so it gets the same impact thud as the other strikes.
+            Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.BossImpact,
+                CurrentAttack == BossAttack.Lightning ? aim : origin);
             switch (CurrentAttack)
             {
                 case BossAttack.Crescent:

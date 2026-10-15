@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Lightbringer.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,13 +12,17 @@ namespace Lightbringer.UI
         private readonly VisualElement panel;
         private readonly VisualElement story, frame;
         private readonly Image picture, previousPicture;
-        private readonly Texture2D[] arrivalPictures, retreatPictures;
+        private readonly StoryEffects effects;
+        private readonly Dictionary<string, Texture2D> pictures = new Dictionary<string, Texture2D>();
         private float pictureFade;
         private float pictureFadeDuration = .35f;
         private readonly BossPortalEscape portalEscape;
         private bool escapeHandoff;
         private bool wasStoryVisible;
-        private readonly Label chapter, speaker, line, count;
+        // Camera move and light of the page on screen (StoryCatalog.Panel), timed from its first frame.
+        private StoryBeat page;
+        private float pageTime;
+        private readonly Label speaker, line, count;
         private readonly Button next;
         private BossEncounter encounter;
         public bool Visible => !Root.ClassListContains("lb-hidden");
@@ -28,20 +33,19 @@ namespace Lightbringer.UI
         {
             Root = Hud.Box(parent, "lb-boss-cinematic");
             Hud.Box(Root, "lb-boss-letterbox");
-            chapter = Hud.Text(Root, "", "lb-boss-chapter");
             story = Hud.Box(Root, "lb-boss-story");
             frame = Hud.Box(story, "lb-prologue-frame");
+            frame.style.overflow = Overflow.Hidden;
             previousPicture = new Image { scaleMode = ScaleMode.ScaleToFit };
             previousPicture.AddToClassList("lb-prologue-picture");
             frame.Add(previousPicture);
             picture = new Image { scaleMode = ScaleMode.ScaleToFit };
             picture.AddToClassList("lb-prologue-picture");
             frame.Add(picture);
+            effects = new StoryEffects();
+            frame.Add(effects);
             portalEscape = new BossPortalEscape();
             frame.Add(portalEscape);
-            // The establishing shot spans the opening exchange; each subsequent beat gets its own image.
-            arrivalPictures = LoadPictures("Confrontation_v1", "Confrontation_v1", "WarlordClose_v1", "HeroResolve_v1");
-            retreatPictures = LoadPictures("WarlordDefeated_v1", "Retreat_v1", "Aftermath_v1");
             Root.RegisterCallback<GeometryChangedEvent>(_ => Fit());
             panel = Hud.Box(frame, "lb-boss-dialogue", "lb-boss-story-caption");
             speaker = Hud.Text(panel, "", "lb-boss-speaker");
@@ -60,20 +64,21 @@ namespace Lightbringer.UI
             if (!visible) { wasStoryVisible = false; portalEscape.Stop(); return; }
             bool illustrated = encounter.IsStoryPanel;
             Hud.Show(story, illustrated);
-            Hud.Show(chapter, !illustrated && encounter.Phase != BossEncounterPhase.Rupture);
-            Hud.Set(chapter, encounter.ChapterTitle);
             if (!illustrated) { wasStoryVisible = false; portalEscape.Stop(); return; }
             if (!encounter.IsIllustrated) { RefreshLive(); return; }
             story.RemoveFromClassList("lb-boss-story--live");
-            portalEscape.Tick(Time.unscaledDeltaTime);
-            if (portalEscape.Complete && encounter.IsRetreating && encounter.DialogueIndex == 1)
+            float delta = Time.unscaledDeltaTime;
+            portalEscape.Tick(delta);
+            int escape = encounter.EscapeLine;
+            if (portalEscape.Complete && escape >= 0 && encounter.DialogueIndex == escape)
                 encounter.AdvanceDialogue();
             int index = Mathf.Clamp(encounter.DialogueIndex, 0, encounter.CurrentLines.Length - 1);
-            Texture2D[] pictures = encounter.IsRetreating ? retreatPictures : arrivalPictures;
-            Texture2D art = pictures[Mathf.Min(index, pictures.Length - 1)];
+            string[] paths = encounter.CurrentPictures;
+            string path = paths[Mathf.Min(index, paths.Length - 1)];
+            Texture2D art = Load(path);
             if (picture.image != art || !wasStoryVisible)
             {
-                escapeHandoff = wasStoryVisible && encounter.IsRetreating && index == 2 && portalEscape.Complete;
+                escapeHandoff = wasStoryVisible && escape >= 0 && index == escape + 1 && portalEscape.Complete;
                 pictureFadeDuration = escapeHandoff ? 1.1f : .35f;
                 // Keep the clean plate over the old lord but under the arriving Aftermath image.
                 // Fading both overlays separately would briefly expose the lord again.
@@ -81,16 +86,27 @@ namespace Lightbringer.UI
                 else portalEscape.PlaceInFront(picture);
                 if (!escapeHandoff) portalEscape.Stop();
                 previousPicture.image = wasStoryVisible ? picture.image : null;
+                // The outgoing page fades from wherever its camera move had reached.
+                StoryFraming.Copy(picture, previousPicture);
                 picture.image = art;
+                page = StoryCatalog.Panel(path);
+                pageTime = 0;
+                effects.Show(page != null ? page.Effect : null);
                 pictureFade = 0;
                 Fit();
             }
             wasStoryVisible = true;
-            pictureFade = Mathf.MoveTowards(pictureFade, 1, Time.unscaledDeltaTime / pictureFadeDuration);
+            pageTime += delta;
+            effects.Tick(delta);
+            StoryShot shot = StoryFraming.At(page, pageTime);
+            StoryFraming.Apply(picture, shot);
+            StoryFraming.Apply(effects, shot);
+            pictureFade = Mathf.MoveTowards(pictureFade, 1, delta / pictureFadeDuration);
             portalEscape.style.opacity = encounter.StoryOpacity;
             if (escapeHandoff && pictureFade >= 1) portalEscape.Stop();
             previousPicture.style.opacity = pictureFade < 1 ? encounter.StoryOpacity : 0;
             picture.style.opacity = pictureFade * encounter.StoryOpacity;
+            effects.style.opacity = picture.style.opacity;
             panel.style.opacity = pictureFade * encounter.StoryOpacity;
             ShowLine(index);
         }
@@ -102,6 +118,7 @@ namespace Lightbringer.UI
             story.AddToClassList("lb-boss-story--live");
             previousPicture.image = null;
             picture.image = null;
+            effects.Show(null);
             if (!wasStoryVisible) { pictureFade = 0; Fit(); }
             wasStoryVisible = true;
             pictureFade = Mathf.MoveTowards(pictureFade, 1, Time.unscaledDeltaTime / .35f);
@@ -111,12 +128,16 @@ namespace Lightbringer.UI
 
         private void ShowLine(int index)
         {
-            Hud.Set(speaker, encounter.CurrentSpeakers[index]);
-            Hud.Set(line, encounter.CurrentLines[index]);
+            // A silent page keeps only the count and the button.
+            string who = encounter.CurrentSpeakers[index], said = encounter.CurrentLines[index];
+            Hud.Set(speaker, who);
+            Hud.Set(line, said);
+            Hud.Show(speaker, !string.IsNullOrEmpty(who));
+            Hud.Show(line, !string.IsNullOrEmpty(said));
             Hud.Set(count, $"{index + 1} / {encounter.CurrentLines.Length}");
             // While an animation plays the button simply greys out (see .lb-boss-next:disabled).
             Hud.Set(next, index == encounter.CurrentLines.Length - 1
-                ? encounter.IsRetreating ? "계속" : "맞서 싸운다"
+                ? encounter.IsInterlude ? "마왕에게 맞선다" : encounter.IsRetreating ? "계속" : "맞서 싸운다"
                 : "다음");
             next.SetEnabled(encounter.IsDialogue && !portalEscape.Running);
             Keyboard keyboard = Keyboard.current;
@@ -128,21 +149,19 @@ namespace Lightbringer.UI
         {
             // Guard both the button and Enter/Space; early input is not queued past the animation.
             if (!Visible || !StoryVisible || portalEscape.Running) return;
-            // Read the lord's final line first; the next input starts his escape and advances only on completion.
-            if (encounter != null && encounter.IsIllustrated && encounter.IsDialogue && encounter.IsRetreating && encounter.DialogueIndex == 1
-                && portalEscape.Begin()) return;
+            // Read the line on the escape page first; the next input starts his escape and advances only on completion.
+            if (encounter != null && encounter.IsIllustrated && encounter.IsDialogue && encounter.EscapeLine >= 0
+                && encounter.DialogueIndex == encounter.EscapeLine && portalEscape.Begin()) return;
             encounter?.AdvanceDialogue();
         }
 
-        private static Texture2D[] LoadPictures(params string[] names)
+        private Texture2D Load(string path)
         {
-            var pictures = new Texture2D[names.Length];
-            for (int i = 0; i < names.Length; i++)
-            {
-                pictures[i] = UnityEngine.Resources.Load<Texture2D>("BossStory/" + names[i]);
-                if (pictures[i] == null) Debug.LogError("Missing boss story illustration: BossStory/" + names[i]);
-            }
-            return pictures;
+            if (pictures.TryGetValue(path, out Texture2D art)) return art;
+            art = UnityEngine.Resources.Load<Texture2D>(path);
+            if (art == null) Debug.LogError("Missing boss story illustration: " + path);
+            pictures[path] = art;
+            return art;
         }
 
         private void Fit()

@@ -6,20 +6,21 @@ using UnityEngine;
 
 namespace Lightbringer.Core
 {
-    public enum BossEncounterPhase { Assault, Stronghold, Rupture, Arrival, Dialogue, Fight, RetreatDialogue, Retreat, Complete }
+    public enum BossEncounterPhase { Assault, Stronghold, Rupture, Arrival, Dialogue, Fight, Interlude, RetreatDialogue, Retreat, Complete }
 
     // Owns the Warlord encounters (8, 16) and the final battle (24); neither a base death nor the cinematic grants victory.
     // The finale adds the Demon King: a sky darkness whose health is an abyss core standing on the ruined stronghold,
-    // so troops advancing along their Paths can strike it. Both bosses must fall, in any order.
+    // so troops advancing along their Paths can strike it. Story order (Storyline.md): the Warlord wards the core until
+    // he falls, his remaining light speaks (Interlude), then the Demon King is fought alone.
     public sealed class BossEncounter : MonoBehaviour
     {
-        public const float WaveSeconds = 4.2f, ArrivalSeconds = 3f;
+        public const float WaveSeconds = 4.2f, ArrivalSeconds = 5.5f;
         public const float RetreatFadeSeconds = 1.2f;
         // The reveal shroud gathers at the ruin while the camera follows the wave, so it is already thick when the
         // view cuts back; it is blown apart PartAt seconds into the arrival.
         private const float ShroudLead = 1.2f, PartAt = 1f;
         // The Warlord stands this far in front of the ruined citadel.
-        private static readonly Vector3 RevealOffset = Vector3.back * 4;
+        private static readonly Vector3 RevealOffset = Vector3.zero;
         private readonly BattleSimulation cinematic = new BattleSimulation();
         private readonly List<Combatant> victims = new List<Combatant>();
         private PrototypeBattle battle;
@@ -35,9 +36,12 @@ namespace Lightbringer.Core
         private float sunIntensity;
         private DemonKingSky sky;
         private DemonKingCombat demonKing;
+        // Once a boss stands on the field, every newly raised unit hunts across it: allies the boss, enemies the hero.
+        private bool hunting;
         public BossEncounterPhase Phase { get; private set; }
         public bool IsRetreating => Phase == BossEncounterPhase.RetreatDialogue || Phase == BossEncounterPhase.Retreat;
-        public bool IsDialogue => Phase == BossEncounterPhase.Dialogue || Phase == BossEncounterPhase.RetreatDialogue;
+        public bool IsInterlude => Phase == BossEncounterPhase.Interlude;
+        public bool IsDialogue => Phase == BossEncounterPhase.Dialogue || Phase == BossEncounterPhase.RetreatDialogue || IsInterlude;
         public bool IsStoryPanel => IsDialogue || Phase == BossEncounterPhase.Retreat;
         public bool IsCinematic => Phase == BossEncounterPhase.Rupture || Phase == BossEncounterPhase.Arrival || IsStoryPanel;
         public float StoryOpacity => Phase == BossEncounterPhase.Retreat ? 1 - Mathf.Clamp01(elapsed / RetreatFadeSeconds) : 1;
@@ -46,16 +50,17 @@ namespace Lightbringer.Core
         public Combatant Boss => battle != null ? battle.Waves.Boss : null;
         public bool IsRematch => battle != null && battle.Stage == 16;
         public bool IsFinale => battle != null && EnemyCatalog.IsFinale(battle.Stage);
-        // Only the first encounter destroys the army with the rupture; later arrivals keep it.
-        public bool KeepsArmy => battle != null && battle.Stage != EnemyCatalog.BossStage;
-        // The finale's dialogue plays over the live battlefield so the Demon King in the sky is seen, not drawn.
-        public bool IsIllustrated => !IsFinale;
+        // The finale's dialogue plays over the live battlefield so the Demon King in the sky is seen, not drawn;
+        // only the Warlord's fall is a storybook page.
+        public bool IsIllustrated => !IsFinale || IsInterlude;
+        // While the Warlord stands, the abyss core cannot be harmed (the Demon King still casts from the sky).
+        public bool IsCoreWarded => demonKing != null && demonKing.Warded;
         public Combatant DemonCore => demonKing != null ? demonKing.Core : null;
         public DemonKingCombat DemonKing => demonKing;
         public DemonKingSky Sky => sky;
         public string ChapterTitle => IsFinale ? "두 어둠" : "어둠의 군주";
         private Vector3 RevealPoint => centre + (IsFinale ? Vector3.back * 7 : RevealOffset);
-        private float CinematicFov => IsFinale ? 52 : 48;
+        private float CinematicFov => IsFinale ? 60 : 48;
         public static readonly string[] Speakers = { "어둠의 군주", "빛의 지휘관", "어둠의 군주", "빛의 지휘관" };
         public static readonly string[] Lines =
         {
@@ -71,40 +76,69 @@ namespace Lightbringer.Core
             "이것으로 끝이라 생각하지 마라. 우리는 다시 만날 것이다.",
             "물러났군… 모두의 희생을 잊지 않겠어. 봉화에 다시 빛을 밝히자."
         };
-        private static readonly string[] RematchLines = {
+        // The Warlord's identity is not revealed in Act 2 (Storyline.md): the rematch opens without naming him.
+        public static readonly string[] RematchLines = {
             "끝내 이 성채까지 왔구나. 되살린 봉화의 빛으로 나를 꺾을 수 있다고 믿느냐?",
-            "폐허에서 당신의 문장을 보았어. 옛 빛의 용사… 어째서 마왕의 검이 된 거지?",
-            "그 맹세는 오래전에 버렸다. 더 알고 싶다면 내 검을 넘어 보아라.",
-            "우린 함께 여기까지 왔어. 이번에도 모두를 지키며 당신을 넘어서겠어."
+            "이번엔 물러서지 않아. 마왕에게 가는 길, 여기서 열고 말겠어.",
+            "길을 원한다면 내 검을 넘어 보아라.",
+            "우린 함께 여기까지 왔어. 이번에도 모두를 지키며 너를 넘어서겠어."
         };
-        private static readonly string[] RematchRetreatLines = {
-            "내 갑주가… 또다시 이 빛에 무너지다니.",
-            "아직 끝이 아니다. 마왕의 성에서… 다시 만나게 될 것이다.",
-            "성채를 되찾았어. 봉화를 밝히고 다음 길을 준비하자. 모두, 잘 싸워 주었어."
+        // Act 2 ending: kneeling, sword close-up, she knows her teacher's sword, he turns without answering and leaves.
+        // An empty line is a silent page.
+        public static readonly string[] RematchRetreatSpeakers = { "", "", "빛의 지휘관", "빛의 지휘관", "빛의 지휘관", "" };
+        public static readonly string[] RematchRetreatLines = {
+            "",
+            "",
+            "그 검… 스승님의 검인데.",
+            "네가 왜 그 검을 가지고 있지?",
+            "잠깐!",
+            ""
         };
-        // First drafts: the Warlord's final fate and the Demon King's end are still to be settled (CampaignStoryProgression.md).
         public static readonly string[] FinaleSpeakers = { "어둠의 군주", "마왕", "빛의 지휘관", "어둠의 군주", "빛의 지휘관" };
         public static readonly string[] FinaleLines = {
             "여기까지 올 줄 알았다. 하지만 이번에 너를 맞는 것은 나 혼자가 아니다.",
             "봉화를 되살린 작은 빛이여. 이 하늘 아래에서 네 빛은 모두 꺼진다.",
             "하늘을 뒤덮은 어둠… 저것이 마왕이구나.",
-            "옛 맹세의 빛이 아직 남았다면, 마지막으로 증명해 보아라.",
-            "모두, 땅에 내려온 어둠의 핵을 노려! 군주와 마왕, 두 어둠을 여기서 끝낸다!"
+            "그 검의 주인이 누구였는지 알고 싶다면… 나를 넘어 보아라.",
+            "모두, 군주부터 막아! 그가 서 있는 한 마왕의 핵에는 닿지 않아!"
         };
-        public static readonly string[] FinaleEndSpeakers = { "어둠의 군주", "빛의 지휘관", "빛의 지휘관" };
+        // Act 3: the Warlord's body is gone but a small light remains and speaks in the teacher's voice.
+        public static readonly string[] InterludeSpeakers = { "익숙한 목소리", "빛의 지휘관" };
+        public static readonly string[] InterludeLines = {
+            "아직… 끝나지 않았다. 내 빛은 놈에게 묶여 있다.",
+            "스승님…?"
+        };
+        public static readonly string[] FinaleEndSpeakers = { "빛의 지휘관", "빛의 지휘관" };
         public static readonly string[] FinaleEndLines = {
-            "이 빛은… 그날 내가 버린 맹세의 빛이로군.",
             "하늘이 걷히고 있어. 모든 봉화에 다시 빛이 돌아와.",
-            "끝까지 함께 싸워 준 모두에게 고마워. 이제 이 땅을 다시 일으키자."
+            "스승님… 이제 당신을 묶던 어둠도 사라졌어요."
         };
-        public string[] CurrentSpeakers => IsFinale ? (IsRetreating ? FinaleEndSpeakers : FinaleSpeakers)
-            : IsRetreating ? RetreatSpeakers : Speakers;
-        public string[] CurrentLines => IsFinale ? (IsRetreating ? FinaleEndLines : FinaleLines)
+        // One illustration per line (Resources paths); the finale's own dialogue has none.
+        private static readonly string[] ArrivalPictures =
+            { "BossStory/Confrontation_v1", "BossStory/Confrontation_v1", "BossStory/WarlordClose_v1", "BossStory/HeroResolve_v1" };
+        private static readonly string[] RetreatPictures =
+            { "BossStory/WarlordDefeated_v1", "BossStory/Retreat_v1", "BossStory/Aftermath_v1" };
+        private static readonly string[] RematchRetreatPictures =
+        {
+            "BossStory/WarlordDefeated_v1", StoryCatalog.SwordCloseUp, StoryCatalog.HeroRecognition,
+            "BossStory/WarlordClose_v1", "BossStory/Retreat_v1", "BossStory/Aftermath_v1"
+        };
+        private static readonly string[] InterludePictures = { StoryCatalog.WarlordDissolution, StoryCatalog.WarlordDissolution };
+        public string[] CurrentSpeakers => IsInterlude ? InterludeSpeakers
+            : IsFinale ? (IsRetreating ? FinaleEndSpeakers : FinaleSpeakers)
+            : IsRetreating ? (IsRematch ? RematchRetreatSpeakers : RetreatSpeakers) : Speakers;
+        public string[] CurrentLines => IsInterlude ? InterludeLines
+            : IsFinale ? (IsRetreating ? FinaleEndLines : FinaleLines)
             : IsRematch ? (IsRetreating ? RematchRetreatLines : RematchLines)
             : IsRetreating ? RetreatLines : Lines;
+        public string[] CurrentPictures => IsInterlude ? InterludePictures : IsFinale ? null
+            : IsRetreating ? (IsRematch ? RematchRetreatPictures : RetreatPictures) : ArrivalPictures;
+        // Leaving this retreat line starts the Warlord's escape through the rift (BossPortalEscape); -1 for none.
+        public int EscapeLine => IsFinale || !IsRetreating ? -1 : IsRematch ? 4 : 1;
         public string ObjectiveText => Phase == BossEncounterPhase.Assault ? "마지막 공세를 모두 격퇴하세요"
             : Phase == BossEncounterPhase.Stronghold ? "적 본진을 파괴하세요"
             : Phase == BossEncounterPhase.Fight ? FightObjective
+            : IsInterlude ? "어둠의 군주가 쓰러집니다"
             : IsFinale ? (IsRetreating ? "두 어둠이 걷힙니다" : "두 어둠이 모습을 드러냅니다")
             : IsRetreating ? "어둠의 군주가 물러납니다" : "어둠의 군주가 나타납니다";
 
@@ -114,8 +148,8 @@ namespace Lightbringer.Core
             {
                 if (!IsFinale) return "어둠의 군주를 격퇴하세요";
                 bool lord = Boss != null && Boss.IsAlive, core = DemonCore != null && DemonCore.IsAlive;
-                return lord && core ? "어둠의 군주와 마왕의 핵을 쓰러뜨리세요"
-                    : lord ? "남은 어둠의 군주를 쓰러뜨리세요" : "남은 마왕의 핵을 파괴하세요";
+                return lord && core ? "어둠의 군주를 쓰러뜨려 마왕의 핵을 드러내세요"
+                    : lord ? "남은 어둠의 군주를 쓰러뜨리세요" : "마왕의 핵을 파괴하세요";
             }
         }
 
@@ -129,6 +163,8 @@ namespace Lightbringer.Core
             battle.Objective.FinalBossDefeated += BeginRetreat;
             battle.Objective.BossFellEarly += OnBossFellEarly;
             battle.Objective.Completed += OnCompleted;
+            battle.Waves.Spawned += OnEnemySpawned;
+            if (battle.Summoner != null) battle.Summoner.Summoned += OnAllySummoned;
             // The storm bank already looms over the final citadel; its eyes open when the stronghold falls.
             if (IsFinale) sky = DemonKingSky.Build(art, battle.Root.transform);
         }
@@ -152,11 +188,11 @@ namespace Lightbringer.Core
                 if (light.type == LightType.Directional) { sun = light; sunIntensity = light.intensity; break; }
             battle.Hero.Invulnerable = true;
             battle.AlliedBase.Invulnerable = true;
-            // The shockwave runs to the far corners of the field, whoever is standing where.
+            // Every arrival opens with the rupture: the shockwave runs to the far corners of the field and wipes the army.
             waveRadius = FieldReach() + 4;
             front = 0;
             foreach (Combatant unit in battle.Root.GetComponentsInChildren<Combatant>())
-                if (!KeepsArmy && unit.IsAlive && unit.Faction == Faction.Allied && unit != battle.Hero && unit != battle.AlliedBase
+                if (unit.IsAlive && unit.Faction == Faction.Allied && unit != battle.Hero && unit != battle.AlliedBase
                     && unit.GetComponent<UnitPathFollower>() != null)
                 {
                     victims.Add(unit);
@@ -172,13 +208,6 @@ namespace Lightbringer.Core
                 poseRotation = cameraRotation;
             }
             shake = 1;
-            // Only the first encounter destroys the army. Reuse the arrival transition without a rupture.
-            if (KeepsArmy)
-            {
-                elapsed = WaveSeconds;
-                shake = 0;
-                return;
-            }
             if (Application.isPlaying)
             {
                 Lightbringer.Audio.BossArrivalAudio.Begin(transform);
@@ -244,6 +273,7 @@ namespace Lightbringer.Core
                     bossCombat.enabled = false;
                     battle.Objective.TrackFinalBoss(boss, waitForOutro: true);
                     if (IsFinale) SummonDemonKing();
+                    hunting = true;
                     // Cut from the wave's far edge back to the smoke-filled ruin.
                     shake = 0;
                     SnapCamera();
@@ -278,10 +308,11 @@ namespace Lightbringer.Core
 
         public bool AdvanceDialogue()
         {
-            if (!IsDialogue || elapsed < (IsRetreating ? 0.75f : 0.25f) || battle.Objective.HasEnded) return false;
+            if (!IsDialogue || elapsed < (IsRetreating || IsInterlude ? 0.75f : 0.25f) || battle.Objective.HasEnded) return false;
             elapsed = 0;
             if (++DialogueIndex < CurrentLines.Length) return true;
-            if (IsRetreating) Phase = BossEncounterPhase.Retreat;
+            if (IsInterlude) EndInterlude();
+            else if (IsRetreating) Phase = BossEncounterPhase.Retreat;
             else BeginFight();
             return true;
         }
@@ -327,7 +358,7 @@ namespace Lightbringer.Core
             core.IsHeavy = true;
             core.StatusImmune = true;
             core.Invulnerable = true;
-            BuildCoreVisual(item.transform);
+            AbyssCoreVisual.Build(item.transform, core, sky);
             battle.Waves.RegisterBossPart(core);
             battle.Objective.AddFinalBoss(core);
             var host = new GameObject("Demon King");
@@ -340,36 +371,55 @@ namespace Lightbringer.Core
                 BossVfx.Spawn(item.transform, centre + Vector3.up * .02f, BossVfx.Shape.Aura, 4.5f, -1);
         }
 
-        // Greybox core: the enemy crystal prop scaled to the collider when available, otherwise a dark block.
-        private void BuildCoreVisual(Transform core)
+        // The surviving darkness, or null once both have fallen.
+        private Combatant BossQuarry => Boss != null && Boss.IsAlive ? Boss : DemonCore != null && DemonCore.IsAlive ? DemonCore : null;
+
+        private void OnEnemySpawned(Combatant unit)
         {
-            BattlefieldPropAsset crystal = art != null && art.battlefieldProps != null ? art.battlefieldProps.Find(BattlefieldPropKind.EnemyCrystal) : null;
-            if (crystal != null)
-            {
-                GameObject model = Instantiate(crystal.prefab, core, false);
-                model.name = "Abyss Core Crystal";
-                model.transform.localScale = Vector3.one * (5.5f / Mathf.Max(.1f, crystal.size.y));
-                return;
-            }
-            GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            block.name = "Abyss Core (Greybox)";
-            Collider solid = block.GetComponent<Collider>();
-            solid.enabled = false;
-            if (Application.isPlaying) Destroy(solid); else DestroyImmediate(solid);
-            block.transform.SetParent(core, false);
-            block.transform.localPosition = Vector3.up * 2.5f;
-            block.transform.localScale = new Vector3(3, 5, 3);
-            MaterialPropertyBlock tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", new Color(.12f, .05f, .12f));
-            block.GetComponent<Renderer>().SetPropertyBlock(tint);
+            if (hunting && unit != null && unit != Boss && unit.TryGetComponent(out UnitCombat combat)) combat.Quarry = battle.Hero;
+        }
+
+        private void OnAllySummoned(Combatant unit)
+        {
+            if (hunting && unit != null && unit.TryGetComponent(out UnitCombat combat)) combat.Quarry = BossQuarry;
         }
 
         private void OnBossFellEarly(Combatant fallen)
         {
             if (!IsFinale) return;
+            // Allies hunting the fallen darkness turn on the survivor.
+            Combatant survivor = BossQuarry;
+            foreach (UnitCombat ally in battle.Root.GetComponentsInChildren<UnitCombat>())
+                if (ally.Quarry == fallen) ally.Quarry = survivor;
             // The survivor strengthens one pattern; nobody heals.
             if (fallen == DemonCore && bossCombat != null) bossCombat.Bereaved = true;
             else if (demonKing != null) demonKing.Bereaved = true;
+            if (fallen == Boss) OnWarlordFell();
+        }
+
+        // The core is warded while the Warlord stands, so in the finale he always falls first: the fight halts while the
+        // light left in his place speaks in the teacher's voice (ActThree_01), then the Demon King is fought alone.
+        private void OnWarlordFell()
+        {
+            if (Phase != BossEncounterPhase.Fight || battle.Objective.HasEnded) return;
+            Phase = BossEncounterPhase.Interlude;
+            elapsed = 0; DialogueIndex = 0;
+            battle.Root.GetComponentInParent<CampaignSession>()?.UpdatePause();
+            cinematic.Pause(battle.Root.transform);
+            heroShield = battle.Hero.Invulnerable;
+            baseShield = battle.AlliedBase.Invulnerable;
+            battle.Hero.Invulnerable = true;
+            battle.AlliedBase.Invulnerable = true;
+        }
+
+        private void EndInterlude()
+        {
+            Phase = BossEncounterPhase.Fight;
+            RestoreProtection();
+            cinematic.Resume(battle.Objective.HasEnded);
+            if (demonKing != null) demonKing.Warded = false;
+            if (DemonCore != null && DemonCore.IsAlive) DemonCore.Invulnerable = false;
+            battle.Root.GetComponentInParent<CampaignSession>()?.UpdatePause();
         }
 
         private void BeginFight()
@@ -391,7 +441,9 @@ namespace Lightbringer.Core
             }
             if (demonKing != null && DemonCore != null && DemonCore.IsAlive)
             {
-                DemonCore.Invulnerable = false;
+                // The core stays out of reach while the Warlord stands; the Demon King still casts from the sky.
+                demonKing.Warded = Boss != null && Boss.IsAlive;
+                DemonCore.Invulnerable = demonKing.Warded;
                 demonKing.enabled = true;
             }
             // A base kill can grant a level-up; apply that pause before anyone can attack this frame.
@@ -425,10 +477,16 @@ namespace Lightbringer.Core
             offset = new Vector3(12, 10, -20);
             if (IsFinale && Phase != BossEncounterPhase.Rupture)
             {
-                // Pulled back and low so the Warlord, the core and the Demon King's eyes share the frame;
-                // the ending tilts up into the clearing sky.
-                offset = new Vector3(14, 3, -48);
-                return centre + new Vector3(0, IsRetreating ? 16 : 9, 8);
+                // The ending pulls back and tilts up into the clearing sky.
+                if (IsRetreating)
+                {
+                    offset = new Vector3(14, 3, -48);
+                    return centre + new Vector3(0, 16, 8);
+                }
+                // Low behind the Warlord, tilted up so the Demon King's head and eyes over the citadel crown the
+                // frame; the ruined citadel is only a backdrop.
+                offset = new Vector3(6, -11.5f, -36);
+                return centre + new Vector3(0, 15, 8);
             }
             if (Phase != BossEncounterPhase.Rupture) return focus;
             offset = new Vector3(18, 24, -32);
@@ -462,7 +520,12 @@ namespace Lightbringer.Core
         private void OnDestroy()
         {
             if (battle == null) return;
-            if (battle.Waves != null) battle.Waves.AssaultEnded -= OnAssaultEnded;
+            if (battle.Waves != null)
+            {
+                battle.Waves.AssaultEnded -= OnAssaultEnded;
+                battle.Waves.Spawned -= OnEnemySpawned;
+            }
+            if (battle.Summoner != null) battle.Summoner.Summoned -= OnAllySummoned;
             if (battle.Objective != null)
             {
                 battle.Objective.BaseDestroyed -= OnBaseDestroyed;

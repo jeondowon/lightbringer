@@ -5,17 +5,19 @@ using UnityEngine.Rendering;
 namespace Lightbringer.Visuals
 {
     // Boss special-attack impacts built to the hero spell standard: layered HDR surfaces (thorned sigil, scorched
-    // ground, sky pillar, sweeping slash, shock walls), forked violet bolts, a flash light and spark/ember bursts.
-    // Presentation only: damage stays in BossCombat. Shader lives in Resources (BossStrike) for standalone builds.
+    // ground, sky pillar, sweeping slash, shock walls), forked violet bolts, obsidian thorns that erupt from the
+    // ground and sink back, dark smoke, a flash light and spark/ember bursts. DarkLightning and AbyssDrop are the
+    // Demon King's sky magic. Presentation only: damage stays in BossCombat and DemonKingCombat. Shader lives in
+    // Resources (BossStrike) for standalone builds.
     public sealed class BossStrikeVfx : MonoBehaviour
     {
-        public enum Kind { Lightning, Cleave, Shockwave, Summon, ChargeImpact, ChargeTrail }
+        public enum Kind { Lightning, Cleave, Shockwave, Summon, ChargeImpact, ChargeTrail, DarkLightning, AbyssDrop }
 
         public static readonly Color Violet = new Color(0.72f, 0.16f, 1f);
         public static readonly Color Crimson = new Color(1f, 0.2f, 0.42f);
         public const float CleaveHalfArc = 55f;
 
-        private const float SigilMode = 0, PillarMode = 1, SlashMode = 2, WallMode = 3, ScorchMode = 4;
+        private const float SigilMode = 0, PillarMode = 1, SlashMode = 2, WallMode = 3, ScorchMode = 4, ThornMode = 5;
         private static readonly int AgeId = Shader.PropertyToID("_Age");
         private static readonly int ModeId = Shader.PropertyToID("_Mode");
         private static readonly int ArcId = Shader.PropertyToID("_Arc");
@@ -23,8 +25,8 @@ namespace Lightbringer.Visuals
         private static readonly int DescentId = Shader.PropertyToID("_Descent");
         private static readonly int SweepId = Shader.PropertyToID("_Sweep");
         private static readonly int SeedId = Shader.PropertyToID("_Seed");
-        private static Material additive, scorch, bolt;
-        private static Mesh cylinder, cleaveFan;
+        private static Material additive, scorch, obsidian, bolt;
+        private static Mesh cylinder, cleaveFan, thornMesh;
 
         private struct Layer
         {
@@ -39,8 +41,17 @@ namespace Lightbringer.Visuals
             public float Delay, Duration;
         }
 
+        private sealed class Thorn
+        {
+            public Transform Item;
+            public Vector3 Base, Scale;
+            public float Delay, Life;
+            public bool Erupted;
+        }
+
         private readonly List<Layer> layers = new List<Layer>();
         private readonly List<Growth> growth = new List<Growth>();
+        private readonly List<Thorn> thorns = new List<Thorn>();
         private readonly List<(float time, Vector3 point, Vector3 direction)> slashSparks = new List<(float, Vector3, Vector3)>();
         private MaterialPropertyBlock block;
         private ArtStyleLibrary style;
@@ -50,7 +61,7 @@ namespace Lightbringer.Visuals
         private float lightPeak, lightDecay;
         private LineRenderer[] bolts, groundArcs;
         private Vector3 boltTop;
-        private float nextReshape, arcLength;
+        private float nextReshape, arcLength, boltSpan = 0.42f;
 
         public static BossStrikeVfx Spawn(ArtStyleLibrary style, Transform parent, Vector3 ground, Vector3 forward, Kind kind, float radius)
         {
@@ -83,6 +94,17 @@ namespace Lightbringer.Visuals
                 // Burnt ground sorts under the glowing layers drawn on top of it.
                 scorch.renderQueue = 3004;
             }
+            if (obsidian == null)
+            {
+                Shader shader = UnityEngine.Resources.Load<Shader>("BossStrike");
+                if (shader == null) return false;
+                // Solid, depth-writing thorns drawn after the opaque world and before every transparent layer.
+                obsidian = new Material(shader) { name = "Boss Strike (Obsidian Thorn)", hideFlags = HideFlags.DontSave };
+                obsidian.SetFloat("_SrcBlend", (float)BlendMode.One);
+                obsidian.SetFloat("_DstBlend", (float)BlendMode.Zero);
+                obsidian.SetFloat("_ZWrite", 1f);
+                obsidian.renderQueue = 2460;
+            }
             if (bolt == null && style != null && style.lightningMaterial != null)
             {
                 bolt = new Material(style.lightningMaterial) { name = "Boss Violet Lightning", hideFlags = HideFlags.DontSave };
@@ -108,12 +130,53 @@ namespace Lightbringer.Visuals
                     Burst("Violet Sparks", Vector3.up * 0.2f, 48, new Vector2(4f, 10f), new Vector2(0.3f, 0.8f),
                         new Vector2(0.04f, 0.1f), 1.4f, 70f, Color.white, Violet, true);
                     Embers(26, radius * 0.8f);
+                    Wall(1.2f, 0.5f, radius * 1.1f, 0f, 0.3f, 0.6f);
+                    ThornRing(6, radius * 0.95f, 180f, 1.4f, 0.03f, 0.08f, 1.25f);
+                    Smoke(Vector3.zero, radius * 0.6f, 10);
+                    break;
+                case Kind.DarkLightning:
+                    // The Demon King's bolt: a far taller, wider lance with a white-hot core, more forks crawling over
+                    // a longer strike, double shock walls and a crown of obsidian thorns.
+                    lifetime = 1.8f;
+                    Decal(ScorchMode, radius * 1.7f, full, 0f, 1.8f);
+                    Decal(SigilMode, radius * 1.35f, full, 0f, 1.3f);
+                    Pillar(radius * 0.42f, 40f, 0f, 0.75f, 0.06f);
+                    Pillar(radius * 0.16f, 40f, 0f, 0.5f, 0.05f);
+                    Bolts(40f, 1.9f, 9, 0.6f);
+                    GroundArcs(10, radius * 1.7f);
+                    Wall(2.6f, 0.6f, radius * 1.5f, 0f, 0.32f, 0.8f);
+                    Wall(1.4f, 0.4f, radius * 1.9f, 0.1f, 0.45f, 0.9f);
+                    ThornRing(10, radius * 0.85f, 180f, 2.2f, 0.04f, 0.1f, 1.5f);
+                    Flash(Vector3.up * 3f, 16f, radius * 5f, 0.8f);
+                    Burst("Abyss Sparks", Vector3.up * 0.2f, 64, new Vector2(5f, 12f), new Vector2(0.35f, 0.9f),
+                        new Vector2(0.05f, 0.12f), 1.4f, 75f, Color.white, Violet, true);
+                    Embers(36, radius * 0.9f);
+                    Smoke(Vector3.zero, radius * 0.7f, 16);
+                    break;
+                case Kind.AbyssDrop:
+                    // A falling abyss orb bursts: a splash column, a dark shock ring and thorns ringing the crater.
+                    lifetime = 1.5f;
+                    Decal(ScorchMode, radius * 1.4f, full, 0f, 1.5f);
+                    Decal(SigilMode, radius * 1.15f, full, 0f, 1.1f);
+                    Pillar(radius * 0.55f, 7f, 0f, 0.45f, 0.001f);
+                    Wall(2.2f, 0.4f, radius * 1.25f, 0f, 0.3f, 0.7f);
+                    ThornRing(7, radius * 0.62f, 180f, 1.6f, 0.02f, 0.06f, 1.2f);
+                    Flash(Vector3.up * 1.2f, 9f, radius * 4f, 0.5f);
+                    Burst("Abyss Splash", Vector3.up * 0.2f, 40, new Vector2(4f, 9f), new Vector2(0.3f, 0.7f),
+                        new Vector2(0.05f, 0.12f), 1.8f, 50f, Color.white, Violet, true);
+                    Embers(20, radius * 0.7f);
+                    Smoke(Vector3.zero, radius * 0.5f, 10);
                     break;
                 case Kind.Cleave:
                     lifetime = 1.1f;
                     Decal(ScorchMode, radius * 1.05f, cone, 0.05f, 1.1f);
                     Decal(SigilMode, radius, cone, 0f, 0.9f);
                     Slash(radius, 0.14f, 0.6f);
+                    // A fainter afterimage follows the blade, and thorns burst along the arc behind the sweep.
+                    Slash(radius * 0.86f, 0.16f, 0.5f, 0.05f);
+                    ThornRing(9, radius * 0.78f, CleaveHalfArc - 6f, 1.5f, 0.05f, 0.14f, 1f);
+                    ThornRing(5, radius * 0.45f, CleaveHalfArc - 10f, 1f, 0.03f, 0.14f, 1f);
+                    Smoke(Vector3.forward * radius * 0.55f, radius * 0.4f, 10);
                     Flash(Vector3.forward * radius * 0.5f + Vector3.up * 1.6f, 8f, radius * 2.5f, 0.45f);
                     for (int i = 0; i <= 6; i++)
                     {
@@ -135,6 +198,11 @@ namespace Lightbringer.Visuals
                     Burst("Shock Debris", Vector3.up * 0.2f, 56, new Vector2(5f, 11f), new Vector2(0.35f, 0.9f),
                         new Vector2(0.04f, 0.1f), 1.6f, 82f, Color.white, Violet, true);
                     Embers(32, radius * 0.6f);
+                    // Thorns erupt as the shock wall passes them, and violet arcs crawl outwards over the ground.
+                    ThornRing(8, radius * 0.5f, 180f, 1.6f, 0.07f, 0.05f, 1.3f);
+                    ThornRing(14, radius * 0.88f, 180f, 2.2f, 0.18f, 0.06f, 1.25f);
+                    GroundArcs(8, radius * 0.95f);
+                    Smoke(Vector3.zero, radius * 0.7f, 18);
                     break;
                 case Kind.Summon:
                     lifetime = 1.6f;
@@ -143,6 +211,8 @@ namespace Lightbringer.Visuals
                     Pillar(1.5f, 20f, 0f, 0.9f, 0.14f);
                     Flash(Vector3.up * 2.5f, 7f, 14f, 1f);
                     Embers(40, radius * 0.7f);
+                    ThornRing(8, radius * 0.8f, 180f, 1.8f, 0.15f, 0.15f, 1.4f);
+                    Smoke(Vector3.zero, radius * 0.5f, 12);
                     break;
                 case Kind.ChargeImpact:
                     lifetime = 1f;
@@ -152,6 +222,8 @@ namespace Lightbringer.Visuals
                     Flash(Vector3.up * 1.4f, 7f, radius * 3f, 0.4f);
                     Burst("Charge Sparks", Vector3.up * 0.2f, 30, new Vector2(3f, 8f), new Vector2(0.25f, 0.6f),
                         new Vector2(0.035f, 0.08f), 1.3f, 75f, Color.white, Violet, true);
+                    ThornRing(6, radius * 0.8f, 70f, 1.3f, 0.02f, 0.06f, 0.9f);
+                    Smoke(Vector3.zero, radius * 0.5f, 8);
                     break;
                 case Kind.ChargeTrail:
                     lifetime = 0.9f;
@@ -176,12 +248,45 @@ namespace Lightbringer.Visuals
             AddLayer(renderer, PillarMode, Mathf.PI, delay, life, descent);
         }
 
-        private void Slash(float size, float sweep, float life)
+        private void Slash(float size, float sweep, float life, float delay = 0f)
         {
             Renderer renderer = Surface("Cleave Crescent", CleaveFan, additive);
             renderer.transform.localScale = new Vector3(size, 1f, size);
-            AddLayer(renderer, SlashMode, Mathf.PI, 0f, life, 0f, sweep);
+            AddLayer(renderer, SlashMode, Mathf.PI, delay, life, 0f, sweep);
         }
+
+        // Obsidian thorns around a full ring (halfArc 180) or across an arc ahead, leaning outwards. Arcs erupt in a
+        // sweep from one side to the other over `stagger` seconds; rings erupt in a ragged burst within it.
+        private void ThornRing(int count, float distance, float halfArc, float height, float delay, float stagger, float life)
+        {
+            bool ring = halfArc >= 180f;
+            for (int i = 0; i < count; i++)
+            {
+                float t = count == 1 ? 0.5f : i / (float)(ring ? count : count - 1);
+                float angle = Mathf.Lerp(-halfArc, halfArc, t) + Range(-8f, 8f) * (ring ? 1f : 0.5f);
+                Vector3 outward = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+                float tall = height * Range(0.6f, 1.15f);
+                Spike(outward * distance * Range(0.85f, 1.12f), outward, tall, tall * Range(0.16f, 0.24f),
+                    delay + stagger * (ring ? Range(0f, 1f) : t), life);
+            }
+        }
+
+        private void Spike(Vector3 position, Vector3 outward, float height, float girth, float delay, float life)
+        {
+            if (obsidian == null) return;
+            Renderer renderer = Surface("Obsidian Thorn", ThornMesh, obsidian);
+            Vector3 lean = (Vector3.up + outward * Mathf.Tan(Range(14f, 32f) * Mathf.Deg2Rad)).normalized;
+            renderer.transform.localPosition = position;
+            renderer.transform.localRotation = Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, Range(0f, 360f), 0f);
+            renderer.transform.localScale = new Vector3(girth, 0.01f, girth);
+            renderer.enabled = false;
+            AddLayer(renderer, ThornMode, Mathf.PI, delay, life);
+            thorns.Add(new Thorn { Item = renderer.transform, Base = position, Scale = new Vector3(girth, height, girth), Delay = delay, Life = life });
+        }
+
+        // Dark smoke curling up from the struck ground (CombatEffects pool), centred at a local offset.
+        private void Smoke(Vector3 local, float area, int count) =>
+            CombatEffects.Smoke(style, transform.TransformPoint(local), area, count);
 
         private void Wall(float height, float from, float to, float delay, float duration, float life)
         {
@@ -231,11 +336,12 @@ namespace Lightbringer.Visuals
             lightDecay = decay;
         }
 
-        private void Bolts(float height, float strength)
+        private void Bolts(float height, float strength, int forks = 5, float span = 0.42f)
         {
             if (bolt == null) return;
             boltTop = Vector3.up * height + new Vector3(Range(-1.5f, 1.5f), 0f, Range(-1.5f, 1.5f));
-            bolts = new LineRenderer[7];
+            boltSpan = span;
+            bolts = new LineRenderer[2 + forks];
             bolts[0] = Line("Bolt Halo", 18, 0.95f * strength);
             bolts[1] = Line("Bolt Core", 18, 0.34f * strength);
             for (int i = 2; i < bolts.Length; i++) bolts[i] = Line("Bolt Fork " + i, 8, 0.13f * strength);
@@ -437,12 +543,32 @@ namespace Lightbringer.Visuals
                 float fall = Mathf.Clamp01(1f - age / lightDecay);
                 flash.intensity = lightPeak * rise * fall * fall * (age < 0.2f ? 0.8f + 0.2f * Mathf.Sin(age * 140f) : 1f);
             }
-            if ((bolts != null || groundArcs != null) && age < 0.22f && age >= nextReshape)
+            foreach (Thorn thorn in thorns)
+            {
+                float local = age - thorn.Delay;
+                if (local < 0f) continue;
+                if (!thorn.Erupted)
+                {
+                    // Each thorn tears up a little ground as it breaks the surface.
+                    thorn.Erupted = true;
+                    Vector3 root = transform.TransformPoint(thorn.Base);
+                    CombatEffects.DustRing(root, 0.25f, 3);
+                    CombatEffects.Hit(style, root + Vector3.up * 0.3f, Vector3.up, Crimson, 0.6f);
+                }
+                // Bursts up with an overshoot in a tenth of a second, then sinks back over its last third of a second.
+                float rise = Mathf.Clamp01(local / 0.1f) - 1f;
+                float grow = 1f + 2.70158f * rise * rise * rise + 1.70158f * rise * rise;
+                float sink = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(thorn.Life - 0.35f, thorn.Life, local));
+                float girth = 1f - sink * 0.3f;
+                thorn.Item.localScale = new Vector3(thorn.Scale.x * girth, thorn.Scale.y * Mathf.Max(0.01f, grow), thorn.Scale.z * girth);
+                thorn.Item.localPosition = thorn.Base + Vector3.down * (thorn.Scale.y * sink);
+            }
+            if ((bolts != null || groundArcs != null) && age < boltSpan * 0.55f && age >= nextReshape)
             {
                 ReshapeBolts();
                 nextReshape = age + 0.045f;
             }
-            float strike = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.06f, 0.42f, age));
+            float strike = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.06f, boltSpan, age));
             float flicker = age < 0.2f ? 0.75f + 0.25f * Mathf.Sin(age * 120f) : 1f;
             if (bolts != null)
             {
@@ -498,6 +624,47 @@ namespace Lightbringer.Visuals
                 cylinder.vertices = vertices; cylinder.uv = uv; cylinder.triangles = triangles;
                 cylinder.RecalculateBounds();
                 return cylinder;
+            }
+        }
+
+        // A faceted five-sided crystal thorn (base radius 1 sunk slightly below the ground, a twisted waist, tip at
+        // height 1), flat shaded. uv.x runs around it and uv.y up.
+        private static Mesh ThornMesh
+        {
+            get
+            {
+                if (thornMesh != null) return thornMesh;
+                const int sides = 5;
+                var vertices = new List<Vector3>();
+                var uv = new List<Vector2>();
+                var triangles = new List<int>();
+                // Listed anticlockwise from outside; stored clockwise so the recalculated normals face outwards.
+                void Face(Vector3 a, Vector3 b, Vector3 c, Vector2 ua, Vector2 ub, Vector2 uc)
+                {
+                    triangles.Add(vertices.Count); vertices.Add(a); uv.Add(ua);
+                    triangles.Add(vertices.Count); vertices.Add(c); uv.Add(uc);
+                    triangles.Add(vertices.Count); vertices.Add(b); uv.Add(ub);
+                }
+                Vector3 Ring(int i, float radius, float height, float twist)
+                {
+                    float angle = (i / (float)sides + twist) * Mathf.PI * 2f;
+                    return new Vector3(Mathf.Sin(angle) * radius, height, Mathf.Cos(angle) * radius);
+                }
+                Vector3 tip = Vector3.up;
+                for (int i = 0; i < sides; i++)
+                {
+                    float u0 = i / (float)sides, u1 = (i + 1) / (float)sides;
+                    Vector3 b0 = Ring(i, 1f, -0.25f, 0f), b1 = Ring(i + 1, 1f, -0.25f, 0f);
+                    Vector3 w0 = Ring(i, 0.6f, 0.42f, 0.08f), w1 = Ring(i + 1, 0.6f, 0.42f, 0.08f);
+                    Face(b0, w0, b1, new Vector2(u0, 0f), new Vector2(u0, 0.42f), new Vector2(u1, 0f));
+                    Face(b1, w0, w1, new Vector2(u1, 0f), new Vector2(u0, 0.42f), new Vector2(u1, 0.42f));
+                    Face(w0, tip, w1, new Vector2(u0, 0.42f), new Vector2((u0 + u1) * 0.5f, 1f), new Vector2(u1, 0.42f));
+                }
+                thornMesh = new Mesh { name = "Boss Obsidian Thorn", hideFlags = HideFlags.DontSave };
+                thornMesh.SetVertices(vertices); thornMesh.SetUVs(0, uv); thornMesh.SetTriangles(triangles, 0);
+                thornMesh.RecalculateNormals();
+                thornMesh.RecalculateBounds();
+                return thornMesh;
             }
         }
 

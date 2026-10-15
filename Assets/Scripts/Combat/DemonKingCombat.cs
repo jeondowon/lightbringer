@@ -40,6 +40,8 @@ namespace Lightbringer.Combat
         public int SpecialsResolved { get; private set; }
         // The Warlord fell first: shorter waits and a longer rain, without restoring any health.
         public bool Bereaved { get; set; }
+        // The Warlord wards the core while he stands (BossEncounter): it takes no damage, but the sky keeps casting.
+        public bool Warded { get; set; }
         public bool HoldsWarlord => IsAttacking || gap > 0;
         public Combatant Core => core;
 
@@ -58,7 +60,7 @@ namespace Lightbringer.Combat
 
         public void Tick(float delta)
         {
-            if (!isActiveAndEnabled || delta <= 0 || battle == null || core == null || !core.IsAlive || core.Invulnerable
+            if (!isActiveAndEnabled || delta <= 0 || battle == null || core == null || !core.IsAlive || (core.Invulnerable && !Warded)
                 || battle.Objective.HasEnded || battle.Hero == null || !battle.Hero.IsAlive) return;
             if (IsAttacking)
             {
@@ -121,7 +123,10 @@ namespace Lightbringer.Combat
         private void AddStrike(Vector3 point, float delay)
         {
             point.y = battle.Root.transform.position.y + .08f;
-            BossVfx warning = Application.isPlaying ? BossVfx.Spawn(battle.Root.transform, point, BossVfx.Shape.WarningCircle, Radius, -1) : null;
+            BossVfx warning = Application.isPlaying ? BossVfx.Spawn(battle.Root.transform, point, BossVfx.Shape.WarningCircle, Radius, -1, art) : null;
+            // Dark lightning gathers in a lance under a storm eye; each abyss drop is seen falling from the sky.
+            if (warning != null && CurrentAttack == DemonKingAttack.DarkLightning) warning.AddSkyLance(38, .8f);
+            else if (warning != null) warning.AddFallingOrb(30, 1.3f);
             strikes.Add(new Strike { Point = point, Delay = delay, Warning = warning });
         }
 
@@ -150,7 +155,8 @@ namespace Lightbringer.Combat
             if (Application.isPlaying)
             {
                 Vector3 ground = strike.Point; ground.y = battle.Root.transform.position.y + .02f;
-                BossStrikeVfx.Spawn(art, battle.Root.transform, ground, Vector3.back, BossStrikeVfx.Kind.Lightning, radius);
+                BossStrikeVfx.Spawn(art, battle.Root.transform, ground, Vector3.back,
+                    CurrentAttack == DemonKingAttack.DarkLightning ? BossStrikeVfx.Kind.DarkLightning : BossStrikeVfx.Kind.AbyssDrop, radius);
                 CombatEffects.DustRing(ground, Mathf.Min(radius * .5f, 3), 10);
                 Lightbringer.Audio.SoundEffects.World(Lightbringer.Audio.SoundCue.BossImpact, ground);
                 CameraSystem.ThirdPersonCamera.Shake(ground, CurrentAttack == DemonKingAttack.DarkLightning ? .55f : .3f);

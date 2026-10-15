@@ -5,13 +5,15 @@ using UnityEngine.Rendering.Universal;
 
 namespace Lightbringer.Visuals
 {
-    // The Warlord's arrival: the citadel's fall throws stone and a rolling wall of dust across the field under his
+    // The Warlord's arrival: the citadel's fall throws a rolling wall of dust across the field under his
     // shockwave (Rupture, alongside BossShockwaveVfx), then a dense shroud of fire-lit smoke gathers in front of the
-    // ruin and is blown apart to reveal him standing there (Reveal). Lit smoke billboards, a fissure decal, stone
-    // debris with dust trails, embers and a fire light. Presentation only: BossEncounter owns timing, kills and the boss.
+    // ruin and is blown apart to reveal him standing there (Reveal). Lit smoke billboards, a fissure decal,
+    // embers and a fire light. Presentation only: BossEncounter owns timing, kills and the boss.
     public sealed class BossArrivalVfx : MonoBehaviour
     {
         public enum Kind { Rupture, Reveal }
+
+        private const float ShroudFadeSeconds = 3f, SmokeEndFadeSeconds = 2f;
 
         private static readonly Color Ember = new Color(1f, 0.6f, 0.3f);
         private static readonly Color FireLight = new Color(1f, 0.36f, 0.16f);
@@ -31,26 +33,19 @@ namespace Lightbringer.Visuals
         private static bool depthWasRequired;
         private static UniversalAdditionalCameraData depthCamera;
 
-        private struct Debris
-        {
-            public Transform Item;
-            public Vector3 Velocity, Spin;
-            public float Size, NextTrail;
-            public bool Resting;
-        }
-
         private readonly List<Material> owned = new List<Material>();
-        private readonly List<Mesh> meshes = new List<Mesh>();
-        private readonly List<Debris> debris = new List<Debris>();
+        private readonly List<Material> smokeMaterials = new List<Material>();
         private ArtStyleLibrary style;
         private System.Random random;
         private Kind kind;
         private float age, lifetime, ground, front, ringFront;
+        private float partAge;
         private bool holdsDepth, burst, parted;
         private Shader shader;
         private Material fissure;
+        private Material shroudMaterial;
         private Light fire;
-        private ParticleSystem dust, fireSmoke, trails, sparks, shroud;
+        private ParticleSystem dust, fireSmoke, sparks, shroud;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetDepth() { depthUsers = 0; depthCamera = null; }
@@ -82,6 +77,7 @@ namespace Lightbringer.Visuals
         {
             if (kind != Kind.Reveal || parted) return;
             parted = true;
+            partAge = age;
             Vector3 centre = transform.position;
             if (shroud != null)
             {
@@ -92,9 +88,9 @@ namespace Lightbringer.Visuals
                     Vector3 outward = puffs[i].position - centre;
                     outward.y = 0f;
                     outward = outward.sqrMagnitude > 0.04f ? outward.normalized : Flat(Range(0f, Mathf.PI * 2f));
-                    puffs[i].velocity += outward * Range(3.5f, 6.5f) + Vector3.up * Range(1f, 2.5f);
-                    // Jump each puff into the thinning part of its life so the whole shroud clears together.
-                    puffs[i].remainingLifetime = Mathf.Min(puffs[i].remainingLifetime, puffs[i].startLifetime * Range(0.35f, 0.5f));
+                    puffs[i].velocity += outward * Range(1.2f, 2.4f) + Vector3.up * Range(0.4f, 1f);
+                    // Preserve particle age: opacity, size and shader density all depend on it.
+                    // New emission stops below; existing puffs drift apart and fade over their natural lifetimes.
                 }
                 shroud.SetParticles(puffs, count);
             }
@@ -115,11 +111,15 @@ namespace Lightbringer.Visuals
             Material fireLitSmoke = Smoke(1.25f);
             dust = Smoky("Rolling Dust", litSmoke, rupture ? 2400 : 260, 1.6f);
             fireSmoke = Smoky(rupture ? "Citadel Smoke Plume" : "Ruin Smoke", fireLitSmoke, rupture ? 260 : 200, 0.55f);
-            trails = Smoky("Debris Dust Trails", litSmoke, 400, 1.2f);
             sparks = Sparks(rupture ? 320 : 360);
             // The citadel's fissures already cover the ground in front of the ruin where the Warlord is revealed.
             if (rupture) Fissure(9f);
-            else shroud = Smoky("Reveal Shroud", fireLitSmoke, 320, 0.8f);
+            else
+            {
+                // The reveal cloud fades independently of the smoke still venting from the ruin.
+                shroudMaterial = Smoke(1.25f);
+                shroud = Smoky("Reveal Shroud", shroudMaterial, 320, 0.8f);
+            }
             fire = new GameObject("Fissure Firelight").AddComponent<Light>();
             fire.transform.SetParent(transform, false);
             fire.transform.localPosition = Vector3.up * (rupture ? 3f : 0.8f);
@@ -141,10 +141,12 @@ namespace Lightbringer.Visuals
             var material = new Material(shader) { name = "Boss Arrival Smoke", hideFlags = HideFlags.DontSave };
             material.SetFloat(ModeId, 0f);
             material.SetFloat(GlowAmountId, glow);
+            material.SetFloat(OpacityId, 1f);
             material.SetColor(GlowId, new Color(2.6f, 0.42f, 0.14f));
             if (holdsDepth) material.EnableKeyword("_SOFT_PARTICLES");
             material.renderQueue = 3010;
             owned.Add(material);
+            smokeMaterials.Add(material);
             return material;
         }
 
@@ -284,86 +286,6 @@ namespace Lightbringer.Visuals
         private Color Shade(Color colour, float alpha) =>
             new Color(colour.r * Range(0.85f, 1.12f), colour.g * Range(0.85f, 1.12f), colour.b * Range(0.85f, 1.1f), alpha);
 
-        // ---------------------------------------------------------------- debris
-
-        private void Stones(int count, Vector3 origin, Vector2 height, Vector2 outward, Vector2 up, Vector2 size)
-        {
-            Material material = style.propsMaterial != null ? style.propsMaterial : style.enemyMaterial;
-            if (material == null) return;
-            if (meshes.Count == 0)
-                for (int v = 0; v < 4; v++)
-                {
-                    // Copies of the shared chipped-stone meshes with the corrupted citadel stone baked into vertex colour.
-                    Mesh mesh = Instantiate(ProceduralMeshes.Faceted(v));
-                    mesh.name = "Boss Arrival Rubble " + v;
-                    mesh.hideFlags = HideFlags.DontSave;
-                    var colours = new Color[mesh.vertexCount];
-                    Color stone = Color.Lerp(style.corruptStone, style.rock * 0.55f, v / 3f);
-                    for (int i = 0; i < colours.Length; i++) colours[i] = stone;
-                    mesh.colors = colours;
-                    meshes.Add(mesh);
-                }
-            for (int i = 0; i < count; i++)
-            {
-                float angle = Range(0f, Mathf.PI * 2f);
-                Vector3 direction = Flat(angle);
-                float scale = Range(size.x, size.y);
-                var item = new GameObject("Rubble");
-                item.transform.SetParent(transform, false);
-                item.transform.position = origin + direction * Range(0.3f, 2.2f) + Vector3.up * Range(height.x, height.y);
-                item.transform.rotation = Random.rotation;
-                item.transform.localScale = new Vector3(scale * Range(0.8f, 1.3f), scale * Range(0.6f, 1f), scale * Range(0.8f, 1.2f));
-                item.AddComponent<MeshFilter>().sharedMesh = meshes[random.Next(meshes.Count)];
-                var renderer = item.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = material;
-                renderer.shadowCastingMode = ShadowCastingMode.On;
-                debris.Add(new Debris
-                {
-                    Item = item.transform, Size = scale,
-                    Velocity = direction * Range(outward.x, outward.y) + Vector3.up * Range(up.x, up.y),
-                    Spin = new Vector3(Range(-1f, 1f), Range(-1f, 1f), Range(-1f, 1f)) * Range(200f, 520f)
-                });
-            }
-        }
-
-        private void MoveDebris(float delta)
-        {
-            float sink = Mathf.Clamp01((age - (lifetime - 1.6f)) / 1.4f);
-            for (int i = 0; i < debris.Count; i++)
-            {
-                Debris piece = debris[i];
-                if (piece.Item == null) continue;
-                Vector3 p = piece.Item.position;
-                float floor = ground + piece.Size * 0.22f - sink * piece.Size;
-                if (!piece.Resting)
-                {
-                    piece.Velocity += Physics.gravity * (1.35f * delta);
-                    p += piece.Velocity * delta;
-                    piece.Item.Rotate(piece.Spin * delta, Space.World);
-                    if (age >= piece.NextTrail && piece.Velocity.sqrMagnitude > 9f)
-                    {
-                        Puff(trails, p, piece.Velocity * 0.1f, piece.Size * Range(1.6f, 2.6f), Range(0.9f, 1.5f), Shade(Dust, 0.35f));
-                        piece.NextTrail = age + 0.05f;
-                    }
-                    if (p.y <= floor && piece.Velocity.y < 0f)
-                    {
-                        p.y = floor;
-                        // Impact: a puff of dust, a weaker bounce and a lot of rolling friction.
-                        if (piece.Velocity.y < -4f)
-                            for (int k = 0; k < 2; k++)
-                                Puff(dust, p + Vector3.up * 0.3f, new Vector3(Range(-1.5f, 1.5f), Range(0.3f, 1f), Range(-1.5f, 1.5f)),
-                                    piece.Size * Range(2.8f, 4.2f), Range(1.2f, 2f), Shade(Dust, 0.45f));
-                        piece.Velocity = new Vector3(piece.Velocity.x * 0.45f, -piece.Velocity.y * 0.28f, piece.Velocity.z * 0.45f);
-                        piece.Spin *= 0.4f;
-                        if (piece.Velocity.y < 1.2f) piece.Resting = true;
-                    }
-                }
-                else p.y = Mathf.MoveTowards(p.y, floor, delta * 2f);
-                piece.Item.position = p;
-                debris[i] = piece;
-            }
-        }
-
         // ---------------------------------------------------------------- timeline
 
         private void Update() => Tick(Time.deltaTime);
@@ -374,8 +296,20 @@ namespace Lightbringer.Visuals
             age += delta;
             if (kind == Kind.Rupture) RuptureTimeline(delta);
             else RevealTimeline(delta);
-            MoveDebris(delta);
+            FadeSmoke();
             if (age >= lifetime) Destroy(gameObject);
+        }
+
+        private void FadeSmoke()
+        {
+            // Reach zero opacity before destroying the root, including late-born wisps.
+            float endFade = 1f - Mathf.SmoothStep(0f, 1f,
+                (age - (lifetime - SmokeEndFadeSeconds)) / SmokeEndFadeSeconds);
+            float revealFade = parted
+                ? 1f - Mathf.SmoothStep(0f, 1f, (age - partAge) / ShroudFadeSeconds)
+                : 1f;
+            foreach (Material material in smokeMaterials)
+                material.SetFloat(OpacityId, endFade * (material == shroudMaterial ? revealFade : 1f));
         }
 
         private void RuptureTimeline(float delta)
@@ -384,8 +318,7 @@ namespace Lightbringer.Visuals
             if (!burst)
             {
                 burst = true;
-                // The citadel bursts: heavy rubble from its walls, a choking cloud at its foot.
-                Stones(28, centre, new Vector2(1.5f, 7f), new Vector2(4f, 12f), new Vector2(4f, 11f), new Vector2(0.35f, 1.3f));
+                // The citadel bursts: a choking cloud at its foot.
                 for (int i = 0; i < 46; i++)
                 {
                     Vector3 direction = Flat(Range(0f, Mathf.PI * 2f));
@@ -401,7 +334,7 @@ namespace Lightbringer.Visuals
             }
             // A plume of fire-lit smoke climbing out of the ruin, thinning as the wave runs out.
             float plume = Mathf.Clamp01(1f - age / 3.2f);
-            int count = Mathf.RoundToInt(delta * 30f * plume + (float)random.NextDouble());
+            int count = Mathf.FloorToInt(delta * 30f * plume + (float)random.NextDouble());
             for (int i = 0; i < count; i++)
             {
                 Vector3 direction = Flat(Range(0f, Mathf.PI * 2f));
@@ -469,19 +402,21 @@ namespace Lightbringer.Visuals
             // The shroud churns slowly in place until Part() blows it away.
             if (!parted)
             {
-                int count = Mathf.RoundToInt(delta * 48f + (float)random.NextDouble());
+                int count = Mathf.FloorToInt(delta * 48f + (float)random.NextDouble());
                 for (int i = 0; i < count; i++) ShroudPuff(centre);
             }
             // Heat keeps venting from the citadel's cracks: thin fire-lit smoke and drifting embers until the effect ends.
             float vent = Mathf.Clamp01((lifetime - 2f - age) / 2f);
-            int wisps = Mathf.RoundToInt(delta * (age < 2.5f ? 14f : 6f) * vent + (float)random.NextDouble() * 0.6f);
+            int wisps = vent > 0f
+                ? Mathf.FloorToInt(delta * (age < 2.5f ? 14f : 6f) * vent + (float)random.NextDouble()) : 0;
             for (int i = 0; i < wisps; i++)
             {
                 Vector3 direction = Flat(Range(0f, Mathf.PI * 2f));
                 Puff(fireSmoke, centre + direction * Range(0.5f, 4.5f) + Vector3.up * 0.4f,
                     direction * Range(0.1f, 0.5f) + Vector3.up * Range(0.9f, 2.2f), Range(1.8f, 3.2f), Range(2.4f, 3.4f), Shade(Ash, 0.4f));
             }
-            int embers = Mathf.RoundToInt(delta * (age < 2.5f ? 34f : 10f) * vent + (float)random.NextDouble() * 0.5f);
+            int embers = vent > 0f
+                ? Mathf.FloorToInt(delta * (age < 2.5f ? 34f : 10f) * vent + (float)random.NextDouble()) : 0;
             for (int i = 0; i < embers; i++)
             {
                 Vector3 direction = Flat(Range(0f, Mathf.PI * 2f));
@@ -544,9 +479,7 @@ namespace Lightbringer.Visuals
             }
             holdsDepth = false;
             foreach (Material material in owned) if (material != null) Destroy(material);
-            foreach (Mesh mesh in meshes) if (mesh != null) Destroy(mesh);
             owned.Clear();
-            meshes.Clear();
         }
     }
 }

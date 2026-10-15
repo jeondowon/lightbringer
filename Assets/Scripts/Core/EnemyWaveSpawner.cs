@@ -58,7 +58,9 @@ namespace Lightbringer.Core
             if (waves < TotalWaves)
             {
                 timer -= delta;
-                if (timer <= 0)
+                // A cleared battlefield starts the next wave on the next active tick. Pending troops
+                // still belong to the current assault, even when every deployed enemy has died.
+                if (timer <= 0 || (livingTroops == 0 && PendingCount == 0))
                 {
                     timer = WaveInterval;
                     QueueWave();
@@ -86,15 +88,25 @@ namespace Lightbringer.Core
             AssaultEnded?.Invoke();
         }
 
+        // Debug shortcut: drop the remaining waves and end the assault so the encounter moves on to the stronghold.
+        public void DebugSkipAssault()
+        {
+            if (AssaultCleared || !HasBoss) return;
+            waves = TotalWaves;
+            foreach (List<EnemyKind> lane in pending) lane.Clear();
+            AssaultCleared = true;
+            AssaultEnded?.Invoke();
+        }
+
         // Only the encounter director calls this, after the stronghold collapses.
         public Combatant SpawnFinalBoss(Vector3 position)
         {
             if (!HasBoss || !AssaultCleared || Boss != null || BossDefeated || routes == null || routes.Length == 0) return null;
-            // After the first encounter the army survives and may already surround the ruined gate.
+            // In later encounters the hero or fallen soldiers may still stand at the ruined gate.
             if (stage != EnemyCatalog.BossStage)
             {
                 Vector3 ground = position - Vector3.up * .85f;
-                if (!TryFindSlot(ground, EnemyCatalog.Radius(EnemyKind.Boss), out position)
+                if (!TryFindSlot(ground, EnemyCatalog.Radius(EnemyKind.Boss), out position, preferCentre: true)
                     && !TryFindSlot(ground + Vector3.forward * 10, EnemyCatalog.Radius(EnemyKind.Boss), out position))
                     return null;
             }
@@ -138,13 +150,15 @@ namespace Lightbringer.Core
         }
 
         // Three columns by three rows behind the route start; the first free slot wins.
-        private static bool TryFindSlot(Vector3 start, float radius, out Vector3 position)
+        private static bool TryFindSlot(Vector3 start, float radius, out Vector3 position, bool preferCentre = false)
         {
             // Probe the 1.6 m unit body while keeping the capsule clear of the ground, whatever the radius.
             float low = radius + 0.1f, high = Mathf.Max(low, 1.6f - radius);
             for (int i = 0; i < 9; i++)
             {
-                Vector3 ground = start + new Vector3((i % 3 - 1) * SlotSpacing, 0f, (i / 3) * SlotSpacing);
+                // Keep the boss on the arrival light's centre unless that spot is occupied.
+                int slot = preferCentre && i < 2 ? 1 - i : i;
+                Vector3 ground = start + new Vector3((slot % 3 - 1) * SlotSpacing, 0f, (slot / 3) * SlotSpacing);
                 if (!Physics.CheckCapsule(ground + Vector3.up * low, ground + Vector3.up * high, radius,
                     ~0, QueryTriggerInteraction.Ignore))
                 {

@@ -13,7 +13,7 @@ namespace Lightbringer.Combat
         private Combatant owner;
         private ArtStyleLibrary art;
         private Vector3 direction;
-        private float travelled, trailTimer;
+        private float travelled, trailTimer, furrowTimer;
         private Light glow;
         private readonly HashSet<Combatant> hit = new HashSet<Combatant>();
 
@@ -77,6 +77,15 @@ namespace Lightbringer.Combat
         private void Trail(float delta)
         {
             if (glow != null) glow.intensity = 5f * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(Range * 0.7f, Range, travelled)));
+            // The blade gouges a smouldering furrow into the ground as it passes.
+            furrowTimer -= delta;
+            if (furrowTimer <= 0f)
+            {
+                furrowTimer = 0.11f;
+                Vector3 ground = transform.position;
+                ground.y = battle.Root.transform.position.y + 0.02f;
+                BossStrikeVfx.Spawn(art, battle.Root.transform, ground, direction, BossStrikeVfx.Kind.ChargeTrail, 1.5f);
+            }
             trailTimer -= delta;
             if (trailTimer > 0f) return;
             trailTimer = 0.03f;
