@@ -19,12 +19,14 @@ MonoBehaviour:
   auraMotesMaterial: {fileID: 2100000, guid: 407c555f41deeff45917357e1b6f53b6, type: 2}
   lightningMaterial: {fileID: 2100000, guid: db6ebeccd580e4e40994f2231d286c99, type: 2}
   celestialStrikeMaterial: {fileID: 2100000, guid: 29e0bf9d37cfb4e4ea0a641935cca6f6, type: 2}
+  meteorMaterial: {fileID: 2100000, guid: d1df52040b06f1d4b83e9c195acbea75, type: 2}
   terrainMaterial: {fileID: 2100000, guid: cdfac254b786c1e44a7ff332bb427db8, type: 2}
   grassMaterial: {fileID: 2100000, guid: d0ca5325729be9243bd92d36d8f4708c, type: 2}
   propsMaterial: {fileID: 2100000, guid: 58e2ba22f98e381478958791a4eade1d, type: 2}
   skyMaterial: {fileID: 2100000, guid: 6a604490472de0248a20f7dba289a624, type: 2}
   vfxMaterial: {fileID: 2100000, guid: fd7cd9feb92cf2d40bb29dab415d9729, type: 2}
   auraBlessingMaterial: {fileID: 2100000, guid: e5a3898ac1352c44696898373f61ffcd, type: 2}
+  waterMaterial: {fileID: 2100000, guid: d956f0e7b77049deb1cf79da7fa1d2af, type: 2}
   forestEnvironment: {fileID: 11400000, guid: 362a33e416d3418eabb6b5c47f809c6c, type: 2}
   actTwoEnvironment: {fileID: 11400000, guid: 806c55261b69a8041913bbb98a0868f9, type: 2}
   battlefieldProps: {fileID: 11400000, guid: 65f5ba2494d696d43a4e33c82a4fdeed, type: 2}
@@ -33,17 +35,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a39d9536560f4acea7890a01051c2bca, type: 2}
   - {fileID: 11400000, guid: 923b54a0a1ed462f938e0a4b92795d8f, type: 2}
   - {fileID: 11400000, guid: 07f4db70519544959ee242324f7bd40c, type: 2}
-  ivory: {r: 0.93, g: 0.91, b: 0.86, a: 1}
   royalBlue: {r: 0.2, g: 0.33, b: 0.68, a: 1}
   gold: {r: 0.86, g: 0.68, b: 0.3, a: 1}
   steel: {r: 0.66, g: 0.7, b: 0.77, a: 1}
-  leather: {r: 0.24, g: 0.17, b: 0.14, a: 1}
   skin: {r: 0.96, g: 0.81, b: 0.7, a: 1}
-  hair: {r: 0.17, g: 0.12, b: 0.1, a: 1}
   lightGlow: {r: 0.62, g: 0.8, b: 1, a: 1}
-  holyGlow: {r: 1, g: 0.86, b: 0.52, a: 1}
-  dragonScale: {r: 0.92, g: 0.94, b: 0.98, a: 1}
-  dragonMembrane: {r: 0.66, g: 0.76, b: 0.96, a: 1}
   corruptBody: {r: 0.16, g: 0.12, b: 0.2, a: 1}
   corruptArmor: {r: 0.3, g: 0.2, b: 0.34, a: 1}
   bone: {r: 0.8, g: 0.75, b: 0.64, a: 1}
@@ -58,7 +54,6 @@ MonoBehaviour:
   bark: {r: 0.36, g: 0.26, b: 0.2, a: 1}
   foliage: {r: 0.4, g: 0.6, b: 0.34, a: 1}
   foliageDark: {r: 0.2, g: 0.38, b: 0.26, a: 1}
-  mountain: {r: 0.5, g: 0.56, b: 0.66, a: 1}
   sunEuler: {x: 32, y: -35, z: 0}
   cloudShadowStrength: 0.35
   cloudScale: 0.018

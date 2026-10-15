@@ -28,7 +28,7 @@ namespace Lightbringer.Visuals
 
         public bool Apply(VisualId id) => Attach(gameObject, id, style, feetOffset) != null;
 
-        public static Transform Attach(GameObject owner, VisualId id, ArtStyleLibrary style, float feetOffset)
+        public static Transform Attach(GameObject owner, VisualId id, ArtStyleLibrary style, float feetOffset, float extraScale = 1f)
         {
             if (owner == null || style == null || !style.HasMaterials) return null;
             VisualOverride replacement = style.FindOverride(id);
@@ -48,6 +48,7 @@ namespace Lightbringer.Visuals
             root.localPosition = new Vector3(0f, feetOffset / Mathf.Max(scale.y, 0.0001f), 0f);
             if (id != VisualId.Hero && id != VisualId.AlliedStronghold && id != VisualId.EnemyStronghold)
                 root.localScale *= TroopVisualScale;
+            root.localScale *= extraScale;
 
             AddCombatFeedback(owner, root, style);
             GameObject model = Object.Instantiate(replacement.prefab, root, false);

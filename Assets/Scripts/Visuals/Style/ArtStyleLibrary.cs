@@ -86,6 +86,8 @@ namespace Lightbringer.Visuals
         public Material lightningMaterial;
         [Tooltip("Descending light column and impact sigil for the Light Staff.")]
         public Material celestialStrikeMaterial;
+        [Tooltip("Lightbringer/Meteor: ground aurora warning, fire curtain, falling meteor and impact dome.")]
+        public Material meteorMaterial;
         [Tooltip("Lightbringer/Terrain: painterly ground (vertex palette, alpha = road mask).")]
         public Material terrainMaterial;
         [Tooltip("Lightbringer/Grass: wind-swayed grass blades.")]
@@ -98,6 +100,8 @@ namespace Lightbringer.Visuals
         public Material vfxMaterial;
         [Tooltip("Lightbringer/Aura Blessing: low circular light veil around empowered allies' feet.")]
         public Material auraBlessingMaterial;
+        [Tooltip("Lightbringer/River Water: shallow river crossings (stages 15 and 18).")]
+        public Material waterMaterial;
 
         [Header("Stage environment overrides")]
         public ForestEnvironmentProfile forestEnvironment;

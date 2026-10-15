@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Lightbringer.Visuals
 {
-    // Stage-one landmark and victory presentation. Never changes combat or progression rules.
+    // Per-stage landmark and victory presentation (stage one keeps the fixed Centre; others pick a flank site). Never changes combat or progression rules.
     public sealed class BeaconSanctuary : MonoBehaviour
     {
         public static readonly Vector2 Centre = new Vector2(-13f, Core.BattlefieldLayout.CentreZ);
@@ -24,17 +24,21 @@ namespace Lightbringer.Visuals
         private Renderer ground;
         private MaterialPropertyBlock groundLight;
         private float elapsed;
+        private float cameraSide = 1f;
         private Vector3 cameraStart;
         private Quaternion rotationStart;
         public bool IsLit { get; private set; }
         public bool IsPresenting => IsLit && elapsed < PresentationDuration && isActiveAndEnabled;
 
-        public static BeaconSanctuary Build(Transform parent, GameObject beacon, BattlefieldEnvironment terrain)
+        public static BeaconSanctuary Build(Transform parent, GameObject beacon, BattlefieldEnvironment terrain, Vector2? site = null)
         {
+            Vector2 at = site ?? Centre;
             GameObject root = new GameObject("Beacon Light and Sanctuary");
             root.transform.SetParent(parent, false);
-            root.transform.localPosition = new Vector3(Centre.x, terrain.SurfaceHeight(Centre.x, Centre.y), Centre.y);
+            root.transform.localPosition = new Vector3(at.x, terrain.SurfaceHeight(at.x, at.y), at.y);
             BeaconSanctuary sanctuary = root.AddComponent<BeaconSanctuary>();
+            // The victory camera swings in from the field side, so a beacon on the east flank mirrors its offset.
+            sanctuary.cameraSide = at.x > 0f ? -1f : 1f;
             sanctuary.ground = terrain.Terrain.GetComponent<Renderer>();
             sanctuary.Populate(beacon);
             return sanctuary;
@@ -173,7 +177,7 @@ namespace Lightbringer.Visuals
             if (battleCamera != null)
             {
                 float blend = Mathf.SmoothStep(0f, 1f, elapsed / 2f);
-                Vector3 destination = transform.TransformPoint(new Vector3(12f, 7f, -17f));
+                Vector3 destination = transform.TransformPoint(new Vector3(12f * cameraSide, 7f, -17f));
                 Quaternion rotation = Quaternion.LookRotation(transform.TransformPoint(new Vector3(0f, 4f, 0f)) - destination);
                 battleCamera.transform.SetPositionAndRotation(Vector3.Lerp(cameraStart, destination, blend),
                     Quaternion.Slerp(rotationStart, rotation, blend));

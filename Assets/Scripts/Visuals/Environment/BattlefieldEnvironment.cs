@@ -9,8 +9,8 @@ using Surface = Lightbringer.Visuals.PropShapes.Surface;
 namespace Lightbringer.Visuals
 {
     // Art Pass battlefield dressing: a terrain whose play area stays perfectly flat (so movement, deployment
-    // and Paths are unchanged) rising into hills outside it, dirt roads along the Paths, stone plazas at both
-    // strongholds, trees/rocks/ruins kept clear of the lanes, and a hazy mountain and castle backdrop.
+    // and Paths are unchanged) rising into hills outside it, dirt roads along the Paths, natural stronghold grounds,
+    // corrupted enemy grounds, trees/rocks/ruins kept clear of the lanes, and a hazy mountain and castle backdrop.
     // Deterministic per stage. Owns the meshes/materials it creates and destroys them with the battlefield.
     public sealed class BattlefieldEnvironment : MonoBehaviour
     {
@@ -38,10 +38,14 @@ namespace Lightbringer.Visuals
         private ArtStyleLibrary style;
         private ForestEnvironmentProfile forest;
         private ActTwoScenery actTwo;
+        private ActOneScenery actOne;
         private bool beaconClearing;
+        private Vector2? beaconSite;
         private Material instanceSky, previousSky;
 
         public MeshCollider Terrain { get; private set; }
+        // Victory beacon built for stages other than the opening glade (stage one's lives in the prop dressing).
+        public BeaconSanctuary Beacon { get; private set; }
         public int GrassChunks { get; private set; }
         public float LaneDistance(Vector2 point) => DistanceToLanes(point);
 
@@ -60,6 +64,7 @@ namespace Lightbringer.Visuals
         {
             style = library;
             actTwo = GetComponentInParent<ActTwoScenery>(true);
+            actOne = GetComponentInParent<ActOneScenery>(true);
             BattlefieldBackdropProfile panorama = library.FindBackdrop(stage);
             // An explicit stage profile can refine a battlefield inside a larger backdrop region.
             forest = library.forestEnvironment != null && library.forestEnvironment.AppliesTo(stage)
@@ -83,19 +88,26 @@ namespace Lightbringer.Visuals
             if (clearPoints.Length > 0) alliedGate = Local(clearPoints[0]);
             if (clearPoints.Length > 1) enemyGate = Local(clearPoints[1]);
             beaconClearing = stage == 1 && forest != null && forest.openingGlade;
+            // Stage one keeps its authored glade; every other stage gets a beacon on a quiet flank, off the lanes.
+            if (!beaconClearing) beaconSite = FindBeaconSite();
             PublishLanes();
 
             BuildTerrain();
+            if (!beaconClearing) BuildBeacon();
             if (actTwo != null) actTwo.Dress(this, paths);
-            else BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length,
-                    beaconClearing);
+            else
+            {
+                BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length, beaconClearing);
+                if (actOne != null) actOne.Dress(this, paths);
+            }
             // Imported forest tufts replace the old solid-colour blade carpet.
             if (forest == null && style.grassMaterial != null) BuildGrass();
             Shapes near = new Shapes(), far = new Shapes();
             if (forest == null)
             {
                 if (actTwo == null) ScatterTrees(near, far);
-                ScatterRocks(near);
+                // Act 2 photoscanned rocks replace the procedural ones.
+                if (actTwo == null || !actTwo.UsesPhotoscans) ScatterRocks(near);
             }
             else ForestEnvironmentDressing.Build(forest, this, stage);
 
@@ -184,7 +196,8 @@ namespace Lightbringer.Visuals
             foreach (Vector3 vertex in vertices)
             {
                 Vector2 flat = Flat(vertex);
-                masks.Add(new Vector4(Mathf.Min(DistanceToLanes(flat), 30f), PlazaMask(flat), CorruptionMask(flat), 1f));
+                // No stone paving: gates and sanctuaries use the stage's natural ground as well.
+                masks.Add(new Vector4(Mathf.Min(DistanceToLanes(flat), 30f), 0f, CorruptionMask(flat), 1f));
             }
             mesh.SetUVs(0, masks);
             mesh.RecalculateBounds();
@@ -203,8 +216,6 @@ namespace Lightbringer.Visuals
             // Dirt roads along every lane, with a soft edge.
             float road = RoadMask(flat);
             color = Color.Lerp(color, Color.Lerp(style.dirt, style.dirt * 0.85f, variation), road * 0.9f);
-            // Stone plazas at the strongholds.
-            color = Color.Lerp(color, style.plazaStone * (0.92f + 0.08f * variation), PlazaMask(flat));
             // Hills darken with height; steep faces turn to rock.
             color = Color.Lerp(color, style.grassDark * 0.8f, Mathf.Clamp01(point.y / 20f) * 0.5f);
             color = Color.Lerp(color, style.rock, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.85f, 0.6f, normal.y)));
@@ -214,7 +225,8 @@ namespace Lightbringer.Visuals
 
         private float RoadMask(Vector2 flat) => 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.8f, 3.4f, DistanceToLanes(flat)));
 
-        private float PlazaMask(Vector2 flat)
+        // Keep grass sparse around structures without painting stone onto the terrain.
+        private float GroundClearingMask(Vector2 flat)
         {
             float plaza = 0f;
             if (beaconClearing)
@@ -224,9 +236,54 @@ namespace Lightbringer.Visuals
                 plaza = Mathf.Max(1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(4f, 7f, sanctuary)),
                     1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.2f, 2.5f, Vector2.Distance(flat, approach))));
             }
+            if (beaconSite.HasValue)
+                plaza = Mathf.Max(plaza, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(3.6f, 5.6f, Vector2.Distance(flat, beaconSite.Value))));
             foreach (Vector2 clear in keepClear)
+            {
                 plaza = Mathf.Max(plaza, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 8.5f, Vector2.Distance(flat, clear))));
+            }
             return plaza;
+        }
+
+        // Quiet flank spot: clear of every lane and gate, near mid-field, preferring the outer edge and the west.
+        private Vector2 FindBeaconSite()
+        {
+            foreach (float minLane in new[] { 7f, 5.5f, 4.5f })
+            {
+                Vector2? best = null;
+                float bestScore = float.MinValue;
+                for (float x = -29f; x <= 29f; x += 1f)
+                    for (float z = 14f; z <= 50f; z += 2f)
+                    {
+                        Vector2 point = new Vector2(x, z);
+                        float lane = DistanceToLanes(point);
+                        if (lane < minLane) continue;
+                        bool nearGate = false;
+                        foreach (Vector2 gate in keepClear) if (Vector2.Distance(point, gate) < 20f) nearGate = true;
+                        if (nearGate) continue;
+                        float score = Mathf.Min(lane, 11f) * 2f - Mathf.Abs(z - Core.BattlefieldLayout.CentreZ) * 0.2f
+                            + Mathf.Abs(x) * 0.12f + (x < 0f ? 1.5f : 0f);
+                        if (score > bestScore) { bestScore = score; best = point; }
+                    }
+                if (best.HasValue) return best.Value;
+            }
+            return new Vector2(-26f, Core.BattlefieldLayout.CentreZ);
+        }
+
+        private void BuildBeacon()
+        {
+            BattlefieldPropAsset asset = style.battlefieldProps != null ? style.battlefieldProps.Find(BattlefieldPropKind.AlliedBeacon) : null;
+            if (asset == null || asset.prefab == null || Terrain == null || !beaconSite.HasValue) return;
+            Vector2 site = beaconSite.Value;
+            Transform group = new GameObject("Beacon Sanctuary").transform;
+            group.SetParent(transform, false);
+            GameObject instance = Instantiate(asset.prefab, group);
+            instance.name = BattlefieldPropKind.AlliedBeacon.ToString();
+            instance.transform.localPosition = new Vector3(site.x, SurfaceHeight(site.x, site.y) - 0.025f, site.y);
+            instance.transform.localRotation = Quaternion.Euler(0f, site.x < 0f ? 35f : -35f, 0f);
+            instance.transform.localScale = Vector3.one * 1.9f;
+            ReserveProp(site, 7f);
+            Beacon = BeaconSanctuary.Build(group, instance, this, site);
         }
 
         // ---------- Grass ----------
@@ -252,7 +309,7 @@ namespace Lightbringer.Visuals
                         if (!ClearOfProps(flat, 0.25f)) continue;
                         if (density <= 0f || random.NextDouble() > density) continue;
                         float road = RoadMask(flat);
-                        if (random.NextDouble() < Mathf.Max(road * 1.3f, PlazaMask(flat))) continue;
+                        if (random.NextDouble() < Mathf.Max(road * 1.3f, GroundClearingMask(flat))) continue;
                         float slope = Mathf.Abs(Height(x + 0.5f, z) - Height(x - 0.5f, z)) + Mathf.Abs(Height(x, z + 0.5f) - Height(x, z - 0.5f));
                         if (slope > 0.7f) continue;
                         Vector3 root = new Vector3(x, Height(x, z), z);
@@ -521,11 +578,13 @@ namespace Lightbringer.Visuals
         private Vector2? AlliedKeep => alliedGate.HasValue ? alliedGate.Value + Vector2.down * StrongholdBehindGate : (Vector2?)null;
         private Vector2? EnemyKeep => enemyGate.HasValue ? enemyGate.Value + Vector2.up * EnemyStrongholdBehindGate : (Vector2?)null;
 
-        // 1 at the enemy stronghold, fading out over ~24 m: drives the corrupted soil and withered grass.
+        // 1 around the enemy stronghold, fading out by ~38 m: drives the corrupted soil and withered grass.
         private float CorruptionMask(Vector2 flat)
         {
+            // Act 3 is the Demon King's domain: all ground uses the dark soil found at the enemy gate.
+            if (actTwo != null && actTwo.IsActThree) return 1f;
             if (!EnemyKeep.HasValue) return 0f;
-            return 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(5f, 24f, Vector2.Distance(flat, EnemyKeep.Value)));
+            return 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(10f, 38f, Vector2.Distance(flat, EnemyKeep.Value)));
         }
 
         // Lane segments for the terrain shader's per-pixel road (world XZ).

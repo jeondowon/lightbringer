@@ -11,6 +11,7 @@ namespace Lightbringer.EditorTools
 {
     // Creates the Art Pass style assets once (never overwriting tuned values) and assigns them to the
     // campaign scene. Delete an asset to regenerate it with defaults.
+    [InitializeOnLoad]
     public static class ArtStyleSetup
     {
         public const string Folder = "Assets/Art";
@@ -25,6 +26,9 @@ namespace Lightbringer.EditorTools
         public const string GrassShader = "Lightbringer/Grass";
         public const string VfxShader = "Lightbringer/VFX Shape";
         public const string BlessingShader = "Lightbringer/Aura Blessing";
+
+        // Fills any missing style material without touching the scene. Request file: Docs/Diagnostics/art-style.request.
+        static ArtStyleSetup() => EditorRequests.Register("Docs/Diagnostics/art-style.request", () => EnsureLibrary());
 
         [MenuItem("Lightbringer/Art/Build Art Style Assets")]
         private static void BuildMenu()
@@ -66,6 +70,8 @@ namespace Lightbringer.EditorTools
             if (library.lightningMaterial == null && lightning != null) library.lightningMaterial = LoadOrCreate("LB_Lightning", lightning, null);
             Shader celestial = Shader.Find("Lightbringer/Celestial Strike");
             if (library.celestialStrikeMaterial == null && celestial != null) library.celestialStrikeMaterial = LoadOrCreate("LB_CelestialStrike", celestial, null);
+            Shader meteor = Shader.Find("Lightbringer/Meteor");
+            if (library.meteorMaterial == null && meteor != null) library.meteorMaterial = LoadOrCreate("LB_Meteor", meteor, null);
             Shader terrain = Shader.Find(TerrainShader), grass = Shader.Find(GrassShader);
             if (library.terrainMaterial == null && terrain != null) library.terrainMaterial = LoadOrCreate("LB_EnvTerrain", terrain, null);
             if (library.grassMaterial == null && grass != null) library.grassMaterial = LoadOrCreate("LB_Grass", grass, null);

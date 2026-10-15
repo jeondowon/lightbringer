@@ -26,7 +26,7 @@ namespace Lightbringer.EditorTools
                 {
                     Vector3 clamped = root.transform.InverseTransformPoint(boundary.ClampPosition(root.transform.TransformPoint(local)));
                     Check(Mathf.Abs(clamped.x) <= BattlefieldLayout.HalfWidth - 0.99f
-                        && clamped.z >= BattlefieldLayout.MinZ + 0.99f && clamped.z <= BattlefieldLayout.MaxZ - 0.99f
+                        && clamped.z >= BattlefieldLayout.HeroMinZ + 0.99f && clamped.z <= BattlefieldLayout.HeroMaxZ - 0.99f
                         && Mathf.Abs(clamped.y - 2f) < 0.002f, "Hero stays inside edge/corner " + local);
                 }
                 hero.transform.localPosition = new Vector3(33f, 1f, 20f);

@@ -96,26 +96,35 @@ namespace Lightbringer.Core
             // After the summoner exists, so Leadership also lowers summon costs.
             battle.Abilities.ApplyProgression(progress.ranks, progress.level);
             GameObject objective = Primitive("Enemy Stronghold", PrimitiveType.Cube, root, material);
-            objective.transform.localPosition = new Vector3(0, 2, BattlefieldLayout.EnemyBaseZ);
-            objective.transform.localScale = new Vector3(6, 4, 4);
+            objective.transform.localScale = new Vector3(BattlefieldLayout.StrongholdWidth, BattlefieldLayout.StrongholdHeight, BattlefieldLayout.StrongholdDepth);
+            objective.transform.localPosition = new Vector3(0, objective.transform.localScale.y * 0.5f, BattlefieldLayout.EnemyBaseCentreZ);
             Combatant baseHealth = objective.AddComponent<Combatant>();
             baseHealth.Configure(Faction.Enemy, 150 + stage * 50);
             baseHealth.SetAttackSurface(objective.GetComponent<BoxCollider>());
-            StrongholdVfx.Attach(UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f), false, art);
+            StrongholdVfx.Attach(UnitAppearance.Attach(objective, VisualId.EnemyStronghold, art, -objective.transform.localScale.y * 0.5f, BattlefieldLayout.StrongholdScale), false, art);
             battle.Objective = battle.Root.AddComponent<StageObjective>();
             battle.Objective.Configure(baseHealth, battle.Hero, root, follow, battle.AlliedBase);
             battle.Waves = battle.Root.AddComponent<EnemyWaveSpawner>();
             battle.Waves.Configure(template, enemies, enemyRoutes, stage);
-            // The last assault must be defeated before destroying the gate and revealing the boss.
+            // Every stage protects the gate until the last assault is defeated; boss stages then reveal the boss.
+            baseHealth.Invulnerable = true;
+            template.GetComponent<UnitPathFollower>().ConfigureProtectedObjective(baseHealth);
             if (battle.Waves.HasBoss)
             {
                 battle.Objective.RequireBossVictory();
-                baseHealth.Invulnerable = true;
                 battle.Encounter = battle.Root.AddComponent<BossEncounter>();
                 battle.Encounter.Configure(battle, art);
             }
+            else
+            {
+                StageObjective stageObjective = battle.Objective;
+                battle.Waves.AssaultEnded += () =>
+                {
+                    if (!stageObjective.HasEnded && baseHealth != null) baseHealth.Invulnerable = false;
+                };
+            }
             battle.Root.AddComponent<Lightbringer.UI.BattlefieldReadability>().Configure(battle);
-            ArtStyleLibrary environmentArt = ActTwoScenery.CreatePalette(root, art, stage);
+            ArtStyleLibrary environmentArt = ActOneScenery.CreatePalette(root, ActTwoScenery.CreatePalette(root, art, stage), stage);
             if (art != null && art.HasMaterials)
             {
                 // The environment's flat play area replaces the greybox plane (same height, so nothing moves).
@@ -123,9 +132,10 @@ namespace Lightbringer.Core
                 BattlefieldEnvironment environment = BattlefieldEnvironment.Build(environmentArt, stage, root, battle.Paths,
                     battle.DeployPoint.position, new[] { battle.DeployPoint.position, enemyGate }, light);
                 if (environment != null) ground.SetActive(false);
-                if (stage == 1 && environment != null)
+                if (environment != null)
                 {
-                    battle.Beacon = environment.GetComponentInChildren<BeaconSanctuary>(true);
+                    battle.Beacon = environment.Beacon != null ? environment.Beacon
+                        : environment.GetComponentInChildren<BeaconSanctuary>(true);
                     if (battle.Beacon != null) battle.Beacon.Configure(battle.Objective, battle.Camera);
                 }
             }
@@ -139,12 +149,12 @@ namespace Lightbringer.Core
         private static void BuildAlliedBase(PrototypeBattle battle, int stage, Transform root, Material material, ArtStyleLibrary art)
         {
             GameObject stronghold = Primitive("Allied Stronghold", PrimitiveType.Cube, root, material);
-            stronghold.transform.localPosition = new Vector3(0, 2, BattlefieldLayout.AlliedBaseZ);
-            stronghold.transform.localScale = new Vector3(6, 4, 4);
+            stronghold.transform.localScale = new Vector3(BattlefieldLayout.StrongholdWidth, BattlefieldLayout.StrongholdHeight, BattlefieldLayout.StrongholdDepth);
+            stronghold.transform.localPosition = new Vector3(0, stronghold.transform.localScale.y * 0.5f, BattlefieldLayout.AlliedBaseCentreZ);
             battle.AlliedBase = stronghold.AddComponent<Combatant>();
             battle.AlliedBase.Configure(Faction.Allied, 400 + stage * 50);
             battle.AlliedBase.SetAttackSurface(stronghold.GetComponent<BoxCollider>());
-            StrongholdVfx.Attach(UnitAppearance.Attach(stronghold, VisualId.AlliedStronghold, art, -2f), true, art);
+            StrongholdVfx.Attach(UnitAppearance.Attach(stronghold, VisualId.AlliedStronghold, art, -stronghold.transform.localScale.y * 0.5f, BattlefieldLayout.StrongholdScale), true, art);
             battle.DeployPoint = Child("Deploy Point", root).transform;
             battle.DeployPoint.localPosition = new Vector3(0, 0, -17.5f);
             battle.Summoner.ConfigureSpawnAnchor(battle.DeployPoint);

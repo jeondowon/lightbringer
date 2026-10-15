@@ -23,7 +23,7 @@ namespace Lightbringer.Player
             Vector3 local = battlefield.InverseTransformPoint(world);
             const float margin = 1f;
             local.x = Mathf.Clamp(local.x, -BattlefieldLayout.HalfWidth + margin, BattlefieldLayout.HalfWidth - margin);
-            local.z = Mathf.Clamp(local.z, BattlefieldLayout.MinZ + margin, BattlefieldLayout.MaxZ - margin);
+            local.z = Mathf.Clamp(local.z, BattlefieldLayout.HeroMinZ + margin, BattlefieldLayout.HeroMaxZ - margin);
             return battlefield.TransformPoint(local);
         }
 

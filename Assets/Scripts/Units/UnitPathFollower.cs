@@ -14,6 +14,7 @@ namespace Lightbringer.Units
         [Tooltip("Intermediate waypoints count as reached within this radius, so a crowd sharing one corner never jams.")]
         [SerializeField, Min(0.05f)] private float cornerRadius = 1.6f;
         [SerializeField] private float gravity = -25f;
+        [SerializeField] private Combatant protectedObjective;
 
         public WaypointPath AssignedPath { get; private set; }
         public bool HasReachedEnd { get; private set; }
@@ -32,6 +33,7 @@ namespace Lightbringer.Units
         private float movementAccumulator;
 
         public void ConfigureSpeed(float speed) => moveSpeed = Mathf.Max(0f, speed);
+        public void ConfigureProtectedObjective(Combatant objective) => protectedObjective = objective;
         public void ConfigureCrowdAvoidance(bool enabled)
         {
             crowdAvoidance = enabled;
@@ -93,17 +95,35 @@ namespace Lightbringer.Units
             }
 
             Vector3 horizontal = Vector3.zero;
-            if (hasSteeringOverride)
+            // Hold on the approach to the enemy deployment point while its stronghold is shielded.
+            // Combat steering still takes priority; survivors return here between waves, even after a chase.
+            bool waitingForAssault = !hasSteeringOverride && protectedObjective != null
+                && protectedObjective.IsAlive && protectedObjective.Invulnerable
+                && TryGetComponent(out Combatant self) && self.Faction != protectedObjective.Faction
+                && AssignedPath != null && AssignedPath.IsValid && AssignedPath.Count >= 3
+                && waypointIndex >= AssignedPath.Count - 2;
+            Vector3 destination = steeringDestination;
+            float stopDistance = steeringStopDistance;
+            if (waitingForAssault)
             {
-                Vector3 offset = steeringDestination - transform.position;
+                Vector3 deployment = AssignedPath.GetPosition(AssignedPath.Count - 2);
+                Vector3 approach = AssignedPath.GetPosition(AssignedPath.Count - 3) - deployment;
+                approach.y = 0f;
+                destination = deployment + approach.normalized * 4f;
+                stopDistance = arrivalDistance;
+                HasReachedEnd = false;
+            }
+            if (hasSteeringOverride || waitingForAssault)
+            {
+                Vector3 offset = destination - transform.position;
                 offset.y = 0f;
-                float travel = Mathf.Min(moveSpeed * deltaTime, Mathf.Max(0f, offset.magnitude - steeringStopDistance));
+                float travel = Mathf.Min(moveSpeed * deltaTime, Mathf.Max(0f, offset.magnitude - stopDistance));
                 horizontal = offset.normalized * travel;
                 if (offset.sqrMagnitude > 0.0001f)
                     transform.rotation = Quaternion.RotateTowards(transform.rotation,
                         Quaternion.LookRotation(offset, Vector3.up), rotationSpeed * deltaTime);
             }
-            while (!hasSteeringOverride && AssignedPath != null && AssignedPath.IsValid && !HasReachedEnd)
+            while (!hasSteeringOverride && !waitingForAssault && AssignedPath != null && AssignedPath.IsValid && !HasReachedEnd)
             {
                 waypointIndex = Mathf.Min(waypointIndex, AssignedPath.Count - 1);
                 Vector3 waypoint = AssignedPath.GetPosition(waypointIndex);

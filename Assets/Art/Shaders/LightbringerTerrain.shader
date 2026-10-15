@@ -290,11 +290,20 @@ Shader "Lightbringer/Terrain"
                     half weatheredPave = smoothstep(0.18h, 0.8h, plaza + (Fbm(p * 1.2) - 0.5h) * 0.65h);
                     pave = lerp(pave, weatheredPave, _StoneTextureStrength);
                 }
+                // Edge noise must not create stone patches where no paving is requested.
+                pave *= saturate(plaza * 100.0h);
                 albedo = lerp(albedo, paved, pave);
 
                 // Corruption: ashen purple soil with glowing veins that pulse, strongest by the enemy gate.
                 half corrupt = smoothstep(0.1h, 0.7h, corruption + (Fbm(p * 0.35 + 8.0) - 0.5) * 0.4h);
-                albedo = lerp(albedo, _CorruptSoil.rgb * lerp(0.8h, 1.15h, broad), corrupt * (1.0h - pave * 0.6h));
+                // The fringe only greys and dries the ground underneath (grass or plaza stone); the dark soil colour
+                // is blended in gradually towards the core so grass, soil and plaza share one continuous gradient.
+                half3 withered = albedo * half3(0.8h, 0.76h, 0.74h);
+                half3 soil = _CorruptSoil.rgb * lerp(0.8h, 1.15h, broad);
+                half3 corruptTarget = lerp(withered, soil, smoothstep(0.3h, 1.0h, corrupt) * 0.6h);
+                albedo = lerp(albedo, corruptTarget, corrupt * (1.0h - pave * 0.3h));
+                // The plaza stone in front of the enemy gate sinks into the same dark soil instead of staying a pale patch.
+                albedo *= 1.0h - pave * smoothstep(0.25h, 0.8h, corrupt) * 0.5h;
                 float3 veins = Voronoi(p * 0.55 + float2(3.1, 7.7));
                 half vein = (1.0h - smoothstep(0.0, 0.06 + 0.04 * corruption, veins.y)) * smoothstep(0.35h, 0.9h, corrupt);
                 half pulse = 0.65h + 0.35h * sin(_Time.y * 2.2 + veins.z * 6.28);

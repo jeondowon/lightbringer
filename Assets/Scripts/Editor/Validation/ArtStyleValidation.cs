@@ -97,7 +97,7 @@ namespace Lightbringer.EditorTools
                 Combatant stronghold = battle.Objective.EnemyBase;
                 Transform fortress = stronghold.transform.Find(UnitAppearance.StyledName);
                 BoxCollider surface = stronghold.GetComponent<BoxCollider>();
-                Check(fortress != null && Vector3.Distance(fortress.lossyScale, Vector3.one) < 0.001f
+                Check(fortress != null && Vector3.Distance(fortress.lossyScale, Vector3.one * Lightbringer.Core.BattlefieldLayout.StrongholdScale) < 0.001f
                     && surface.enabled && !stronghold.GetComponent<MeshRenderer>().enabled
                     && fortress.GetComponentsInChildren<Collider>(true).Length == 0,
                     "Enemy stronghold gets a world-scale fortress while keeping its attack surface");
