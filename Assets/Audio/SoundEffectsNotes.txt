@@ -1,5 +1,16 @@
 Lightbringer sound effects — recorded foley pass (2026-10-12)
 
+Skill volume pass (2026-10-15):
+  Applied PCM gain to Resources/SoundEffects WAVs; timing, pitch and import settings unchanged.
+  HeroHeal, MeteorImpact: x1.5 (+3.52 dB).
+  BossWarning, BossImpact: x2.25 total (+7.04 dB), including a further x1.5 for all Demon King attacks.
+  These two clips are shared with the Warlord, whose corresponding sounds also increase.
+  ShockwaveBoom: x2.25 total (+7.04 dB), including a further x1.5 requested boost.
+  IceMagic: x1.35 (+2.61 dB). BossSummon: x1.1 (+0.83 dB).
+  The latter two already have high peaks; smaller gains preserve unclipped samples.
+  All seven remain below full scale. HeroLightStaff (light beam) is unchanged.
+  Rebuilding these clips from source requires reapplying this gain pass once.
+
 The initial oscillator-generated sounds were rejected and replaced.
 This bank uses existing recorded/designed audio, edited into short layered game cues.
 No synthesized sine notes, pitch sweeps or arcade arpeggios are added.

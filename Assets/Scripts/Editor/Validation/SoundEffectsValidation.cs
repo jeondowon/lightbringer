@@ -42,11 +42,11 @@ namespace Lightbringer.EditorTools
                     "A thousand simultaneous impacts yield one rate-limited sound without adding sources");
                 Assert(sources.Where(s => s.isPlaying && s.clip.name == "HeavyImpact").All(s => s.spatialBlend > 0 && s.dopplerLevel == 0),
                     "Battle sounds spatialize at impact positions without Doppler pitch shifts");
-                Assert(sources.Where(s => s.isPlaying).All(s => Mathf.Approximately(s.volume, .7f)),
-                    "Normalized SFX follow the user's slider without hidden per-cue attenuation");
+                Assert(sources.Where(s => s.isPlaying).All(s => Mathf.Approximately(s.volume, .7f * .7f)),
+                    "Leveled battle SFX follow the user's slider at the combat mix gain");
                 SoundEffects.Volume = 1f;
-                Assert(sources.All(s => Mathf.Approximately(s.volume, 1f)),
-                    "SFX slider maximum exposes the full normalized level on every voice");
+                Assert(sources.Where(s => s.isPlaying).All(s => Mathf.Approximately(s.volume, .7f)),
+                    "SFX slider maximum raises existing voices to their mix gain");
                 SoundEffects.Volume = 0;
                 Assert(sources.All(s => s.volume == 0f) && !pool.Play(SoundCue.MageFire, point)
                     && Mathf.Approximately(BattleMusic.Volume, music), "SFX mute affects existing and new voices without changing music");
@@ -54,8 +54,8 @@ namespace Lightbringer.EditorTools
                 Assert(pool.Play(SoundCue.Click, Vector3.zero, true), "Interface feedback uses the reserved interface pool");
                 Assert(sources.Any(s => s.isPlaying && s.clip.name == "Click" && s.spatialBlend == 0),
                     "Interface feedback remains audible independently of camera distance");
-                Assert(sources.Where(s => s.isPlaying && s.clip.name == "Click").All(s => Mathf.Approximately(s.volume, .7f)),
-                    "Button feedback uses the same normalized volume as battlefield sounds");
+                Assert(sources.Where(s => s.isPlaying && s.clip.name == "Click").All(s => Mathf.Approximately(s.volume, .7f * .35f)),
+                    "Button feedback sits under battlefield sounds");
                 ValidateEnemyDeathAudio(pool, sources, point);
                 pool.StopWorld();
                 Assert(sources.Where(s => s.spatialBlend > 0).All(s => !s.isPlaying), "Battle cleanup stops every world voice");

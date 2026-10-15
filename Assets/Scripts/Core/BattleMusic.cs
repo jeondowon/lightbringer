@@ -19,6 +19,15 @@ namespace Lightbringer.Core
             set => PlayerPrefs.SetFloat(VolumeKey, Mathf.Clamp01(value));
         }
 
+        // Music sits under the effects: at a full slider its loudest passages land ~7 dB below the hero's spells.
+        public const float Mix = 0.5f;
+        // Measured with Lightbringer/Audio/Measure Audio Levels: the battle track averages -15.2 dBFS (loudest
+        // 400 ms -10.1) against the prologue's -16.3 (-12.0); it is trimmed by 1.5 dB so both sit level.
+        public const float BattleTrim = 0.84f, PrologueTrim = 1f;
+
+        // Every music player (title, prologue, battle) goes through here so the tracks stay level with each other.
+        public static float Output(float trim) => Volume * Mix * trim;
+
         public void Configure(CampaignSession owner)
         {
             session = owner;
@@ -46,7 +55,7 @@ namespace Lightbringer.Core
             float target = ended ? 0f : session.IsUserPaused || session.IsChoosing ? 0.35f : 1f;
             // Pause uses timeScale=0: transitions must continue on unscaled time.
             envelope = Mathf.MoveTowards(envelope, target, Time.unscaledDeltaTime / 1.2f);
-            source.volume = Volume * envelope;
+            source.volume = Output(BattleTrim) * envelope;
             if (ended && envelope == 0f && source.isPlaying) source.Stop();
         }
 
