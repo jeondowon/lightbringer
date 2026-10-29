@@ -319,6 +319,8 @@ namespace Lightbringer.EditorTools
                     // Apply probe resources after the hero's real Start has applied its saved growth/loadout.
                     battle.Hero.GetComponent<FoodResource>().Configure(1000, 1000);
                     if (elapsed < 1.2f) return;
+                    // Stage 8 unlocks only four troops; open every kind so the runtime check deploys each of them.
+                    battle.Summoner.ConfigureSelection(battle.Paths, UnitCatalog.Count);
                     for (int i = 0; i < UnitCatalog.Count; i++)
                     {
                         bool selected = battle.Summoner.TrySelectUnit(i);
@@ -561,8 +563,9 @@ namespace Lightbringer.EditorTools
                     }
                     if (!battle.Objective.HasEnded) return;
                     Assert(battle.Objective.HasWon && !session.Progress.IsComplete && session.Progress.unlockedStage == 17
-                        && session.Progress.IsLearned((int)SkillKind.Ice) && session.Progress.IsLearned((int)SkillKind.Meteor),
-                        "Runtime Act 2 completes all eight stages, awards Ice and Meteor and opens Act 3");
+                        && session.Progress.IsLearned((int)SkillKind.Ice) && session.Progress.IsLearned((int)SkillKind.Flame)
+                        && !session.Progress.IsLearned((int)SkillKind.Meteor),
+                        "Runtime Act 2 completes all eight stages, awards Ice and Flame and opens Act 3 (Meteor waits for stage 17)");
                     while (session.IsChoosing) session.ChooseGrowth(0);
                     Assert(session.ReturnToPreparation(), "Second Warlord victory returns to preparation");
                     if (SessionState.GetBool(ActTwoKey, false)) { Finish(true, null); break; }

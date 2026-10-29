@@ -15,6 +15,15 @@ namespace Lightbringer.Units
         private static readonly float[] Damage = { 10, 7, 8, 14, 0, 18, 32, 40 };
         private static readonly float[] Ranges = { 1.25f, 7, 1.3f, 2.5f, 6, 6, 1.6f, 8 };
         public static float Cost(UnitKind kind) => Costs[(int)kind];
+        // First stage each troop can be deployed (it is the reward of the stage before). Rising in UnitKind order, so
+        // the unlocked troops are always the first UnlockedAt(stage) kinds. Table: Docs/GameDesign/Unlocks.md.
+        private static readonly int[] UnlockStages = { 1, 3, 6, 8, 10, 12, 16, 20 };
+        public static int UnlockedAt(int stage)
+        {
+            int count = 0;
+            while (count < Count && UnlockStages[count] <= stage) count++;
+            return count;
+        }
         // Gold upgrades: every rank raises health and damage by a share of the base value.
         public const int MaxRank = 10;
         public const float HealthPerRank = 0.12f, DamagePerRank = 0.08f;

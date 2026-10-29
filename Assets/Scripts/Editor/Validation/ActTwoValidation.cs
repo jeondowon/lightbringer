@@ -49,7 +49,8 @@ namespace Lightbringer.EditorTools
                             Check(battle.Objective.HasWon && session.Progress.cleared[stage - 1]
                                 && session.Progress.unlockedStage == stage + 1,
                                 $"Stage {stage} victory unlocks the next Act 2 battle");
-                            if (stage == 15) Check(session.Progress.IsLearned((int)SkillKind.Ice), "Stage 15 first clear teaches Ice");
+                            if (stage == 12) Check(session.Progress.IsLearned((int)SkillKind.Ice), "Stage 12 first clear teaches Ice");
+                            if (stage == 14) Check(session.Progress.IsLearned((int)SkillKind.Flame), "Stage 14 first clear teaches Flame");
                         }
                         while (session.IsChoosing) session.ChooseGrowth(0);
                         Check(session.ReturnToPreparation(), $"Stage {stage} returns to preparation");
@@ -167,8 +168,8 @@ namespace Lightbringer.EditorTools
             for (int i = 0; i < BossEncounter.RematchRetreatLines.Length; i++) { battle.Encounter.Tick(.8f); battle.Encounter.AdvanceDialogue(); }
             battle.Encounter.Tick(BossEncounter.RetreatFadeSeconds);
             Check(battle.Objective.HasWon && !session.Progress.IsComplete && session.Progress.unlockedStage == 17
-                && session.Progress.IsLearned((int)SkillKind.Meteor) && session.LastResult.Contains("2막 완료"),
-                "Second retreat completes Act 2, teaches Meteor and opens Act 3");
+                && !session.Progress.IsLearned((int)SkillKind.Meteor) && session.LastResult.Contains("2막 완료"),
+                "Second retreat completes Act 2 and opens Act 3; Meteor waits for stage 17");
         }
 
         private static void ValidateActTwoMigration()

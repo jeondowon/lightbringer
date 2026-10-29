@@ -203,7 +203,11 @@ namespace Lightbringer.Combat
                 if (!isActiveAndEnabled) return;
             }
             searchCooldown -= deltaTime;
-            if (IsValidQuarry())
+            // A Rune Wall in reach draws the attack away from everything else, the hunted Quarry included.
+            Combatant taunt = RuneWall.TauntFor(self);
+            if (taunt != null)
+                Target = taunt;
+            else if (IsValidQuarry())
                 Target = Quarry;
             else if (!IsValidTarget(Target))
             {

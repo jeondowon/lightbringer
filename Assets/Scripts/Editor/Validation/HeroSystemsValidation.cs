@@ -9,6 +9,66 @@ namespace Lightbringer.EditorTools
 {
     public static partial class GreyboxValidation
     {
+        private static void ValidateRuneWallAndFlame(HeroAbilities abilities, ManaResource mana, Vector3 origin)
+        {
+            int wall = (int)SkillKind.RuneWall, flame = (int)SkillKind.Flame;
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, wall, flame, SkillCatalog.Empty }, new[] { 1, 0, 0, 0, 0, 1, 1 }),
+                "Rune Wall and Flame can be loadout");
+            abilities.Tick(20);
+            mana.Tick(100);
+            Vector3 wallPoint = origin + new Vector3(-6, 0, -6);
+            Combatant drawn = CreateCombatUnit(wallPoint + new Vector3(0, 0, -4), Faction.Enemy);
+            Combatant distant = CreateCombatUnit(wallPoint + new Vector3(0, 0, -HeroAbilities.RuneWallTaunt - 3f), Faction.Enemy);
+            Combatant boss = CreateCombatUnit(wallPoint + new Vector3(2, 0, -2), Faction.Enemy);
+            boss.StatusImmune = true;
+            Physics.SyncTransforms();
+            float manaBeforeWall = mana.Current;
+            Check(abilities.TryCast(1, null, wallPoint) && Mathf.Approximately(mana.Current, manaBeforeWall - SkillCatalog.Cost(wall))
+                && Mathf.Approximately(abilities.CooldownRemaining(1), SkillCatalog.Cooldown(wall)),
+                "Rune Wall needs no target, spends mana and starts its cooldown");
+            RuneWall raised = Object.FindAnyObjectByType<RuneWall>();
+            Check(raised != null && raised.Health.Faction == Faction.Allied
+                && Mathf.Approximately(raised.Health.MaximumHealth, HeroAbilities.RuneWallHealth) && raised.GetComponentInChildren<Collider>() == null,
+                "Rune Wall rises as an allied target with no collider, so troops pass through it");
+            UnitCombat drawnCombat = drawn.GetComponent<UnitCombat>(), distantCombat = distant.GetComponent<UnitCombat>(), bossCombat = boss.GetComponent<UnitCombat>();
+            drawnCombat.Tick(0.1f); distantCombat.Tick(0.1f); bossCombat.Tick(0.1f);
+            Check(drawnCombat.Target == raised.Health && distantCombat.Target != raised.Health && bossCombat.Target != raised.Health,
+                "Rune Wall draws enemies within its taunt radius; distant enemies and bosses ignore it");
+            raised.Tick(HeroAbilities.RuneWallDuration + 0.1f);
+            drawnCombat.Tick(0.1f);
+            Check(raised == null && drawnCombat.Target == null, "Rune Wall crumbles after its duration and releases the enemies");
+            Object.DestroyImmediate(drawn.gameObject);
+            Object.DestroyImmediate(distant.gameObject);
+            Object.DestroyImmediate(boss.gameObject);
+
+            Combatant ahead = CreateCombatUnit(origin + new Vector3(0, 0, -4), Faction.Enemy);
+            ahead.Configure(Faction.Enemy, 200);
+            Combatant behind = CreateCombatUnit(origin + new Vector3(0, 0, 4), Faction.Enemy);
+            behind.Configure(Faction.Enemy, 200);
+            Combatant friend = CreateCombatUnit(origin + new Vector3(0.5f, 0, -3), Faction.Allied);
+            friend.Configure(Faction.Allied, 200);
+            Physics.SyncTransforms();
+            float manaBeforeFlame = mana.Current;
+            Check(!abilities.TryCast(2, null) && abilities.Channel(2, 0f, Vector3.back) && abilities.IsChanneling
+                && Mathf.Approximately(mana.Current, manaBeforeFlame - SkillCatalog.FlameStartCost),
+                "Flame is held rather than cast and lighting it costs its start mana");
+            Check(abilities.Channel(2, 1.01f, Vector3.back)
+                && Mathf.Approximately(ahead.CurrentHealth, 200 - HeroAbilities.FlameDamagePerSecond)
+                && behind.CurrentHealth == 200 && friend.CurrentHealth == 200
+                && Mathf.Approximately(mana.Current, manaBeforeFlame - SkillCatalog.FlameStartCost - SkillCatalog.Cost(flame) * 1.01f),
+                "Flame burns enemies in its cone each tick, spends mana per second and spares allies and enemies behind");
+            abilities.StopChannel();
+            Check(!abilities.IsChanneling && Mathf.Approximately(abilities.CooldownRemaining(2), SkillCatalog.Cooldown(flame))
+                && !abilities.Channel(2, 0f, Vector3.back), "Releasing Flame starts its cooldown");
+            abilities.Tick(20);
+            mana.TrySpend(mana.Current);
+            Check(!abilities.Channel(2, 0f, Vector3.back) && !abilities.IsChanneling, "Flame cannot be lit without mana");
+            Object.DestroyImmediate(ahead.gameObject);
+            Object.DestroyImmediate(behind.gameObject);
+            Object.DestroyImmediate(friend.gameObject);
+            mana.Tick(100);
+        }
+
         private static void ValidateHeroSystems()
         {
             Vector3 origin = new Vector3(7000, 1, 7000);
@@ -22,7 +82,7 @@ namespace Lightbringer.EditorTools
             FoodResource food = heroObject.AddComponent<FoodResource>();
             HeroAbilities abilities = heroObject.AddComponent<HeroAbilities>();
             abilities.ApplyProgression(new int[8]);
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, (int)SkillKind.Heal, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.LightBeam, (int)SkillKind.Heal, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0, 0, 0 }),
                 "Learned skills can be loadout with an empty slot");
             Invoke(food, "GenerateFood", 1f);
             Check(food.CurrentFood == 5f, "Food production is the base rate now that rings are gone");
@@ -69,14 +129,14 @@ namespace Lightbringer.EditorTools
                 "Healing rejects invalid input and clamps to maximum health");
             Object.DestroyImmediate(inAura.gameObject);
             Object.DestroyImmediate(outsideAura.gameObject);
-            Check(!abilities.ConfigureLoadout(new[] { 0, 0, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 })
-                && !abilities.ConfigureLoadout(new[] { 0, 1, 2, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 })
-                && !abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }),
+            Check(!abilities.ConfigureLoadout(new[] { 0, 0, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1, 1, 1 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1, 2, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0, 0, 0 })
+                && !abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0, 0, 0 }),
                 "Loadout enforces four slots of distinct learned skills");
-            Check(abilities.ConfigureLoadout(new[] { 0, SkillCatalog.Empty, 2, SkillCatalog.Empty }, new[] { 2, 1, 1, 0, 0 })
+            Check(abilities.ConfigureLoadout(new[] { 0, SkillCatalog.Empty, 2, SkillCatalog.Empty }, new[] { 2, 1, 1, 0, 0, 0, 0 })
                 && !abilities.TryCast(1, enemy),
                 "Upgraded skills and empty slots can be loadout, and an empty slot casts nothing");
-            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout can return to Light Beam and Healing");
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0, 0, 0 }), "Loadout can return to Light Beam and Healing");
             abilities.ApplyProgression(new int[8]);
             Check(hero.MaximumHealth == 120, "Maximum hero health is the base value without growth");
             abilities.ApplyProgression(new[] { 1, 1, 1, 1, 1, 1, 1, 1 });
@@ -97,7 +157,7 @@ namespace Lightbringer.EditorTools
                 "Mana regeneration is capped and invalid costs are rejected");
 
             // Shockwave: no target needed, lands at the slam's contact, stuns and pushes; the Boss (StatusImmune) only takes damage.
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Shockwave, (int)SkillKind.Ice, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 0 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Shockwave, (int)SkillKind.Ice, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 0, 0, 0 }),
                 "Shockwave and Ice can be loadout");
             abilities.Tick(20);
             // Shockwave reaches as far as the level's aura: about 4m at level 12.
@@ -173,7 +233,7 @@ namespace Lightbringer.EditorTools
             StatusEffects bossAfterIce = bossLike.GetComponent<StatusEffects>();
             Check(bossLike.CurrentHealth == 70 && (bossAfterIce == null || !bossAfterIce.IsFrozen),
                 "The Boss takes Ice damage but is never frozen");
-            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Meteor, SkillCatalog.Empty, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1 }),
+            Check(abilities.ConfigureLoadout(new[] { (int)SkillKind.Meteor, SkillCatalog.Empty, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 1, 1, 1, 0, 0 }),
                 "Meteor can be loadout");
             abilities.Tick(20);
             mana.Tick(100);
@@ -206,7 +266,8 @@ namespace Lightbringer.EditorTools
                 "Meteor aimed beyond its range is pulled in rather than refused");
             abilities.Tick(HeroAbilities.MeteorDelay + 0.01f);
             Check(far.CurrentHealth == 200, "An aim point beyond 15m lands at 15m, out of reach of distant enemies");
-            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
+            ValidateRuneWallAndFlame(abilities, mana, origin);
+            Check(abilities.ConfigureLoadout(new[] { 0, 1, SkillCatalog.Empty, SkillCatalog.Empty }, new[] { 1, 1, 0, 0, 0, 0, 0 }), "Loadout returns to Light Beam and Healing");
             abilities.Tick(20);
             mana.Tick(100);
 

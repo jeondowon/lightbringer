@@ -332,7 +332,7 @@ namespace Lightbringer.UI
                 bool sealedSlot = !valid && SkillCatalog.IsFixedSlot(i);
                 Hud.Set(slot.Name, valid ? SkillCatalog.Names[id] : sealedSlot ? "???" : "비어 있음");
                 slot.Root.EnableInClassList("lb-slot--sealed", sealedSlot);
-                Hud.Set(slot.Cost, active ? SkillCatalog.Cost(id).ToString("0") + " MP" : "");
+                Hud.Set(slot.Cost, active ? SkillCatalog.CostLabel(id) : "");
                 float remaining = battle.Abilities.CooldownRemaining(i);
                 bool cooling = active && remaining > 0f;
                 slot.Dial.Set(cooling ? remaining / SkillCatalog.Cooldown(id) : 0f);

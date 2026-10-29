@@ -251,8 +251,8 @@ namespace Lightbringer.UI
                 int id = profile.loadout[i]; Icon(slots[i].Icon, id);
                 bool fixedSlot = SkillCatalog.IsFixedSlot(i), sealedSlot = fixedSlot && !SkillCatalog.IsSkill(id);
                 Hud.Set(slots[i].Main, SkillCatalog.IsSkill(id) ? SkillCatalog.Names[id] : sealedSlot ? "???" : "비어 있음");
-                Hud.Set(slots[i].Note, sealedSlot ? "미습득 기술" : fixedSlot ? $"고정 · Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP"
-                    : SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.Cost(id):0} MP" : "배운 기술을 넣으세요");
+                Hud.Set(slots[i].Note, sealedSlot ? "미습득 기술" : fixedSlot ? $"고정 · Lv {profile.skillLevels[id]} · {SkillCatalog.CostLabel(id)}"
+                    : SkillCatalog.IsSkill(id) ? $"Lv {profile.skillLevels[id]} · {SkillCatalog.CostLabel(id)}" : "배운 기술을 넣으세요");
                 slots[i].Root.SetEnabled(!fixedSlot);
                 slots[i].Root.EnableInClassList("lb-brief-slot--active", i == ActiveSlot);
                 slots[i].Root.EnableInClassList("lb-brief-slot--empty", !SkillCatalog.IsSkill(id));
@@ -288,7 +288,7 @@ namespace Lightbringer.UI
                 : $"현재 {SlotKeys[ActiveSlot]} 슬롯은 비어 있습니다");
             Hud.Set(itemTitle, SkillCatalog.Names[id] + " Lv " + level);
             Hud.Set(itemEffect, Effects[id]);
-            Hud.Set(itemStats, $"소모 {SkillCatalog.Cost(id):0} MP   ·   재사용 {SkillCatalog.Cooldown(id):0.#}초   ·   위력 ×{SkillCatalog.Power(level):0.0#}");
+            Hud.Set(itemStats, $"소모 {SkillCatalog.CostLabel(id)}   ·   재사용 {SkillCatalog.Cooldown(id):0.#}초   ·   위력 ×{SkillCatalog.Power(level):0.0#}");
             Hud.Set(shardsLabel, $"보유 빛의 조각  {profile.gold:N0}");
             int owner = System.Array.IndexOf(profile.loadout, id);
             bool fixedSkill = SkillCatalog.IsFixedSkill(id);

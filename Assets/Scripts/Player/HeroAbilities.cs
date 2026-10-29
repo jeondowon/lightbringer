@@ -6,6 +6,7 @@ using Lightbringer.Resources;
 using Lightbringer.Units;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 namespace Lightbringer.Player
 {
@@ -33,13 +34,23 @@ namespace Lightbringer.Player
         public const float MeteorRadius = 8f;
         public const float MeteorDamage = 80f;
         public const float MeteorDelay = 1.8f;
+        // Rune Wall rises on the aimed ground and draws the attacks of enemies within its taunt radius.
+        public const float RuneWallRange = 12f;
+        public const float RuneWallHealth = 150f;
+        public const float RuneWallDuration = 8f;
+        public const float RuneWallTaunt = 8f;
+        // Flame burns enemies in a cone ahead of the aim while held, applied in ticks.
+        public const float FlameRange = 7f;
+        public const float FlameHalfAngle = 35f;
+        public const float FlameDamagePerSecond = 30f;
+        public const float FlameTick = 0.2f;
         private struct Delayed { public SkillKind Skill; public Combatant Target; public Vector3 Point; public float Power, Remaining; public bool Launched; }
         private readonly List<Delayed> delayed = new List<Delayed>();
         private readonly List<(Combatant target, float damage, float remaining)> pendingLightHits =
             new List<(Combatant, float, float)>();
         [SerializeField] private UnityEngine.Camera aimCamera;
         [SerializeField] private int[] equipment = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty, (int)SkillKind.Shockwave };
-        [SerializeField] private int[] levels = { 1, 0, 0, 1, 0 };
+        [SerializeField] private int[] levels = { 1, 0, 0, 1, 0, 0, 0 };
         private readonly float[] cooldowns = new float[SkillCatalog.Slots];
         private readonly HashSet<Combatant> hits = new HashSet<Combatant>();
         private readonly PhysicsQueryBuffer query = new PhysicsQueryBuffer();
@@ -50,6 +61,8 @@ namespace Lightbringer.Player
         private int heroLevel = 1;
         private bool capturedBaseStats;
         private int inputEnabledFrame = -1;
+        private int channelSlot = -1;
+        private float channelTick;
         private float baseHealth, baseFoodCapacity, baseFoodProduction, baseManaCapacity, baseManaRecovery, baseAuraBonus;
         public string Feedback { get; private set; } = "";
         // Raised after a successful cast with the equipment slot; visuals play the cast animation.
@@ -62,6 +75,9 @@ namespace Lightbringer.Player
         public event System.Action<int, Combatant, float> BoltLaunched;
         public int Equipped(int slot) => slot >= 0 && slot < equipment.Length ? equipment[slot] : -1;
         public float CooldownRemaining(int slot) => cooldowns[slot];
+        // A held skill (Flame) is burning, towards ChannelDirection on the ground plane.
+        public bool IsChanneling => channelSlot >= 0;
+        public Vector3 ChannelDirection { get; private set; }
         // The aura's current radius, or the level's aura radius when the hero has no aura component. Shockwave and Heal
         // both reach this far.
         public float AuraRadius =>TryGetComponent(out HeroAura aura) ? aura.Radius : GrowthCatalog.AuraRadiusAt(heroLevel);
@@ -131,13 +147,33 @@ namespace Lightbringer.Player
         {
             Tick(Time.deltaTime);
             if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || Time.timeScale <= 0 || Time.frameCount == inputEnabledFrame)
+            {
+                StopChannel();
                 return;
-            // Slots follow SkillCatalog.SlotKeys: left click, Q, E, right click.
-            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) TryCast(0, FindAimedTarget());
-            if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) TryCast(1, FindAimedTarget());
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) TryCast(2, FindAimedTarget());
-            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) TryCast(3, FindAimedTarget());
+            }
+            for (int slot = 0; slot < SkillCatalog.Slots; slot++)
+            {
+                ButtonControl button = SlotButton(slot);
+                if (button == null) continue;
+                if (SkillCatalog.IsChanneled(equipment[slot]))
+                {
+                    // It lights on the press only, so a held button with no mana does not retry every frame.
+                    if (button.wasPressedThisFrame || (button.isPressed && channelSlot == slot)) Channel(slot, Time.deltaTime);
+                    else if (!button.isPressed && channelSlot == slot) StopChannel();
+                }
+                else if (button.wasPressedThisFrame) TryCast(slot, FindAimedTarget());
+            }
         }
+
+        // Slots follow SkillCatalog.SlotKeys: left click, Q, E, right click.
+        private static ButtonControl SlotButton(int slot) => slot switch
+        {
+            0 => Mouse.current?.leftButton,
+            1 => Keyboard.current?.qKey,
+            2 => Keyboard.current?.eKey,
+            3 => Mouse.current?.rightButton,
+            _ => null,
+        };
 
         public void Tick(float delta)
         {
@@ -241,6 +277,7 @@ namespace Lightbringer.Player
 
         private void OnDisable()
         {
+            StopChannel();
             pendingLightHits.Clear();
             delayed.Clear();
         }
@@ -252,12 +289,15 @@ namespace Lightbringer.Player
             if (!isActiveAndEnabled || !self.IsAlive || slot < 0 || slot >= equipment.Length || cooldowns[slot] > 0)
                 return false;
             int id = equipment[slot];
-            if (!SkillCatalog.IsSkill(id)) return false;
+            if (!SkillCatalog.IsSkill(id) || SkillCatalog.IsChanneled(id)) return false;
             if (SkillCatalog.NeedsTarget(id) && !CanAttack(target))
             { Feedback = "15m 이내에 보이는 적을 조준하세요."; return RejectCast(); }
             Vector3 meteorPoint = default;
-            if (id == (int)SkillKind.Meteor && !TryFindGroundPoint(groundPoint, out meteorPoint))
+            if (id == (int)SkillKind.Meteor && !TryFindGroundPoint(groundPoint, MeteorRange, out meteorPoint))
             { Feedback = "운석을 떨어뜨릴 땅을 조준하세요."; return RejectCast(); }
+            Vector3 wallPoint = default;
+            if (id == (int)SkillKind.RuneWall && !TryFindGroundPoint(groundPoint, RuneWallRange, out wallPoint))
+            { Feedback = "룬 벽을 세울 땅을 조준하세요."; return RejectCast(); }
             if (!mana.TrySpend(SkillCatalog.Cost(id))) { Feedback = "마나가 부족합니다."; return RejectCast(); }
             cooldowns[slot] = SkillCatalog.Cooldown(id);
             float power = SkillCatalog.Power(levels[id]) * damageMultiplier;
@@ -280,13 +320,79 @@ namespace Lightbringer.Player
                 delayed.Add(new Delayed { Skill = SkillKind.Meteor, Point = meteorPoint, Power = power, Remaining = MeteorDelay });
                 SpellTargeted?.Invoke(id, meteorPoint, MeteorRadius, MeteorDelay);
             }
+            else if (id == (int)SkillKind.RuneWall)
+            {
+                // The wall faces the hero, so it spans across the line from the hero to the aimed point.
+                Vector3 facing = Vector3.ProjectOnPlane(wallPoint - transform.position, Vector3.up);
+                RuneWall.Raise(wallPoint, facing.sqrMagnitude > 0.01f ? facing : transform.forward, self.Faction,
+                    RuneWallHealth * power, RuneWallDuration, RuneWallTaunt, transform.parent);
+            }
             Feedback = SkillCatalog.Names[id];
             Casted?.Invoke(slot);
             return true;
         }
 
-        // The ground under the aim camera's centre, pulled in to MeteorRange from the hero.
-        private bool TryFindGroundPoint(Vector3? forced, out Vector3 point)
+        // Flame: lighting it costs FlameStartCost, burning costs the skill's cost per second, and it stops when the
+        // button is released (StopChannel) or the mana runs out; only then the cooldown starts. `direction` overrides
+        // the aim (tests, scripted casts).
+        public bool Channel(int slot, float delta, Vector3? direction = null)
+        {
+            if (self == null || mana == null) Awake();
+            if (slot < 0 || slot >= equipment.Length || !SkillCatalog.IsChanneled(equipment[slot])) return false;
+            if (!isActiveAndEnabled || !self.IsAlive) { StopChannel(); return false; }
+            int id = equipment[slot];
+            if (channelSlot != slot)
+            {
+                StopChannel();
+                if (cooldowns[slot] > 0) return false;
+                if (!mana.TrySpend(SkillCatalog.FlameStartCost)) { Feedback = "마나가 부족합니다."; return RejectCast(); }
+                channelSlot = slot;
+                channelTick = 0f;
+                Feedback = SkillCatalog.Names[id];
+                Casted?.Invoke(slot);
+            }
+            Vector3 aim = Vector3.ProjectOnPlane(direction ?? (aimCamera != null ? aimCamera.transform.forward : transform.forward), Vector3.up);
+            ChannelDirection = aim.sqrMagnitude > 0.0001f ? aim.normalized : transform.forward;
+            if (delta <= 0f) return true;
+            if (!mana.TrySpend(SkillCatalog.Cost(id) * delta)) { Feedback = "마나가 부족합니다."; StopChannel(); return false; }
+            float power = SkillCatalog.Power(levels[id]) * damageMultiplier;
+            for (channelTick += delta; channelTick >= FlameTick && channelSlot == slot; channelTick -= FlameTick)
+                Burn(FlameDamagePerSecond * FlameTick * power);
+            return channelSlot == slot;
+        }
+
+        public void StopChannel()
+        {
+            if (channelSlot < 0) return;
+            cooldowns[channelSlot] = SkillCatalog.Cooldown(equipment[channelSlot]);
+            channelSlot = -1;
+        }
+
+        // One Flame tick on every enemy in the cone (and any right at the hero's feet).
+        private void Burn(float damage)
+        {
+            Vector3 origin = transform.position;
+            float minimumDot = Mathf.Cos(FlameHalfAngle * Mathf.Deg2Rad);
+            var struck = new List<Combatant>();
+            foreach (Combatant unit in Collect(origin, FlameRange))
+            {
+                if (unit == null || !unit.IsAlive || unit.Invulnerable || unit.Faction == self.Faction) continue;
+                Vector3 offset = Vector3.ProjectOnPlane(unit.GetAimPoint(origin) - origin, Vector3.up);
+                if (offset.sqrMagnitude <= FlameRange * FlameRange
+                    && (offset.sqrMagnitude < 0.25f || Vector3.Dot(offset.normalized, ChannelDirection) >= minimumDot))
+                    struck.Add(unit);
+            }
+            foreach (Combatant unit in struck)
+            {
+                if (unit == null || !unit.IsAlive) continue;
+                unit.TakeDamage(damage, self);
+                // A lethal hit can end the battle and disable this component.
+                if (!isActiveAndEnabled) return;
+            }
+        }
+
+        // The ground under the aim camera's centre, pulled in to `range` from the hero.
+        private bool TryFindGroundPoint(Vector3? forced, float range, out Vector3 point)
         {
             Vector3 hero = transform.position;
             Vector3 aimed = hero;
@@ -304,7 +410,7 @@ namespace Lightbringer.Player
             point = hero;
             if (!found) return false;
             Vector3 flat = Vector3.ProjectOnPlane(aimed - hero, Vector3.up);
-            if (flat.magnitude > MeteorRange) aimed = hero + flat.normalized * MeteorRange + Vector3.up * (aimed.y - hero.y);
+            if (flat.magnitude > range) aimed = hero + flat.normalized * range + Vector3.up * (aimed.y - hero.y);
             // Settle on the ground below, so a point on a unit or at the edge of the sky lands on the terrain.
             point = aimed;
             RaycastHit[] ground = Physics.RaycastAll(aimed + Vector3.up * 20f, Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore);

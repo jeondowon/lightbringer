@@ -38,12 +38,12 @@ namespace Lightbringer.EditorTools
                 LevelUpView levelUp = new LevelUpView(root);
                 ResultView result = new ResultView(root);
                 view.Bind(battle);
-                Check(view.FrontChipCount == 3 && view.TroopCardCount == 8, "Battle HUD shows one chip per front and one card per unlocked troop");
+                Check(view.FrontChipCount == 3 && view.TroopCardCount == UnitCatalog.UnlockedAt(EnemyCatalog.BossStage), "Battle HUD shows one chip per front and one card per unlocked troop");
 
                 FoodResource food = battle.Hero.GetComponent<FoodResource>();
                 Invoke(food, "GenerateFood", 4f);
                 view.Refresh(session);
-                Check(view.FoodText.StartsWith(food.CurrentFood.ToString("0") + " /") && view.IsCardReady(0) && !view.IsCardReady(7)
+                Check(view.FoodText.StartsWith(food.CurrentFood.ToString("0") + " /") && view.IsCardReady(0) && !view.IsCardReady(view.TroopCardCount - 1)
                     && view.IsCardSelected((int)battle.Summoner.SelectedUnit),
                     "Troop cards light up exactly when Food covers their cost");
                 Check(view.EnemyBaseShielded && !view.BossVisible, "Boss stage shows the shielded enemy stronghold before the Warlord arrives");
@@ -211,6 +211,9 @@ namespace Lightbringer.EditorTools
                 CampaignProgress profile = new CampaignProgress();
                 profile.CompleteStage(1);
                 profile.CompleteStage(2);
+                // Heal is the stage 4 reward now; teach it here so the briefing checks below keep a learned skill in Q.
+                profile.skillLevels[(int)SkillKind.Heal] = 1;
+                profile.loadout[1] = (int)SkillKind.Heal;
                 session.InitializeForValidation(profile);
                 EditorAssets.ConfigureSession(session, material);
                 CampaignMapView map = new CampaignMapView(new VisualElement(), null);
@@ -242,7 +245,7 @@ namespace Lightbringer.EditorTools
                     "Reopening the atlas restores the current act and its eight beacons");
                 PreparationView view = new PreparationView(new VisualElement());
                 view.Refresh(session);
-                Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == CampaignStages.Name(3) && view.TroopCount == 3,
+                Check(view.Visible && view.StartText.Contains("봉화 03") && view.DestinationText == CampaignStages.Name(3) && view.TroopCount == 2,
                     "Briefing shows the selected beacon and all unlocked troops");
                 Check(session.SelectStage(2) && RefreshAndSelected(view, session, 2), "Selecting a stage highlights it and retargets START");
                 view.Refresh(session, false);

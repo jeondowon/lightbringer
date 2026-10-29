@@ -20,6 +20,7 @@ namespace Lightbringer.Visuals
         [SerializeField] private ArtStyleLibrary style;
         private HeroAbilities abilities;
         private Renderer staff;
+        private float nextFlame;
         private readonly List<(float start, float delay, Vector3 point)> meteors = new List<(float, float, Vector3)>();
         private readonly List<(float time, Vector3 point, float radius, float strength)> pending =
             new List<(float, Vector3, float, float)>();
@@ -141,6 +142,18 @@ namespace Lightbringer.Visuals
 
         private void Update()
         {
+            if (abilities != null && abilities.IsChanneling && Time.time >= nextFlame)
+            {
+                // Flame: fireballs streaming from the staff head along the aim, growing as they spread.
+                nextFlame = Time.time + 0.04f;
+                Vector3 origin = StaffHead();
+                for (int i = 0; i < 2; i++)
+                {
+                    float t = Random.value;
+                    CombatEffects.Fireball(style, origin + abilities.ChannelDirection * (t * HeroAbilities.FlameRange) + Vector3.down * t,
+                        MeteorFire, Mathf.Lerp(0.4f, 1.8f, t));
+                }
+            }
             for (int i = meteors.Count - 1; i >= 0; i--)
             {
                 float t = (Time.time - meteors[i].start) / Mathf.Max(0.01f, meteors[i].delay);

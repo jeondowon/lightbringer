@@ -11,7 +11,7 @@ namespace Lightbringer.Progression
     {
         public const int StageCount = Core.CampaignStages.Count;
         public const int GrowthCount = 8;
-        public const int Version = 7;
+        public const int Version = 8;
         public const int MaxLevel = 30;
         // EXP from level n to n + 1 (index n - 1). Tuned so stage bosses 8 / 16 / 24 expect Lv 15 / 25 / 30 with
         // replays: first clears of stages 1-7 give ~6,000 EXP (Lv 12) and a few stage 6-7 replays reach Lv 15.
@@ -30,12 +30,14 @@ namespace Lightbringer.Progression
         public int[] choices = new int[0];
         public int[] ranks = new int[GrowthCount];
         // Level of each learned skill (SkillKind order); 0 = not learned yet.
-        public int[] skillLevels = { 1, 0, 0, 1, 0 };
+        public int[] skillLevels = { 1, 0, 0, 1, 0, 0, 0 };
         // Skill in each slot (left click, Q, E, right click), SkillCatalog.Empty when the slot is empty. Left click is
         // always Light Beam and right click Shockwave once learned (SkillCatalog.FixedSkillOf).
         public int[] loadout = { (int)SkillKind.LightBeam, SkillCatalog.Empty, SkillCatalog.Empty, (int)SkillKind.Shockwave };
         // Slot order of versions 2-6: left click, right click, Q.
         private const int LegacySlots = 3, LegacyRightClick = 1;
+        // Versions up to 7 knew five skills (no Rune Wall or Flame).
+        private const int LegacySkillCount = 5;
         // Versions 1 and 2 kept staffs and rings here; read only to migrate (UpgradeSavedData).
         public int[] equipmentLevels = new int[0];
         // Light shards, the one currency (the field keeps its old name so saves stay readable).
@@ -44,7 +46,7 @@ namespace Lightbringer.Progression
         public bool IsMaxLevel => level >= MaxLevel;
         // 0 at max level, where no EXP is kept.
         public int ExperienceToNext => IsMaxLevel ? 0 : ExperienceTable[Mathf.Max(level, 1) - 1];
-        public int UnlockedUnits => Mathf.Min(Units.UnitCatalog.Count, unlockedStage);
+        public int UnlockedUnits => Units.UnitCatalog.UnlockedAt(unlockedStage);
         public bool IsComplete => cleared[StageCount - 1];
 
         public bool IsValid()
@@ -116,12 +118,17 @@ namespace Lightbringer.Progression
         // ranks as unspent level-ups, refunds light shards for troop ranks above the cap and caps gear levels.
         public void UpgradeSavedData()
         {
+            // Rune Wall and Flame (version 8) start unlearned; resize first so every older step sees the full table.
+            if (version < 8 && skillLevels != null && skillLevels.Length == LegacySkillCount)
+                Array.Resize(ref skillLevels, SkillCatalog.Count);
             if (version == 1) UpgradeFromVersion1();
             if (version == 2) UpgradeFromVersion2();
             if (version == 3) ExtendStages(8);
             if (version == 4) ExtendStages(16);
             if (version == 5) UpgradeFromVersion5();
             if (version == 6) UpgradeFromVersion6();
+            // Version 7 only lacked the two new skills. Troops ranked up beyond the new unlock table stay invalid.
+            if (version == 7) version = Version;
         }
 
         // Version 5 learned Shockwave at stage 7 and let any slot hold it. Now it is known from the start and fixed to
@@ -144,7 +151,7 @@ namespace Lightbringer.Progression
         // Beam, Q, E, right click = Shockwave): the other skills worn at left click and Q move to Q and E in that order.
         private void UpgradeFromVersion6()
         {
-            version = Version;
+            version = 7;
             if (skillLevels == null || skillLevels.Length != SkillCatalog.Count
                 || loadout == null || loadout.Length != LegacySlots) return;
             int[] slots = new int[SkillCatalog.Slots];

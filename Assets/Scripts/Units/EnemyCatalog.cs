@@ -12,13 +12,12 @@ namespace Lightbringer.Units
         public const int Count = 6;
         public const int BossStage = 8;
         public static readonly string[] Names = { "약탈자", "적 궁병", "군집병", "파괴자", "주술사", "군주" };
-        // First stage in which each kind can appear. Act 1 alternates a new tool for the hero with a new threat: each
-        // role arrives on a stage where no new troop or skill does, a stage or so before its answer (Brute at 7, the
-        // Spearman at 8; Shaman at 10 once ranged troops and the Priest are near).
+        // First stage in which each kind can appear: no later than its answer, possibly on the same stage (Brute at 7,
+        // the Spearman at 8; Shaman at 10 with the Priest). Troop and skill unlocks: Docs/GameDesign/Unlocks.md.
         private static readonly int[] FirstStage = { 1, 3, 5, 7, 10, BossStage };
-        // Swarmlings stay in packs of at most this many until the Mage (stage 13) can sweep larger ones.
+        // Swarmlings stay in packs of at most this many until the Mage (stage 12) can sweep larger ones.
         public const int SmallSwarm = 4;
-        public const int LargeSwarmStage = 13;
+        public const int LargeSwarmStage = 12;
         // Value at stage 0 plus growth per stage.
         private static readonly float[] BaseHealth = { 25, 18, 8, 90, 20, 800 };
         private static readonly float[] HealthGrowth = { 5, 4, 2, 18, 4, 100 };
