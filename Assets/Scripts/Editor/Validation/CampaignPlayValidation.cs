@@ -219,7 +219,6 @@ namespace Lightbringer.EditorTools
                             r.sharedMaterials.All(m => m != null && m.shader != null && m.shader.isSupported)),
                             "Imported forest renderers have supported materials");
                         Lightbringer.Visuals.BattlefieldEnvironment terrain = forest.GetComponentInParent<Lightbringer.Visuals.BattlefieldEnvironment>();
-                        Assert(terrain.GrassChunks == 0, "Imported forest replaces the procedural grass carpet");
                         foreach (Transform tree in forest.transform)
                         {
                             if (tree.name != session.ArtStyle.forestEnvironment.tree.name) continue;

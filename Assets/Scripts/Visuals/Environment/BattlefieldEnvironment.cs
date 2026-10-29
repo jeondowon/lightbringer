@@ -19,9 +19,6 @@ namespace Lightbringer.Visuals
         private const float LaneClearance = 4.5f;
 
         private readonly List<Object> owned = new List<Object>();
-        // Lower graphics tiers skip grass chunks far from the camera (see GraphicsQuality.GrassDistance).
-        private readonly List<(MeshRenderer renderer, Bounds bounds)> grass = new List<(MeshRenderer, Bounds)>();
-        private float grassCheck;
         private readonly List<(Vector2 a, Vector2 b)> lanes = new List<(Vector2, Vector2)>();
         private readonly List<Vector2> keepClear = new List<Vector2>();
         private readonly List<(Vector2 point, float radius)> propFootprints = new List<(Vector2, float)>();
@@ -45,7 +42,6 @@ namespace Lightbringer.Visuals
         public MeshCollider Terrain { get; private set; }
         // Victory beacon built for stages other than the opening glade (stage one's lives in the prop dressing).
         public BeaconSanctuary Beacon { get; private set; }
-        public int GrassChunks { get; private set; }
         public float LaneDistance(Vector2 point) => DistanceToLanes(point);
 
         public static BattlefieldEnvironment Build(ArtStyleLibrary library, int stage, Transform root,
@@ -99,8 +95,6 @@ namespace Lightbringer.Visuals
                 BattlefieldPropDressing.Build(style.battlefieldProps, this, AlliedKeep, EnemyKeep, paths.Length, beaconClearing);
                 if (actOne != null) actOne.Dress(this);
             }
-            // Imported forest tufts replace the old solid-colour blade carpet.
-            if (forest == null && style.grassMaterial != null) BuildGrass();
             Shapes near = new Shapes(), far = new Shapes();
             if (forest == null)
             {
@@ -224,26 +218,6 @@ namespace Lightbringer.Visuals
 
         private float RoadMask(Vector2 flat) => 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.8f, 3.4f, DistanceToLanes(flat)));
 
-        // Keep grass sparse around structures without painting stone onto the terrain.
-        private float GroundClearingMask(Vector2 flat)
-        {
-            float plaza = 0f;
-            if (beaconClearing)
-            {
-                float sanctuary = Vector2.Distance(flat, BeaconSanctuary.Centre);
-                Vector2 approach = new Vector2(Mathf.Clamp(flat.x, BeaconSanctuary.Centre.x, 0f), BeaconSanctuary.Centre.y);
-                plaza = Mathf.Max(1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(4f, 7f, sanctuary)),
-                    1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.2f, 2.5f, Vector2.Distance(flat, approach))));
-            }
-            if (beaconSite.HasValue)
-                plaza = Mathf.Max(plaza, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(3.6f, 5.6f, Vector2.Distance(flat, beaconSite.Value))));
-            foreach (Vector2 clear in keepClear)
-            {
-                plaza = Mathf.Max(plaza, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 8.5f, Vector2.Distance(flat, clear))));
-            }
-            return plaza;
-        }
-
         // Quiet flank spot: clear of every lane and gate, near mid-field, preferring the outer edge and the west.
         private Vector2 FindBeaconSite()
         {
@@ -283,83 +257,6 @@ namespace Lightbringer.Visuals
             instance.transform.localScale = Vector3.one * 1.9f;
             ReserveProp(site, 7f);
             Beacon = BeaconSanctuary.Build(group, instance, this, site);
-        }
-
-        // ---------- Grass ----------
-
-        // Blades are baked into 12 m chunks so off-screen chunks are culled; none on roads, plazas or steep slopes.
-        private void BuildGrass()
-        {
-            const float chunk = 12f;
-            int chunks = 0;
-            for (float cx = -66f; cx < 66f; cx += chunk)
-                for (float cz = -54f; cz < 84f; cz += chunk)
-                {
-                    List<Vector3> vertices = new List<Vector3>();
-                    List<Color> colors = new List<Color>();
-                    List<Vector2> uvs = new List<Vector2>();
-                    List<int> triangles = new List<int>();
-                    for (int i = 0; i < (actTwo != null ? 100 : 1500); i++)
-                    {
-                        float x = cx + Range(0f, chunk), z = cz + Range(0f, chunk);
-                        float outside = OutsideDistance(x, z);
-                        float density = outside <= 0f ? 1f : Mathf.Clamp01(1f - outside / 26f) * 0.5f;
-                        Vector2 flat = new Vector2(x, z);
-                        if (!ClearOfProps(flat, 0.25f)) continue;
-                        if (density <= 0f || random.NextDouble() > density) continue;
-                        float road = RoadMask(flat);
-                        if (random.NextDouble() < Mathf.Max(road * 1.3f, GroundClearingMask(flat))) continue;
-                        float slope = Mathf.Abs(Height(x + 0.5f, z) - Height(x - 0.5f, z)) + Mathf.Abs(Height(x, z + 0.5f) - Height(x, z - 0.5f));
-                        if (slope > 0.7f) continue;
-                        Vector3 root = new Vector3(x, Height(x, z), z);
-                        Color ground = GroundColor(root, Vector3.up);
-                        // Corrupted ground near the enemy stronghold grows sparse, withered grass.
-                        float corruption = CorruptionMask(flat);
-                        if (random.NextDouble() < corruption * 0.75f) continue;
-                        Color blade = Color.Lerp(Color.Lerp(ground, style.grassLight, 0.3f), style.dirt * 1.1f, road * 0.6f);
-                        blade = Color.Lerp(blade, Color.Lerp(style.corruptStone, style.dirt, 0.4f) * 1.2f, corruption);
-                        Blade(vertices, colors, uvs, triangles, root, blade, outside > 0f);
-                    }
-                    if (vertices.Count == 0) continue;
-                    Mesh mesh = new Mesh { name = "LB Grass " + chunks, hideFlags = HideFlags.DontSave };
-                    mesh.SetVertices(vertices);
-                    mesh.SetColors(colors);
-                    mesh.SetUVs(0, uvs);
-                    mesh.SetTriangles(triangles, 0);
-                    mesh.RecalculateBounds();
-                    // Room for the wind and hero-push displacement so chunks are not culled too early.
-                    Bounds bounds = mesh.bounds;
-                    bounds.Expand(1.5f);
-                    mesh.bounds = bounds;
-                    MeshRenderer renderer = AddMesh("Grass " + chunks++, mesh, style.grassMaterial, false);
-                    renderer.receiveShadows = true;
-                    grass.Add((renderer, mesh.bounds));
-                    GrassChunks++;
-                }
-        }
-
-        private void Blade(List<Vector3> vertices, List<Color> colors, List<Vector2> uvs, List<int> triangles,
-            Vector3 root, Color color, bool hills)
-        {
-            float yaw = Range(0f, Mathf.PI * 2f);
-            Vector3 side = new Vector3(Mathf.Cos(yaw), 0f, Mathf.Sin(yaw));
-            Vector3 lean = new Vector3(Range(-1f, 1f), 0f, Range(-1f, 1f)) * 0.12f;
-            float height = hills ? Range(0.4f, 0.75f) : Range(0.3f, 0.58f);
-            if (actTwo != null) height *= .6f;
-            float width = Range(0.08f, 0.13f);
-            int start = vertices.Count;
-            vertices.Add(root - side * width * 0.5f);
-            vertices.Add(root + side * width * 0.5f);
-            vertices.Add(root + Vector3.up * height * 0.5f + lean * 0.35f - side * width * 0.3f);
-            vertices.Add(root + Vector3.up * height * 0.5f + lean * 0.35f + side * width * 0.3f);
-            vertices.Add(root + Vector3.up * height + lean);
-            for (int i = 0; i < 5; i++) colors.Add(color);
-            uvs.Add(new Vector2(0f, 0f)); uvs.Add(new Vector2(1f, 0f));
-            uvs.Add(new Vector2(0f, 0.5f)); uvs.Add(new Vector2(1f, 0.5f));
-            uvs.Add(new Vector2(0.5f, 1f));
-            triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 1);
-            triangles.Add(start + 1); triangles.Add(start + 2); triangles.Add(start + 3);
-            triangles.Add(start + 2); triangles.Add(start + 4); triangles.Add(start + 3);
         }
 
         // ---------- Props ----------
@@ -632,22 +529,6 @@ namespace Lightbringer.Visuals
         private static Vector2 Flat(Vector3 point) => new Vector2(point.x, point.z);
         // Terrain and props are authored in this component's local space; Paths come in world space.
         private Vector2 Local(Vector3 world) => Flat(transform.InverseTransformPoint(world));
-
-        // Four times a second is plenty: the camera moves at most a few metres between checks.
-        private void Update()
-        {
-            if ((grassCheck -= Time.unscaledDeltaTime) > 0f || grass.Count == 0) return;
-            grassCheck = 0.25f;
-            Camera view = Camera.main;
-            float range = Lightbringer.Core.GraphicsQuality.GrassDistance;
-            Vector3 eye = view != null ? view.transform.position : Vector3.zero;
-            foreach ((MeshRenderer chunk, Bounds bounds) in grass)
-            {
-                if (chunk == null) continue;
-                bool visible = range <= 0f || view == null || bounds.SqrDistance(chunk.transform.InverseTransformPoint(eye)) <= range * range;
-                if (chunk.enabled != visible) chunk.enabled = visible;
-            }
-        }
 
         private void OnDestroy()
         {

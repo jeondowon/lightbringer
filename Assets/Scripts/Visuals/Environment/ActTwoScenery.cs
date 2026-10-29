@@ -73,9 +73,6 @@ namespace Lightbringer.Visuals
                 s.propsMaterial.SetColor("_ShadowColor", new Color(.59f, .62f, .64f));
                 s.propsMaterial.SetColor("_BaseColor", new Color(.72f, .74f, .72f));
             }
-            s.grassMaterial = scenery.Copy(source.grassMaterial);
-            if (s.grassMaterial != null)
-                s.grassMaterial.SetColor("_TipTint", new Color(.54f, .55f, .46f));
             Material terrainSource = s.actTwoEnvironment != null && s.actTwoEnvironment.terrain != null
                 ? s.actTwoEnvironment.terrain : source.terrainMaterial;
             s.terrainMaterial = scenery.Copy(terrainSource);

@@ -69,14 +69,6 @@ namespace Lightbringer.Visuals
             s.rock = new Color(.24f, .24f, .23f);
             s.ruinStone = new Color(.27f, .26f, .24f);
             s.bark = new Color(.17f, .15f, .13f);
-            if (s.grassMaterial != null)
-            {
-                // Dead, dry blades instead of pale spikes.
-                s.grassMaterial.SetColor("_TipTint", new Color(.62f, .55f, .42f));
-                s.grassMaterial.SetFloat("_RootShade", .5f);
-                s.grassMaterial.SetColor("_ShadowColor", new Color(.55f, .57f, .62f));
-            }
-
             if (s.terrainMaterial != null)
             {
                 Material t = s.terrainMaterial;

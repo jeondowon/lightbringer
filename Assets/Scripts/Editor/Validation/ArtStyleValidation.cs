@@ -123,13 +123,6 @@ namespace Lightbringer.EditorTools
                 Mesh props = environment.transform.Find("Props (Near)").GetComponent<MeshFilter>().sharedMesh;
                 Check(props.vertices.Where(v => v.y < 2.5f).All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 2.5f),
                     "Trees, rocks and ruins keep the lanes clear");
-                bool importedForest = environment.GetComponentInChildren<ForestEnvironmentDressing>() != null;
-                bool grassOffRoads = importedForest ? environment.GrassChunks == 0 : environment.GrassChunks > 20;
-                foreach (MeshFilter chunk in environment.GetComponentsInChildren<MeshFilter>())
-                    if (chunk.name.StartsWith("Grass "))
-                        grassOffRoads &= chunk.sharedMesh.vertices.Where(v => Mathf.Abs(v.y) < 0.01f)
-                            .All(v => environment.LaneDistance(new Vector2(v.x, v.z)) > 1.8f);
-                Check(grassOffRoads, "Ground cover uses forest tufts or fallback grass chunks and leaves dirt roads bare");
                 FoodResource food = battle.Hero.GetComponent<FoodResource>();
                 CharacterController template = battle.Root.GetComponentsInChildren<CharacterController>(true).First(c => c.name == "Unit Template");
                 Combatant spawned = null;

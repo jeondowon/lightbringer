@@ -9,17 +9,12 @@ namespace Lightbringer.Visuals
     // Normalized copies retain the supplier's LOD groups and share meshes/materials.
     public sealed class ForestEnvironmentDressing : MonoBehaviour
     {
-        private readonly List<GameObject> groundCover = new List<GameObject>();
         private readonly List<Vector2> trunks = new List<Vector2>();
-        private readonly List<Vector2> grassCentres = new List<Vector2>();
-        private readonly Dictionary<Material, Material> grassMaterials = new Dictionary<Material, Material>();
         private System.Random random;
         private BattlefieldEnvironment terrain;
-        private float nextCull;
         private bool openingGlade;
         public int TreeCount { get; private set; }
         public int PropCount { get; private set; }
-        public int GrassCount { get; private set; }
 
         public static ForestEnvironmentDressing Build(ForestEnvironmentProfile profile,
             BattlefieldEnvironment terrain, int stage)
@@ -68,12 +63,10 @@ namespace Lightbringer.Visuals
             if (openingGlade) BuildGladeUnderstory(profile);
             else
             {
-                Scatter(profile.sapling, 55, 9f, 14f, 0.7f, 1.2f, false);
-                Scatter(profile.rock, 55, 7f, 13f, 0.7f, 1.4f, false);
-                Scatter(profile.stone, 115, 4.5f, 10f, 0.4f, 1.1f, false);
-                Scatter(profile.plant, 210, 4f, 10f, 0.7f, 1.4f, true);
+                Scatter(profile.sapling, 55, 9f, 14f, 0.7f, 1.2f);
+                Scatter(profile.rock, 55, 7f, 13f, 0.7f, 1.4f);
+                Scatter(profile.stone, 115, 4.5f, 10f, 0.4f, 1.1f);
             }
-            BuildGrassPatches(profile.grass);
             // Last, so the hand-tuned field dressing above keeps its random sequence.
             BuildHillsideForest(profile);
             if (profile.wind != null)
@@ -109,32 +102,28 @@ namespace Lightbringer.Visuals
             };
             foreach (Vector2 centre in islands)
             {
-                for (int i = 0; i < 32; i++)
+                for (int i = 0; i < 12; i++)
                 {
                     float angle = Range(0f, Mathf.PI * 2f);
                     float radius = i < 3 ? Range(0f, 2.8f) : Range(2.2f, 7.5f);
                     Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
                     if (!terrain.ClearOfPlay(point, 6f, 12f) || !terrain.ClearOfProps(point, 2f) || NearTrunk(point)) continue;
-                    GameObject prefab = i < 3 ? profile.rock : i < 8 ? profile.stone
-                        : i < 12 ? profile.sapling : profile.plant;
-                    float scale = i < 3 ? Range(0.5f, 0.95f) : i < 8 ? Range(0.5f, 1.1f)
-                        : i < 12 ? Range(0.65f, 1.3f) : Range(1.1f, 1.8f);
+                    GameObject prefab = i < 3 ? profile.rock : i < 8 ? profile.stone : profile.sapling;
+                    float scale = i < 3 ? Range(0.5f, 0.95f) : i < 8 ? Range(0.5f, 1.1f) : Range(0.65f, 1.3f);
                     GameObject prop = Spawn(prefab, point, scale);
                     if (i < 3) prop.transform.localScale = Vector3.Scale(prop.transform.localScale,
                         new Vector3(Range(1.15f, 1.6f), Range(0.65f, 0.85f), 1f));
-                    if (i >= 12) groundCover.Add(prop);
                 }
             }
-            // Short plants and small pebbles soften the road edge while preserving its open centre.
-            Scatter(profile.stone, 110, 4.5f, 11f, 0.25f, 0.65f, false);
-            Scatter(profile.plant, 220, 4.5f, 11f, 0.9f, 1.6f, true);
+            // Small pebbles soften the road edge while preserving its open centre.
+            Scatter(profile.stone, 110, 4.5f, 11f, 0.25f, 0.65f);
         }
 
         private void BuildHillsideForest(ForestEnvironmentProfile profile)
         {
             // Dense woodland over the hills outside the field, so the ridgelines read as forest, not bare
             // lawn. Rare noise clearings break up the canopy. Stays inside the terrain mesh so roots ground.
-            const float cell = 7.5f, minX = -106f, maxX = 106f, minZ = -91f, maxZ = 145f;
+            const float cell = 8.5f, minX = -106f, maxX = 106f, minZ = -91f, maxZ = 145f;
             float noise = random.Next(1000);
             for (float z = minZ; z <= maxZ; z += cell)
                 for (float x = minX; x <= maxX; x += cell)
@@ -185,83 +174,11 @@ namespace Lightbringer.Visuals
                 trunks.Add(centre);
                 TreeCount++;
             }
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 2; i++)
             {
                 Vector2 point = centre + new Vector2(Range(-4f, 4f), Range(-4f, 4f));
                 if (NearTrunk(point) || !terrain.ClearOfPlay(point, 6f, 11f) || !terrain.ClearOfProps(point, 2f)) continue;
-                GameObject prop = Spawn(i < 2 ? profile.sapling : profile.plant, point, Range(0.8f, 1.4f));
-                if (i >= 2) groundCover.Add(prop);
-            }
-        }
-
-        private void BuildGrassPatches(GameObject prefab)
-        {
-            // Cull whole patches, sharing the supplier mesh and instanced material between tufts.
-            // Gaps between patches leave the ground texture visible instead of making a solid carpet.
-            for (int attempt = 0, placed = 0; attempt < 3200 && placed < 260; attempt++)
-            {
-                Vector2 centre = new Vector2(Range(-35f, 35f), Range(BattlefieldLayout.MinZ + 3f, BattlefieldLayout.MaxZ + 3f));
-                if (openingGlade && attempt % 3 == 0)
-                    centre = new Vector2((attempt % 2 == 0 ? -1f : 1f) * Range(5f, 12f), Range(-16f, BattlefieldLayout.EnemyBaseZ - 10f));
-                if (!terrain.ClearOfPlay(centre, 5f, 11f) || (openingGlade && !terrain.ClearOfProps(centre, 1f))) continue;
-                bool overlaps = false;
-                foreach (Vector2 other in grassCentres)
-                    if ((centre - other).sqrMagnitude < 16f) { overlaps = true; break; }
-                if (overlaps) continue;
-                GameObject patch = new GameObject("Forest Grass Patch");
-                patch.transform.SetParent(transform, false);
-                patch.transform.localPosition = new Vector3(centre.x, terrain.SurfaceHeight(centre.x, centre.y), centre.y);
-                float radius = Range(2.2f, 3.5f);
-                int count = random.Next(38, 55);
-                for (int i = 0; i < count; i++)
-                {
-                    float angle = Range(0f, Mathf.PI * 2f);
-                    float distance = Mathf.Sqrt(Range(0f, 1f)) * radius;
-                    Vector2 point = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
-                    // Test every tuft, including the patch edge, with room for the blade width.
-                    if (!terrain.ClearOfPlay(point, 4.8f, 10.5f)
-                        || (openingGlade && !terrain.ClearOfProps(point, 0.5f)) || NearTrunk(point)) continue;
-                    float slope = Mathf.Abs(terrain.SurfaceHeight(point.x + 0.5f, point.y) - terrain.SurfaceHeight(point.x - 0.5f, point.y))
-                        + Mathf.Abs(terrain.SurfaceHeight(point.x, point.y + 0.5f) - terrain.SurfaceHeight(point.x, point.y - 0.5f));
-                    if (slope > 0.6f) continue;
-                    GameObject tuft = Spawn(prefab, point, 1f);
-                    foreach (Renderer renderer in tuft.GetComponentsInChildren<Renderer>())
-                    {
-                        Material[] materials = renderer.sharedMaterials;
-                        for (int m = 0; m < materials.Length; m++)
-                        {
-                            Material source = materials[m];
-                            if (source == null) continue;
-                            if (!grassMaterials.TryGetValue(source, out Material shared))
-                            {
-                                shared = new Material(source) { name = "Forest Grass (Instance)", enableInstancing = true };
-                                // Deep olive foliage; keep source materials shared and unchanged.
-                                if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.12f, 0.18f, 0.055f));
-                                if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.67f, 0.77f, 0.45f));
-                                if (shared.HasProperty("_RootMaskStrength")) shared.SetFloat("_RootMaskStrength", 0.1f);
-                                if (openingGlade)
-                                {
-                                    if (shared.HasProperty("_RootColor")) shared.SetColor("_RootColor", new Color(0.075f, 0.13f, 0.035f));
-                                    if (shared.HasProperty("_Color")) shared.SetColor("_Color", new Color(0.6f, 0.72f, 0.4f));
-                                    if (shared.HasProperty("_NormalScale")) shared.SetFloat("_NormalScale", 0.65f);
-                                    if (shared.HasProperty("_TransStrength")) shared.SetFloat("_TransStrength", 0.25f);
-                                }
-                                grassMaterials.Add(source, shared);
-                            }
-                            materials[m] = shared;
-                        }
-                        renderer.sharedMaterials = materials;
-                    }
-                    float width = openingGlade ? Range(1.6f, 2.5f) : Range(1.3f, 2f);
-                    float height = (openingGlade ? Range(1.25f, 1.85f) : Range(0.7f, 1.1f))
-                        * Mathf.Lerp(1f, 0.7f, distance / radius);
-                    tuft.transform.localScale = new Vector3(width, height, width);
-                    tuft.transform.SetParent(patch.transform, true);
-                    GrassCount++;
-                }
-                grassCentres.Add(centre);
-                groundCover.Add(patch);
-                placed++;
+                Spawn(profile.sapling, point, Range(0.8f, 1.4f));
             }
         }
 
@@ -273,7 +190,7 @@ namespace Lightbringer.Visuals
         }
 
         private void Scatter(GameObject prefab, int count, float lane, float bases,
-            float minScale, float maxScale, bool cull)
+            float minScale, float maxScale)
         {
             for (int attempt = 0, placed = 0; attempt < count * 6 && placed < count; attempt++)
             {
@@ -281,8 +198,7 @@ namespace Lightbringer.Visuals
                 if (!terrain.ClearOfPlay(p, lane, bases) || (openingGlade && !terrain.ClearOfProps(p, 1f))) continue;
                 // Don't bury shrubs inside the large trunks.
                 if (NearTrunk(p)) continue;
-                GameObject instance = Spawn(prefab, p, Range(minScale, maxScale));
-                if (cull) groundCover.Add(instance);
+                Spawn(prefab, p, Range(minScale, maxScale));
                 placed++;
             }
         }
@@ -311,32 +227,6 @@ namespace Lightbringer.Visuals
             }
             PropCount++;
             return instance;
-        }
-
-        private void OnDestroy()
-        {
-            foreach (Material material in grassMaterials.Values)
-                if (material != null)
-                {
-                    if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
-                }
-            grassMaterials.Clear();
-        }
-
-        private void Update()
-        {
-            if ((nextCull -= Time.unscaledDeltaTime) > 0f) return;
-            nextCull = 0.3f;
-            Camera view = Camera.main;
-            if (view == null) return;
-            float distance = GraphicsQuality.GrassDistance;
-            distance = distance > 0f ? Mathf.Min(distance, 65f) : 65f;
-            foreach (GameObject prop in groundCover)
-            {
-                if (prop == null) continue;
-                bool visible = (prop.transform.position - view.transform.position).sqrMagnitude < distance * distance;
-                if (prop.activeSelf != visible) prop.SetActive(visible);
-            }
         }
     }
 }

@@ -9,8 +9,8 @@ namespace Lightbringer.Core
     // Graphics tiers so the game stays smooth on weaker machines (integrated GPUs, base Apple Silicon Macs).
     // Each tier is a Unity quality level (Low / Medium / High) with its own URP asset: MSAA, shadow cascades
     // and resolution, soft-shadow quality and SSAO step down together. On top of that the internal render
-    // resolution is capped to a pixel budget, so a Retina or 4K screen does not multiply the GPU cost, and
-    // distant grass is skipped on lower tiers. Presentation only: no gameplay value depends on the tier.
+    // resolution is capped to a pixel budget, so a Retina or 4K screen does not multiply the GPU cost.
+    // Presentation only: no gameplay value depends on the tier.
     //
     // Each session starts from a tier detected from the hardware and steps down automatically if battles
     // run slow. F9 cycles the tier by hand; that pick is remembered per machine (PlayerPrefs) and stops
@@ -30,14 +30,11 @@ namespace Lightbringer.Core
         private const string FrameLimitKey = "Lightbringer.Graphics.FrameLimit";
         // Internal render pixels per tier: 1600x900, 1920x1080, 2560x1440.
         private static readonly float[] PixelBudget = { 1600f * 900f, 1920f * 1080f, 2560f * 1440f };
-        // Grass chunks beyond this distance from the camera are not drawn (0 = no limit).
-        private static readonly float[] GrassRange = { 38f, 60f, 0f };
 
         public static Tier Current { get; private set; } = Tier.High;
         public static bool IsManual { get; private set; }
         public static FrameLimit Limit { get; private set; } = FrameLimit.Fps60;
         public static float RenderScale { get; private set; } = 1f;
-        public static float GrassDistance => GrassRange[(int)Current];
         // Lets the benchmark measure a fixed tier without auto adjustment interfering.
         public static bool AutoAdjust { get; set; } = true;
         public static event Action Changed;
@@ -83,8 +80,9 @@ namespace Lightbringer.Core
         {
             string gpu = SystemInfo.graphicsDeviceName ?? string.Empty;
             bool mac = Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor;
+            // Base chips (e.g. "Apple M1") start on Low; Pro on Medium; Max and Ultra on High.
             if (gpu.Contains("Apple"))
-                return gpu.Contains("Max") || gpu.Contains("Ultra") ? Tier.High : Tier.Medium;
+                return gpu.Contains("Max") || gpu.Contains("Ultra") ? Tier.High : gpu.Contains("Pro") ? Tier.Medium : Tier.Low;
             if (mac) return Tier.Low; // Intel Macs
             bool integrated = (gpu.Contains("Intel") && !gpu.Contains("Arc"))
                 || (gpu.Contains("Radeon") && gpu.Contains("Graphics") && !gpu.Contains("RX"));
@@ -107,7 +105,7 @@ namespace Lightbringer.Core
                 PlayerPrefs.SetInt(ManualKey, 1);
             }
             int level = Array.IndexOf(QualitySettings.names, tier.ToString());
-            // Projects without the tier levels keep their single level; resolution and grass still scale.
+            // Projects without the tier levels keep their single level; resolution still scales.
             if (level >= 0 && level != QualitySettings.GetQualityLevel())
                 QualitySettings.SetQualityLevel(level, true);
             appliedLevel = QualitySettings.GetQualityLevel();

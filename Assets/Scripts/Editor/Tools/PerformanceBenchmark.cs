@@ -24,11 +24,16 @@ namespace Lightbringer.EditorTools
     // Each quality level is measured in a typical and a heavy crowd. Results are appended to
     // Docs/Diagnostics/Performance.txt so runs before and after an optimisation can be compared.
     // Triggered by Lightbringer/Diagnostics/Benchmark Performance or Docs/Diagnostics/performance.request.
+    // The cost-breakdown variant (Benchmark GPU Cost Breakdown, or ablation.request) measures only Medium with
+    // the typical crowd, switching one thing off per phase (trees, shadows, SSAO and post,
+    // half resolution) to show what each costs.
+    // An unreported warm-up comes first and the baseline is measured at both ends, so drift shows.
     // Editor numbers include Editor overhead: compare runs with each other, not with a shipping build.
     [InitializeOnLoad]
     public static class PerformanceBenchmark
     {
         private const string RunningKey = "Lightbringer.PerformanceBenchmark.Running";
+        private const string AblationKey = "Lightbringer.PerformanceBenchmark.Ablation";
         private const string PreviousSceneKey = "Lightbringer.PerformanceBenchmark.PreviousStartScene";
         private const string PreviousBackgroundKey = "Lightbringer.PerformanceBenchmark.PreviousBackground";
         private const string TestScenePath = "Assets/Scenes/CampaignValidation.unity";
@@ -38,6 +43,20 @@ namespace Lightbringer.EditorTools
 
         private static string Folder => Path.GetFullPath(Path.Combine(Application.dataPath, "../Docs/Diagnostics"));
         private static string RequestPath => Path.Combine(Folder, "performance.request");
+        private static string AblationRequestPath => Path.Combine(Folder, "ablation.request");
+        private static readonly string[] Variants = { "warm-up", "baseline", "no trees", "no shadows", "no SSAO+post",
+            "half resolution", "baseline again" };
+        // Frame-time mean per measured phase, summarised against the two baselines at the end.
+        private static readonly List<(string name, double ms)> phaseMeans = new List<(string, double)>();
+        private static int variant;
+        private static readonly List<Renderer> hiddenRenderers = new List<Renderer>();
+        private static readonly List<(Light light, LightShadows shadows)> shadowLights = new List<(Light, LightShadows)>();
+        private static readonly List<UnityEngine.Rendering.Universal.ScriptableRendererFeature> disabledFeatures
+            = new List<UnityEngine.Rendering.Universal.ScriptableRendererFeature>();
+        private static readonly List<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData> postCameras
+            = new List<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        private static float originalRenderScale = -1f;
+        private static bool Ablation => SessionState.GetBool(AblationKey, false);
         private static string ReportPath => Path.Combine(Folder, "Performance.txt");
 
         private static CampaignSession session;
@@ -91,14 +110,24 @@ namespace Lightbringer.EditorTools
             File.WriteAllText(RequestPath, "Run rendered performance benchmark");
         }
 
+        [MenuItem("Lightbringer/Diagnostics/Benchmark GPU Cost Breakdown")]
+        public static void RequestAblation()
+        {
+            Directory.CreateDirectory(Folder);
+            File.WriteAllText(AblationRequestPath, "Run GPU cost breakdown");
+        }
+
         private static void Update()
         {
             if (!EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode && !SessionState.GetBool(RunningKey, false))
             {
                 if (EditorApplication.timeSinceStartup < nextProbe) return;
                 nextProbe = EditorApplication.timeSinceStartup + 1;
-                if (!File.Exists(RequestPath) || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
-                File.Delete(RequestPath);
+                if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+                bool ablation = File.Exists(AblationRequestPath);
+                if (!ablation && !File.Exists(RequestPath)) return;
+                File.Delete(ablation ? AblationRequestPath : RequestPath);
+                SessionState.SetBool(AblationKey, ablation);
                 Begin();
                 return;
             }
@@ -109,7 +138,7 @@ namespace Lightbringer.EditorTools
             {
                 if (runtimeError != null) throw new InvalidOperationException(runtimeError);
                 if (session == null) Initialize();
-                if (EditorApplication.timeSinceStartup - started > 240) throw new TimeoutException("Benchmark exceeded 240 seconds.");
+                if (EditorApplication.timeSinceStartup - started > 900) throw new TimeoutException("Benchmark exceeded 900 seconds.");
                 Step();
             }
             catch (Exception exception) { Finish(exception.ToString()); }
@@ -139,6 +168,8 @@ namespace Lightbringer.EditorTools
             if (state != PlayModeStateChange.EnteredEditMode || !SessionState.GetBool(RunningKey, false)) return;
             EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(SessionState.GetString(PreviousSceneKey, ""));
             SessionState.SetBool(RunningKey, false);
+            // A run stopped by hand must not leave SSAO switched off in the renderer assets.
+            RestoreVariant();
             Application.runInBackground = SessionState.GetBool(PreviousBackgroundKey, false);
             session = null;
         }
@@ -146,7 +177,7 @@ namespace Lightbringer.EditorTools
         private static void Initialize()
         {
             lines.Clear(); spawned.Clear(); runtimeError = null; finishing = false; sampling = false;
-            level = 0; crowd = 0; originalLevel = QualitySettings.GetQualityLevel();
+            level = Ablation ? 1 : 0; crowd = 0; variant = 0; phaseMeans.Clear(); originalLevel = QualitySettings.GetQualityLevel();
             Application.logMessageReceived += CaptureError;
             Application.runInBackground = true;
             GraphicsQuality.SetFrameLimit(GraphicsQuality.FrameLimit.Unlimited, false);
@@ -170,6 +201,7 @@ namespace Lightbringer.EditorTools
             trianglesRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Triangles Count");
             shadowRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Shadow Casters Count");
             lines.Add($"== Performance benchmark | {DateTime.Now:yyyy-MM-dd HH:mm} | {SystemInfo.processorType} | {SystemInfo.graphicsDeviceName} ({SystemInfo.graphicsDeviceType})");
+            if (Ablation) lines.Add("GPU cost breakdown: Medium, typical crowd, one thing switched off per phase.");
             lines.Add($"Game view {Screen.width}x{Screen.height}. Stage 8, art pass, immortal armies. Editor numbers; compare runs with each other.");
             BeginLevel();
         }
@@ -225,6 +257,9 @@ namespace Lightbringer.EditorTools
                 return;
             }
             frame.Add(Time.unscaledDeltaTime * 1000.0);
+            // GraphicsQuality re-fits the scale when the Game view resizes; hold the half-resolution phase.
+            if (originalRenderScale > 0f && QualitySettings.renderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset held)
+                held.renderScale = 0.5f;
             for (int i = 0; i < markers.Count; i++)
                 if (markers[i].recorder.Valid) markerTotals[i] += markers[i].recorder.LastValue * 1e-6;
             FrameTimingManager.CaptureFrameTimings();
@@ -237,7 +272,18 @@ namespace Lightbringer.EditorTools
             batches.Add(batchesRecorder.LastValue); setPass.Add(setPassRecorder.LastValue);
             triangles.Add(trianglesRecorder.LastValue); shadowCasters.Add(shadowRecorder.LastValue);
             if (frame.Count < Samples) return;
-            Report();
+            // The first phase also pays for shader variants and allocations of the fresh battle: not reported.
+            if (!Ablation || Variants[variant] != "warm-up") Report();
+            if (Ablation && Variants[variant] != "warm-up") phaseMeans.Add((Variants[variant], frame.Average()));
+            if (Ablation)
+            {
+                RestoreVariant();
+                if (++variant >= Variants.Length) { Finish(null); return; }
+                ApplyVariant();
+                phaseStart = Time.realtimeSinceStartup;
+                sampling = false;
+                return;
+            }
             if (++crowd >= Crowds.Length)
             {
                 crowd = 0;
@@ -250,6 +296,8 @@ namespace Lightbringer.EditorTools
         {
             int allies = spawned.Count(item => item != null && item.activeInHierarchy && item.GetComponent<Combatant>().Faction == Faction.Allied);
             int enemies = spawned.Count(item => item != null && item.activeInHierarchy) - allies;
+            if (Ablation) lines.Add($"<< {Variants[variant]} >> (switched off: {hiddenRenderers.Count} renderers, {shadowLights.Count} shadow lights, "
+                + $"{disabledFeatures.Count} renderer features, {postCameras.Count} post cameras)");
             lines.Add($"[{GraphicsQuality.Current} ({QualitySettings.names[QualitySettings.GetQualityLevel()]}) | {Crowds[crowd].name}: {allies} allies + {enemies} enemies | render {RenderDescription()}]");
             lines.Add($"  frame mean {frame.Average():F2} ms ({1000.0 / frame.Average():F0} fps), p95 {Percentile(frame, 0.95):F2} ms"
                 + $" | main {Mean(main)} | render thread {Mean(render)} | GPU {Mean(gpu)}");
@@ -259,6 +307,106 @@ namespace Lightbringer.EditorTools
                 .OrderByDescending(i => markerTotals[i]).Take(22)
                 .Select(i => $"{markers[i].name} {markerTotals[i] / frame.Count:F2}");
             lines.Add("  main-thread ms/frame: " + string.Join(" | ", top));
+            if (!Ablation) ReportRenderers();
+        }
+
+        // Switches off one cost for the current phase; RestoreVariant puts everything back.
+        private static void ApplyVariant()
+        {
+            string name = Variants[variant];
+            if (name == "no trees")
+            {
+                string[] owners = { "ForestTree", "ForestSapling" };
+                foreach (Renderer renderer in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (!renderer.enabled) continue;
+                    bool owned = false;
+                    for (Transform node = renderer.transform; node != null && !owned; node = node.parent)
+                        owned = owners.Contains(node.name);
+                    if (!owned) continue;
+                    renderer.enabled = false;
+                    hiddenRenderers.Add(renderer);
+                }
+            }
+            else if (name == "no shadows")
+            {
+                foreach (Light light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+                    if (light.shadows != LightShadows.None) { shadowLights.Add((light, light.shadows)); light.shadows = LightShadows.None; }
+            }
+            else if (name == "half resolution" && QualitySettings.renderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp)
+            {
+                originalRenderScale = urp.renderScale;
+                urp.renderScale = 0.5f;
+            }
+            else if (name == "no SSAO+post")
+            {
+                foreach (string guid in AssetDatabase.FindAssets("t:UniversalRendererData"))
+                {
+                    var data = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(AssetDatabase.GUIDToAssetPath(guid));
+                    foreach (var feature in data.rendererFeatures)
+                        if (feature != null && feature.isActive) { feature.SetActive(false); disabledFeatures.Add(feature); }
+                }
+                foreach (Camera view in Camera.allCameras)
+                    if (view.TryGetComponent(out UnityEngine.Rendering.Universal.UniversalAdditionalCameraData extra) && extra.renderPostProcessing)
+                    { extra.renderPostProcessing = false; postCameras.Add(extra); }
+            }
+        }
+
+        private static void RestoreVariant()
+        {
+            foreach (Renderer renderer in hiddenRenderers) if (renderer != null) renderer.enabled = true;
+            foreach ((Light light, LightShadows shadows) in shadowLights) if (light != null) light.shadows = shadows;
+            foreach (var feature in disabledFeatures) if (feature != null) feature.SetActive(true);
+            foreach (var extra in postCameras) if (extra != null) extra.renderPostProcessing = true;
+            if (originalRenderScale > 0f && QualitySettings.renderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp)
+                urp.renderScale = originalRenderScale;
+            originalRenderScale = -1f;
+            hiddenRenderers.Clear(); shadowLights.Clear(); disabledFeatures.Clear(); postCameras.Clear();
+        }
+
+        // Where the geometry comes from: active renderers grouped by their first three hierarchy levels, five
+        // inside the environment so each scattered prefab gets a row (clone suffixes and numbers dropped, so
+        // every unit of a kind or every grass chunk shares a row). Triangles are LOD0 per mesh, counted only
+        // for "seen" renderers (Renderer.isVisible: any camera, shadows included), so hidden LODGroup levels
+        // do not count.
+        private static void ReportRenderers()
+        {
+            var groups = new Dictionary<string, (int count, int seen, int shadows, int slots, long triangles)>();
+            Dictionary<Material, int> materials = new Dictionary<Material, int>();
+            foreach (Renderer renderer in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                if (!renderer.enabled) continue;
+                Mesh mesh = renderer is SkinnedMeshRenderer skin ? skin.sharedMesh
+                    : renderer.TryGetComponent(out MeshFilter filter) ? filter.sharedMesh : null;
+                long triangles = 0;
+                if (mesh != null && renderer.isVisible)
+                    for (int i = 0; i < mesh.subMeshCount; i++)
+                        triangles += (mesh.lodCount > 1 ? mesh.GetIndexCount(i, 0) : mesh.GetIndexCount(i)) / 3;
+                string key = GroupKey(renderer.transform);
+                groups.TryGetValue(key, out var row);
+                bool shadows = renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off;
+                groups[key] = (row.count + 1, row.seen + (renderer.isVisible ? 1 : 0), row.shadows + (shadows ? 1 : 0),
+                    row.slots + renderer.sharedMaterials.Length, row.triangles + triangles);
+                if (renderer.isVisible)
+                    foreach (Material material in renderer.sharedMaterials)
+                        if (material != null) materials[material] = materials.TryGetValue(material, out int uses) ? uses + 1 : 1;
+            }
+            lines.Add($"  renderers: {groups.Values.Sum(row => row.count)} active, {groups.Values.Sum(row => row.seen)} seen, "
+                + $"{groups.Values.Sum(row => row.shadows)} cast shadows, {groups.Values.Sum(row => row.triangles) / 1000}k seen LOD0 triangles");
+            foreach (var entry in groups.OrderByDescending(entry => entry.Value.triangles).Take(25))
+                lines.Add($"    {entry.Key}: {entry.Value.count} renderers ({entry.Value.seen} seen, {entry.Value.shadows} shadow), "
+                    + $"{entry.Value.slots} material slots, {entry.Value.triangles / 1000}k seen tris");
+            lines.Add("  most used seen materials: " + string.Join(" | ", materials.OrderByDescending(entry => entry.Value).Take(10)
+                .Select(entry => $"{entry.Key.name} ({entry.Key.shader.name}) x{entry.Value}")));
+        }
+
+        private static string GroupKey(Transform item)
+        {
+            List<string> names = new List<string>();
+            for (Transform node = item; node != null; node = node.parent) names.Insert(0, node.name);
+            int depth = names.Contains("Battlefield Environment") ? 5 : 3;
+            return string.Join("/", names.Take(depth).Select(name =>
+                System.Text.RegularExpressions.Regex.Replace(name.Replace("(Clone)", ""), @"[\s_]*[\(\[]?\d+[\)\]]?", "").Trim()));
         }
 
         private static string RenderDescription()
@@ -341,12 +489,23 @@ namespace Lightbringer.EditorTools
         private static void Finish(string error)
         {
             finishing = true;
+            RestoreVariant();
             Application.logMessageReceived -= CaptureError;
             batchesRecorder.Dispose(); setPassRecorder.Dispose(); trianglesRecorder.Dispose(); shadowRecorder.Dispose();
             foreach ((string _, ProfilerRecorder recorder) in markers) recorder.Dispose();
             markers.Clear();
             GraphicsQuality.AutoAdjust = true;
             if (error != null) lines.Add("FAIL: " + error);
+            if (Ablation && phaseMeans.Count > 0)
+            {
+                // Trust the deltas only when both baselines agree (within ~10%).
+                double[] baselines = phaseMeans.Where(phase => phase.name.StartsWith("baseline")).Select(phase => phase.ms).ToArray();
+                double reference = baselines.Length > 0 ? baselines.Average() : phaseMeans[0].ms;
+                lines.Add($"Summary (frame-time mean; baselines {string.Join(" / ", baselines.Select(ms => ms.ToString("F1")))} ms):");
+                foreach ((string name, double ms) in phaseMeans)
+                    lines.Add($"  {name,-20} {ms,7:F1} ms  ({ms - reference:+0.0;-0.0} ms)");
+            }
+            phaseMeans.Clear();
             Directory.CreateDirectory(Folder);
             File.AppendAllText(ReportPath, string.Join("\n", lines) + "\n\n", Encoding.UTF8);
             if (material != null) UnityEngine.Object.Destroy(material);
